@@ -10,6 +10,13 @@ import { api } from '@/data/api';
 import { downloadBlob } from '@/utils';
 import ErrorDialog from './ErrorDialog.vue';
 
+type MetadataTypeValue = 'nmdc:Biosample' | 'nmdc:Study' | 'nmdc:DataGeneration' | 'nmdc:DataObject' | 'nmdc:WorkflowExecution';
+
+interface MetadataDownloadOption {
+  id: MetadataTypeValue;
+  label: string;
+}
+
 const {
   disabled = false,
   searchResultCount = 0,
@@ -58,25 +65,25 @@ const dataProductOptions = computed(() => {
     }));
 });
 
-const metadataOptions = computed(() => [
+const metadataOptions = computed<MetadataDownloadOption[]>(() => [
   {
-    id: 'biosamples',
+    id: 'nmdc:Biosample',
     label: 'Biosamples',
   },
   {
-    id: 'studies',
+    id: 'nmdc:Study',
     label: 'Studies',
   },
   {
-    id: 'data_generations',
+    id: 'nmdc:DataGeneration',
     label: 'Data Generations',
   },
   {
-    id: 'data_objects',
+    id: 'nmdc:DataObject',
     label: 'Data Objects',
   },
   {
-    id: 'workflow_executions',
+    id: 'nmdc:WorkflowExecution',
     label: 'Workflow Executions',
   },
 ]);

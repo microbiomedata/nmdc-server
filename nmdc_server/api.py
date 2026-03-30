@@ -4,8 +4,8 @@ import time
 import zipfile
 from enum import StrEnum
 from importlib import resources
-from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union
+from io import BytesIO, RawIOBase, StringIO
+from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -406,44 +406,78 @@ async def get_biosample_source_metadata(biosample_id: str):
     return source_biosample
 
 
-@router.post(
-    "/biosample/search/source_metadata",
-    tags=["biosample"],
-)
-async def search_biosample_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-):
+class _StreamingBuffer(RawIOBase):
     """
-    Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
+    A non-seekable, write-only buffer used to stream a ZIP archive incrementally.
+
+    By being non-seekable, Python's `zipfile` module operates in "streaming mode":
+    it sets the data-descriptor flag (bit 3) on each entry so that the CRC and
+    compressed/uncompressed sizes are written *after* the compressed data instead
+    of seeking back to rewrite the local file header.  The resulting archive is
+    fully valid — all modern tools (unzip, 7-zip, macOS Archive Utility, Windows
+    Explorer) understand data descriptors.
+
+    The `drain()` method returns and clears all bytes written since the last call,
+    allowing an async generator to yield those bytes to the HTTP client without
+    ever holding the full archive in memory.
     """
-    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
 
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
-        return []
+    def __init__(self) -> None:
+        super().__init__()
+        self._buf: bytearray = bytearray()
 
-    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:Biosample")
-    return documents
+    # file-like interface expected by zipfile
+    def write(self, b: bytes | bytearray | memoryview) -> int:  # type: ignore[override]
+        self._buf.extend(b)
+        return len(b)
+
+    def seekable(self) -> bool:
+        return False
+
+    def readable(self) -> bool:
+        return False
+
+    def writable(self) -> bool:
+        return True
+
+    # drain interface for the async generator
+    def drain(self) -> bytes:
+        """Return and clear all bytes accumulated since the last drain."""
+        data = bytes(self._buf)
+        self._buf.clear()
+        return data
 
 
 @router.post("/download_metadata", tags=["bulk_download"])
 async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
     """
-    Download multiple metadata lists as a zip file given a list of endpoint labels.
-    Endpoint labels are mapped to functions that retrieve JSON.
+    Download multiple metadata lists as a zip file given a list of requested
+    document types.
 
-    Uses a `StreamingResponse` so that FastAPI sends the HTTP response headers to the
-    client (and through any reverse proxies) immediately when this handler returns, before
-    the generator body begins executing. This prevents proxies from timing out or closing
-    the connection while waiting for response headers during a slow build of a large archive.
+    The request body should specify `endpoints` as a list of `high_level_type`
+    values (e.g., `"nmdc:Biosample"`, `"nmdc:Study"`).
+
+    Uses a `StreamingResponse` so that FastAPI sends the HTTP response headers to
+    the client (and through any reverse proxies) immediately when this handler
+    returns, before the generator body begins executing.  This prevents proxies
+    from timing out or closing the connection while waiting for response headers
+    during a slow build of a large archive.
+
+    The archive is built using a non-seekable `_StreamingBuffer` so that compressed
+    bytes are yielded to the client continuously as each document is serialised,
+    rather than accumulating the entire archive in a `BytesIO` buffer first.  Peak
+    memory is therefore proportional to one zlib compression window (~32 KB) plus
+    one DB batch (~1 000 rows) rather than the full uncompressed dataset.
     """
-    endpoint_map = {
-        "biosamples": search_biosample_source_metadata,
-        "studies": search_study_source_metadata,
-        "data_objects": search_data_object_source_metadata,
-        "data_generations": search_data_generation_source_metadata,
-        "workflow_executions": search_workflow_execution_source_metadata,
+    # The set of document types the client is allowed to request.  Each value is used
+    # directly as the high_level_type filter in BiosampleRelatedDocument.
+    # The value is used as the JSON file name.
+    allowed_document_types = {
+        "nmdc:Biosample": "biosamples",
+        "nmdc:Study": "studies",
+        "nmdc:DataObject": "data_objects",
+        "nmdc:DataGeneration": "data_generations",
+        "nmdc:WorkflowExecution": "workflow_executions",
     }
 
     if not q.endpoints or len(q.endpoints) == 0:
@@ -453,17 +487,49 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
         )
 
     async def generate_zip():
-        zip_buffer = BytesIO()
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-            for endpoint_name in q.endpoints:
-                if endpoint_name in endpoint_map:
-                    data = await endpoint_map[endpoint_name](q=q, db=db)
-                    json_bytes = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
-                    del data
-                    zf.writestr(f"{endpoint_name}.json", json_bytes)
-                    del json_bytes
-        zip_buffer.seek(0)
-        while chunk := zip_buffer.read(settings.zip_streamer_chunk_size_bytes):
+        biosample_ids = crud.get_biosample_ids(db, q.conditions)
+        buf = _StreamingBuffer()
+
+        with zipfile.ZipFile(cast(IO[bytes], buf), "w", zipfile.ZIP_DEFLATED) as zf:
+            for high_level_type in q.endpoints:
+                filename = allowed_document_types.get(high_level_type)
+                if filename is None:
+                    continue
+
+                with zf.open(f"{filename}.json", "w") as jf:
+                    if not biosample_ids:
+                        # Write an empty list if there are no biosamples matching the query
+                        jf.write(b"[]")
+                    else:
+                        # Stream each document as a JSON object on a separate line, wrapped in a list.
+                        jf.write(b"[\n")
+                        first = True
+                        for doc in crud.get_documents_by_biosample_ids(
+                            db, biosample_ids, high_level_type
+                        ):
+                            if not first:
+                                # Write a comma before all but the first document to maintain valid JSON list syntax.
+                                jf.write(b",\n")
+                            jf.write(json.dumps(doc, ensure_ascii=False).encode("utf-8"))
+                            first = False
+                            # Drain whatever the zlib compressor has emitted so far.
+                            # Most calls return a small chunk or nothing; the important
+                            # thing is that buf never accumulates the full dataset.
+                            chunk = buf.drain()
+                            if chunk:
+                                yield chunk
+                        # End the JSON list.
+                        jf.write(b"\n]")
+
+                # The entry's compressor is finalised and the data descriptor is
+                # written when the `with zf.open()` block exits.  Drain those bytes.
+                chunk = buf.drain()
+                if chunk:
+                    yield chunk
+
+        # The ZIP central directory is written when the ZipFile context exits.
+        chunk = buf.drain()
+        if chunk:
             yield chunk
 
     return StreamingResponse(
@@ -683,27 +749,6 @@ async def get_study_source_metadata(study_id: str):
     return source_study
 
 
-@router.post(
-    "/study/search/source_metadata",
-    tags=["study"],
-)
-async def search_study_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-):
-    """
-    Gets all `Study` documents related to the `Biosample`s specified via the `SearchQuery`.
-    """
-    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
-
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
-        return []
-
-    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:Study")
-    return documents
-
-
 # data_generation
 # Note the intermingling of the terms "data generation" and "omics processing."
 # The Berkeley schema (NMDC schema v11) did away with the phrase "omics processing."
@@ -857,59 +902,6 @@ def data_object_aggregation(
     db: Session = Depends(get_db),
 ):
     return crud.aggregate_data_object_by_workflow(db, query.conditions)
-
-
-async def search_data_object_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """
-    Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
-    """
-    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
-
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
-        return []
-
-    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:DataObject")
-    return documents
-
-
-async def search_data_generation_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """
-    Gets all `DataGeneration` documents related to the `Biosample`s specified via the `SearchQuery`.
-    """
-    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
-
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
-        return []
-
-    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:DataGeneration")
-    return documents
-
-
-async def search_workflow_execution_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-) -> list[dict]:
-    """
-    Gets all `WorkflowExecution` documents related to the `Biosample`s specified via the `SearchQuery`.
-    """
-    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
-
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
-        return []
-
-    documents = crud.get_documents_by_biosample_ids(
-        db, biosample_ids_list, "nmdc:WorkflowExecution"
-    )
-    return documents
 
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
