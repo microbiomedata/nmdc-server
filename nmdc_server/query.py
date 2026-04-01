@@ -846,6 +846,26 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
             return {value: count for count, value in aggregated_query if value is not None}
         return super().facet(db, attribute)
 
+    def _fts_subquery(self, db: Session, term: str) -> Optional[Query]:
+        """Return OmicsProcessing IDs linked to biosamples matching the full-text search."""
+        biosample_fts_subquery = BiosampleQuerySchema()._fts_subquery(db, term)
+        if biosample_fts_subquery is None:
+            return None
+        biosample_subquery = biosample_fts_subquery.subquery()
+        return (
+            db.query(models.OmicsProcessing.id.label("id"))
+            .join(
+                models.biosample_input_association,
+                models.biosample_input_association.c.omics_processing_id
+                == models.OmicsProcessing.id,
+            )
+            .join(
+                biosample_subquery,
+                models.biosample_input_association.c.biosample_id == biosample_subquery.c.id,
+            )
+            .distinct()
+        )
+
     def omics_processing_for_biosample_ids(self, db: Session, biosample_ids):
         # Do the normal query with the conditions
         query = self.execute(db)
