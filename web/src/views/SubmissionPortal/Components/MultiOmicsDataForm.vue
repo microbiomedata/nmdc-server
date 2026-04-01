@@ -83,8 +83,7 @@ export default defineComponent({
           return valid || 'DOI must be provided if a provider is selected.';
         },
         (value: string) => {
-          const valid = !value || checkDoiFormat(value);
-          return valid || 'DOI must be in the correct format.';
+          return !value || checkDoiFormat(value);
         },
       ]
     );
@@ -106,26 +105,6 @@ export default defineComponent({
       nextTick(() => formRef.value!.validate());
     };
 
-    function resetFields(field: string) {
-      if (field === 'dataGenerated') {
-        multiOmicsForm.facilityGenerated = undefined;
-        multiOmicsForm.doe = undefined;
-      }
-      multiOmicsForm.award = undefined;
-      multiOmicsForm.otherAward = undefined;
-      multiOmicsForm.mgCompatible = undefined;
-      multiOmicsForm.mgInterleaved = undefined;
-      multiOmicsForm.omicsProcessingTypes = [];
-      multiOmicsForm.mtCompatible = undefined;
-      multiOmicsForm.mtInterleaved = undefined;
-      multiOmicsForm.facilities = [];
-      multiOmicsForm.lipProtocols = undefined;
-      multiOmicsForm.mbProtocols = undefined;
-      multiOmicsForm.nomProtocols = undefined;
-      multiOmicsForm.mpProtocols = undefined;
-      revalidate();
-    }
-
     watch(
       () => multiOmicsForm.award,
       (award) => {
@@ -146,7 +125,6 @@ export default defineComponent({
       doiValueRules,
       doiProviderRules,
       revalidate,
-      resetFields,
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
@@ -183,7 +161,7 @@ export default defineComponent({
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'You must select if data has been generated.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
-        @change="resetFields('dataGenerated')"
+        @change="revalidate"
       >
         <v-radio
           label="No"
@@ -200,7 +178,7 @@ export default defineComponent({
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'You must select if data was generated at a DOE user facility.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
-        @change="resetFields('facilityGenerated')"
+        @change="revalidate"
       >
         <v-radio
           label="No"
@@ -226,7 +204,7 @@ export default defineComponent({
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'You must select if you are submitting samples to a DOE user facility.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
-        @change="resetFields('doe')"
+        @change="revalidate"
       >
         <v-radio
           label="No"

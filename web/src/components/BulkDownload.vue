@@ -10,6 +10,13 @@ import { api } from '@/data/api';
 import { downloadBlob } from '@/utils';
 import ErrorDialog from './ErrorDialog.vue';
 
+type MetadataTypeValue = 'nmdc:Biosample' | 'nmdc:Study' | 'nmdc:DataGeneration' | 'nmdc:DataObject' | 'nmdc:WorkflowExecution';
+
+interface MetadataDownloadOption {
+  id: MetadataTypeValue;
+  label: string;
+}
+
 const {
   disabled = false,
   searchResultCount = 0,
@@ -58,14 +65,26 @@ const dataProductOptions = computed(() => {
     }));
 });
 
-const metadataOptions = computed(() => [
+const metadataOptions = computed<MetadataDownloadOption[]>(() => [
   {
-    id: 'biosamples',
+    id: 'nmdc:Biosample',
     label: 'Biosamples',
   },
   {
-    id: 'studies',
+    id: 'nmdc:Study',
     label: 'Studies',
+  },
+  {
+    id: 'nmdc:DataGeneration',
+    label: 'Data Generations',
+  },
+  {
+    id: 'nmdc:DataObject',
+    label: 'Data Objects',
+  },
+  {
+    id: 'nmdc:WorkflowExecution',
+    label: 'Workflow Executions',
   },
 ]);
 
@@ -74,7 +93,7 @@ async function createAndDownload() {
     downloadMenuOpen.value = false;
     bulkTermsDialog.value = false;
     const val = await download();
-    window.location.assign(val.url);
+    if (val) window.location.assign(val.url);
   } catch (error) {
     console.error('Failed to create bulk download:', error);
     errorDialog.value = true;
@@ -182,7 +201,7 @@ watch(
             </template>
             <span>
               Choose a group of files to download based on file type
-              from the currently filtered search results.
+              from the currently filtered sample results.
             </span>
           </v-tooltip>
         </v-tab>
@@ -203,7 +222,7 @@ watch(
               </v-icon>
             </template>
             <span>
-              Download metadata as JSON for the currently filtered search results.
+              Download different types of metadata as JSON that are associated with the currently filtered sample results.
             </span>
           </v-tooltip>
         </v-tab>

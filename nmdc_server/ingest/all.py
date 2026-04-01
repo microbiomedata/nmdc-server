@@ -10,11 +10,13 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest import (
     biosample,
+    biosample_related_document,
     common,
     data_object,
     envo,
     kegg,
     omics_processing,
+    ontology,
     pipeline,
     search_index,
     study,
@@ -66,6 +68,12 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
     )
     mongodb = client[settings.mongo_database]
 
+    with duration_logger(logger, "Loading ontology data"):
+        ontology.load(
+            db, mongodb["ontology_class_set"].find(), mongodb["ontology_relation_set"].find()
+        )
+        db.commit()
+
     with duration_logger(logger, "Loading ENVO terms"):
         envo.load(db)
         db.commit()
@@ -99,6 +107,10 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
         )
         db.commit()
         logger.info(biosample_etl_report)
+
+    with duration_logger(logger, "Loading biosample-related documents"):
+        biosample_related_document.load(db, mongodb)
+        db.commit()
 
     with duration_logger(logger, "Loading omics processing"):
         omics_processing.load(

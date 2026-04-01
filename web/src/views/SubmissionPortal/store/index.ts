@@ -32,9 +32,10 @@ import {
   SuggestionsMode,
   SuggestionType,
 } from '@/views/SubmissionPortal/types';
-import { setPendingSuggestions } from '@/store/localStorage';
+import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
+import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -159,6 +160,9 @@ function setTabValidated(tabName: string, validated: boolean) {
       tabsValidated: {},
     };
   }
+  if (!templateList.value.includes(tabName)) {
+    return;
+  }
   validationState.sampleMetadata.tabsValidated[tabName] = validated;
 }
 
@@ -168,6 +172,9 @@ function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record
       invalidCells: {},
       tabsValidated: {},
     };
+  }
+  if (!templateList.value.includes(tabName)) {
+    return;
   }
   validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
 }
@@ -321,6 +328,7 @@ const studyFormDefault = {
   linkOutWebpage: [],
   studyDate: null,
   dataDois: [] as Doi[] | null,
+  publicationDois: [] as Doi[] | null,
   fundingSources: [] as string[] | null,
   description: '',
   notes: '',
@@ -345,27 +353,34 @@ interface Protocols {
 /**
  * Multi-Omics Form Step
  */
+export type OmicsProcessingType =
+  // non-doe types
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  // doe facility associated types
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
 const multiOmicsFormDefault = {
-  award: undefined as undefined | string,
+  award: null as null | string,
   awardDois: [] as Doi[] | null,
-  dataGenerated: undefined as undefined | boolean,
-  doe: undefined as undefined | boolean,
+  dataGenerated: null as null | boolean,
+  doe: null as null | boolean,
   facilities: [] as string[],
-  facilityGenerated: undefined as undefined | boolean,
+  facilityGenerated: null as null | boolean,
   JGIStudyId: '',
-  mgCompatible: undefined as undefined | boolean,
-  mgInterleaved: undefined as undefined | boolean,
-  mtCompatible: undefined as undefined | boolean,
-  mtInterleaved: undefined as undefined | boolean,
-  omicsProcessingTypes: [] as string[],
-  otherAward: undefined as undefined | string,
-  ship: undefined as undefined | boolean,
+  mgCompatible: null as null | boolean,
+  mgInterleaved: null as null | boolean,
+  mtCompatible: null as null | boolean,
+  mtInterleaved: null as null | boolean,
+  omicsProcessingTypes: [] as OmicsProcessingType[],
+  otherAward: null as null | string,
+  ship: null as null | boolean,
   studyNumber: '',
-  unknownDoi: undefined as undefined | boolean,
-  mpProtocols: undefined as undefined | Protocols,
-  mbProtocols: undefined as undefined | Protocols,
-  lipProtocols: undefined as undefined | Protocols,
-  nomProtocols: undefined as undefined | Protocols,
+  unknownDoi: null as null | boolean,
+  mpProtocols: null as null | Protocols,
+  mbProtocols: null as null | Protocols,
+  mbGcProtocols: null as null | Protocols,
+  lipProtocols: null as null | Protocols,
+  nomProtocols: null as null | Protocols,
+  nomLcProtocols: null as null | Protocols,
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
@@ -389,15 +404,135 @@ function removeAwardDoi(i: number) {
   if (multiOmicsForm.awardDois === null) {
     multiOmicsForm.awardDois = [];
   }
-  if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+  if ((multiOmicsForm.facilities?.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
     multiOmicsForm.awardDois.splice(i, 1);
   }
 }
 
-function checkDoiFormat(v: string) {
-  const valid = /^(?:doi:)?10.\d{2,9}\/.*$/.test(v);
-  return valid;
+function checkDoiFormat(v: string): string | boolean {
+  return /^(?:doi:)?10.\d{2,9}\/.*$/.test(v) || 'DOI must be in the format "10.xxxx/xxxxx"';
 }
+
+// When "Have data already been generated for your study?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.dataGenerated, (newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  // Reset "Are you submitting samples to a DOE user facility (JGI, EMSL)?"
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.doe = null;
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  // Reset "Was data generated at a DOE user facility (JGI, EMSL)?"
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.facilityGenerated = null;
+  }
+});
+
+// When "Was data generated at a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilityGenerated, (newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  // Uncheck all "Which facility?" checkboxes
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.omicsProcessingTypes = [];
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  // Uncheck all "Which data types were generated?" checkboxes
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.facilities = [];
+    multiOmicsForm.awardDois = []
+  }
+});
+
+// When "Are you submitting samples to a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.doe, ( newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.omicsProcessingTypes = [];
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.award = null;
+    multiOmicsForm.otherAward = null;
+    multiOmicsForm.facilities = [];
+    multiOmicsForm.awardDois = [];
+  }
+});
+
+// When "Which facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
+  // EMSL was removed
+  if (!newValue.includes('EMSL') && prevValue.includes('EMSL')) {
+    multiOmicsForm.studyNumber = '';
+    multiOmicsForm.ship = null;
+    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+      t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
+    ));
+  }
+  // JGI was removed
+  if (!newValue.includes('JGI') && prevValue.includes('JGI')) {
+    multiOmicsForm.JGIStudyId = '';
+    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+      t !== 'mg-jgi' && t !== 'mg-lr-jgi' && t !== 'mt-jgi' && t !== 'mb-jgi'
+    ));
+  }
+});
+
+// When "Which data types were generated?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
+  // mg was removed
+  if (!newValue.includes('mg') && oldValue.includes('mg')) {
+    multiOmicsForm.mgCompatible = null;
+  }
+  // mt was removed
+  if (!newValue.includes('mt') && oldValue.includes('mt')) {
+    multiOmicsForm.mtCompatible = null;
+  }
+  // mp was removed
+  if (!newValue.includes('mp') && oldValue.includes('mp')) {
+    multiOmicsForm.mpProtocols = null;
+  }
+  // mb was removed
+  if (!newValue.includes('mb') && oldValue.includes('mb')) {
+    multiOmicsForm.mbProtocols = null;
+  }
+  // mb-gc was removed
+  if (!newValue.includes('mb-gc') && oldValue.includes('mb-gc')) {
+    multiOmicsForm.mbGcProtocols = null;
+  }
+  // nom was removed
+  if (!newValue.includes('nom') && oldValue.includes('nom')) {
+    multiOmicsForm.nomProtocols = null;
+  }
+  // nom-lc was removed
+  if (!newValue.includes('nom-lc') && oldValue.includes('nom-lc')) {
+    multiOmicsForm.nomLcProtocols = null;
+  }
+  // lipidome was removed
+  if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
+    multiOmicsForm.lipProtocols = null;
+  }
+});
+
+// When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
+watch(() => multiOmicsForm.mgCompatible, (newValue, oldValue) => {
+  // mg compatible was cleared or changed from true to false
+  if (newValue === null || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mgInterleaved = null;
+  }
+});
+watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
+  // mt compatible was cleared or changed from true to false
+  if (newValue === null || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mtInterleaved = null;
+  }
+});
+
+// Watch for changes to the "Will samples be shipped?" field. If the field is reset or the answer becomes "No",
+// reset the sender shipping info form validation state to null (untouched).
+watch(() => multiOmicsForm.ship, (newVal) => {
+  if (newVal !== true) {
+    validationState.senderShippingInfoForm = null;
+  }
+});
 
 /**
  * Environmental Package Step
@@ -441,7 +576,7 @@ const templateList = computed<string[]>((prevTemplates) => {
 
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
-      if (multiOmicsForm.facilities.includes('EMSL')) {
+      if (multiOmicsForm.facilities?.includes('EMSL')) {
         // Which facility? EMSL
         if (multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')) {
           // Data types? Lipidome
@@ -460,7 +595,7 @@ const templateList = computed<string[]>((prevTemplates) => {
           templates.add(EMSL);
         }
       }
-      if (multiOmicsForm.facilities.includes('JGI')) {
+      if (multiOmicsForm.facilities?.includes('JGI')) {
         // Which facility? JGI
         if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) {
           // Data types? Metagenome
@@ -515,6 +650,25 @@ watch(templateList, (newList, oldList) => {
     };
   }
   validationState.sampleMetadata.tabsValidated = newTabsValidated;
+
+  // Remove sampleData and validation state for any templates that are no longer included in the package
+  const removedTemplates = oldList.filter((template) => !newList.includes(template));
+  if (removedTemplates.length > 0) {
+    const newSampleData = { ...sampleData.value };
+    removedTemplates.forEach((template) => {
+      const sampleDataSlot = HARMONIZER_TEMPLATES[template as keyof typeof HARMONIZER_TEMPLATES]?.sampleDataSlot;
+      if (sampleDataSlot === undefined) {
+        return;
+      }
+      delete newSampleData[sampleDataSlot];
+      if (validationState.sampleMetadata) {
+        delete validationState.sampleMetadata.tabsValidated[template];
+        delete validationState.sampleMetadata.invalidCells[template];
+      }
+    });
+    sampleData.value = newSampleData;
+  }
+  hasChanged.value += 1;
 });
 
 /** Submit page */
@@ -598,8 +752,7 @@ async function submit(id: string, status?: SubmissionStatusKey) {
   if (!canEditSubmissionByStatus()) {
     throw new Error('Unable to submit with current submission status.');
   }
-  const response = await api.updateRecord(id, payloadObject.value);
-  let record = response.data;
+  let record = await api.updateRecord(id, payloadObject.value);
   if (status) {
     record = await api.updateSubmissionStatus(id, status);
   }
@@ -648,7 +801,9 @@ async function incrementalSaveRecord(id: string): Promise<void> {
     const response = await incrementalSaveRecordRequest.request(
       () => api.updateRecord(id, payload, permissions)
     );
-    updateStateFromRecord(response.data);
+    if (response) {
+      updateStateFromRecord(response);
+    }
     return;
   }
   hasChanged.value = 0;
@@ -736,6 +891,7 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
+const fetchSuggestionsFromSampleRowsRequest = useRequest();
 /**
  * Get metadata suggestions from the server and add them to the list of pending suggestions. Then sync the pending
  * suggestions with local storage.
@@ -745,26 +901,65 @@ function mergeSampleData(key: string | undefined, data: any[]) {
  * @param requests
  * @param batchSize
  */
-async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
-  const batches = chunk(requests, batchSize);
-  for (let i = 0; i < batches.length; i += 1) {
-    const batch = batches[i] || [];
+async function fetchSuggestionsFromSampleRows(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
+  return fetchSuggestionsFromSampleRowsRequest.request(async () => {
+    const batches = chunk(requests, batchSize);
+    for (let i = 0; i < batches.length; i += 1) {
+      const batch = batches[i] || [];
 
 
-    const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
+      const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
-    // Drop all the existing suggestions for the rows in this batch
-    batch.forEach((request) => {
-      metadataSuggestions.value = metadataSuggestions.value.filter(
-        (suggestion) => suggestion.row !== request.row,
-      );
-    });
+      // Drop all the existing suggestions for the rows in this batch
+      batch.forEach((request) => {
+        metadataSuggestions.value = metadataSuggestions.value.filter(
+          (suggestion) => suggestion.row !== request.row,
+        );
+      });
 
-    // Add the new suggestions to the list
-    metadataSuggestions.value.push(...suggestions);
-  }
+      // Add the new suggestions to the list
+      metadataSuggestions.value.push(...suggestions);
+    }
 
-  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+    setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+  });
+}
+
+const fetchSuggestionsFromStudyInfoRequest = useRequest();
+/**
+ * Get suggestions from the server based on study information. These suggestions are not tied to specific submission
+ * schema classes, so this function needs to sort out which classes the target slot is part of and then sync the pending
+ * suggestions with local storage. If there is an existing suggestion for the same slot, row and type as an incoming
+ * suggestion, the existing suggestion will be replaced by the incoming one. The in-memory list of suggestions will also
+ * be updated to trigger reactivity in the UI if the active schema class is the one being updated.
+ */
+async function fetchSuggestionsFromStudyInfo(submissionId: string, allSchemaClassNames: string[], activeSchemaClassName: string, harmonizerApi: HarmonizerApi) {
+  return fetchSuggestionsFromStudyInfoRequest.request(async () => {
+    const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId);
+    for (const schemaClassName of allSchemaClassNames) {
+      const suggestionsForClass = getPendingSuggestions(submissionId, schemaClassName);
+      suggestions.forEach((suggestion) => {
+        if (!harmonizerApi.isSlotInClass(suggestion.slot, schemaClassName)) {
+          return;
+        }
+        const existingIndex = suggestionsForClass.findIndex(
+          (s) => s.row === suggestion.row && s.slot === suggestion.slot && s.type === suggestion.type,
+        );
+        if (existingIndex >= 0) {
+          // Replace existing suggestion
+          suggestionsForClass[existingIndex] = suggestion;
+        } else {
+          // Add new suggestion
+          suggestionsForClass.push(suggestion);
+        }
+      });
+      setPendingSuggestions(submissionId, schemaClassName, suggestionsForClass);
+      if (schemaClassName === activeSchemaClassName) {
+        // If the active schema class is the one we just updated, also update the in-memory list of suggestions to trigger reactivity
+        metadataSuggestions.value = getPendingSuggestions(submissionId, schemaClassName);
+      }
+    }
+  });
 }
 
 /**
@@ -815,6 +1010,8 @@ export {
   suggestionType,
   SubmissionStatusEnum,
   submissionPages,
+  fetchSuggestionsFromSampleRowsRequest,
+  fetchSuggestionsFromStudyInfoRequest,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -830,7 +1027,8 @@ export {
   canEditSubmissionMetadata,
   canEditSubmissionByStatus,
   editableByStatus,
-  addMetadataSuggestions,
+  fetchSuggestionsFromSampleRows,
+  fetchSuggestionsFromStudyInfo,
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,

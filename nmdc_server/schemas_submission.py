@@ -20,7 +20,7 @@ class Contributor(BaseModel):
 
 class Doi(BaseModel):
     value: str
-    provider: str
+    provider: Optional[str] = None
 
 
 class StudyFormCreate(BaseModel):
@@ -30,6 +30,7 @@ class StudyFormCreate(BaseModel):
     piOrcid: str
     fundingSources: Optional[List[str]] = None
     dataDois: Optional[List[Doi]] = None
+    publicationDois: Optional[List[Doi]] = None
     linkOutWebpage: List[str]
     studyDate: Optional[str] = None
     description: str
@@ -79,8 +80,10 @@ class MultiOmicsForm(BaseModel):
     unknownDoi: Optional[bool] = None
     mpProtocols: Optional[Protocols] = None
     mbProtocols: Optional[Protocols] = None
+    mbGcProtocols: Optional[Protocols] = None
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
+    nomLcProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
@@ -210,6 +213,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
     author_orcid: str
     field_notes_metadata: Optional[Dict[str, Any]] = None
     metadata_submission: MetadataSubmissionRecord
+    nmdc_study_id: Optional[str] = None
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None
@@ -290,12 +294,18 @@ class MetadataSuggestionRequest(BaseModel):
 
 class MetadataSuggestionType(str, Enum):
     ADD = "add"
+    """Indicates that a value is being suggested for a metadata slot that does not currently have a value."""
     REPLACE = "replace"
+    """Indicates that a value is being suggested for a metadata slot that already has a value."""
+    ATTENTION = "attention"
+    """Indicates that the user should be aware of the metadata slot, but no specific value is being suggested."""
 
 
 class MetadataSuggestion(BaseModel):
     type: MetadataSuggestionType
-    row: int
+    row: Optional[int] = None
     slot: str
-    value: str
+    value: Optional[str] = None
     current_value: Optional[str] = None
+    is_ai_generated: bool = False
+    source: Optional[str] = None

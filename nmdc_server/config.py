@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     zip_streamer_url: str = "http://zipstreamer:4008/download"
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
+    portal_api_internal_url: str = "http://backend:8000"
+    """Internal base URL of the backend API, used by ZipStreamer to fetch on-the-fly metadata
+    files that are added to bulk-download zip archives."""
 
     # for single file downloads (not bulk downloads)
     nersc_data_url_external_replacement_prefix: str = "https://data.microbiomedata.org/data"
@@ -213,6 +216,15 @@ class Settings(BaseSettings):
     github_issue_url: Optional[str] = None
     github_authentication_token: Optional[str] = None
     github_issue_assignee: Optional[str] = None
+
+    llm_service_account_credentials_file: Optional[str] = None
+    """Path to the service account credentials JSON file used by nmdc-metadata-suggestor-ai-tool.
+
+    If needed for local development, get this file from an NMDC team member. The file should be
+    copied into the auth subfolder of this project, and the corresponding environment variable
+    should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth`
+    in the docker container.
+    """
 
     @property
     def current_db_uri(self) -> str:

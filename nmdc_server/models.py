@@ -21,12 +21,13 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
-    func,
+    event,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
+from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base, update_multiomics_sql
@@ -154,6 +155,67 @@ class EnvoAncestor(Base):
         lazy="joined",
     )
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
+
+
+# Generic ontology models to store all ontology classes and relations
+class OntologyClass(Base):
+    __tablename__ = "ontology_class"
+
+    id = Column(String, primary_key=True)  # e.g., "ENVO:00000001"
+    type = Column(String, nullable=False, default="nmdc:OntologyClass")
+    name = Column(String, nullable=False, index=True)  # label/name
+    definition = Column(Text)
+    alternative_names = Column(JSONB, default=list)  # array of strings
+    is_root = Column(Boolean, nullable=False, default=False)
+    is_obsolete = Column(Boolean, nullable=False, default=False)
+    # Additional metadata can be stored in annotations
+    annotations = Column(JSONB, default=dict)
+
+    # Relationships where this class is the subject
+    subject_relations = relationship(
+        "OntologyRelation",
+        foreign_keys="OntologyRelation.subject",
+        back_populates="subject_class",
+        cascade="all, delete-orphan",
+    )
+
+    # Relationships where this class is the object
+    object_relations = relationship(
+        "OntologyRelation",
+        foreign_keys="OntologyRelation.object",
+        back_populates="object_class",
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def ontology_prefix(self) -> str:
+        """Extract the ontology prefix from the ID (e.g., 'ENVO' from 'ENVO:00000001')"""
+        return self.id.split(":")[0] if ":" in self.id else ""
+
+
+class OntologyRelation(Base):
+    __tablename__ = "ontology_relation"
+    __table_args__ = (
+        UniqueConstraint(
+            "subject", "predicate", "object", name="uq_ontology_relation_subject_predicate_object"
+        ),
+        Index("idx_ontology_relation_subject", "subject"),
+        Index("idx_ontology_relation_object", "object"),
+        Index("idx_ontology_relation_predicate", "predicate"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    subject = Column(String, ForeignKey(OntologyClass.id), nullable=False)
+    predicate = Column(String, nullable=False)  # e.g., "rdfs:subClassOf", "BFO:0000050"
+    object = Column(String, ForeignKey(OntologyClass.id), nullable=False)
+    type = Column(String, nullable=False, default="nmdc:OntologyRelation")
+
+    subject_class = relationship(
+        "OntologyClass", foreign_keys=[subject], back_populates="subject_relations"
+    )
+    object_class = relationship(
+        "OntologyClass", foreign_keys=[object], back_populates="object_relations"
+    )
 
 
 class KoTermToModule(Base):
@@ -434,6 +496,21 @@ class Biosample(Base, AnnotatedModel):
     def populate_multiomics(cls, db: Session):
         db.execute(update_multiomics_sql)
         db.commit()
+
+
+class BiosampleRelatedDocument(Base):
+    """
+    Table containing JSON documents (typically ingested from a MongoDB database)
+    related to biosamples.
+    """
+
+    __tablename__ = "biosample_related_document"
+
+    id = Column(String, primary_key=True)
+    biosample_ids = Column(ARRAY(String), nullable=False, default=list)
+    high_level_type = Column(String, nullable=False)
+    document = Column(JSONB, nullable=False)
+    downstream_neighbor_ids = Column(ARRAY(String), nullable=False, default=list)
 
 
 omics_processing_output_association = output_association("omics_processing")
@@ -1032,7 +1109,11 @@ Index("bulk_download_data_object_id_idx", BulkDownloadDataObject.data_object_id)
 class EnvoTree(Base):
     __tablename__ = "envo_tree"
 
-    id = Column(String, primary_key=True)
+    # Surrogate primary key to allow multiple parents per term
+    pk = Column(Integer, primary_key=True)
+    # The ontology term ID (e.g., "ENVO:00000447", "PO:0009005")
+    id = Column(String, nullable=False)
+    # Parent term ID, NULL for root nodes
     parent_id = Column(String, index=True)
 
 
@@ -1118,8 +1199,11 @@ class SubmissionMetadata(Base):
     templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
+    nmdc_study_id = Column(String, nullable=True)
     date_last_modified = Column(
-        DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=func.now()
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(UTC),
     )
     submission_issue = Column(String, nullable=True)
 
@@ -1253,3 +1337,26 @@ class InvalidatedToken(Base):
     __tablename__ = "invalidated_token"
 
     token = Column(String, primary_key=True)
+
+
+# ORM event listener to conditionally update date_last_modified only when submission data changes
+@event.listens_for(SubmissionMetadata, "before_update")
+def update_submission_metadata_date(mapper, _connection, target):
+    """
+    Update date_last_modified only when actual submission data changes, not when lock-related fields are modified.
+
+    This event fires before an UPDATE statement is executed. We check which attributes have changed
+    and only set date_last_modified to the current time if submission data columns changed.
+    """
+
+    # Columns that relate to the lock mechanism and should not trigger a date_last_modified update
+    lock_columns = {"locked_by_id", "locked_by", "lock_updated"}
+
+    # Check if any submission data column has been modified
+    for col in mapper.columns:
+        if col.name not in lock_columns:
+            history = get_history(target, col.name)
+            # If this column has been changed (has_changes returns True when value differs from DB)
+            if history.has_changes():
+                target.date_last_modified = datetime.now(UTC)
+                return

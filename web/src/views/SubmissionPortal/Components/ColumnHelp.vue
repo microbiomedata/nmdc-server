@@ -1,26 +1,25 @@
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
 import { urlify } from '@/data/utils';
 import { ColumnHelpInfo, HarmonizerTemplateInfo } from '@/views/SubmissionPortal/types';
 
-export default defineComponent({
-  props: {
-    columnHelp: {
-      type: Object as PropType<ColumnHelpInfo | null>,
-      default: null,
-    },
-    harmonizerTemplate: {
-      type: Object as PropType<HarmonizerTemplateInfo>,
-      required: true,
-    },
-  },
-  emits: ['full-reference-click'],
-  setup() {
-    return {
-      urlify,
-    };
-  },
+interface ColumnHelpProps {
+  /**
+   * Help information for the currently selected column.
+   */
+  columnHelp?: ColumnHelpInfo | null;
+  /**
+   * Information about the active template.
+   */
+  harmonizerTemplate: HarmonizerTemplateInfo;
+}
+
+withDefaults(defineProps<ColumnHelpProps>(), {
+  columnHelp: null,
 });
+
+defineEmits<{
+  'full-reference-click': [],
+}>();
 </script>
 
 <template>
@@ -62,10 +61,13 @@ export default defineComponent({
         color="grey"
         variant="outlined"
         size="small"
+        class="text-truncate justify-start"
         block
         @click="$emit('full-reference-click')"
       >
-        Full {{ harmonizerTemplate.displayName }} Reference
+        <span class="text-truncate" style="max-width: 250px;">
+          Full {{ harmonizerTemplate.displayName }} Reference
+        </span>
         <v-icon class="pl-1">
           mdi-open-in-new
         </v-icon>

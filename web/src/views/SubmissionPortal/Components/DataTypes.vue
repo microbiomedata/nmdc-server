@@ -21,48 +21,14 @@ export default defineComponent({
     },
   },
 emits: ['revalidate'],
-  setup(_, { emit }) {
+  setup() {
     const dataCaveat = 'You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows';
-
-    const handleMetagenomeChange = () => {
-      if (!multiOmicsForm.omicsProcessingTypes.includes('mg')) {
-        multiOmicsForm.mgCompatible = undefined;
-        multiOmicsForm.mgInterleaved = undefined;
-      }
-      emit('revalidate');
-    };
-
-    const handleMgCompatibleChange = (value: boolean) => {
-      if (!value) {
-        multiOmicsForm.mgInterleaved = undefined;
-      }
-      emit('revalidate');
-    };
-
-    const handleMetatranscriptomeChange = () => {
-      if (!multiOmicsForm.omicsProcessingTypes.includes('mt')) {
-        multiOmicsForm.mtCompatible = undefined;
-        multiOmicsForm.mtInterleaved = undefined;
-      }
-      emit('revalidate');
-    };
-
-    const handleMtCompatibleChange = (value: boolean) => {
-      if (!value) {
-        multiOmicsForm.mtInterleaved = undefined;
-      }
-      emit('revalidate');
-    };
 
     return {
       dataCaveat,
       multiOmicsForm,
       HARMONIZER_TEMPLATES,
       templateHasData,
-      handleMetagenomeChange,
-      handleMgCompatibleChange,
-      handleMetatranscriptomeChange,
-      handleMtCompatibleChange,
     };
   },
 
@@ -82,7 +48,7 @@ emits: ['revalidate'],
         value="mg"
         :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
         hide-details
-        @change="handleMetagenomeChange"
+        @change="$emit('revalidate')"
       />
       <div
         v-if="showDataCompatibilityQuestions && multiOmicsForm.omicsProcessingTypes.includes('mg')"
@@ -104,9 +70,9 @@ emits: ['revalidate'],
         <v-radio-group
           v-model="multiOmicsForm.mgCompatible"
           label="Is the generated data compatible? *"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
-          @change="handleMgCompatibleChange"
+          @change="$emit('revalidate')"
         >
           <v-radio
             :value="false"
@@ -146,7 +112,7 @@ emits: ['revalidate'],
           v-model="multiOmicsForm.mgInterleaved"
           label="Is the data in interleaved format? *"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
         >
           <v-radio
             label="No"
@@ -158,13 +124,14 @@ emits: ['revalidate'],
           />
         </v-radio-group>
       </div>
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt"
         :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
         hide-details
-        @change="handleMetatranscriptomeChange"
+        @change="$emit('revalidate')"
       />
       <div
         v-if="showDataCompatibilityQuestions && multiOmicsForm.omicsProcessingTypes.includes('mt')"
@@ -189,9 +156,9 @@ emits: ['revalidate'],
         <v-radio-group
           v-model="multiOmicsForm.mtCompatible"
           label="Is the generated data compatible? *"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
-          @change="handleMtCompatibleChange"
+          @change="$emit('revalidate')"
         >
           <v-radio
             :value="false"
@@ -231,7 +198,7 @@ emits: ['revalidate'],
           v-model="multiOmicsForm.mtInterleaved"
           label="Is the data in interleaved format? *"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
         >
           <v-radio
             label="No"
@@ -246,7 +213,7 @@ emits: ['revalidate'],
 
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metaproteome"
+        label="Metaproteome (LC-MS)"
         value="mp"
         hide-details
       />
@@ -254,9 +221,10 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
         data-type="mpProtocols"
       />
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metabolome"
+        label="Metabolome (LC-MS)"
         value="mb"
         hide-details
       />
@@ -264,6 +232,18 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('mb')"
         data-type="mbProtocols"
       />
+
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Metabolome (GC-MS)"
+        value="mb-gc"
+        hide-details
+      />
+      <ExternalProtocolForm
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('mb-gc')"
+        data-type="mbGcProtocols"
+      />
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
@@ -274,14 +254,26 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
         data-type="nomProtocols"
       />
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Lipidome"
-        value="lipidome-emsl"
+        label="Natural Organic Matter (LC-FT-ICR MS)"
+        value="nom-lc"
         hide-details
       />
       <ExternalProtocolForm
-        v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')"
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('nom-lc')"
+        data-type="nomLcProtocols"
+      />
+
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Lipidome (LC-MS)"
+        value="lipidome"
+        hide-details
+      />
+      <ExternalProtocolForm
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome')"
         data-type="lipProtocols"
       />
     </div>

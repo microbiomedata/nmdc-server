@@ -2,13 +2,18 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
+<<<<<<< HEAD
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session, noload
+=======
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import Query, Session
+>>>>>>> main
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -472,6 +477,17 @@ def full_text_search_biosample(
     )
 
 
+def get_biosample_ids(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+):
+    """
+    Get the list of `Biosample` `id`s specified via the search query.
+    """
+    biosample_ids = search_biosample(db, conditions, []).with_entities(models.Biosample.id).all()
+    return [id for (id,) in biosample_ids]
+
+
 def facet_biosample(
     db: Session, attribute: str, conditions: List[query.ConditionSchema], **kwargs
 ) -> query.FacetResponse:
@@ -513,6 +529,64 @@ def aggregate_data_object_by_workflow(
     db: Session, conditions: List[query.ConditionSchema]
 ) -> schemas.DataObjectAggregation:
     return aggregations.get_data_object_aggregation(db, conditions)
+
+
+def search_data_objects(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+) -> Query:
+    """Search for data objects, optionally filtered by biosample conditions."""
+    return query.DataObjectQuerySchema(conditions=conditions).execute(db)
+
+
+def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[dict]:
+    """
+    Get all `DataObject` documents whose `id` exists in the specified list of IDs.
+    This is used to get all the DataObjects for files in a bulk download.
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.id.in_(ids_list))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+    )
+
+    rows = db.execute(statement).all()
+    return [row[0] for row in rows]
+
+
+def get_documents_by_biosample_ids(
+    db: Session,
+    biosample_ids_list: list[str],
+    high_level_type: str,
+    batch_size: int = 1000,
+) -> Iterator[dict]:
+    """
+    Yield documents of type, `high_level_type`, related to any of the specified `Biosample`s.
+
+    Results are streamed from the database in batches of `batch_size` rows using a server-side
+    cursor (`stream_results=True` / `yield_per`), so the full result set is never held in memory
+    at once.  This is important for high-volume types such as `nmdc:WorkflowExecution` whose
+    result sets can exceed 1 GB.
+
+    Note: We don't bother using `DISTINCT`, since `overlap` is only evaluated _once_ per row of the
+    table (even if multiple specified `Biosample` `id`s overlap the `biosample_ids` on that
+    row), so a given row of the table will only appear at most once in the result.
+    We include the `type: ignore[attr-defined]` comment because we're using old SQLAlchemy
+    stubs that do not account for the existence of an `overlap` method on array columns.
+    Similarly, we use `type: ignore[arg-type]` since the old stubs do not account for
+    the fact that `select` now expects columns directly, not an iterable of columns.
+
+    Note: We order them by `id` to facilitate testing and manual review.
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
+        .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
+        .order_by(models.BiosampleRelatedDocument.id)
+        .execution_options(stream_results=True, yield_per=batch_size)
+    )
+    for row in db.execute(statement):
+        yield row[0]
 
 
 # principal investigator
@@ -662,6 +736,31 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             url=data_object.url, replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
         )
         file_descriptions.append({"url": url, "zipPath": file.path})
+
+    # Append on-the-fly metadata files at the top level of the archive.
+    # ZipStreamer will GET these endpoints from within the Docker network after
+    # `bulk_download.expired` has already been set to True, so those endpoints
+    # deliberately skip the expired check.
+    # TODO: Might want to invalidate the URL (status.HTTP_410_GONE) after the bulk_download is expired
+    base = settings.portal_api_internal_url
+    file_descriptions.append(
+        {
+            "url": f"{base}/api/bulk_download/{id}/README.md",
+            "zipPath": "README.md",
+        }
+    )
+    file_descriptions.append(
+        {
+            "url": f"{base}/api/bulk_download/{id}/metadata/data_objects.json",
+            "zipPath": "metadata/data_objects.json",
+        }
+    )
+    file_descriptions.append(
+        {
+            "url": f"{base}/api/bulk_download/{id}/metadata/related_biosamples.json",
+            "zipPath": "metadata/related_biosamples.json",
+        }
+    )
 
     zip_file_descriptor["files"] = file_descriptions
 
@@ -921,6 +1020,7 @@ def get_submissions_for_user(
     column_sort: str,
     order: str,
     is_test_submission_filter: Optional[bool] = None,
+    search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
     column = (
@@ -943,6 +1043,14 @@ def get_submissions_for_user(
     if is_test_submission_filter != None:
         all_submissions = all_submissions.filter(
             models.SubmissionMetadata.is_test_submission == is_test_submission_filter
+        )
+    if search_text:
+        search_text = f"%{search_text}%"
+        all_submissions = all_submissions.filter(
+            or_(
+                models.SubmissionMetadata.study_name.ilike(search_text),
+                models.User.name.ilike(search_text),
+            )
         )
 
     if user.is_admin:

@@ -1,7 +1,7 @@
 // @ts-ignore
 import colors from './colors';
 import {
-  entityType, entitySchemaType, KeggTermSearchResponse, api,
+  EntityType, entitySchemaType, KeggTermSearchResponse, api,
 } from './data/api';
 
 export interface EntityData {
@@ -158,7 +158,7 @@ export interface GeneFunctionSearchParams {
   label: string;
   expectedFormats: string;
   helpSite: string;
-  table: entityType;
+  table: EntityType;
   encodeFunction: (value: string, url: boolean) => string;
   searchFunction: (query: string) => Promise<KeggTermSearchResponse[]>;
   searchWithInputText: (value: string) => boolean;
@@ -348,7 +348,7 @@ const types = {
     plural: 'Gene functions',
     visible: true,
   },
-} as const satisfies Record<entityType, EntityData>;
+} as const satisfies Record<EntityType, EntityData>;
 
 const fields: Record<string, FieldsData> = {
   id: {
@@ -578,7 +578,7 @@ const fields: Record<string, FieldsData> = {
  *  If any of the above overrides should only happen on a single entity,
  * override them here
  */
-const tableFields: Record<entityType, Record<string, FieldsData>> = {
+const tableFields: Record<EntityType, Record<string, FieldsData>> = {
   kegg_function: {
     id: {
       icon: 'mdi-dna',
@@ -664,7 +664,7 @@ const ecosystems = [
   },
 ];
 
-function getField(name: string, table?: entityType): FieldsData {
+function getField(name: string, table?: EntityType): FieldsData {
   if (table && table in tableFields) {
     if (name in tableFields[table]) {
       return tableFields[table][name]!;

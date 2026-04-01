@@ -965,8 +965,24 @@ def test_metadata_suggest(client: TestClient, suggest_payload, logged_in_user):
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.00", "current_value": None},
-        {"type": "replace", "row": 3, "slot": "elev", "value": "16.00", "current_value": "0"},
+        {
+            "type": "add",
+            "row": 1,
+            "slot": "elev",
+            "value": "16.00",
+            "current_value": None,
+            "is_ai_generated": False,
+            "source": "Google Maps API",
+        },
+        {
+            "type": "replace",
+            "row": 3,
+            "slot": "elev",
+            "value": "16.00",
+            "current_value": "0",
+            "is_ai_generated": False,
+            "source": "Google Maps API",
+        },
     ]
 
 
@@ -978,7 +994,15 @@ def test_metadata_suggest_single_type(client: TestClient, suggest_payload, logge
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.00", "current_value": None},
+        {
+            "type": "add",
+            "row": 1,
+            "slot": "elev",
+            "value": "16.00",
+            "current_value": None,
+            "is_ai_generated": False,
+            "source": "Google Maps API",
+        },
     ]
 
 
@@ -990,8 +1014,24 @@ def test_metadata_suggest_multiple_types(client: TestClient, suggest_payload, lo
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.00", "current_value": None},
-        {"type": "replace", "row": 3, "slot": "elev", "value": "16.00", "current_value": "0"},
+        {
+            "type": "add",
+            "row": 1,
+            "slot": "elev",
+            "value": "16.00",
+            "current_value": None,
+            "is_ai_generated": False,
+            "source": "Google Maps API",
+        },
+        {
+            "type": "replace",
+            "row": 3,
+            "slot": "elev",
+            "value": "16.00",
+            "current_value": "0",
+            "is_ai_generated": False,
+            "source": "Google Maps API",
+        },
     ]
 
 
@@ -1499,7 +1539,7 @@ def test_delete_submission_study_images_success(
     assert other_blob.exists() is True
 
 
-def test_make_submission_images_public(
+def test_finalize_submission(
     db: Session, client: TestClient, logged_in_admin_user, temp_storage_object
 ):
     """Tests that an admin can successfully make submission images public."""
@@ -1539,10 +1579,10 @@ def test_make_submission_images_public(
     study_image_1_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, study_image_1.name)
     study_image_2_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, study_image_2.name)
 
-    # Call the endpoint to make the submission images public
+    # Call the endpoint to finalize the submission
     study_id = "nmdc:sty-11-012345"
     response = client.post(
-        f"/api/metadata_submission/{submission.id}/image/make_public", json={"study_id": study_id}
+        f"/api/metadata_submission/{submission.id}/finalize", json={"study_id": study_id}
     )
 
     # Assert that the response is successful and contains the expected URLs
@@ -1551,6 +1591,12 @@ def test_make_submission_images_public(
     assert body.get("pi_image_url") is not None
     assert body.get("primary_study_image_url") is not None
     assert len(body.get("study_image_urls", [])) == 2
+
+    # Assert that the study ID has been set on the submission and the status has been updated
+    # to "Released"
+    db.refresh(submission)
+    assert submission.nmdc_study_id == study_id
+    assert submission.status == SubmissionStatusEnum.Released.text
 
     # The expected public image object names should be the same as the submission image names,
     # but with the submission ID replaced by the study ID
@@ -1581,11 +1627,10 @@ def test_make_submission_images_public(
     public_study_image_2.delete()
 
 
-def test_make_submission_images_public_unauthorized(
+def test_finalize_submission_unauthorized(
     db: Session, client: TestClient, logged_in_user, temp_storage_object
 ):
-    """Tests that a non-admin user (even the submission owner) cannot make submission images
-    public."""
+    """Tests that a non-admin user (even the submission owner) cannot finalize a submission."""
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
@@ -1598,7 +1643,7 @@ def test_make_submission_images_public_unauthorized(
     db.commit()
 
     response = client.post(
-        f"/api/metadata_submission/{submission.id}/image/make_public",
+        f"/api/metadata_submission/{submission.id}/finalize",
         json={"study_id": "nmdc:sty-11-012345"},
     )
 

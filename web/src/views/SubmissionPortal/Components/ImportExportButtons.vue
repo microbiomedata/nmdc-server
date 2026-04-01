@@ -1,39 +1,41 @@
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 
-export default defineComponent({
-  props: {
-    importDisabled: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['export', 'import'],
-  setup(props, { emit }) {
-    const xlsxFileInput = ref();
+interface ImportExportButtonsProps {
+  /**
+   * Whether the import button should be disabled.
+   */
+  importDisabled?: boolean;
+}
 
-    function showOpenFileDialog() {
-      xlsxFileInput.value.click();
-    }
-
-    function handleFileInputChange(event: Event) {
-      const target = event.target as HTMLInputElement;
-      if (!target || !target.files) {
-        return;
-      }
-      emit('import', target.files[0]);
-
-      // Reset the file input so that the same filename can be loaded multiple times
-      target.value = '';
-    }
-
-    return {
-      handleFileInputChange,
-      showOpenFileDialog,
-      xlsxFileInput,
-    };
-  },
+withDefaults(defineProps<ImportExportButtonsProps>(), {
+  importDisabled: false,
 });
+
+const emit = defineEmits<{
+  export: [],
+  import: [file: File],
+}>();
+
+const xlsxFileInput = ref();
+
+function showOpenFileDialog() {
+  xlsxFileInput.value.click();
+}
+
+function handleFileInputChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  if (!target || !target.files) {
+    return;
+  }
+  const firstFile = target.files[0];
+  if (firstFile) {
+    emit('import', firstFile);
+  }
+
+  // Reset the file input so that the same filename can be loaded multiple times
+  target.value = '';
+}
 </script>
 
 <template>

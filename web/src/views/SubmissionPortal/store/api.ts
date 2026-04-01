@@ -49,7 +49,7 @@ async function updateRecord(id: string, record: Partial<MetadataSubmission>, per
     metadata_submission: record,
     permissions,
   });
-  return { data: resp.data, httpStatus: resp.status };
+  return resp.data;
 }
 
 async function updateSubmissionStatus(submission_id: string, newStatus: string) {
@@ -73,7 +73,7 @@ async function addSubmissionRole(submission_id: string, orcid: string, role: str
   return resp.data;
 }
 
-async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null) {
+async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null, searchText: string) {
   const params: Record<string, any> = {
     limit: searchParams.limit,
     offset: searchParams.offset,
@@ -82,6 +82,9 @@ async function listRecords(searchParams: SearchParams, isTestFilter: boolean | n
   };
   if (isTestFilter !== null) {
     params.is_test_submission_filter = isTestFilter;
+  }
+  if (searchText !== '') {
+    params.search_text = searchText;
   }
   const resp = await client.get<PaginatedResponse<MetadataSubmissionRecordSlim>>(
     'metadata_submission/slim',
@@ -127,6 +130,11 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
     AxiosResponse<MetadataSuggestion[]>,
     MetadataSuggestionRequest[]
   >(endpoint, data);
+  return resp.data;
+}
+
+async function getMetadataSuggestionsFromStudyDetails(submissionId: string) {
+  const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/${submissionId}/study-suggest`);
   return resp.data;
 }
 
@@ -176,6 +184,7 @@ export {
   unlockSubmission,
   deleteSubmission,
   getMetadataSuggestions,
+  getMetadataSuggestionsFromStudyDetails,
   generateSignedUploadUrl,
   getAllStatusTransitions,
   setSubmissionImage,

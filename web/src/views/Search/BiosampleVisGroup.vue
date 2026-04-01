@@ -1,10 +1,7 @@
-<script lang="ts">
-import {
-  computed, defineComponent, ref, watchEffect, PropType,
-} from 'vue';
+<script setup lang="ts">
+import { computed, ref, watchEffect } from 'vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
-
 import UpSet from '@/components/Presentation/UpSet.vue';
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 // TODO: replace with composition functions
@@ -13,12 +10,14 @@ import BinnedSummaryWrapper from '@/components/Wrappers/BinnedSummaryWrapper.vue
 // ENDTODO
 import TooltipCard from '@/components/TooltipCard.vue';
 import ClusterMap from '@/components/ClusterMap.vue';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 import {
-  toggleConditions, removeConditions, setUniqueCondition,
+  toggleConditions, setUniqueCondition,
 } from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import { makeSetsFromBitmask } from '@/encoding';
+import useRequest from '@/use/useRequest';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
 const helpMap = `
@@ -43,100 +42,72 @@ const staticUpsetTooltips = {
   AMP: 'Amplicon',
 };
 
-export default defineComponent({
-  name: 'SampleVisGroup',
+const props = withDefaults(defineProps<{
+  conditions: Condition[];
+  vistab?: number | null;
+}>(), {
+  vistab: null,
+});
 
-  components: {
-    ChartContainer,
-    DateHistogram,
-    FacetBarChart,
-    ClusterMap,
-    TooltipCard,
-    // TODO replace with composition functions
-    FacetSummaryWrapper,
-    BinnedSummaryWrapper,
-    UpSet,
-  },
+const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
+const studyFacetSummary = ref<FacetSummaryResponse[] | null>(null);
+const sampleRequest = useRequest();
+const studyRequest = useRequest();
+const upSetLoading = computed(() => sampleRequest.loading.value || studyRequest.loading.value);
+const upSetError = computed(() => {
+  if (sampleRequest.error.value) {
+    return 'Could not retrieve sample summary values for UpSet plot';
+  } else if (studyRequest.error.value) {
+    return 'Could not retrieve study summary values for UpSet plot';
+  }
+  return null;
+});
 
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-    vistab: {
-      type: Number,
-      default: null,
-    },
-  },
-
-  setup(props) {
-    const sampleFacetSummary = ref([] as FacetSummaryResponse[]);
-    const studyFacetSummary = ref([] as FacetSummaryResponse[]);
-
-    const upsetData = computed(() => {
-      const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
-      sampleFacetSummary.value.forEach(({ facet, count }) => {
-        if (parseInt(facet, 10) === 0) {
-          return;
-        }
+const upsetData = computed(() => {
+  const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
+  if (sampleFacetSummary.value) {
+    sampleFacetSummary.value.forEach(({ facet, count }) => {
+      if (parseInt(facet, 10) === 0) {
+        return;
+      }
+      multiomicsObj[facet] = {
+        counts: {
+          Samples: count,
+          Studies: 0,
+        },
+        sets: makeSetsFromBitmask(facet),
+      };
+    });
+  }
+  if (studyFacetSummary.value) {
+    studyFacetSummary.value.forEach(({ facet, count }) => {
+      if (parseInt(facet, 10) === 0) {
+        return;
+      }
+      if (!multiomicsObj[facet]) {
         multiomicsObj[facet] = {
           counts: {
-            Samples: count,
-            Studies: 0,
+            Samples: 0,
           },
           sets: makeSetsFromBitmask(facet),
         };
-      });
-      studyFacetSummary.value.forEach(({ facet, count }) => {
-        if (parseInt(facet, 10) === 0) {
-          return;
-        }
-        if (!multiomicsObj[facet]) {
-          multiomicsObj[facet] = {
-            counts: {
-              Samples: 0,
-            },
-            sets: makeSetsFromBitmask(facet),
-          };
-        }
-        multiomicsObj[facet].counts.Studies = count;
-      });
-      return Object.keys(multiomicsObj)
-        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-        .map((k) => multiomicsObj[k]);
+      }
+      multiomicsObj[facet].counts.Studies = count;
     });
-
-    watchEffect(async () => {
-      sampleFacetSummary.value = await api.getFacetSummary(
-        'biosample',
-        'multiomics',
-        props.conditions,
-      );
-      studyFacetSummary.value = await api.getFacetSummary(
-        'study',
-        'multiomics',
-        props.conditions,
-      );
-    });
-
-    function setBoundsFromMap(val: Condition[]) {
-      setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
-    }
-
-    return {
-      helpBarchart,
-      helpMap,
-      helpTimeline,
-      helpUpset,
-      toggleConditions,
-      setUniqueCondition,
-      removeConditions,
-      setBoundsFromMap,
-      staticUpsetTooltips,
-      upsetData,
-    };
-  },
+  }
+  return Object.keys(multiomicsObj)
+    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+    .map((k) => multiomicsObj[k]);
 });
+
+watchEffect(async () => {
+  sampleFacetSummary.value = await sampleRequest.request(() => api.getFacetSummary('biosample', 'multiomics', props.conditions));
+  studyFacetSummary.value = await studyRequest.request(() => api.getFacetSummary('study', 'multiomics', props.conditions));
+});
+
+function setBoundsFromMap(val: Condition[]) {
+  setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
+}
 </script>
 
 <template>
@@ -150,9 +121,9 @@ export default defineComponent({
             :conditions="conditions"
             use-all-conditions
           >
-            <template #default="props">
+            <template #default="slotProps">
               <FacetBarChart
-                v-bind="props"
+                v-bind="slotProps"
                 :height="360"
                 :show-title="false"
                 :show-baseline="false"
@@ -193,9 +164,9 @@ export default defineComponent({
             :conditions="conditions"
             use-all-conditions
           >
-            <template #default="props">
+            <template #default="slotProps">
               <DateHistogram
-                v-bind="props"
+                v-bind="slotProps"
                 :height="240"
                 @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />
@@ -211,7 +182,14 @@ export default defineComponent({
           :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
-          <ChartContainer :height="240">
+          <LoadingOverlay
+            :loading="upSetLoading"
+            :error="upSetError"
+            :height="240"
+          />
+          <ChartContainer
+            :height="240"
+          >
             <template #default="{ width, height }">
               <UpSet
                 v-bind="{

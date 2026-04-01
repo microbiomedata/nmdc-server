@@ -78,7 +78,7 @@ export default class HarmonizerApi {
       if (!classDefinition) {
         return;
       }
-       
+
       template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
     });
 
@@ -421,6 +421,11 @@ export default class HarmonizerApi {
     }
     // Otherwise return the top-level slot definition
     return this.schema.slots[slotName];
+  }
+
+  isSlotInClass(slotName: string, className: string): boolean {
+    const classAttributes = this.schema.classes?.[className]?.attributes;
+    return !!classAttributes && slotName in classAttributes;
   }
 
   getSlotRank(slotName: string, className: string) {

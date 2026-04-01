@@ -3,6 +3,7 @@ import Components from 'unplugin-vue-components/vite'
 import Vue from '@vitejs/plugin-vue'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import Fonts from 'unplugin-fonts/vite'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 // Utilities
 import { defineConfig } from 'vite'
@@ -33,6 +34,23 @@ export default defineConfig({
             styles: ['normal', 'italic'],
           },
         ],
+      },
+    }),
+    // The Sentry Vite Plugin uploads source maps to Sentry during the Vite app build process.
+    //
+    // Quote from the Sentry docs (linked below):
+    //
+    // > Place the Sentry Vite plugin after all other plugins in your plugins array. This ensures
+    // > source maps are generated correctly and tree-shaking doesn't remove Sentry's instrumentation.
+    //
+    // Reference: https://docs.sentry.io/platforms/javascript/guides/vue/sourcemaps/uploading/vite/
+    //
+    sentryVitePlugin({
+      org: "microbiomedata",
+      project: "nmdc-frontend-vue",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.VITE_APP_SENTRY_RELEASE_NAME || 'unknown',
       },
     }),
   ],
@@ -79,4 +97,7 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    sourcemap: 'hidden'
+  }
 })

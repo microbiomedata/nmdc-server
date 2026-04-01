@@ -1,12 +1,11 @@
 import csv
-import io
 import json
 import time
 import zipfile
 from enum import StrEnum
 from importlib import resources
-from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union
+from io import BytesIO, RawIOBase, StringIO
+from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -17,7 +16,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -36,7 +35,7 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
-from nmdc_server.metadata import SampleMetadataSuggester
+from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
 from nmdc_server.models import (
     SubmissionEditorRole,
     SubmissionImagesObject,
@@ -415,40 +414,79 @@ async def get_biosample_source_metadata(biosample_id: str):
     return source_biosample
 
 
-@router.post(
-    "/biosample/search/source_metadata",
-    tags=["biosample"],
-)
-async def search_biosample_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-):
+class _StreamingBuffer(RawIOBase):
     """
-    Get a list of biosample source metadata via the Runtime API
-    based on supplied conditions
+    A non-seekable, write-only buffer used to stream a ZIP archive incrementally.
+
+    By being non-seekable, Python's `zipfile` module operates in "streaming mode":
+    it sets the data-descriptor flag (bit 3) on each entry so that the CRC and
+    compressed/uncompressed sizes are written *after* the compressed data instead
+    of seeking back to rewrite the local file header.  The resulting archive is
+    fully valid — all modern tools (unzip, 7-zip, macOS Archive Utility, Windows
+    Explorer) understand data descriptors.
+
+    The `drain()` method returns and clears all bytes written since the last call,
+    allowing an async generator to yield those bytes to the HTTP client without
+    ever holding the full archive in memory.
     """
-    biosample_search = BiosampleSearch()
-    biosample_ids = (
-        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
-    )
-    results = biosample_search.get_records_by_id([id for (id,) in biosample_ids])
-    if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
-    return results
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._buf: bytearray = bytearray()
+
+    # file-like interface expected by zipfile
+    def write(self, b: bytes | bytearray | memoryview) -> int:  # type: ignore[override]
+        self._buf.extend(b)
+        return len(b)
+
+    def seekable(self) -> bool:
+        return False
+
+    def readable(self) -> bool:
+        return False
+
+    def writable(self) -> bool:
+        return True
+
+    # drain interface for the async generator
+    def drain(self) -> bytes:
+        """Return and clear all bytes accumulated since the last drain."""
+        data = bytes(self._buf)
+        self._buf.clear()
+        return data
 
 
 @router.post("/download_metadata", tags=["bulk_download"])
 async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
     """
-    Download multiple metadata lists as a zip file given a list of endpoint labels.
-    Endpoint labels are mapped to functions that retrieve JSON.
-    """
-    endpoint_map = {
-        "biosamples": search_biosample_source_metadata,
-        "studies": search_study_source_metadata,
-    }
+    Download multiple metadata lists as a zip file given a list of requested
+    document types.
 
-    zip_buffer = io.BytesIO()
+    The request body should specify `endpoints` as a list of `high_level_type`
+    values (e.g., `"nmdc:Biosample"`, `"nmdc:Study"`).
+
+    Uses a `StreamingResponse` so that FastAPI sends the HTTP response headers to
+    the client (and through any reverse proxies) immediately when this handler
+    returns, before the generator body begins executing.  This prevents proxies
+    from timing out or closing the connection while waiting for response headers
+    during a slow build of a large archive.
+
+    The archive is built using a non-seekable `_StreamingBuffer` so that compressed
+    bytes are yielded to the client continuously as each document is serialised,
+    rather than accumulating the entire archive in a `BytesIO` buffer first.  Peak
+    memory is therefore proportional to one zlib compression window (~32 KB) plus
+    one DB batch (~1 000 rows) rather than the full uncompressed dataset.
+    """
+    # The set of document types the client is allowed to request.  Each value is used
+    # directly as the high_level_type filter in BiosampleRelatedDocument.
+    # The value is used as the JSON file name.
+    allowed_document_types = {
+        "nmdc:Biosample": "biosamples",
+        "nmdc:Study": "studies",
+        "nmdc:DataObject": "data_objects",
+        "nmdc:DataGeneration": "data_generations",
+        "nmdc:WorkflowExecution": "workflow_executions",
+    }
 
     if not q.endpoints or len(q.endpoints) == 0:
         raise HTTPException(
@@ -456,17 +494,54 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
             detail="No endpoints specified for metadata download.",
         )
 
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for endpoint_name in q.endpoints:
-            if endpoint_name in endpoint_map:
-                data = await endpoint_map[endpoint_name](q=q, db=db)
-                json_str = json.dumps(data, indent=2, ensure_ascii=False)
-                zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
+    async def generate_zip():
+        biosample_ids = crud.get_biosample_ids(db, q.conditions)
+        buf = _StreamingBuffer()
 
-    zip_buffer.seek(0)
+        with zipfile.ZipFile(cast(IO[bytes], buf), "w", zipfile.ZIP_DEFLATED) as zf:
+            for high_level_type in q.endpoints:
+                filename = allowed_document_types.get(high_level_type)
+                if filename is None:
+                    continue
 
-    return Response(
-        content=zip_buffer.getvalue(),
+                with zf.open(f"{filename}.json", "w") as jf:
+                    if not biosample_ids:
+                        # Write an empty list if there are no biosamples matching the query
+                        jf.write(b"[]")
+                    else:
+                        # Stream each document as a JSON object on a separate line, wrapped in a list.
+                        jf.write(b"[\n")
+                        first = True
+                        for doc in crud.get_documents_by_biosample_ids(
+                            db, biosample_ids, high_level_type
+                        ):
+                            if not first:
+                                # Write a comma before all but the first document to maintain valid JSON list syntax.
+                                jf.write(b",\n")
+                            jf.write(json.dumps(doc, ensure_ascii=False).encode("utf-8"))
+                            first = False
+                            # Drain whatever the zlib compressor has emitted so far.
+                            # Most calls return a small chunk or nothing; the important
+                            # thing is that buf never accumulates the full dataset.
+                            chunk = buf.drain()
+                            if chunk:
+                                yield chunk
+                        # End the JSON list.
+                        jf.write(b"\n]")
+
+                # The entry's compressor is finalised and the data descriptor is
+                # written when the `with zf.open()` block exits.  Drain those bytes.
+                chunk = buf.drain()
+                if chunk:
+                    yield chunk
+
+        # The ZIP central directory is written when the ZipFile context exits.
+        chunk = buf.drain()
+        if chunk:
+            yield chunk
+
+    return StreamingResponse(
+        generate_zip(),
         media_type="application/zip",
         headers={"Content-Disposition": "attachment; filename=metadata.zip"},
     )
@@ -680,26 +755,6 @@ async def get_study_source_metadata(study_id: str):
     if source_study is None:
         raise HTTPException(status_code=404, detail="Study not found in the source database")
     return source_study
-
-
-@router.post(
-    "/study/search/source_metadata",
-    tags=["study"],
-)
-async def search_study_source_metadata(
-    q: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-):
-    """
-    Get a list of study source metadata via the Runtime API
-    based on supplied conditions.
-    """
-    study_search = StudySearch()
-    study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
-    results = study_search.get_records_by_id([id for (id,) in study_ids])
-    if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for studies")
-    return results
 
 
 # data_generation
@@ -934,6 +989,116 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
                 logger.warning(message)
             last_chunk_time = this_chunk_time
             yield chunk
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/metadata/data_objects.json",
+    tags=["download"],
+)
+async def get_bulk_download_data_object_metadata(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON array of nmdc:DataObject documents for all files that were
+    included in the specified bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
+
+    # If there were no files specified, return no documents.
+    if len(data_object_ids_list) == 0:
+        return []
+
+    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+
+    return JSONResponse(content=documents)
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/metadata/related_biosamples.json",
+    tags=["download"],
+)
+async def get_bulk_download_data_object_to_biosamples_map(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON dictionary mapping each data object ID with its associated biosample IDs.
+    Each data object ID corresponds to a different file within the bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
+
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bulk download not found",
+        )
+
+    # Get the `id` of each `DataObject` corresponding to each file in this `BulkDownload`.
+    data_object_ids = [file.data_object.id for file in bulk_download.files]
+    if len(data_object_ids) == 0:
+        logger.warning(f"No data object IDs found for bulk download '{bulk_download_id}'")
+        return data_object_id_to_biosample_ids_map
+
+    # Get the `id` of each `Biosample` related to any of those `DataObject`s.
+    statement = (
+        select(
+            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
+            models.BiosampleRelatedDocument.biosample_ids,
+        )
+        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    for row in rows:
+        data_object_id_to_biosample_ids_map[row[0]] = row[1]
+
+    if len(data_object_id_to_biosample_ids_map.keys()) == 0:
+        logger.warning(f"No biosample IDs found for bulk download '{bulk_download_id}'")
+
+    # Ensure the dictionary we return accounts for all the `DataObject` `id`s.
+    for data_object_id in data_object_ids:
+        if data_object_id not in data_object_id_to_biosample_ids_map.keys():
+            data_object_id_to_biosample_ids_map[data_object_id] = []
+
+    return JSONResponse(content=data_object_id_to_biosample_ids_map)
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/README.md",
+    tags=["download"],
+)
+async def get_bulk_download_readme(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a static README.md file that explains the contents of the bulk download
+    and provides instructions for how to use the data and metadata.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    readme_path = resources.files("nmdc_server") / "bulk_download_readme.md"
+    readme_content = readme_path.read_text(encoding="utf-8")
+
+    return Response(content=readme_content, media_type="text/markdown")
 
 
 @router.get(
@@ -1258,13 +1423,14 @@ async def get_paginated_submission_list(
     column_sort: str = "created",
     sort_order: str = "desc",
     is_test_submission_filter: Optional[bool] = None,
+    search_text: Optional[str] = None,
 ):
     """
     Dependency function for getting a list of submissions with pagination, sorting, and filtering
     applied.
     """
     query = crud.get_submissions_for_user(
-        db, user, column_sort, sort_order, is_test_submission_filter
+        db, user, column_sort, sort_order, is_test_submission_filter, search_text
     )
     return pagination.response(query)
 
@@ -1847,33 +2013,47 @@ async def submit_metadata(
 
 
 @router.post(
+    "/metadata_submission/{id}/study-suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def suggest_meta_from_study(
+    id: str,
+    db: Session = Depends(get_db),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    submission_model = get_submission_for_user(
+        db,
+        id,
+        user,
+        allowed_roles=[
+            SubmissionEditorRole.owner,
+            SubmissionEditorRole.editor,
+            SubmissionEditorRole.metadata_contributor,
+        ],
+    )
+    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
+    return suggester.get_suggestions_from_study_information(submission)
+
+
+@router.post(
     "/metadata_submission/suggest",
     tags=["metadata_submission"],
     responses=login_required_responses,
 )
 async def suggest_metadata(
     body: List[schemas_submission.MetadataSuggestionRequest],
-    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
     types: Union[List[schemas_submission.MetadataSuggestionType], None] = Query(None),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.MetadataSuggestion]:
     response: List[schemas_submission.MetadataSuggestion] = []
     for item in body:
         suggestions = suggester.get_suggestions(item.data, types=types)
-        for slot, value in suggestions.items():
-            response.append(
-                schemas_submission.MetadataSuggestion(
-                    type=(
-                        schemas_submission.MetadataSuggestionType.REPLACE
-                        if slot in item.data
-                        else schemas_submission.MetadataSuggestionType.ADD
-                    ),
-                    row=item.row,
-                    slot=slot,
-                    value=value,
-                    current_value=item.data.get(slot, None),
-                )
-            )
+        for suggestion in suggestions:
+            suggestion.row = item.row
+            response.append(suggestion)
     return response
 
 
@@ -1910,27 +2090,38 @@ async def generate_signed_upload_url(
 
 
 @router.post(
-    "/metadata_submission/{id}/image/make_public",
-    response_model=schemas.SubmissionImagesMakePublicResponse,
+    "/metadata_submission/{id}/finalize",
+    response_model=schemas.SubmissionFinalizeResponse,
 )
-async def make_submission_images_public(
+async def finalize_submission(
     id: str,
-    body: schemas.SubmissionImagesMakePublicRequest,
+    body: schemas.SubmissionFinalizeRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> schemas.SubmissionImagesMakePublicResponse:
-    """Copy the submission's images into the public images bucket and return their public URLs.
+) -> schemas.SubmissionFinalizeResponse:
+    """Finalize a submission after ingestion into MongoDB.
+
+    The following operations are performed as part of finalization:
+        - making images public
+        - setting the NMDC study ID
+        - changing the submission status to "Released"
 
     This operation is only allowed for admin users. It is intended to be called as part of the
-    process of translating submission data into nmdc-schema compatible data. We make a public copy
-    instead of changing the permissions of the original image because the submission images
-    bucket uses uniform bucket-level access, which means we can't change the permissions of
-    individual objects.
+    process of translating submission data into nmdc-schema compatible data.
+
+    We make a public copy of the images instead of changing the permissions of the original images
+    because the submission images bucket uses uniform bucket-level access, which means we can't
+    change the permissions of individual objects.
     """
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     submission = get_submission_for_user(db, id, user)
+
+    # Update the NMDC study ID and status
+    submission.nmdc_study_id = body.study_id
+    submission.status = SubmissionStatusEnum.Released.text
+    db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
         """Make a copy of the given image in the public images bucket and return its public URL."""
@@ -1948,7 +2139,7 @@ async def make_submission_images_public(
     public_primary_study_image = make_public(submission.primary_study_image)
     public_study_image_urls = [make_public(img) for img in submission.study_images]
 
-    return schemas.SubmissionImagesMakePublicResponse(
+    return schemas.SubmissionFinalizeResponse(
         pi_image_url=public_pi_image,
         primary_study_image_url=public_primary_study_image,
         study_image_urls=public_study_image_urls,

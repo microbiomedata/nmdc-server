@@ -51,6 +51,7 @@ services:
       - ./data/ingest:/data/ingest
       - ./nmdc_server:/app/nmdc_server
       - $HOME/.config/gcloud/application_default_credentials.json:/gcp/credentials.json
+      - ./auth:/auth
     # Use a TTY so colors are preserved in the log output
     tty: true
 

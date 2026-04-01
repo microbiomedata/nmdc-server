@@ -302,13 +302,15 @@ See [this documentation](./local_ingest.md) for information about ingesting from
 tox
 ```
 
-In order for the `py312` test suite to run properly, it needs to be able to communicate with a running `postgres` server and the fake GCS service. You can use the docker configuration to get these services up and running:
+In order for the `py312` test suite to run properly, it needs to be able to communicate with a running `postgres` 
+server and the fake GCS service. You can use the docker configuration to get these services up and running:
 
 ```bash
 docker compose up db storage
 ```
 
-You'll also need to set environment variables so the tests know where these resources can be found. If you're running the services via `docker compose`, then you can use the following values:
+You'll also need to set environment variables so the tests know where these resources can be found. If you're 
+running the services via `docker compose`, then you can use the following values:
 
 ```bash
 export NMDC_TESTING_DATABASE_URI=postgresql://postgres:postgres@localhost:5432/nmdc_testing
@@ -334,6 +336,20 @@ docker-compose run backend psql -c "create database nmdc_a;" -d postgres
 docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 # Autogenerate a migration diff from the current HEAD
 docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
+```
+
+## Testing migrations
+
+Here are some commands we find helpful when writing new migrations. We typically run these once we have filled out the function bodies of both the `upgrade` and `downgrade` functions.
+
+```shell
+# Migrate the database forward by 1 migration.
+# This can be used to invoke a migration's `upgrade` function.
+docker compose run --rm backend alembic -c nmdc_server/alembic.ini upgrade +1
+
+# Migrate the database backward by 1 migration.
+# This can be used to invoke a migration's `downgrade` function.
+docker compose run --rm backend alembic -c nmdc_server/alembic.ini downgrade -1
 ```
 
 ## Developing with the shell

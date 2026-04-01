@@ -73,6 +73,11 @@ jobs:
           # environment variable. Those GA "Measurement ID" values are stored in
           # repository-level variables, which are accessible via `vars.*`.
           #
+          # Also if the image being built is the one named "client", set the "build argument"
+          # named `VITE_APP_SENTRY_RELEASE_NAME` to either the Git tag name (for production) or the
+          # full Git commit hash (for development) so Sentry can associate the error events it
+          # collects with the correct source maps.
+          #
           # References:
           # - https://github.com/docker/build-push-action/blob/master/README.md#inputs (RE: "build-args")
           # - https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#format (RE: "format")
@@ -85,7 +90,35 @@ jobs:
                 'VITE_APP_NMDC_GOOGLE_ANALYTICS_ID={0}',
                 env.IS_PROD_RELEASE == 'true' && vars.GOOGLE_ANALYTICS_ID_PROD ||
                 vars.GOOGLE_ANALYTICS_ID_DEV
-              )
+              ) || ''
+            }}
+            ${{ 
+              matrix.image == 'client' &&
+              format(
+                'VITE_APP_SENTRY_RELEASE_NAME={0}',
+                env.IS_PROD_RELEASE == 'true' && github.ref_name ||
+                github.sha
+              ) || ''
+            }}
+
+          # Specify `--secret` options for the underlying `$ docker build` command.
+          #
+          # If the image being built is the one named "client", then include a "build secret" named
+          # `sentry_auth_token` that `$ docker build` can use to access the value of the repository-level
+          # secret named `SENTRY_AUTH_TOKEN` when building the image (see `Dockerfile` for its use).
+          #
+          # References:
+          # - https://docs.docker.com/build/ci/github-actions/secrets
+          # - https://docs.docker.com/build/building/secrets/#using-build-secrets
+          # - https://github.com/marketplace/actions/build-and-push-docker-images
+          #
+          secrets: |
+            ${{ 
+              matrix.image == 'client' &&
+              format(
+                'sentry_auth_token={0}',
+                secrets.SENTRY_AUTH_TOKEN
+              ) || ''
             }}
 
   # Use the Rancher API to redeploy the specified deployments,

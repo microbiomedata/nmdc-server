@@ -206,11 +206,13 @@ export interface MetadataSuggestionRequest {
 }
 
 export interface MetadataSuggestion {
-  type: 'add' | 'replace'
-  row: number
-  slot: string
-  value: string
-  current_value?: string
+  type: 'add' | 'replace' | 'attention';
+  row: number | null;
+  slot: string;
+  value: string | null;
+  current_value: string | null;
+  is_ai_generated: boolean;
+  source: string | null;
 }
 
 export interface NmdcAddress {
@@ -274,6 +276,7 @@ export interface MetadataSubmissionRecordSlim {
 export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   author_orcid: string;
   metadata_submission: MetadataSubmission;
+  nmdc_study_id: string | null;
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
@@ -296,7 +299,7 @@ export interface LockOperationResult {
 
 export interface Doi {
   value: string;
-  provider: string;
+  provider: string | null;
 }
 
 export interface DataProtocol {
