@@ -887,6 +887,10 @@ class BiosampleQuerySchema(BaseQuerySchema):
 
     def _fts_subquery(self, db: Session, term: str) -> Query:
         """Return biosample IDs whose text fields match the full-text search term."""
+        EnvoBroadScale = aliased(models.EnvoTerm)
+        EnvoLocalScale = aliased(models.EnvoTerm)
+        EnvoMedium = aliased(models.EnvoTerm)
+
         search_fields = func.concat_ws(
             " ",
             models.Biosample.id,
@@ -897,17 +901,26 @@ class BiosampleQuerySchema(BaseQuerySchema):
             models.Biosample.collection_date,
             models.Biosample.study_id,
             models.Biosample.env_broad_scale_id,
+            EnvoBroadScale.label,
             models.Biosample.env_local_scale_id,
+            EnvoLocalScale.label,
             models.Biosample.env_medium_id,
+            EnvoMedium.label,
             models.Biosample.ecosystem,
             models.Biosample.ecosystem_category,
             models.Biosample.ecosystem_type,
             models.Biosample.ecosystem_subtype,
             models.Biosample.specific_ecosystem,
         )
-        return db.query(models.Biosample.id.label("id")).filter(
-            func.to_tsvector("simple", search_fields).op("@@")(
-                func.plainto_tsquery("simple", term)
+        return (
+            db.query(models.Biosample.id.label("id"))
+            .outerjoin(EnvoBroadScale, EnvoBroadScale.id == models.Biosample.env_broad_scale_id)
+            .outerjoin(EnvoLocalScale, EnvoLocalScale.id == models.Biosample.env_local_scale_id)
+            .outerjoin(EnvoMedium, EnvoMedium.id == models.Biosample.env_medium_id)
+            .filter(
+                func.to_tsvector("simple", search_fields).op("@@")(
+                    func.plainto_tsquery("simple", term)
+                )
             )
         )
 
