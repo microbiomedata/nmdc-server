@@ -440,7 +440,9 @@ class BaseQuerySchema(BaseModel):
                 matches.append(filter.matches(db, self.table))
 
         # Handle full-text search conditions by delegating to the per-entity subquery method.
-        for fts_cond in [c for c in self.conditions if isinstance(c, FullTextSearchConditionSchema)]:
+        for fts_cond in [
+            c for c in self.conditions if isinstance(c, FullTextSearchConditionSchema)
+        ]:
             fts_match = self._fts_subquery(db, fts_cond.value)
             if fts_match is not None:
                 matches.append(fts_match)
@@ -712,7 +714,7 @@ class StudyQuerySchema(BaseQuerySchema):
             filter_conditions = [
                 c
                 for c in self.conditions
-                if hasattr(c.table, "value") # FTS conditions won't have a table, so we need to check for this first
+                if not isinstance(c, FullTextSearchConditionSchema)
                 and c.table.value in {"omics_processing", table_name, "biosample"}
             ]
 
@@ -736,7 +738,7 @@ class StudyQuerySchema(BaseQuerySchema):
         op_filter_conditions = [
             c
             for c in self.conditions
-            if hasattr(c.table, "value")
+            if not isinstance(c, FullTextSearchConditionSchema)
             and c.table.value
             in {"omics_processing", "biosample", "gene_function", "metaproteomic_analysis"}
         ]
@@ -778,9 +780,7 @@ class StudyQuerySchema(BaseQuerySchema):
                 .join(biosample_ids_subquery, models.Biosample.id == biosample_ids_subquery.c.id)
                 .distinct()
             )
-            study_query = study_query.filter(
-                self.table.model.id.in_(study_ids_from_biosamples)
-            )
+            study_query = study_query.filter(self.table.model.id.in_(study_ids_from_biosamples))
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
             studies_from_omics_query = omics_query.with_entities(
@@ -849,8 +849,6 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
     def _fts_subquery(self, db: Session, term: str) -> Optional[Query]:
         """Return OmicsProcessing IDs linked to biosamples matching the full-text search."""
         biosample_fts_subquery = BiosampleQuerySchema()._fts_subquery(db, term)
-        if biosample_fts_subquery is None:
-            return None
         biosample_subquery = biosample_fts_subquery.subquery()
         return (
             db.query(models.OmicsProcessing.id.label("id"))

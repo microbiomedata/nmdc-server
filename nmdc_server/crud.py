@@ -441,7 +441,7 @@ def full_text_search_biosample(
     limit: int = 6,
 ) -> Dict[str, Any]:
     search_fields = func.concat_ws(
-        ' ',
+        " ",
         models.Biosample.id,
         models.Biosample.name,
         models.Biosample.description,
@@ -456,16 +456,14 @@ def full_text_search_biosample(
         models.Biosample.ecosystem_category,
         models.Biosample.ecosystem_type,
         models.Biosample.ecosystem_subtype,
-        models.Biosample.specific_ecosystem
+        models.Biosample.specific_ecosystem,
     )
 
     base_query = db.query(models.Biosample).filter(
-        func.to_tsvector('simple', search_fields).op('@@')(
-            func.plainto_tsquery('simple', term)
-        )
+        func.to_tsvector("simple", search_fields).op("@@")(func.plainto_tsquery("simple", term))
     )
 
-    results = base_query.options(noload('*')).limit(limit).all()
+    results = base_query.options(noload("*")).limit(limit).all()
     count = base_query.count()
 
     return {"count": count, "results": results}
