@@ -33,7 +33,7 @@ const { conditions, fields, filterText, facetValues } = defineProps<{
   facetValues: Condition[];
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:filterText', value: string): void;
   (e: 'select', condition: Condition): void;
 }>();
@@ -93,6 +93,16 @@ function tableName(table: string): string {
   }
   return '';
 }
+
+function fullTextSearch(): void {
+  const condition: Condition = {
+    op: 'like',
+    field: 'search',
+    value: filterText,
+    table: 'full_text_search',
+  };
+  emit('select', condition)
+}
 </script>
 
 <template>
@@ -114,6 +124,25 @@ function tableName(table: string): string {
       shaped
       class="compact"
     >
+      <div v-if="filterText">
+        <v-divider
+          class="my-2"
+        />
+        <v-list-subheader>
+          Full Text Search
+        </v-list-subheader>
+        <v-list-item @click="fullTextSearch">
+          <v-list-item-title>
+            "{{ filterText }}"
+          </v-list-item-title>
+          <template #append>
+            <v-icon>mdi-text-search</v-icon>
+          </template>
+        </v-list-item>
+        <v-divider
+          class="my-2"
+        />
+      </div>
       <div
         v-for="[groupname, filteredFields] in groupedFields"
         :key="groupname"
