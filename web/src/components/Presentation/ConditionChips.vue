@@ -114,7 +114,7 @@ export default defineComponent({
           </transition-group>
         </div>
         <v-menu
-          v-if="group.key !== 'multiomicsbiosample'"
+          v-if="group.key !== 'multiomicsbiosample' && group.table !== 'full_text_search'"
           v-model="menuState[group.key]"
           offset-x
           :nudge-right="10"
