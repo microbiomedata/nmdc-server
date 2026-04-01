@@ -1416,20 +1416,6 @@ async def get_metadata_submissions_report(
     return response
 
 
-def _validate_env_triad_or_raise(db: Session, submission) -> None:
-    """Validate env triad fields and raise HTTPException if invalid."""
-    from nmdc_server.validation.env_triad import validate_submission_triad
-
-    validation_result = validate_submission_triad(db, submission)
-    if not validation_result.valid:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "message": "Submission has env triad validation errors",
-                "validation": _validation_result_to_response(validation_result).model_dump(),
-            },
-        )
-
 
 def _validation_result_to_response(
     validation_result,
@@ -1741,10 +1727,6 @@ async def update_submission_status(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid status transition.",
             )
-
-    # Validate env triad before allowing transition to SubmittedPendingReview
-    if body.status == SubmissionStatusEnum.SubmittedPendingReview.text:
-        _validate_env_triad_or_raise(db, submission)
 
     db.commit()
 

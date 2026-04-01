@@ -174,6 +174,38 @@ async function deleteSubmissionImage(submissionId: string, imageType: Submission
   await client.delete<MetadataSubmissionRecord>(endpoint);
 }
 
+interface FieldValidationResponse {
+  valid: boolean;
+  value?: string;
+  ontology_id?: string;
+  errors: string[];
+  warnings: string[];
+}
+
+interface SampleTriadValidationResponse {
+  sample_index: number;
+  sample_name?: string;
+  env_broad_scale: FieldValidationResponse;
+  env_local_scale: FieldValidationResponse;
+  env_medium: FieldValidationResponse;
+  cross_field_errors: string[];
+}
+
+export interface SubmissionTriadValidationResponse {
+  submission_id: string;
+  valid: boolean;
+  sample_results: Record<string, SampleTriadValidationResponse[]>;
+  error_count: number;
+  warning_count: number;
+}
+
+async function validateEnvTriad(submissionId: string): Promise<SubmissionTriadValidationResponse> {
+  const resp = await client.post<SubmissionTriadValidationResponse>(
+    `metadata_submission/${submissionId}/validate_env_triad`,
+  );
+  return resp.data;
+}
+
 export {
   addressToString,
   createRecord,
@@ -192,4 +224,5 @@ export {
   updateSubmissionStatus,
   addSubmissionRole,
   getSubmissionStatus,
+  validateEnvTriad,
 };

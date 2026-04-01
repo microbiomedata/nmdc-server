@@ -4,6 +4,7 @@ import { useTimeoutFn } from '@vueuse/core';
 import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
+import { validateEnvTriad } from './store/api';
 import useRequest from '@/use/useRequest';
 
 import {
@@ -420,6 +421,44 @@ async function validate() {
 
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
+
+  // Merge backend env triad validation errors into the DH result
+  try {
+    await incrementalSaveRecord(props.id);
+    const triadResult = await validateEnvTriad(props.id);
+    const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
+    if (sampleDataSlot && triadResult.sample_results[sampleDataSlot]) {
+      const ENV_TRIAD_FIELDS = ['env_broad_scale', 'env_local_scale', 'env_medium'] as const;
+      for (const sampleResult of triadResult.sample_results[sampleDataSlot]) {
+        const row = sampleResult.sample_index;
+        for (const fieldName of ENV_TRIAD_FIELDS) {
+          const fieldResult = sampleResult[fieldName];
+          const allErrors = [...fieldResult.errors, ...fieldResult.warnings];
+          if (allErrors.length > 0) {
+            const colInfo = harmonizerApi.slotInfo.get(fieldName);
+            if (colInfo) {
+              if (!result[row]) result[row] = {};
+              result[row][colInfo.columnIndex] = allErrors.join('; ');
+            }
+          }
+        }
+        // Cross-field errors: attach each to the second (duplicate) field mentioned
+        for (const crossError of sampleResult.cross_field_errors) {
+          // Error format: "...is used in both <first_field> and <second_field>"
+          const targetField = ENV_TRIAD_FIELDS.findLast((f) => crossError.includes(f));
+          const colInfo = targetField ? harmonizerApi.slotInfo.get(targetField) : null;
+          if (colInfo) {
+            if (!result[row]) result[row] = {};
+            const existing = result[row][colInfo.columnIndex];
+            result[row][colInfo.columnIndex] = existing ? `${existing}; ${crossError}` : crossError;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Env triad validation failed:', e);
+  }
+
   const valid = Object.keys(result).length === 0;
   if (!valid && !sidebarOpen.value) {
     sidebarOpen.value = true;

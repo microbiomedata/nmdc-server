@@ -12,6 +12,7 @@ build/**
 data/**
 .DS_Store
 .agents
+ENV_TRIAD_API_UTILS_PLAN.md
 
 # Ignore all files in the auth directory except for the README.md file.
 # **DO NOT** add additional exclusions here unless they have already been discussed and approved by the team.
