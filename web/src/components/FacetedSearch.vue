@@ -117,6 +117,7 @@ function fullTextSearch(): void {
       density="compact"
       append-inner-icon="mdi-magnify"
       @update:model-value="$emit('update:filterText', $event || '')"
+      @keydown.enter="fullTextSearch"
     />
     <v-list
       ref="list"

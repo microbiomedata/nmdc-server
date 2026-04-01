@@ -175,11 +175,20 @@ function toggleConditions(conditions: Condition[]) {
     if (match.length === 0) {
       return true; // this is a new condition
     }
-    duplicates.push(c);
+    // For full_text_search, resubmitting the same term does nothing (no toggle-off)
+    if (c.table !== 'full_text_search') {
+      duplicates.push(c);
+    }
     return false;
   });
+  // If a new full_text_search condition is being added, replace any existing one
+  // rather than appending a second search term.
+  const hasNewFullTextSearch = newConditions.some((c) => c.table === 'full_text_search');
+  const baseConditions = hasNewFullTextSearch
+    ? state.conditions.filter((c) => c.table !== 'full_text_search')
+    : state.conditions;
   if (newConditions.length > 0 || duplicates.length > 0) {
-    const withoutDuplicates = utilsRemoveCond(state.conditions, duplicates);
+    const withoutDuplicates = utilsRemoveCond(baseConditions, duplicates);
     setConditions([
       ...withoutDuplicates,
       ...newConditions,
