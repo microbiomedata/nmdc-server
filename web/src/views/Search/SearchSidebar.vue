@@ -1,6 +1,6 @@
-<script lang="ts">
+<script setup lang="ts">
 import {
-  defineComponent, ref, watch,
+  ref, watch,
 } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
@@ -17,7 +17,7 @@ import FacetedSearch, { SearchFacet } from '@/components/FacetedSearch.vue';
 import {
   stateRefs, removeConditions, setConditions, toggleConditions,
 } from '@/store';
-import { event } from 'vue-gtag'
+import { event } from 'vue-gtag';
 
 /**
  * Sidebar has a fixed list of facets, possibly from different tables.
@@ -122,113 +122,85 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
 ];
 
-export default defineComponent({
-  components: {
-    ConditionChips,
-    FacetedSearch,
-    MenuContent,
-  },
-
-  props: {
-    resultsCount: {
-      type: Number,
-      default: 0,
-    },
-    isLoading: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  setup() {
-    const filterText = ref('');
-    const textSearchResults = ref([] as Condition[]);
-    const dbSummary = ref({} as DatabaseSummaryResponse);
-    const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
-
-    api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
-
-    function dbSummaryForTable(table: EntityType, field: string): AttributeSummary {
-      if (table in dbSummary.value) {
-        return dbSummary.value[table].attributes[field] as AttributeSummary;
-      }
-      if (geneFunctionTables.includes(table)) {
-        const tableToType: Record<string, string> = {
-          kegg_function: 'kegg_function',
-          cog_function: 'cog_function',
-          pfam_function: 'pfam_function',
-          go_function: 'go_function',
-        };
-        return {
-          type: tableToType[table],
-        } as AttributeSummary;
-      }
-      return {} as AttributeSummary;
-    }
-
-    async function updateSearch() {
-      if (filterText.value.length >= 2) {
-        textSearchResults.value = await api.textSearch(filterText.value);
-      } else {
-        textSearchResults.value = [];
-      }
-    }
-    watch(filterText, updateSearch);
-
-    function trackFilterConditions(newConditionList: Condition[], oldConditionList: Condition[]) {
-      // Do nothing if Google Analytics is not available. This is expected in development mode.
-      // Also do nothing if there are no new conditions or if the conditions have not changed (spurious effect).
-      if (import.meta.env.DEV || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
-        return;
-      }
-      // On initial load, track each filter condition that exists
-      // Otherwise, track the last filter condition added or updated
-      if (oldConditionList.length === 0 && newConditionList.length > 0) {
-        newConditionList.forEach((condition) => {
-          event('filter_added', {
-            event_category: 'search',
-            event_label: condition.field,
-            event_value: condition.value,
-          });
-        });
-      // If a condition is added or updated, track that condition
-      } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
-        event('filter_added', {
-          event_category: 'search',
-          event_label: newConditionList[newConditionList.length - 1]?.field,
-          event_value: newConditionList[newConditionList.length - 1]?.value,
-        });
-        // Special case for map usage: if lat/lon were the last two filters added
-        // then track both filters because they are added together from the map interface
-        if (newConditionList[newConditionList.length - 1]?.field === 'longitude' && newConditionList[newConditionList.length - 2]?.field === 'latitude') {
-          event('filter_added', {
-            event_category: 'search',
-            event_label: newConditionList[newConditionList.length - 2]?.field,
-            event_value: newConditionList[newConditionList.length - 2]?.value,
-          });
-        }
-      }
-    }
-
-    watch(stateRefs.conditions, trackFilterConditions);
-
-    return {
-      /* data */
-      biosampleDescription,
-      conditions: stateRefs.conditions,
-      dbSummary,
-      textSearchResults,
-      filterText,
-      FunctionSearchFacets,
-      types,
-      /* methods */
-      dbSummaryForTable,
-      removeConditions,
-      setConditions,
-      toggleConditions,
-    };
-  },
+withDefaults(defineProps<{
+  resultsCount?: number;
+  isLoading?: boolean;
+}>(), {
+  resultsCount: 0,
+  isLoading: false,
 });
+
+const filterText = ref('');
+const textSearchResults = ref([] as Condition[]);
+const dbSummary = ref({} as DatabaseSummaryResponse);
+const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
+const conditions = stateRefs.conditions;
+
+api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
+
+function dbSummaryForTable(table: EntityType, field: string): AttributeSummary {
+  if (table in dbSummary.value) {
+    return dbSummary.value[table].attributes[field] as AttributeSummary;
+  }
+  if (geneFunctionTables.includes(table)) {
+    const tableToType: Record<string, string> = {
+      kegg_function: 'kegg_function',
+      cog_function: 'cog_function',
+      pfam_function: 'pfam_function',
+      go_function: 'go_function',
+    };
+    return {
+      type: tableToType[table],
+    } as AttributeSummary;
+  }
+  return {} as AttributeSummary;
+}
+
+async function updateSearch() {
+  if (filterText.value.length >= 2) {
+    textSearchResults.value = await api.textSearch(filterText.value);
+  } else {
+    textSearchResults.value = [];
+  }
+}
+watch(filterText, updateSearch);
+
+function trackFilterConditions(newConditionList: Condition[], oldConditionList: Condition[]) {
+  // Do nothing if Google Analytics is not available. This is expected in development mode.
+  // Also do nothing if there are no new conditions or if the conditions have not changed (spurious effect).
+  if (import.meta.env.DEV || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
+    return;
+  }
+  // On initial load, track each filter condition that exists
+  // Otherwise, track the last filter condition added or updated
+  if (oldConditionList.length === 0 && newConditionList.length > 0) {
+    newConditionList.forEach((condition) => {
+      event('filter_added', {
+        event_category: 'search',
+        event_label: condition.field,
+        event_value: condition.value,
+      });
+    });
+  // If a condition is added or updated, track that condition
+  } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
+    event('filter_added', {
+      event_category: 'search',
+      event_label: newConditionList[newConditionList.length - 1]?.field,
+      event_value: newConditionList[newConditionList.length - 1]?.value,
+    });
+    // Special case for map usage: if lat/lon were the last two filters added
+    // then track both filters because they are added together from the map interface
+    if (newConditionList[newConditionList.length - 1]?.field === 'longitude' && newConditionList[newConditionList.length - 2]?.field === 'latitude') {
+      event('filter_added', {
+        event_category: 'search',
+        event_label: newConditionList[newConditionList.length - 2]?.field,
+        event_value: newConditionList[newConditionList.length - 2]?.value,
+      });
+    }
+  }
+}
+
+watch(stateRefs.conditions, trackFilterConditions);
 </script>
 
 <template>
