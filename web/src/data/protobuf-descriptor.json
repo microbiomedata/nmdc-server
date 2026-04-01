@@ -55,7 +55,8 @@
                 "cog_function": 6,
                 "pfam_function": 7,
                 "go_function": 8,
-                "metaproteomic_analysis": 9
+                "metaproteomic_analysis": 9,
+                "full_text_search": 10
               }
             },
             "FieldName": {
@@ -85,7 +86,8 @@
                 "name": 22,
                 "description": 23,
                 "title": 24,
-                "metaproteomics_analysis_category": 25
+                "metaproteomics_analysis_category": 25,
+                "search": 26
               }
             }
           }
