@@ -146,7 +146,7 @@ watch(() => filterText, (newVal) => {
           @update:focused="handleSearchFocus"
         />
       </template>
-      <span>Type to find a filter or perform a full text search</span>
+      <span>Type to find a filter or perform a full text search.</span>
     </v-tooltip>
     <v-list
       ref="list"
