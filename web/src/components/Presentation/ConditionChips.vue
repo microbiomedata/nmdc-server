@@ -1,83 +1,72 @@
-<script>
+<script setup lang="ts">
 import moment from 'moment';
-import { defineComponent, ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { groupBy } from 'lodash';
-import { opMap } from '@/data/api';
+import { opMap, type Condition, type DatabaseSummaryResponse, type opType } from '@/data/api';
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { makeSetsFromBitmask } from '@/encoding';
 
-export default defineComponent({
-  props: {
-    conditions: {
-      type: Array,
-      required: true,
-    },
-    dbSummary: {
-      type: Object,
-      required: true,
-    },
-  },
-  emits: ['remove'],
-  setup(props) {
-    const menuState = ref({});
+const props = defineProps<{
+  conditions: Condition[];
+  dbSummary: DatabaseSummaryResponse;
+}>();
 
-    const conditionGroups = computed(() => Object.entries(groupBy(
-      props.conditions,
-      (c) => JSON.stringify(({ field: c.field, table: c.table })),
-    )).map(([group, conditions]) => {
-      const parsed = JSON.parse(group);
-      return {
-        key: parsed.field + parsed.table,
-        field: parsed.field,
-        table: parsed.table,
-        conditions,
-      };
-    }).sort((a, b) => a.key.localeCompare(b.key)));
+defineEmits<{
+  (e: 'remove', cond: Condition): void;
+}>();
 
-    function verb(op) {
-      return opMap[op];
+const menuState = ref<Record<string, boolean>>({});
+
+const conditionGroups = computed(() => Object.entries(groupBy(
+  props.conditions,
+  (c) => JSON.stringify({ field: c.field, table: c.table }),
+)).map(([group, conditions]) => {
+  const parsed: { field: string; table: string } = JSON.parse(group);
+  return {
+    key: parsed.field + parsed.table,
+    field: parsed.field,
+    table: parsed.table,
+    conditions,
+  };
+}).sort((a, b) => a.key.localeCompare(b.key)));
+
+function verb(op?: opType) {
+  if (op) {
+    return opMap[op];
+  }
+  return;
+}
+
+function valueTransform(val: unknown, field: string, type: string): string {
+  // Special handling for multiomics
+  if (field === 'multiomics' && type === 'biosample') {
+    return Array.from(makeSetsFromBitmask(val as string)).join(', ');
+  }
+  // If it's not primitive
+  if (val && typeof val === 'object') {
+    const inner = (val as unknown[]).map((v) => valueTransform(v, field, type)).join(', ');
+    return `(${inner})`;
+  }
+  const summary = ((props.dbSummary[type as keyof DatabaseSummaryResponse] || {}).attributes || {})[field];
+  if (summary) {
+    if (['float', 'integer', 'string', 'gene_search'].includes(summary.type)) {
+      return fieldDisplayName(val);
     }
-    function valueTransform(val, field, type) {
-      // Special handling for multiomics
-      if (field === 'multiomics' && type === 'biosample') {
-        return Array.from(makeSetsFromBitmask(val)).join(', ');
-      }
-      // If it's not primitive
-      if (val && typeof val === 'object') {
-        const inner = val.map((v) => valueTransform(v, field, type)).join(', ');
-        return `(${inner})`;
-      }
-      const summary = ((props.dbSummary[type] || {}).attributes || {})[field];
-      if (summary) {
-        if (['float', 'integer', 'string', 'gene_search'].includes(summary.type)) {
-          return fieldDisplayName(val);
-        }
-        if (['date'].includes(summary.type)) {
-          return moment(val).format('MM/DD/YYYY');
-        }
-        if (['tree', 'sankey-tree'].includes(summary.type)) {
-          return val;
-        }
-        throw new Error(`Unknown entity type for ${type}: ${field}: ${summary.type}`);
-      }
-      return val;
+    if (['date'].includes(summary.type)) {
+      return moment(val as string).format('MM/DD/YYYY');
     }
-
-    function toggleMenu(category, value) {
-      menuState.value[category] = value;
+    if (['tree', 'sankey-tree'].includes(summary.type)) {
+      return val as string;
     }
+    throw new Error(`Unknown entity type for ${type}: ${field}: ${summary.type}`);
+  }
+  return val as string;
+}
 
-    return {
-      conditionGroups,
-      menuState,
-      fieldDisplayName,
-      toggleMenu,
-      verb,
-      valueTransform,
-    };
-  },
-
-});
+function toggleMenu(category: string, value: boolean): void {
+  menuState.value[category] = value;
+}
 </script>
 
 <template>
@@ -94,7 +83,7 @@ export default defineComponent({
             {{ fieldDisplayName(group.field, group.table) }}
           </span>
           <span class="text-caption">
-            [{{ verb(group.conditions[0].op) }}]
+            [{{ verb(group.conditions[0]?.op) }}]
           </span>
           <transition-group name="chip">
             <v-chip
@@ -120,11 +109,11 @@ export default defineComponent({
           :nudge-right="10"
           :close-on-content-click="false"
         >
-          <template #activator="{ props }">
+          <template #activator="{ props: activatorProps }">
             <div
               class="expand d-flex flex-column justify-center"
               style="width: 6%"
-              v-bind="props"
+              v-bind="activatorProps"
             >
               <v-icon size="x-small">
                 mdi-play
@@ -140,7 +129,7 @@ export default defineComponent({
                 field: group.field,
                 table: group.table,
                 isOpen: menuState[group.key],
-                toggleMenu: (val) => toggleMenu(group.key, false),
+                toggleMenu: () => toggleMenu(group.key, false),
               }"
             />
           </v-card>
