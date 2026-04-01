@@ -255,7 +255,18 @@ class MultiomicsConditionSchema(BaseConditionSchema):
         return and_(*and_args)
 
 
+# A special condition type for full-text search.  Unlike other conditions, this does not
+# map to a specific column or table — it triggers a tsvector search across a pre-defined
+# set of fields in BaseQuerySchema subclasses that override _fts_subquery.
+class FullTextSearchConditionSchema(BaseModel):
+    table: Literal["full_text_search"] = "full_text_search"
+    field: Literal["search"] = "search"
+    op: Literal["like"] = "like"
+    value: str
+
+
 ConditionSchema = Union[
+    FullTextSearchConditionSchema,
     RangeConditionSchema,
     SimpleConditionSchema,
     GoldConditionSchema,
@@ -293,7 +304,11 @@ class BaseQuerySchema(BaseModel):
 
     @property
     def sorted_conditions(self) -> List[BaseConditionSchema]:
-        conditions = [c.__class__.from_schema(c, self.table) for c in self.conditions]
+        conditions = [
+            c.__class__.from_schema(c, self.table)
+            for c in self.conditions
+            if not isinstance(c, FullTextSearchConditionSchema)
+        ]
         return sorted(conditions, key=lambda c: c.key)
 
     @property
@@ -424,6 +439,13 @@ class BaseQuerySchema(BaseModel):
             else:
                 matches.append(filter.matches(db, self.table))
 
+        # Handle full-text search conditions by delegating to the per-entity subquery method.
+        for fts_cond in [c for c in self.conditions if isinstance(c, FullTextSearchConditionSchema)]:
+            fts_match = self._fts_subquery(db, fts_cond.value)
+            if fts_match is not None:
+                matches.append(fts_match)
+                has_filters = True
+
         query = db.query(self.table.model.id.label("id"))
         if has_filters:
             matches_query = intersect(*matches).alias("intersect")
@@ -442,6 +464,14 @@ class BaseQuerySchema(BaseModel):
     def count(self, db: Session) -> int:
         """Return the number of matched entities for the query."""
         return self.query(db).count()
+
+    def _fts_subquery(self, db: Session, term: str) -> Optional[Query]:
+        """Return a subquery of entity IDs matching a full-text search term.
+
+        Override in subclasses to support full-text search for that entity type.
+        Returns None by default, which causes the FTS condition to be silently ignored.
+        """
+        return None
 
     def get_query_range(
         self,
@@ -682,7 +712,8 @@ class StudyQuerySchema(BaseQuerySchema):
             filter_conditions = [
                 c
                 for c in self.conditions
-                if c.table.value in {"omics_processing", table_name, "biosample"}
+                if hasattr(c.table, "value") # FTS conditions won't have a table, so we need to check for this first
+                and c.table.value in {"omics_processing", table_name, "biosample"}
             ]
 
             # generate a filtered subquery of the given omics type
@@ -705,7 +736,8 @@ class StudyQuerySchema(BaseQuerySchema):
         op_filter_conditions = [
             c
             for c in self.conditions
-            if c.table.value
+            if hasattr(c.table, "value")
+            and c.table.value
             in {"omics_processing", "biosample", "gene_function", "metaproteomic_analysis"}
         ]
         op_summary_subquery = self._count_omics_processing_summary(
@@ -728,19 +760,26 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def query(self, db: Session):
         study_query = super().query(db)
+        fts_condition_exists = any(
+            isinstance(c, FullTextSearchConditionSchema) for c in self.conditions
+        )
         biosample_condition_exists = any(
             [condition.table == Table.biosample for condition in self.conditions]
         )
         omics_condition_exists = any(
             [condition.table == Table.omics_processing for condition in self.conditions]
         )
-        if biosample_condition_exists:
-            sample_query = BiosampleQuerySchema(conditions=self.conditions).query(db)
-            studies_from_sample_query = sample_query.with_entities(
-                models.Biosample.study_id
-            ).distinct()
-            study_query = study_query.where(  # type: ignore
-                self.table.model.id.in_(studies_from_sample_query)
+        if fts_condition_exists or biosample_condition_exists:
+            biosample_ids_subquery = (
+                BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
+            )
+            study_ids_from_biosamples = (
+                db.query(models.Biosample.study_id)
+                .join(biosample_ids_subquery, models.Biosample.id == biosample_ids_subquery.c.id)
+                .distinct()
+            )
+            study_query = study_query.filter(
+                self.table.model.id.in_(study_ids_from_biosamples)
             )
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
@@ -825,6 +864,32 @@ class BiosampleQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.biosample
+
+    def _fts_subquery(self, db: Session, term: str) -> Query:
+        """Return biosample IDs whose text fields match the full-text search term."""
+        search_fields = func.concat_ws(
+            " ",
+            models.Biosample.id,
+            models.Biosample.name,
+            models.Biosample.description,
+            models.Biosample.alternate_identifiers,
+            models.Biosample.annotations,
+            models.Biosample.collection_date,
+            models.Biosample.study_id,
+            models.Biosample.env_broad_scale_id,
+            models.Biosample.env_local_scale_id,
+            models.Biosample.env_medium_id,
+            models.Biosample.ecosystem,
+            models.Biosample.ecosystem_category,
+            models.Biosample.ecosystem_type,
+            models.Biosample.ecosystem_subtype,
+            models.Biosample.specific_ecosystem,
+        )
+        return db.query(models.Biosample.id.label("id")).filter(
+            func.to_tsvector("simple", search_fields).op("@@")(
+                func.plainto_tsquery("simple", term)
+            )
+        )
 
     def query(self, db: Session):
         sample_query = super().query(db)

@@ -439,7 +439,7 @@ def full_text_search_biosample(
     db: Session,
     term: str,
     limit: int = 6,
-) -> List[models.Biosample]:
+) -> Dict[str, Any]:
     search_fields = func.concat_ws(
         ' ',
         models.Biosample.id,
@@ -459,17 +459,16 @@ def full_text_search_biosample(
         models.Biosample.specific_ecosystem
     )
 
-    return (
-        db.query(models.Biosample)
-        .options(noload('*'))
-        .filter(
-            func.to_tsvector('simple', search_fields).op('@@')(
-                func.plainto_tsquery('simple', term)
-            )
+    base_query = db.query(models.Biosample).filter(
+        func.to_tsvector('simple', search_fields).op('@@')(
+            func.plainto_tsquery('simple', term)
         )
-        .limit(limit)
-        .all()
     )
+
+    results = base_query.options(noload('*')).limit(limit).all()
+    count = base_query.count()
+
+    return {"count": count, "results": results}
 
 
 def get_biosample_ids(
