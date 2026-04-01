@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
-from typing import Any, Dict, Generic, Iterator, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, Iterator, List, Optional, Sequence, Tuple, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
@@ -671,7 +671,7 @@ class StudyQuerySchema(BaseQuerySchema):
         return q
 
     def _count_omics_processing_summary(
-        self, db: Session, conditions: List[ConditionSchema]
+        self, db: Session, conditions: Sequence[ConditionSchema]
     ) -> Query:
         """Aggregate omics types into a custom jsonb response."""
         op_summary_alias = aliased(models.OmicsProcessing)
@@ -885,9 +885,9 @@ class BiosampleQuerySchema(BaseQuerySchema):
 
     def _fts_subquery(self, db: Session, term: str) -> Query:
         """Return biosample IDs whose text fields match the full-text search term."""
-        EnvoBroadScale = aliased(models.EnvoTerm)
-        EnvoLocalScale = aliased(models.EnvoTerm)
-        EnvoMedium = aliased(models.EnvoTerm)
+        envo_broad_scale = aliased(models.EnvoTerm)
+        envo_local_scale = aliased(models.EnvoTerm)
+        envo_medium = aliased(models.EnvoTerm)
 
         search_fields = func.concat_ws(
             " ",
@@ -899,11 +899,11 @@ class BiosampleQuerySchema(BaseQuerySchema):
             models.Biosample.collection_date,
             models.Biosample.study_id,
             models.Biosample.env_broad_scale_id,
-            EnvoBroadScale.label,
+            envo_broad_scale.label,
             models.Biosample.env_local_scale_id,
-            EnvoLocalScale.label,
+            envo_local_scale.label,
             models.Biosample.env_medium_id,
-            EnvoMedium.label,
+            envo_medium.label,
             models.Biosample.ecosystem,
             models.Biosample.ecosystem_category,
             models.Biosample.ecosystem_type,
@@ -912,9 +912,9 @@ class BiosampleQuerySchema(BaseQuerySchema):
         )
         return (
             db.query(models.Biosample.id.label("id"))
-            .outerjoin(EnvoBroadScale, EnvoBroadScale.id == models.Biosample.env_broad_scale_id)
-            .outerjoin(EnvoLocalScale, EnvoLocalScale.id == models.Biosample.env_local_scale_id)
-            .outerjoin(EnvoMedium, EnvoMedium.id == models.Biosample.env_medium_id)
+            .outerjoin(envo_broad_scale, envo_broad_scale.id == models.Biosample.env_broad_scale_id)
+            .outerjoin(envo_local_scale, envo_local_scale.id == models.Biosample.env_local_scale_id)
+            .outerjoin(envo_medium, envo_medium.id == models.Biosample.env_medium_id)
             .filter(
                 func.to_tsvector("simple", search_fields).op("@@")(
                     func.plainto_tsquery("simple", term)
