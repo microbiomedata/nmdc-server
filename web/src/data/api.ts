@@ -52,7 +52,8 @@ export type EntityType =
   | "kegg_function"
   | "cog_function"
   | "pfam_function"
-  | "go_function";
+  | "go_function"
+  | "full_text_search"; // not a real entity type, but used for text search results
 
 export type entitySchemaType = keyof typeof NmdcSchema.classes;
 
