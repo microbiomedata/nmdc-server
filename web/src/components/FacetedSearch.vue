@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { groupBy } from 'lodash';
 
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
@@ -39,6 +39,7 @@ const emit = defineEmits<{
 }>();
 
 const menuState = ref({} as Record<string, boolean>);
+const showSearchHelp = ref(false);
 
 const privatefilteredFields = computed((): SearchFacet[] => {
   if (filterText) {
@@ -103,22 +104,50 @@ function fullTextSearch(): void {
   };
   emit('select', condition)
 }
+
+function handleSearchFocus(focused: boolean): void {
+  if (!focused || filterText.length > 0) {
+    showSearchHelp.value = false;
+  } else {
+    showSearchHelp.value = true;
+  }
+}
+
+watch(() => filterText, (newVal) => {
+  if (newVal.length > 0) {
+    showSearchHelp.value = false;
+  } else {
+    showSearchHelp.value = true;
+  }
+});
 </script>
 
 <template>
   <div>
-    <v-text-field
-      :model-value="filterText"
-      label="search"
-      clearable
-      class="mx-3 pt-1"
-      hide-details
-      variant="outlined"
-      density="compact"
-      append-inner-icon="mdi-magnify"
-      @update:model-value="$emit('update:filterText', $event || '')"
-      @keydown.enter="fullTextSearch"
-    />
+    <v-tooltip
+      v-model="showSearchHelp"
+      location="bottom"
+      :open-on-hover="false"
+    >
+      <template #activator="{ props }">
+        <v-text-field
+          :model-value="filterText"
+          v-bind="props"
+          label="search"
+          autocomplete="off"
+          clearable
+          class="mx-3 pt-1"
+          hide-details
+          variant="outlined"
+          density="compact"
+          append-inner-icon="mdi-magnify"
+          @update:model-value="$emit('update:filterText', $event || '')"
+          @keydown.enter="fullTextSearch"
+          @update:focused="handleSearchFocus"
+        />
+      </template>
+      <span>Type to find a filter or perform a full text search</span>
+    </v-tooltip>
     <v-list
       ref="list"
       density="compact"
