@@ -188,8 +188,8 @@ _WORKFLOW_TYPECODE_MAP: Dict[NmdcTypecode, Any] = {
 
 
 def _extract_nmdc_typecode(term: str) -> Optional[str]:
-    """Extract the typecode from an NMDC ID (e.g. 'nmdc:wfmtan-11-abc.1' → 'wfmtan').
-
+    """
+    Extract the typecode from an NMDC ID (e.g. 'nmdc:wfmtan-11-abc.1' → 'wfmtan').
     Returns None if the term does not match the NMDC ID pattern.
     """
     if not _NMDC_ID_RE.match(term):
@@ -208,12 +208,10 @@ def _biosample_ids_via_workflow(
     data_generation_assoc: Any,
     term: str,
 ) -> Query:
-    """Return biosample IDs linked to a workflow activity whose ID starts with ``term``.
-
-    Join path (working backwards from the association tables):
-      {activity}_data_generation_association  (activity_id LIKE term%)
-        → biosample_input_association          (via data_generation_id == omics_processing_id)
-          → biosample_id
+    """
+    Return biosample IDs linked to a workflow activity whose ID starts with `term`.
+    Join path: biosample_input_association > {activity}_data_generation_association,
+    matched on their shared omics_processing_id / data_generation_id column.
     """
     table_name = activity_model.__tablename__
     activity_id_col = data_generation_assoc.c[f"{table_name}_id"]
