@@ -109,6 +109,125 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 NumericValue = Union[float, int, datetime]
 RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_items=2)]
 
+# Matches any NMDC-style compact URI, e.g. "nmdc:bsm-11-abc123" or "gold:Gp0123".
+_NMDC_ID_RE = re.compile(
+    r"^[a-zA-Z0-9][a-zA-Z0-9_\.]+:[a-zA-Z0-9_][a-zA-Z0-9_\-\/\.,]*$"
+)
+
+# A definitive list of typecodes used in NMDC IDs.
+# This should probably live in nmdc-schema somewhere instead.
+# Based on https://microbiomedata.github.io/nmdc-schema/typecode-to-class-map/
+class NmdcTypecode(Enum):
+    biosample = "bsm"
+    calibration_information = "calib"
+    chemical_conversion_process = "chcpr"
+    chromatography_configuration = "chrcon"
+    collecting_biosamples_from_site = "clsite"
+    chromatographic_separation_process = "cspro"
+    mass_spectrometry = "dgms"
+    nucleotide_sequencing = "dgns"
+    dissolving_process = "dispro"
+    data_object = "dobj"
+    extraction = "extrp"
+    filtration_process = "filtpr"
+    field_research_site = "frsite"
+    instrument = "inst"
+    library_preparation = "libprp"
+    manifest = "manif"
+    mixing_process = "mixpro"
+    mass_spectrometry_configuration = "mscon"
+    # OmicsProcessing is not an official schema class but it is a typecode
+    omics_processing = "omprc"
+    pooling = "poolp"
+    processed_sample = "procsm"
+    storage_process = "storpr"
+    study = "sty"
+    sub_sampling_process = "subspr"
+    mags_analysis = "wfmag"
+    metabolomics_analysis = "wfmb"
+    metagenome_annotation = "wfmgan"
+    metagenome_assembly = "wfmgas"
+    metaproteomics_analysis = "wfmp"
+    metatranscriptome_annotation = "wfmtan"
+    metatranscriptome_assembly = "wfmtas"
+    metatranscriptome_expression_analysis = "wfmtex"
+    nom_analysis = "wfnom"
+    read_based_taxonomy_analysis = "wfrbt"
+    read_qc_analysis = "wfrqc"
+
+# Maps each NMDC typecode to the (workflow_activity_model, data_generation_association_table)
+# for activities that need to be joined back to Biosample via OmicsProcessing.
+_WORKFLOW_TYPECODE_MAP: Dict[NmdcTypecode, Any] = {
+    "wfrqc": (models.ReadsQC, models.reads_qc_data_generation_association),
+    "wfmgas": (models.MetagenomeAssembly, models.metagenome_assembly_data_generation_association),
+    "wfmtas": (
+        models.MetatranscriptomeAssembly,
+        models.metatranscriptome_assembly_data_generation_association,
+    ),
+    "wfmgan": (
+        models.MetagenomeAnnotation,
+        models.metagenome_annotation_data_generation_association,
+    ),
+    "wfmtan": (
+        models.MetatranscriptomeAnnotation,
+        models.metatranscriptome_annotation_data_generation_association,
+    ),
+    "wfmp": (
+        models.MetaproteomicAnalysis,
+        models.metaproteomic_analysis_data_generation_association,
+    ),
+    "wfmag": (models.MAGsAnalysis, models.mags_analysis_data_generation_association),
+    "wfrbt": (models.ReadBasedAnalysis, models.read_based_analysis_data_generation_association),
+    "wfnom": (models.NOMAnalysis, models.nom_analysis_data_generation_association),
+    "wfmb": (
+        models.MetabolomicsAnalysis,
+        models.metabolomics_analysis_data_generation_association,
+    ),
+    "wfmtex": (models.Metatranscriptome, models.metatranscriptome_data_generation_association),
+}
+
+
+def _extract_nmdc_typecode(term: str) -> Optional[str]:
+    """Extract the typecode from an NMDC ID (e.g. 'nmdc:wfmtan-11-abc.1' → 'wfmtan').
+
+    Returns None if the term does not match the NMDC ID pattern.
+    """
+    if not _NMDC_ID_RE.match(term):
+        return None
+    try:
+        remainder = term.split(":", 1)[1]
+        typecode = remainder.split("-")[0]
+        return typecode or None
+    except (IndexError, ValueError):
+        return None
+
+
+def _biosample_ids_via_workflow(
+    db: Session,
+    activity_model: Any,
+    data_generation_assoc: Any,
+    term: str,
+) -> Query:
+    """Return biosample IDs linked to a workflow activity whose ID starts with ``term``.
+
+    Join path (working backwards from the association tables):
+      {activity}_data_generation_association  (activity_id LIKE term%)
+        → biosample_input_association          (via data_generation_id == omics_processing_id)
+          → biosample_id
+    """
+    table_name = activity_model.__tablename__
+    activity_id_col = data_generation_assoc.c[f"{table_name}_id"]
+    return (
+        db.query(models.biosample_input_association.c.biosample_id.label("id"))
+        .join(
+            data_generation_assoc,
+            data_generation_assoc.c.data_generation_id
+            == models.biosample_input_association.c.omics_processing_id,
+        )
+        .filter(activity_id_col.like(f"{term}%"))
+        .distinct()
+    )
+
 
 class GoldTreeValue(BaseModel):
     ecosystem: Optional[str] = None
@@ -884,7 +1003,62 @@ class BiosampleQuerySchema(BaseQuerySchema):
         return Table.biosample
 
     def _fts_subquery(self, db: Session, term: str) -> Query:
-        """Return biosample IDs whose text fields match the full-text search term."""
+        """Return biosample IDs whose text fields match the full-text search term.
+
+        If the term looks like an NMDC ID (e.g. "nmdc:wfmtan-11-abc.1"), a targeted
+        join query is used instead of a tsvector scan.  This is more efficient because
+        the typecode tells us exactly which table holds the ID and how to traverse back
+        to Biosample. The match is a prefix LIKE so partial IDs work as well.
+        """
+        typecode = _extract_nmdc_typecode(term)
+
+        if typecode == NmdcTypecode.biosample.value:
+            return (
+                db.query(models.Biosample.id.label("id"))
+                .filter(models.Biosample.id.like(f"{term}%"))
+            )
+
+        if typecode == NmdcTypecode.study.value:
+            return (
+                db.query(models.Biosample.id.label("id"))
+                .join(models.Study, models.Biosample.study_id == models.Study.id)
+                .filter(models.Study.id.like(f"{term}%"))
+            )
+
+        if typecode in (NmdcTypecode.omics_processing.value, NmdcTypecode.mass_spectrometry.value, NmdcTypecode.nucleotide_sequencing.value):
+            return (
+                db.query(models.biosample_input_association.c.biosample_id.label("id"))
+                .join(
+                    models.OmicsProcessing,
+                    models.OmicsProcessing.id
+                    == models.biosample_input_association.c.omics_processing_id,
+                )
+                .filter(models.OmicsProcessing.id.like(f"{term}%"))
+                .distinct()
+            )
+
+        if typecode == NmdcTypecode.data_object.value:
+            return (
+                db.query(models.biosample_input_association.c.biosample_id.label("id"))
+                .join(
+                    models.omics_processing_output_association,
+                    models.omics_processing_output_association.c.omics_processing_id
+                    == models.biosample_input_association.c.omics_processing_id,
+                )
+                .join(
+                    models.DataObject,
+                    models.DataObject.id
+                    == models.omics_processing_output_association.c.data_object_id,
+                )
+                .filter(models.DataObject.id.like(f"{term}%"))
+                .distinct()
+            )
+
+        if typecode in _WORKFLOW_TYPECODE_MAP:
+            activity_model, data_generation_assoc = _WORKFLOW_TYPECODE_MAP[typecode]
+            return _biosample_ids_via_workflow(db, activity_model, data_generation_assoc, term)
+
+        # Fallback: tsvector full-text search on biosample fields
         envo_broad_scale = aliased(models.EnvoTerm)
         envo_local_scale = aliased(models.EnvoTerm)
         envo_medium = aliased(models.EnvoTerm)
