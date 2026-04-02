@@ -170,6 +170,24 @@ const protocolNames = computed(() => {
   if (multiOmicsForm.lipProtocols?.sampleProtocol.doi) {
     names.add(multiOmicsForm.lipProtocols.sampleProtocol.doi);
   }
+  if(multiOmicsForm.mpProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.mpProtocols.sampleProtocol.url);
+  }
+    if (multiOmicsForm.mbProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.mbProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.mbGcProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.mbGcProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.nomProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.nomProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.nomLcProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.nomLcProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.lipProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.lipProtocols.sampleProtocol.url);
+  }
   return Array.from(names);
 });
 
