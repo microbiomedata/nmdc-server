@@ -7,7 +7,19 @@ import re
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
-from typing import Any, Dict, Generic, Iterator, List, Optional, Sequence, Tuple, TypeVar, TypedDict, Union
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
