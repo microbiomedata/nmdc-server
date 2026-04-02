@@ -263,7 +263,7 @@ const urlValueRules = () => (
           used), and/or cleaned prior to analysis on an instrument.
         </div>
         <v-checkbox
-          v-if="protocolNames.length > 0 && !currentProtocol.sampleProtocol.name"
+          v-if="protocolNames.length > 0 && !currentProtocol.sampleProtocol.name && !currentProtocol.sampleProtocol.doi && !currentProtocol.sampleProtocol.url"
           v-model="currentProtocol.sampleProtocol.sharedData"
         >
           <template #label>
