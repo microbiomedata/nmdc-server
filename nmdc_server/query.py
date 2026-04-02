@@ -215,8 +215,8 @@ _NMDC_TYPECODE_BY_VALUE: Dict[str, NmdcTypecode] = {tc.value: tc for tc in NmdcT
 
 def _extract_nmdc_typecode(term: str) -> Optional[NmdcTypecode]:
     """
-    Extract the typecode from an NMDC ID (e.g. 'nmdc:wfmtan-11-abc.1' → NmdcTypecode.metatranscriptome_annotation).
-    Returns None if the term does not match the NMDC ID pattern or the typecode is not recognised.
+    Extract the typecode from an NMDC ID (e.g. 'nmdc:wfmtan-11-abc.1' > NmdcTypecode.metatranscriptome_annotation).
+    Returns None if the term does not match the NMDC ID pattern or the typecode is not recognized.
     """
     if not _NMDC_ID_RE.match(term):
         return None
