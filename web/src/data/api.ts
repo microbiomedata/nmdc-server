@@ -52,8 +52,10 @@ export type EntityType =
   | "kegg_function"
   | "cog_function"
   | "pfam_function"
-  | "go_function"
-  | "full_text_search"; // not a real entity type, but used for text search results
+  | "go_function";
+
+// This type is used in the search sidebar to represent both real entity types and the "full_text_search" pseudo-type
+export type EntityTypeOrFullTextSearch = EntityType | "full_text_search";
 
 export type entitySchemaType = keyof typeof NmdcSchema.classes;
 

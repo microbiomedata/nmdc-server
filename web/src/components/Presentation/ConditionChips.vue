@@ -2,7 +2,7 @@
 import moment from 'moment';
 import { ref, computed } from 'vue';
 import { groupBy } from 'lodash';
-import { EntityType, opMap, type Condition, type DatabaseSummaryResponse, type opType } from '@/data/api';
+import { EntityType, EntityTypeOrFullTextSearch, opMap, type Condition, type DatabaseSummaryResponse, type opType } from '@/data/api';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { makeSetsFromBitmask } from '@/encoding';
@@ -26,7 +26,7 @@ const conditionGroups = computed(() => Object.entries(groupBy(
   return {
     key: parsed.field + parsed.table,
     field: parsed.field,
-    table: parsed.table as EntityType,
+    table: parsed.table as EntityTypeOrFullTextSearch,
     conditions,
   };
 }).sort((a, b) => a.key.localeCompare(b.key)));
@@ -127,7 +127,7 @@ function toggleMenu(category: string, value: boolean): void {
               name="menu"
               v-bind="{
                 field: group.field,
-                table: group.table,
+                table: group.table as EntityType,
                 isOpen: menuState[group.key] ?? false,
                 toggleMenu: (val: boolean) => toggleMenu(group.key, val),
               }"
