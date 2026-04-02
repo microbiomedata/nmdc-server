@@ -1097,7 +1097,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
         envo_local_scale = aliased(models.EnvoTerm)
         envo_medium = aliased(models.EnvoTerm)
 
-        search_fields = func.concat_ws(
+        biosample_search_fields = func.concat_ws(
             " ",
             models.Biosample.id,
             models.Biosample.name,
@@ -1118,17 +1118,41 @@ class BiosampleQuerySchema(BaseQuerySchema):
             models.Biosample.ecosystem_subtype,
             models.Biosample.specific_ecosystem,
         )
-        return (
+        biosample_fts_query = (
             db.query(models.Biosample.id.label("id"))
             .outerjoin(envo_broad_scale, envo_broad_scale.id == models.Biosample.env_broad_scale_id)
             .outerjoin(envo_local_scale, envo_local_scale.id == models.Biosample.env_local_scale_id)
             .outerjoin(envo_medium, envo_medium.id == models.Biosample.env_medium_id)
             .filter(
-                func.to_tsvector("simple", search_fields).op("@@")(
+                func.to_tsvector("simple", biosample_search_fields).op("@@")(
                     func.plainto_tsquery("simple", term)
                 )
             )
         )
+
+        # Also search study fields and return all biosamples belonging to matching studies
+        study_search_fields = func.concat_ws(
+            " ",
+            models.Study.id,
+            models.Study.name,
+            models.Study.description,
+            models.Study.gold_name,
+            models.Study.gold_description,
+            models.Study.scientific_objective,
+            models.Study.annotations,
+            models.Study.alternate_identifiers,
+        )
+        study_fts_query = (
+            db.query(models.Biosample.id.label("id"))
+            .join(models.Study, models.Biosample.study_id == models.Study.id)
+            .filter(
+                func.to_tsvector("simple", study_search_fields).op("@@")(
+                    func.plainto_tsquery("simple", term)
+                )
+            )
+        )
+
+        return biosample_fts_query.union(study_fts_query)
 
     def query(self, db: Session):
         sample_query = super().query(db)
