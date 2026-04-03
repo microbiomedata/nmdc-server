@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
-from nmdc_server.ingest import envo
-from nmdc_server.models import SubmissionEditorRole
 from nmdc_server.env_triad import (
     parse_ontology_id,
     validate_submission_triad,
 )
+from nmdc_server.ingest import envo
+from nmdc_server.models import SubmissionEditorRole
 
 
 @pytest.fixture

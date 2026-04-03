@@ -268,9 +268,7 @@ def _validate_sample_triad(
 
     for field_name in ENV_TRIAD_FIELDS:
         value = sample.get(field_name)
-        error = _validate_field(
-            field_name, value, template_type, env_pkg, schema_enums, prefetched
-        )
+        error = _validate_field(field_name, value, template_type, env_pkg, schema_enums, prefetched)
         if error:
             field_errors[field_name] = error
 
