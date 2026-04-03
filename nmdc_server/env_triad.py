@@ -6,6 +6,7 @@ Validates submission sample data against:
 """
 
 import re
+from functools import cache
 from importlib import resources
 from typing import Any, Optional
 
@@ -66,10 +67,12 @@ def _env_pkg_to_enum_prefix(env_pkg: str) -> str:
     return env_pkg.replace("-", " ").title().replace(" ", "")
 
 
-def fetch_submission_schema_enums() -> dict[str, list[str]]:
+@cache
+def fetch_submission_schema_enums() -> dict[str, frozenset[str]]:
     """Load env-related enum PVs from the NMDC submission schema.
 
-    Returns a dict mapping enum name -> list of permissible value strings.
+    Returns a dict mapping enum name -> frozenset of permissible value strings.
+    Results are cached for the lifetime of the process.
     """
     submission_schema_files = resources.files("nmdc_submission_schema")
     schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
@@ -77,7 +80,7 @@ def fetch_submission_schema_enums() -> dict[str, list[str]]:
     enum_view = sv.all_enums()
 
     return {
-        enum_name: list(enum_data["permissible_values"].keys())
+        enum_name: frozenset(enum_data["permissible_values"].keys())
         for enum_name, enum_data in enum_view.items()
         if ("EnvPackage" in enum_name)
         or ("EnvMedium" in enum_name)
@@ -87,7 +90,7 @@ def fetch_submission_schema_enums() -> dict[str, list[str]]:
 
 
 def _check_enum_membership(
-    value: str, field_name: str, env_pkg: str, schema_enums: dict[str, list[str]]
+    value: str, field_name: str, env_pkg: str, schema_enums: dict[str, frozenset[str]]
 ) -> bool:
     """Check if value is in the curated enum PV list for this environment type + field.
 
@@ -177,7 +180,7 @@ def _validate_field(
     value: Optional[str],
     template_type: str,
     env_pkg: str,
-    schema_enums: dict[str, list[str]],
+    schema_enums: dict[str, frozenset[str]],
     prefetched: _PrefetchedTermData,
 ) -> Optional[str]:
     """Validate a single env triad field value.
@@ -256,7 +259,7 @@ def _validate_sample_triad(
     sample: dict[str, Any],
     template_type: str,
     env_pkg: str,
-    schema_enums: dict[str, list[str]],
+    schema_enums: dict[str, frozenset[str]],
     prefetched: _PrefetchedTermData,
 ) -> dict[str, str]:
     """Validate all three env triad fields for a single sample.

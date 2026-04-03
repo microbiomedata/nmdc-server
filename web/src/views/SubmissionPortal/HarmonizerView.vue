@@ -422,8 +422,12 @@ async function validate() {
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
 
-  // Merge backend env triad validation errors into the DH result
-  await incrementalSaveRecord(props.id);
+  // Save draft to server, then validate env triad against saved data
+  try {
+    await incrementalSaveRecord(props.id);
+  } catch (e) {
+    console.error('Failed to save record before env triad validation:', e);
+  }
   let triadResult;
   try {
     triadResult = await validateEnvTriad(props.id);
