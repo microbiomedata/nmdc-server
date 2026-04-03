@@ -1691,7 +1691,7 @@ async def validate_env_triad_single(
     user: models.User = Depends(get_current_user),
 ):
     """Validate env triad fields for a single submission."""
-    from nmdc_server.validation.env_triad import validate_submission_triad
+    from nmdc_server.env_triad import validate_submission_triad
 
     submission = get_submission_for_user(db, id, user)
     return validate_submission_triad(db, submission)
