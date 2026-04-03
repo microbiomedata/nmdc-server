@@ -1,3 +1,4 @@
+from sys import stdout
 from typing import Any, Dict, Iterator
 
 import click
@@ -199,7 +200,12 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
                 # TODO test this and make sure it works as expected
                 # this undoes the pagination that existed before
                 with click.progressbar(
-                    annotation_activities, length=len(annotation_activities)
+                    annotation_activities,
+                    length=len(annotation_activities),
+                    # Show this label next to the progress bar.
+                    label="Loading",
+                    # If STDOUT is not a TTY, don't even show the label.
+                    hidden=not stdout.isatty(),
                 ) as bar:
                     pipeline.load(
                         db,
