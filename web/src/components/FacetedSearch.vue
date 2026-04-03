@@ -116,8 +116,6 @@ function handleSearchFocus(focused: boolean): void {
 watch(() => filterText, (newVal) => {
   if (newVal.length > 0) {
     showSearchHelp.value = false;
-  } else {
-    showSearchHelp.value = true;
   }
 });
 </script>

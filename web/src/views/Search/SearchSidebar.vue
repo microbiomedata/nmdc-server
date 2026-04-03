@@ -156,6 +156,11 @@ function dbSummaryForTable(table: EntityType, field: string): AttributeSummary {
   return {} as AttributeSummary;
 }
 
+function handleClearAll() {
+  filterText.value = '';
+  removeConditions(conditions.value);
+}
+
 async function updateSearch() {
   if (filterText.value.length >= 2) {
     textSearchResults.value = await api.textSearch(filterText.value);
@@ -224,7 +229,7 @@ watch(stateRefs.conditions, trackFilterConditions);
                 variant="plain"
                 size="x-small"
                 v-bind="props"
-                @click="removeConditions"
+                @click="handleClearAll"
               >
                 <v-icon class="mr-2">
                   mdi-filter-off
