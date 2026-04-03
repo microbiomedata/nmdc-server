@@ -112,7 +112,7 @@ def _check_enum_membership(
         return False
 
     enum_name = f"{enum_prefix}{prefix}Enum"
-    pvs = schema_enums.get(enum_name, [])
+    pvs = schema_enums.get(enum_name, frozenset())
     return value in pvs
 
 
