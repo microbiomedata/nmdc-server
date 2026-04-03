@@ -1416,7 +1416,6 @@ async def get_metadata_submissions_report(
     return response
 
 
-
 def _validation_result_to_response(
     validation_result,
 ) -> schemas_submission.SubmissionTriadValidationResponse:
