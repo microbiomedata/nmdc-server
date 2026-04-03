@@ -423,9 +423,14 @@ async function validate() {
   const result = await harmonizerApi.validate();
 
   // Merge backend env triad validation errors into the DH result
+  await incrementalSaveRecord(props.id);
+  let triadResult;
   try {
-    await incrementalSaveRecord(props.id);
-    const triadResult = await validateEnvTriad(props.id);
+    triadResult = await validateEnvTriad(props.id);
+  } catch (e) {
+    console.error('Env triad validation failed:', e);
+  }
+  if (triadResult) {
     const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
     const templateErrors = sampleDataSlot ? triadResult[sampleDataSlot] : undefined;
     if (templateErrors) {
@@ -441,8 +446,6 @@ async function validate() {
         }
       }
     }
-  } catch (e) {
-    console.error('Env triad validation failed:', e);
   }
 
   const valid = Object.keys(result).length === 0;
