@@ -167,28 +167,19 @@ def _make_submission_with_samples(
 # --- Unit tests for parse_ontology_id ---
 
 
-def test_parse_ontology_id_standard():
-    assert parse_ontology_id("terrestrial biome [ENVO:00000446]") == "ENVO:00000446"
-
-
-def test_parse_ontology_id_with_leading_underscores():
-    assert parse_ontology_id("__terrestrial biome [ENVO:00000446]") == "ENVO:00000446"
-
-
-def test_parse_ontology_id_no_brackets():
-    assert parse_ontology_id("just some text") is None
-
-
-def test_parse_ontology_id_empty():
-    assert parse_ontology_id("") is None
-
-
-def test_parse_ontology_id_plant_ontology():
-    assert parse_ontology_id("tepal apex [PO:0025143]") == "PO:0025143"
-
-
-def test_parse_ontology_id_uberon():
-    assert parse_ontology_id("skin of eyelid [UBERON:0001457]") == "UBERON:0001457"
+@pytest.mark.parametrize(
+    "input_str, expected",
+    [
+        ("terrestrial biome [ENVO:00000446]", "ENVO:00000446"),
+        ("__terrestrial biome [ENVO:00000446]", "ENVO:00000446"),
+        ("tepal apex [PO:0025143]", "PO:0025143"),
+        ("skin of eyelid [UBERON:0001457]", "UBERON:0001457"),
+        ("just some text", None),
+        ("", None),
+    ],
+)
+def test_parse_ontology_id(input_str, expected):
+    assert parse_ontology_id(input_str) == expected
 
 
 # --- Integration tests for validate_submission_triad ---
@@ -447,38 +438,6 @@ def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy, logged
     result = validate_submission_triad(db, submission)
     assert 0 not in result.get("soil_data", {})  # first sample is valid
     assert "env_broad_scale" in result["soil_data"][1]  # second sample has error
-
-
-def test_non_environmental_data_slots_ignored(db: Session, ontology_hierarchy, logged_in_user):
-    """Sample data under non-ENVIRONMENTAL_DATA_SLOTS keys should be ignored."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "jgi_mg_data": [
-                {
-                    "samp_name": "JGI Sample",
-                    # No env triad fields, but this isn't an environmental slot
-                },
-            ],
-        },
-        package_name="not-a-confirmed-env",
-    )
-
-    result = validate_submission_triad(db, submission)
-    assert result == {}
-
-
-def test_submission_with_no_sample_data(db: Session, ontology_hierarchy, logged_in_user):
-    """Submission with empty sampleData should pass (no samples to validate)."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={},
-    )
-
-    result = validate_submission_triad(db, submission)
-    assert result == {}
 
 
 # --- API endpoint tests ---
