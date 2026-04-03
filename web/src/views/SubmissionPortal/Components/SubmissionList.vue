@@ -436,7 +436,7 @@ export default defineComponent({
                 >
                   <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
                     Resume
-                    <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
+                    <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                   </span>
                   <span v-else>
                     <v-icon class="pl-1">mdi-eye</v-icon>
