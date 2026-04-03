@@ -152,6 +152,42 @@ const protocolNames = computed(() => {
   if (multiOmicsForm.lipProtocols?.sampleProtocol.name) {
     names.add(multiOmicsForm.lipProtocols.sampleProtocol.name);
   }
+  if(multiOmicsForm.mpProtocols?.sampleProtocol.doi) {
+    names.add(multiOmicsForm.mpProtocols.sampleProtocol.doi);
+  }
+    if (multiOmicsForm.mbProtocols?.sampleProtocol.doi) {
+    names.add(multiOmicsForm.mbProtocols.sampleProtocol.doi);
+  }
+  if (multiOmicsForm.mbGcProtocols?.sampleProtocol.doi) {
+    names.add(multiOmicsForm.mbGcProtocols.sampleProtocol.doi);
+  }
+  if (multiOmicsForm.nomProtocols?.sampleProtocol.doi) {
+    names.add(multiOmicsForm.nomProtocols.sampleProtocol.doi);
+  }
+  if (multiOmicsForm.nomLcProtocols?.sampleProtocol.doi) {
+    names.add(multiOmicsForm.nomLcProtocols.sampleProtocol.doi);
+  }
+  if (multiOmicsForm.lipProtocols?.sampleProtocol.doi) {
+    names.add(multiOmicsForm.lipProtocols.sampleProtocol.doi);
+  }
+  if(multiOmicsForm.mpProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.mpProtocols.sampleProtocol.url);
+  }
+    if (multiOmicsForm.mbProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.mbProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.mbGcProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.mbGcProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.nomProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.nomProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.nomLcProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.nomLcProtocols.sampleProtocol.url);
+  }
+  if (multiOmicsForm.lipProtocols?.sampleProtocol.url) {
+    names.add(multiOmicsForm.lipProtocols.sampleProtocol.url);
+  }
   return Array.from(names);
 });
 
@@ -227,7 +263,7 @@ const urlValueRules = () => (
           used), and/or cleaned prior to analysis on an instrument.
         </div>
         <v-checkbox
-          v-if="protocolNames.length > 0 && !currentProtocol.sampleProtocol.name"
+          v-if="protocolNames.length > 0 && !currentProtocol.sampleProtocol.name && !currentProtocol.sampleProtocol.doi && !currentProtocol.sampleProtocol.url"
           v-model="currentProtocol.sampleProtocol.sharedData"
         >
           <template #label>
