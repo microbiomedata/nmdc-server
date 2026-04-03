@@ -117,7 +117,15 @@ def _check_enum_membership(
 
 
 class _PrefetchedTermData(BaseModel):
-    """Batch-fetched term data for efficient validation."""
+    """Batch-fetched term data for efficient validation.
+
+    Three lookup dicts keyed by ontology ID (e.g. "ENVO:00000428"):
+      exists    -> bool   (is the term in the DB?)
+      obsolete  -> bool   (is the term obsolete?)
+      ancestors -> set    (ancestor term IDs for hierarchy checks)
+
+    Populated once by _prefetch_term_data(), then read by _validate_field().
+    """
 
     model_config = {"arbitrary_types_allowed": True}
 
