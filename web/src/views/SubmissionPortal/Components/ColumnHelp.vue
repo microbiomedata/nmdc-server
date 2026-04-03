@@ -65,10 +65,7 @@ defineEmits<{
         block
         @click="$emit('full-reference-click')"
       >
-        <span
-          class="text-truncate"
-          style="max-width: 250px;"
-        >
+        <span class="text-truncate" style="max-width: 250px;">
           Full {{ harmonizerTemplate.displayName }} Reference
         </span>
         <v-icon class="pl-1">
