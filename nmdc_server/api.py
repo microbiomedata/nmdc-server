@@ -1416,80 +1416,6 @@ async def get_metadata_submissions_report(
     return response
 
 
-def _validation_result_to_response(
-    validation_result,
-) -> schemas_submission.SubmissionTriadValidationResponse:
-    """Convert a SubmissionTriadValidationResult dataclass to a Pydantic response."""
-    return schemas_submission.SubmissionTriadValidationResponse(
-        submission_id=validation_result.submission_id,
-        valid=validation_result.valid,
-        sample_results={
-            template_type: [
-                schemas_submission.SampleTriadValidationResponse(
-                    sample_index=sr.sample_index,
-                    sample_name=sr.sample_name,
-                    env_broad_scale=schemas_submission.FieldValidationResponse(
-                        valid=sr.env_broad_scale.valid,
-                        value=sr.env_broad_scale.value,
-                        ontology_id=sr.env_broad_scale.ontology_id,
-                        errors=sr.env_broad_scale.errors,
-                        warnings=sr.env_broad_scale.warnings,
-                    ),
-                    env_local_scale=schemas_submission.FieldValidationResponse(
-                        valid=sr.env_local_scale.valid,
-                        value=sr.env_local_scale.value,
-                        ontology_id=sr.env_local_scale.ontology_id,
-                        errors=sr.env_local_scale.errors,
-                        warnings=sr.env_local_scale.warnings,
-                    ),
-                    env_medium=schemas_submission.FieldValidationResponse(
-                        valid=sr.env_medium.valid,
-                        value=sr.env_medium.value,
-                        ontology_id=sr.env_medium.ontology_id,
-                        errors=sr.env_medium.errors,
-                        warnings=sr.env_medium.warnings,
-                    ),
-                    cross_field_errors=sr.cross_field_errors,
-                )
-                for sr in sample_results
-            ]
-            for template_type, sample_results in validation_result.sample_results.items()
-        },
-        error_count=validation_result.error_count,
-        warning_count=validation_result.warning_count,
-    )
-
-
-@router.get(
-    "/metadata_submission/validate_env_triad",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-    response_model=list[schemas_submission.SubmissionTriadValidationResponse],
-)
-async def validate_env_triad_bulk(
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-    submission_status: Optional[str] = Query(
-        default=SubmissionStatusEnum.SubmittedPendingReview.text,
-        description="Filter submissions by status",
-    ),
-):
-    """Validate env triad fields for all submissions matching the given status."""
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
-
-    from nmdc_server.validation.env_triad import validate_submission_triad
-
-    q = db.query(SubmissionMetadata).filter(SubmissionMetadata.status == submission_status)
-    submissions = q.all()
-
-    results = []
-    for submission in submissions:
-        validation_result = validate_submission_triad(db, submission)
-        results.append(_validation_result_to_response(validation_result))
-    return results
-
-
 async def get_paginated_submission_list(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
@@ -1758,19 +1684,17 @@ async def update_submission_status(
     "/metadata_submission/{id}/validate_env_triad",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas_submission.SubmissionTriadValidationResponse,
 )
 async def validate_env_triad_single(
     id: str,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
-) -> schemas_submission.SubmissionTriadValidationResponse:
+):
     """Validate env triad fields for a single submission."""
     from nmdc_server.validation.env_triad import validate_submission_triad
 
     submission = get_submission_for_user(db, id, user)
-    validation_result = validate_submission_triad(db, submission)
-    return _validation_result_to_response(validation_result)
+    return validate_submission_triad(db, submission)
 
 
 @router.post(

@@ -427,30 +427,16 @@ async function validate() {
     await incrementalSaveRecord(props.id);
     const triadResult = await validateEnvTriad(props.id);
     const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
-    if (sampleDataSlot && triadResult.sample_results[sampleDataSlot]) {
-      const ENV_TRIAD_FIELDS = ['env_broad_scale', 'env_local_scale', 'env_medium'] as const;
-      for (const sampleResult of triadResult.sample_results[sampleDataSlot]) {
-        const row = sampleResult.sample_index;
-        for (const fieldName of ENV_TRIAD_FIELDS) {
-          const fieldResult = sampleResult[fieldName];
-          const allErrors = [...fieldResult.errors, ...fieldResult.warnings];
-          if (allErrors.length > 0) {
-            const colInfo = harmonizerApi.slotInfo.get(fieldName);
-            if (colInfo) {
-              if (!result[row]) result[row] = {};
-              result[row][colInfo.columnIndex] = allErrors.join('; ');
-            }
-          }
-        }
-        // Cross-field errors: attach each to the second (duplicate) field mentioned
-        for (const crossError of sampleResult.cross_field_errors) {
-          // Error format: "...is used in both <first_field> and <second_field>"
-          const targetField = ENV_TRIAD_FIELDS.findLast((f) => crossError.includes(f));
-          const colInfo = targetField ? harmonizerApi.slotInfo.get(targetField) : null;
+    const templateErrors = sampleDataSlot ? triadResult[sampleDataSlot] : undefined;
+    if (templateErrors) {
+      for (const [rowStr, fieldErrors] of Object.entries(templateErrors)) {
+        const row = parseInt(rowStr, 10);
+        for (const [fieldName, errorMsg] of Object.entries(fieldErrors as Record<string, string>)) {
+          const colInfo = harmonizerApi.slotInfo.get(fieldName);
           if (colInfo) {
             if (!result[row]) result[row] = {};
             const existing = result[row][colInfo.columnIndex];
-            result[row][colInfo.columnIndex] = existing ? `${existing}; ${crossError}` : crossError;
+            result[row][colInfo.columnIndex] = existing ? `${existing}; ${errorMsg}` : errorMsg;
           }
         }
       }

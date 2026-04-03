@@ -1,8 +1,6 @@
 """Tests for env triad validation logic and API endpoints."""
 
 import pytest
-from fastapi.encoders import jsonable_encoder
-from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
@@ -215,8 +213,7 @@ def test_valid_triad_passes_ontology_checks(db: Session, ontology_hierarchy, log
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is True
-    assert result.error_count == 0
+    assert result == {}
 
 
 def test_missing_required_fields(db: Session, ontology_hierarchy, logged_in_user):
@@ -235,8 +232,7 @@ def test_missing_required_fields(db: Session, ontology_hierarchy, logged_in_user
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    assert result.error_count == 3  # one per missing field
+    assert len(result["soil_data"][0]) == 3  # one per missing field
 
 
 def test_empty_string_fields(db: Session, ontology_hierarchy, logged_in_user):
@@ -257,8 +253,7 @@ def test_empty_string_fields(db: Session, ontology_hierarchy, logged_in_user):
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    assert result.error_count == 3
+    assert len(result["soil_data"][0]) == 3
 
 
 def test_unparseable_ontology_id(db: Session, ontology_hierarchy, logged_in_user):
@@ -280,10 +275,8 @@ def test_unparseable_ontology_id(db: Session, ontology_hierarchy, logged_in_user
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    assert result.error_count == 3
-    sample = result.sample_results["soil_data"][0]
-    assert "Could not parse ontology ID" in sample.env_broad_scale.errors[0]
+    assert len(result["soil_data"][0]) == 3
+    assert "Could not parse ontology ID" in result["soil_data"][0]["env_broad_scale"]
 
 
 def test_term_not_in_database(db: Session, ontology_hierarchy, logged_in_user):
@@ -305,11 +298,9 @@ def test_term_not_in_database(db: Session, ontology_hierarchy, logged_in_user):
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    sample = result.sample_results["soil_data"][0]
-    assert "not found" in sample.env_broad_scale.errors[0]
-    assert sample.env_local_scale.valid is True
-    assert sample.env_medium.valid is True
+    assert "not found" in result["soil_data"][0]["env_broad_scale"]
+    assert "env_local_scale" not in result["soil_data"][0]
+    assert "env_medium" not in result["soil_data"][0]
 
 
 def test_obsolete_term_rejected(db: Session, ontology_hierarchy, logged_in_user):
@@ -331,9 +322,7 @@ def test_obsolete_term_rejected(db: Session, ontology_hierarchy, logged_in_user)
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    sample = result.sample_results["soil_data"][0]
-    assert "obsolete" in sample.env_broad_scale.errors[0]
+    assert "obsolete" in result["soil_data"][0]["env_broad_scale"]
 
 
 def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy, logged_in_user):
@@ -356,9 +345,7 @@ def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy, 
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    sample = result.sample_results["soil_data"][0]
-    assert "not a subclass of biome" in sample.env_broad_scale.errors[0]
+    assert "not a subclass of biome" in result["soil_data"][0]["env_broad_scale"]
 
 
 def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy, logged_in_user):
@@ -381,9 +368,7 @@ def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy, logged
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    sample = result.sample_results["soil_data"][0]
-    assert any("should not be a subclass of biome" in e for e in sample.env_medium.errors)
+    assert "should not be a subclass of biome" in result["soil_data"][0]["env_medium"]
 
 
 def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy, logged_in_user):
@@ -405,9 +390,8 @@ def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy, logg
     )
 
     result = validate_submission_triad(db, submission)
-    sample = result.sample_results["soil_data"][0]
-    assert len(sample.cross_field_errors) > 0
-    assert "ENVO:00000446" in sample.cross_field_errors[0]
+    # Cross-field error gets appended to the duplicate field (env_local_scale)
+    assert "ENVO:00000446" in result["soil_data"][0]["env_local_scale"]
 
 
 def test_po_term_allowed_for_plant_associated_local_scale(
@@ -431,9 +415,9 @@ def test_po_term_allowed_for_plant_associated_local_scale(
     )
 
     result = validate_submission_triad(db, submission)
-    sample = result.sample_results["plant_associated_data"][0]
     # PO term should not produce hierarchy errors for local_scale
-    assert sample.env_local_scale.valid is True
+    plant_errors = result.get("plant_associated_data", {}).get(0, {})
+    assert "env_local_scale" not in plant_errors
 
 
 def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy, logged_in_user):
@@ -461,11 +445,8 @@ def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy, logged
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is False
-    assert result.error_count >= 1
-    samples = result.sample_results["soil_data"]
-    assert samples[0].env_broad_scale.valid is True
-    assert samples[1].env_broad_scale.valid is False
+    assert 0 not in result.get("soil_data", {})  # first sample is valid
+    assert "env_broad_scale" in result["soil_data"][1]  # second sample has error
 
 
 def test_non_environmental_data_slots_ignored(db: Session, ontology_hierarchy, logged_in_user):
@@ -485,8 +466,7 @@ def test_non_environmental_data_slots_ignored(db: Session, ontology_hierarchy, l
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is True
-    assert "jgi_mg_data" not in result.sample_results
+    assert result == {}
 
 
 def test_submission_with_no_sample_data(db: Session, ontology_hierarchy, logged_in_user):
@@ -498,8 +478,7 @@ def test_submission_with_no_sample_data(db: Session, ontology_hierarchy, logged_
     )
 
     result = validate_submission_triad(db, submission)
-    assert result.valid is True
-    assert result.error_count == 0
+    assert result == {}
 
 
 # --- API endpoint tests ---
@@ -528,15 +507,13 @@ def test_validate_env_triad_single_endpoint(
     response = client.post(f"/api/metadata_submission/{submission.id}/validate_env_triad")
     assert response.status_code == 200
     body = response.json()
-    assert body["submission_id"] == str(submission.id)
-    assert body["valid"] is True
-    assert body["error_count"] == 0
+    assert body == {}
 
 
 def test_validate_env_triad_single_endpoint_with_errors(
     db: Session, client: TestClient, logged_in_user, ontology_hierarchy
 ):
-    """Endpoint returns structured errors for invalid submissions."""
+    """Endpoint returns field errors keyed by template, row, and field name."""
     submission = _make_submission_with_samples(
         db,
         logged_in_user,
@@ -556,46 +533,7 @@ def test_validate_env_triad_single_endpoint_with_errors(
     response = client.post(f"/api/metadata_submission/{submission.id}/validate_env_triad")
     assert response.status_code == 200
     body = response.json()
-    assert body["valid"] is False
-    assert body["error_count"] >= 3
-
-    soil_sample = body["sample_results"]["soil_data"][0]
-    assert soil_sample["env_broad_scale"]["valid"] is False
-    assert soil_sample["env_local_scale"]["valid"] is False
-    assert soil_sample["env_medium"]["valid"] is False
-
-
-def test_validate_env_triad_bulk_endpoint_requires_admin(
-    db: Session, client: TestClient, logged_in_user
-):
-    """GET /metadata_submission/validate_env_triad requires admin."""
-    response = client.get("/api/metadata_submission/validate_env_triad")
-    assert response.status_code == 403
-
-
-def test_validate_env_triad_bulk_endpoint(
-    db: Session, client: TestClient, logged_in_admin_user, ontology_hierarchy
-):
-    """Admin bulk validation returns results for matching submissions."""
-    _make_submission_with_samples(
-        db,
-        logged_in_admin_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
-        },
-        package_name="not-a-confirmed-env",
-        status=SubmissionStatusEnum.SubmittedPendingReview.text,
-    )
-
-    response = client.get("/api/metadata_submission/validate_env_triad")
-    assert response.status_code == 200
-    body = response.json()
-    assert len(body) == 1
-    assert body[0]["valid"] is True
+    row_errors = body["soil_data"]["0"]  # JSON keys are strings
+    assert "env_broad_scale" in row_errors
+    assert "env_local_scale" in row_errors
+    assert "env_medium" in row_errors

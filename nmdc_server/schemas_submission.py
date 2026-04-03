@@ -309,34 +309,3 @@ class MetadataSuggestion(BaseModel):
     current_value: Optional[str] = None
     is_ai_generated: bool = False
     source: Optional[str] = None
-
-
-class FieldValidationResponse(BaseModel):
-    valid: bool
-    value: Optional[str] = None
-    ontology_id: Optional[str] = None
-    errors: List[str] = []
-    warnings: List[str] = []
-
-
-class SampleTriadValidationResponse(BaseModel):
-    sample_index: int
-    sample_name: Optional[str] = None
-    env_broad_scale: FieldValidationResponse = Field(
-        default_factory=lambda: FieldValidationResponse(valid=True)
-    )
-    env_local_scale: FieldValidationResponse = Field(
-        default_factory=lambda: FieldValidationResponse(valid=True)
-    )
-    env_medium: FieldValidationResponse = Field(
-        default_factory=lambda: FieldValidationResponse(valid=True)
-    )
-    cross_field_errors: List[str] = []
-
-
-class SubmissionTriadValidationResponse(BaseModel):
-    submission_id: str
-    valid: bool = True
-    sample_results: Dict[str, List[SampleTriadValidationResponse]] = {}
-    error_count: int = 0
-    warning_count: int = 0

@@ -6,11 +6,11 @@ Validates submission sample data against:
 """
 
 import re
-from dataclasses import dataclass, field
 from importlib import resources
 from typing import Any, Optional
 
 from linkml_runtime.utils.schemaview import SchemaView
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from nmdc_server.models import (
@@ -19,6 +19,9 @@ from nmdc_server.models import (
     EnvoTerm,
     OntologyClass,
 )
+
+# Return type: template_name -> {row_index -> {field_name -> error_string}}
+InvalidCellsByTemplate = dict[str, dict[int, dict[str, str]]]
 
 # Regex to extract ontology ID from "label [ONTOLOGY_ID]" format
 ONTOLOGY_ID_PATTERN = re.compile(r"\[([A-Za-z_]+:\d+)\]\s*$")
@@ -45,40 +48,6 @@ FIELD_HIERARCHY_RULES: dict[str, tuple[str, list[str]]] = {
     "env_medium": (ENVIRONMENTAL_MATERIAL, [BIOME]),
     "env_local_scale": (ASTRONOMICAL_BODY_PART, [BIOME]),
 }
-
-
-@dataclass
-class FieldValidationResult:
-    valid: bool
-    value: Optional[str] = None
-    ontology_id: Optional[str] = None
-    errors: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
-
-
-@dataclass
-class SampleTriadValidationResult:
-    sample_index: int
-    sample_name: Optional[str] = None
-    env_broad_scale: FieldValidationResult = field(
-        default_factory=lambda: FieldValidationResult(valid=True)
-    )
-    env_local_scale: FieldValidationResult = field(
-        default_factory=lambda: FieldValidationResult(valid=True)
-    )
-    env_medium: FieldValidationResult = field(
-        default_factory=lambda: FieldValidationResult(valid=True)
-    )
-    cross_field_errors: list[str] = field(default_factory=list)
-
-
-@dataclass
-class SubmissionTriadValidationResult:
-    submission_id: str
-    valid: bool = True
-    sample_results: dict[str, list[SampleTriadValidationResult]] = field(default_factory=dict)
-    error_count: int = 0
-    warning_count: int = 0
 
 
 def parse_ontology_id(value: str) -> Optional[str]:
@@ -144,16 +113,17 @@ def _check_enum_membership(
     return value in pvs
 
 
-@dataclass
-class _PrefetchedTermData:
+class _PrefetchedTermData(BaseModel):
     """Batch-fetched term data for efficient validation."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     # term_id -> True if term exists
-    exists: dict[str, bool] = field(default_factory=dict)
+    exists: dict[str, bool] = Field(default_factory=dict)
     # term_id -> True if term is obsolete
-    obsolete: dict[str, bool] = field(default_factory=dict)
+    obsolete: dict[str, bool] = Field(default_factory=dict)
     # term_id -> set of ancestor_ids
-    ancestors: dict[str, set[str]] = field(default_factory=dict)
+    ancestors: dict[str, set[str]] = Field(default_factory=dict)
 
 
 def _prefetch_term_data(db: Session, ontology_ids: set[str]) -> _PrefetchedTermData:
@@ -209,51 +179,35 @@ def _validate_field(
     env_pkg: str,
     schema_enums: dict[str, list[str]],
     prefetched: _PrefetchedTermData,
-) -> FieldValidationResult:
-    """Validate a single env triad field value."""
+) -> Optional[str]:
+    """Validate a single env triad field value.
+
+    Returns an error/warning string if invalid, or None if valid.
+    """
     # Step 0: Required check
     if not value or not value.strip():
-        return FieldValidationResult(
-            valid=False,
-            value=value,
-            errors=[f"{field_name} is required"],
-        )
+        return f"{field_name} is required"
 
     # Clean the value (strip leading underscores and whitespace, matching mixs_report pattern)
     cleaned = value.strip().lstrip("_")
 
     # Step 1: Enum PV check (fast path)
     if _check_enum_membership(cleaned, field_name, env_pkg, schema_enums):
-        ontology_id = parse_ontology_id(cleaned)
-        return FieldValidationResult(
-            valid=True,
-            value=cleaned,
-            ontology_id=ontology_id,
-        )
+        return None
 
     # Step 2: Ontology fallback checks
     ontology_id = parse_ontology_id(cleaned)
     if ontology_id is None:
-        return FieldValidationResult(
-            valid=False,
-            value=cleaned,
-            errors=[
-                f"Could not parse ontology ID from '{cleaned}'. "
-                "Expected format: 'label [ONTOLOGY_PREFIX:ID]'"
-            ],
+        return (
+            f"Could not parse ontology ID from '{cleaned}'. "
+            "Expected format: 'label [ONTOLOGY_PREFIX:ID]'"
         )
-
-    errors: list[str] = []
-    warnings: list[str] = []
 
     # Check term exists
     if not prefetched.exists.get(ontology_id, False):
-        return FieldValidationResult(
-            valid=False,
-            value=cleaned,
-            ontology_id=ontology_id,
-            errors=[f"Term '{ontology_id}' not found in ontology database"],
-        )
+        return f"Term '{ontology_id}' not found in ontology database"
+
+    errors: list[str] = []
 
     # Check not obsolete
     if prefetched.obsolete.get(ontology_id, False):
@@ -290,55 +244,56 @@ def _validate_field(
 
     # If the term passed ontology checks but wasn't in the enum, add a warning
     if not errors and env_pkg in CONFIRMED_ENUM_PACKAGES:
-        warnings.append(
+        errors.append(
             f"Term '{ontology_id}' is not in the curated permissible values "
             f"for {env_pkg} {field_name}"
         )
 
-    return FieldValidationResult(
-        valid=len(errors) == 0,
-        value=cleaned,
-        ontology_id=ontology_id,
-        errors=errors,
-        warnings=warnings,
-    )
+    return "; ".join(errors) if errors else None
 
 
 def _validate_sample_triad(
     sample: dict[str, Any],
-    sample_index: int,
     template_type: str,
     env_pkg: str,
     schema_enums: dict[str, list[str]],
     prefetched: _PrefetchedTermData,
-) -> SampleTriadValidationResult:
-    """Validate all three env triad fields for a single sample."""
-    result = SampleTriadValidationResult(
-        sample_index=sample_index,
-        sample_name=sample.get("samp_name"),
-    )
+) -> dict[str, str]:
+    """Validate all three env triad fields for a single sample.
+
+    Returns a dict of field_name -> error_string for fields with errors.
+    Empty dict means all fields are valid.
+    """
+    field_errors: dict[str, str] = {}
 
     for field_name in ENV_TRIAD_FIELDS:
         value = sample.get(field_name)
-        field_result = _validate_field(
+        error = _validate_field(
             field_name, value, template_type, env_pkg, schema_enums, prefetched
         )
-        setattr(result, field_name, field_result)
+        if error:
+            field_errors[field_name] = error
 
     # Cross-field check: no duplicate ontology IDs across the three triad slots
     seen_ids: dict[str, str] = {}
     for field_name in ENV_TRIAD_FIELDS:
-        fr: FieldValidationResult = getattr(result, field_name)
-        if fr.ontology_id:
-            if fr.ontology_id in seen_ids:
-                result.cross_field_errors.append(
-                    f"Ontology term '{fr.ontology_id}' is used in both "
-                    f"{seen_ids[fr.ontology_id]} and {field_name}"
-                )
-            else:
-                seen_ids[fr.ontology_id] = field_name
+        value = sample.get(field_name)
+        if value:
+            ontology_id = parse_ontology_id(str(value).strip().lstrip("_"))
+            if ontology_id:
+                if ontology_id in seen_ids:
+                    cross_error = (
+                        f"Ontology term '{ontology_id}' is used in both "
+                        f"{seen_ids[ontology_id]} and {field_name}"
+                    )
+                    existing = field_errors.get(field_name, "")
+                    field_errors[field_name] = (
+                        f"{existing}; {cross_error}" if existing else cross_error
+                    )
+                else:
+                    seen_ids[ontology_id] = field_name
 
-    return result
+    return field_errors
 
 
 def _collect_ids_needing_lookup(sample_data: dict, schema_enums: dict, env_pkg: str) -> set[str]:
@@ -362,15 +317,12 @@ def _collect_ids_needing_lookup(sample_data: dict, schema_enums: dict, env_pkg: 
     return ids_needing_lookup
 
 
-def validate_submission_triad(db: Session, submission: Any) -> SubmissionTriadValidationResult:
+def validate_submission_triad(db: Session, submission: Any) -> InvalidCellsByTemplate:
     """Validate all env triad fields across all samples in a submission.
 
-    This is the main entry point for validation. It:
-    1. Loads schema enums once
-    2. Checks each sample's env triad fields against curated enums (fast path)
-    3. For terms not in enums, batch-fetches ontology data and runs hierarchy checks
+    Returns a dict of template_name -> {row_index -> {field_name -> error_string}}.
+    Empty dict means all fields are valid.
     """
-    submission_id = str(submission.id)
     metadata = submission.metadata_submission or {}
     sample_data = metadata.get("sampleData", {})
     env_pkg = metadata.get("packageName", "")
@@ -387,33 +339,19 @@ def validate_submission_triad(db: Session, submission: Any) -> SubmissionTriadVa
     prefetched = _prefetch_term_data(db, ids_needing_lookup)
 
     # Second pass: validate each sample
-    result = SubmissionTriadValidationResult(submission_id=submission_id)
-    error_count = 0
-    warning_count = 0
+    result: InvalidCellsByTemplate = {}
 
     for template_type in sample_data:
         if template_type not in ENVIRONMENTAL_DATA_SLOTS:
             continue
         samples = sample_data[template_type] or []
-        sample_results = []
         for i, sample in enumerate(samples):
-            sample_result = _validate_sample_triad(
-                sample, i, template_type, env_pkg, schema_enums, prefetched
+            field_errors = _validate_sample_triad(
+                sample, template_type, env_pkg, schema_enums, prefetched
             )
-            sample_results.append(sample_result)
-
-            # Count errors and warnings
-            for field_name in ENV_TRIAD_FIELDS:
-                fr: FieldValidationResult = getattr(sample_result, field_name)
-                error_count += len(fr.errors)
-                warning_count += len(fr.warnings)
-            error_count += len(sample_result.cross_field_errors)
-
-        if sample_results:
-            result.sample_results[template_type] = sample_results
-
-    result.error_count = error_count
-    result.warning_count = warning_count
-    result.valid = error_count == 0
+            if field_errors:
+                if template_type not in result:
+                    result[template_type] = {}
+                result[template_type][i] = field_errors
 
     return result
