@@ -1,4 +1,5 @@
-from sys import stdout
+import io
+import sys
 from typing import Any, Dict, Iterator
 
 import click
@@ -203,9 +204,10 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
                     annotation_activities,
                     length=len(annotation_activities),
                     # Show this label next to the progress bar.
+                    # When STDOUT is not a TTY, redirect to a sink so that
+                    # click doesn't print the label (or a blank line) to the log.
                     label="Loading",
-                    # If STDOUT is not a TTY, don't even show the label.
-                    hidden=not stdout.isatty(),
+                    file=None if sys.stdout.isatty() else io.StringIO(),
                 ) as bar:
                     pipeline.load(
                         db,
