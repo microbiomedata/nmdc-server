@@ -1,4 +1,3 @@
-import io
 import os
 import sys
 from typing import Any, Dict, Iterator
@@ -208,7 +207,7 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
                         length=len(annotation_activities),
                         # Define a label to be displayed next to the progress bar; and only show
                         # the label and progress bar when the output is a TTY.
-                        # 
+                        #
                         # Note: Once we update Click to 8.2.0 or newer, replace the use of the `file`
                         #       parameter below with a use of the new `hidden` parameter. We use
                         #       this parameter as a workaround for now because, even though Click
