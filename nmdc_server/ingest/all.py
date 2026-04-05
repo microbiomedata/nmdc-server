@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 from typing import Any, Dict, Iterator
 
@@ -198,25 +199,34 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
                         {"type": "nmdc:MetagenomeAnnotation"}, batch_size=100
                     )
                 )
-                # TODO test this and make sure it works as expected
-                # this undoes the pagination that existed before
-                with click.progressbar(
-                    annotation_activities,
-                    length=len(annotation_activities),
-                    # Show this label next to the progress bar.
-                    # When STDOUT is not a TTY, redirect to a sink so that
-                    # click doesn't print the label (or a blank line) to the log.
-                    label="Loading",
-                    file=None if sys.stdout.isatty() else io.StringIO(),
-                ) as bar:
-                    pipeline.load(
-                        db,
-                        bar,
-                        pipeline.load_mg_annotation,
-                        WorkflowActivityTypeEnum.metagenome_annotation.value,
-                        annotations=mongodb["functional_annotation_agg"],
-                        function_limit=function_limit,
-                    )
+                # Get a handle to `/dev/null`, which we might use for discarding text below.
+                with open(os.devnull, "w") as devnull:
+                    # TODO test this and make sure it works as expected
+                    # this undoes the pagination that existed before
+                    with click.progressbar(
+                        annotation_activities,
+                        length=len(annotation_activities),
+                        # Define a label to be displayed next to the progress bar; and only show
+                        # the label and progress bar when the output is a TTY.
+                        # 
+                        # Note: Once we update Click to 8.2.0 or newer, replace the use of the `file`
+                        #       parameter below with a use of the new `hidden` parameter. We use
+                        #       this parameter as a workaround for now because, even though Click
+                        #       automatically hides the progress bar, itself, when the output is not
+                        #       a TTY, it always prints the label (or an empty line, if no label is
+                        #       defined). This workaround hides the label also.
+                        #
+                        label="Loading",
+                        file=None if sys.stdout.isatty() else devnull,  # `None`, here, means STDOUT
+                    ) as bar:
+                        pipeline.load(
+                            db,
+                            bar,
+                            pipeline.load_mg_annotation,
+                            WorkflowActivityTypeEnum.metagenome_annotation.value,
+                            annotations=mongodb["functional_annotation_agg"],
+                            function_limit=function_limit,
+                        )
 
         except Exception:
             logger.exception("Failed during annotation ingest.")
