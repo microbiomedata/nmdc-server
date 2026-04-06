@@ -293,7 +293,7 @@ class MetadataSuggestionRequest(BaseModel):
 
 
 class EnvTriadValidationRequest(BaseModel):
-    samples: List[Dict[str, Any]]
+    samples: List[Dict[str, Any]] = Field(..., max_length=10000)
     env_package: str
     template_type: str
 

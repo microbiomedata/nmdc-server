@@ -6,7 +6,7 @@ Validates submission sample data against:
 """
 
 import re
-from functools import cache
+from functools import lru_cache
 from importlib import resources
 from typing import Any, Optional
 
@@ -21,6 +21,7 @@ from nmdc_server.models import (
 )
 
 # Return type: row_index -> {field_name -> error_string}
+# Note: JSON serialization converts int keys to strings; frontend should parse accordingly
 InvalidCellsByRow = dict[int, dict[str, str]]
 
 # Regex to extract ontology ID from "label [ONTOLOGY_ID]" format
@@ -66,12 +67,12 @@ def _env_pkg_to_enum_prefix(env_pkg: str) -> str:
     return env_pkg.replace("-", " ").title().replace(" ", "")
 
 
-@cache
+@lru_cache(maxsize=1)
 def fetch_submission_schema_enums() -> dict[str, frozenset[str]]:
     """Load env-related enum PVs from the NMDC submission schema.
 
     Returns a dict mapping enum name -> frozenset of permissible value strings.
-    Results are cached for the lifetime of the process.
+    Results are cached; call fetch_submission_schema_enums.cache_clear() to invalidate.
     """
     submission_schema_files = resources.files("nmdc_submission_schema")
     schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"

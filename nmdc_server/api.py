@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
 from nmdc_server import crud, models, query, schemas, schemas_submission
+from nmdc_server.env_triad import validate_sample_data_triad
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -1691,8 +1692,6 @@ async def validate_env_triad(
     user: models.User = Depends(get_current_user),
 ):
     """Validate env triad fields for sample data."""
-    from nmdc_server.env_triad import validate_sample_data_triad
-
     return validate_sample_data_triad(db, body.samples, body.env_package, body.template_type)
 
 
