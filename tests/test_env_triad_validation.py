@@ -129,32 +129,36 @@ def test_valid_triad_passes_ontology_checks(db: Session, ontology_hierarchy):
     assert result == {}
 
 
-def test_missing_required_fields(db: Session, ontology_hierarchy):
-    """Missing env triad fields should produce errors."""
+def test_wrong_hierarchy_local_scale_not_astronomical_body_part(db: Session, ontology_hierarchy):
+    """env_local_scale must be a subclass of astronomical body part."""
     samples = [
         {
             "samp_name": "Sample 1",
-            # All three fields missing
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            # soil is environmental material, not astronomical body part
+            "env_local_scale": "soil [ENVO:00001998]",
+            "env_medium": "soil [ENVO:00001998]",
         },
     ]
 
-    result = validate_sample_data_triad(db, samples, "soil", "soil_data")
-    assert len(result[0]) == 3  # one per missing field
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "not a subclass of astronomical body part" in result[0]["env_local_scale"]
 
 
-def test_empty_string_fields(db: Session, ontology_hierarchy):
-    """Empty string env triad fields should produce errors."""
+def test_wrong_hierarchy_medium_not_environmental_material(db: Session, ontology_hierarchy):
+    """env_medium must be a subclass of environmental material."""
     samples = [
         {
             "samp_name": "Sample 1",
-            "env_broad_scale": "",
-            "env_local_scale": "  ",
-            "env_medium": "",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            # cave is astronomical body part, not environmental material
+            "env_medium": "cave [ENVO:00000067]",
         },
     ]
 
-    result = validate_sample_data_triad(db, samples, "soil", "soil_data")
-    assert len(result[0]) == 3
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "not a subclass of environmental material" in result[0]["env_medium"]
 
 
 def test_unparseable_ontology_id(db: Session, ontology_hierarchy):
@@ -169,8 +173,9 @@ def test_unparseable_ontology_id(db: Session, ontology_hierarchy):
     ]
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
-    assert len(result[0]) == 3
     assert "Could not parse ontology ID" in result[0]["env_broad_scale"]
+    assert "Could not parse ontology ID" in result[0]["env_local_scale"]
+    assert "Could not parse ontology ID" in result[0]["env_medium"]
 
 
 def test_term_not_in_database(db: Session, ontology_hierarchy):
@@ -185,9 +190,10 @@ def test_term_not_in_database(db: Session, ontology_hierarchy):
     ]
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "ENVO:00000000" in result[0]["env_broad_scale"]
     assert "not found" in result[0]["env_broad_scale"]
-    assert "env_local_scale" not in result[0]
-    assert "env_medium" not in result[0]
+    assert result[0].get("env_local_scale") is None  # valid term, no error
+    assert result[0].get("env_medium") is None  # valid term, no error
 
 
 def test_obsolete_term_rejected(db: Session, ontology_hierarchy):
@@ -237,8 +243,8 @@ def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy):
     assert "should not be a subclass of biome" in result[0]["env_medium"]
 
 
-def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy):
-    """Same ontology ID used in multiple triad slots should produce cross-field error."""
+def test_duplicate_term_broad_and_local_scale(db: Session, ontology_hierarchy):
+    """Same ontology ID in env_broad_scale and env_local_scale should produce error."""
     samples = [
         {
             "samp_name": "Sample 1",
@@ -249,8 +255,41 @@ def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy):
     ]
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
-    # Cross-field error gets appended to the duplicate field (env_local_scale)
     assert "ENVO:00000446" in result[0]["env_local_scale"]
+    assert "env_broad_scale" in result[0]["env_local_scale"]
+
+
+def test_duplicate_term_local_and_medium(db: Session, ontology_hierarchy):
+    """Same ontology ID in env_local_scale and env_medium should produce error."""
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "soil [ENVO:00001998]",
+            "env_medium": "soil [ENVO:00001998]",
+        },
+    ]
+
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "ENVO:00001998" in result[0]["env_medium"]
+    assert "env_local_scale" in result[0]["env_medium"]
+
+
+def test_duplicate_term_all_three_same(db: Session, ontology_hierarchy):
+    """Same ontology ID in all three triad slots should produce errors on local and medium."""
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "terrestrial biome [ENVO:00000446]",
+            "env_medium": "terrestrial biome [ENVO:00000446]",
+        },
+    ]
+
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    # Duplicate errors on local_scale and medium
+    assert "ENVO:00000446" in result[0]["env_local_scale"]
+    assert "ENVO:00000446" in result[0]["env_medium"]
 
 
 def test_po_term_allowed_for_plant_associated_local_scale(db: Session, ontology_hierarchy):
@@ -265,9 +304,7 @@ def test_po_term_allowed_for_plant_associated_local_scale(db: Session, ontology_
     ]
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "plant_associated_data")
-    # PO term should not produce hierarchy errors for local_scale
-    row_errors = result.get(0, {})
-    assert "env_local_scale" not in row_errors
+    assert result.get(0) is None  # PO term allowed for plant_associated local_scale
 
 
 def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy):
@@ -288,8 +325,8 @@ def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy):
     ]
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
-    assert 0 not in result  # first sample is valid
-    assert "env_broad_scale" in result[1]  # second sample has error
+    assert result.get(0) is None  # first sample has no errors
+    assert "Could not parse ontology ID" in result[1]["env_broad_scale"]
 
 
 def test_empty_samples_list(db: Session, ontology_hierarchy):
@@ -336,7 +373,7 @@ def test_validate_env_triad_endpoint_with_errors(
                 {
                     "samp_name": "Bad Sample",
                     "env_broad_scale": "no brackets",
-                    "env_local_scale": "",
+                    "env_local_scale": "cave [ENVO:00000067]",
                     "env_medium": "obsolete term [ENVO:99999999]",
                 },
             ],
@@ -347,6 +384,5 @@ def test_validate_env_triad_endpoint_with_errors(
     assert response.status_code == 200
     body = response.json()
     row_errors = body["0"]  # JSON keys are strings
-    assert "env_broad_scale" in row_errors
-    assert "env_local_scale" in row_errors
-    assert "env_medium" in row_errors
+    assert "Could not parse ontology ID" in row_errors["env_broad_scale"]
+    assert "obsolete" in row_errors["env_medium"]

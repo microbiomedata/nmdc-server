@@ -185,7 +185,7 @@ def _prefetch_term_data(db: Session, ontology_ids: set[str]) -> _PrefetchedTermD
 
 def _validate_field(
     field_name: str,
-    value: Optional[str],
+    value: Optional[Any],
     template_type: str,
     env_pkg: str,
     schema_enums: dict[str, frozenset[str]],
@@ -193,14 +193,17 @@ def _validate_field(
 ) -> Optional[str]:
     """Validate a single env triad field value.
 
-    Returns an error/warning string if invalid, or None if valid.
+    Returns an error string if invalid, or None if valid.
     """
-    # Step 0: Required check
-    if not value or not value.strip():
-        return f"{field_name} is required"
+    # Skip validation for empty values (required check handled by harmonizer)
+    if value is None:
+        return None
+    str_value = str(value).strip()
+    if not str_value:
+        return None
 
     # Clean the value (strip leading underscores and whitespace, matching mixs_report pattern)
-    cleaned = value.strip().lstrip("_")
+    cleaned = str_value.lstrip("_")
 
     # Step 1: Enum PV check (fast path)
     if _check_enum_membership(cleaned, field_name, env_pkg, schema_enums):
@@ -252,13 +255,6 @@ def _validate_field(
             }
             label = disallowed_labels.get(disallowed, disallowed)
             errors.append(f"Term '{ontology_id}' should not be a subclass of {label}")
-
-    # If the term passed ontology checks but wasn't in the enum, add a warning
-    if not errors and env_pkg in CONFIRMED_ENUM_PACKAGES:
-        errors.append(
-            f"Term '{ontology_id}' is not in the curated permissible values "
-            f"for {env_pkg} {field_name}"
-        )
 
     return "; ".join(errors) if errors else None
 

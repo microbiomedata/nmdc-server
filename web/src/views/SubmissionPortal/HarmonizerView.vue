@@ -424,8 +424,11 @@ async function validate() {
   const result = await harmonizerApi.validate();
 
   // Validate env triad fields against the current template's data
+  // Only run if the template contains at least one env triad field
   const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
-  if (sampleDataSlot) {
+  const envTriadFields = ['env_broad_scale', 'env_local_scale', 'env_medium'];
+  const hasEnvTriadFields = envTriadFields.some((field) => harmonizerApi.slotInfo.has(field));
+  if (sampleDataSlot && hasEnvTriadFields) {
     try {
       const triadResult = await validateEnvTriad({
         samples: data,
