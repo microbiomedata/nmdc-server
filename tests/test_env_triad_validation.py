@@ -7,10 +7,9 @@ from starlette.testclient import TestClient
 from nmdc_server import fakes
 from nmdc_server.env_triad import (
     parse_ontology_id,
-    validate_submission_triad,
+    validate_sample_data_triad,
 )
 from nmdc_server.ingest import envo
-from nmdc_server.models import SubmissionEditorRole
 
 
 @pytest.fixture
@@ -93,77 +92,6 @@ def ontology_hierarchy(db: Session):
     envo.load(db)
 
 
-def _make_submission_with_samples(
-    db: Session, user, sample_data: dict, package_name: str = "soil", **kwargs
-):
-    """Helper to create a submission with specific sample data and owner role."""
-    submission = fakes.MetadataSubmissionFactory(
-        author=user,
-        author_orcid=user.orcid,
-        metadata_submission={
-            "sampleData": sample_data,
-            "packageName": package_name,
-            "multiOmicsForm": {
-                "studyNumber": "",
-                "JGIStudyId": "",
-                "omicsProcessingTypes": [],
-                "facilities": [],
-            },
-            "studyForm": {
-                "studyName": "",
-                "piName": "",
-                "piEmail": "",
-                "piOrcid": "",
-                "linkOutWebpage": [],
-                "description": "",
-                "notes": "",
-                "contributors": [],
-                "alternativeNames": [],
-                "GOLDStudyId": "",
-                "NCBIBioProjectId": "",
-            },
-            "templates": [],
-            "addressForm": {
-                "shipper": {
-                    "name": "",
-                    "email": "",
-                    "phone": "",
-                    "line1": "",
-                    "line2": "",
-                    "city": "",
-                    "state": "",
-                    "postalCode": "",
-                    "country": "",
-                },
-                "shippingConditions": "",
-                "sample": "",
-                "description": "",
-                "experimentalGoals": "",
-                "randomization": "",
-                "permitNumber": "",
-                "biosafetyLevel": "",
-                "comments": "",
-            },
-            "validationState": {
-                "studyForm": None,
-                "multiOmicsForm": None,
-                "sampleEnvironmentForm": None,
-                "senderShippingInfoForm": None,
-                "sampleMetadata": None,
-            },
-        },
-        **kwargs,
-    )
-    fakes.SubmissionRoleFactory(
-        submission=submission,
-        submission_id=submission.id,
-        user_orcid=user.orcid,
-        role=SubmissionEditorRole.owner,
-    )
-    db.commit()
-    return submission
-
-
 # --- Unit tests for parse_ontology_id ---
 
 
@@ -182,276 +110,206 @@ def test_parse_ontology_id(input_str, expected):
     assert parse_ontology_id(input_str) == expected
 
 
-# --- Integration tests for validate_submission_triad ---
+# --- Integration tests for validate_sample_data_triad ---
 
 
-def test_valid_triad_passes_ontology_checks(db: Session, ontology_hierarchy, logged_in_user):
-    """A submission with valid ontology terms in the correct hierarchy should pass."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+def test_valid_triad_passes_ontology_checks(db: Session, ontology_hierarchy):
+    """Valid ontology terms in the correct hierarchy should pass."""
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",  # forces ontology fallback
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
     assert result == {}
 
 
-def test_missing_required_fields(db: Session, ontology_hierarchy, logged_in_user):
+def test_missing_required_fields(db: Session, ontology_hierarchy):
     """Missing env triad fields should produce errors."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    # All three fields missing
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            # All three fields missing
         },
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert len(result["soil_data"][0]) == 3  # one per missing field
+    result = validate_sample_data_triad(db, samples, "soil", "soil_data")
+    assert len(result[0]) == 3  # one per missing field
 
 
-def test_empty_string_fields(db: Session, ontology_hierarchy, logged_in_user):
+def test_empty_string_fields(db: Session, ontology_hierarchy):
     """Empty string env triad fields should produce errors."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "",
-                    "env_local_scale": "  ",
-                    "env_medium": "",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "",
+            "env_local_scale": "  ",
+            "env_medium": "",
         },
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert len(result["soil_data"][0]) == 3
+    result = validate_sample_data_triad(db, samples, "soil", "soil_data")
+    assert len(result[0]) == 3
 
 
-def test_unparseable_ontology_id(db: Session, ontology_hierarchy, logged_in_user):
+def test_unparseable_ontology_id(db: Session, ontology_hierarchy):
     """Values without a [CURIE] should fail validation."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "just some text without brackets",
-                    "env_local_scale": "also no brackets",
-                    "env_medium": "no brackets here either",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "just some text without brackets",
+            "env_local_scale": "also no brackets",
+            "env_medium": "no brackets here either",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert len(result["soil_data"][0]) == 3
-    assert "Could not parse ontology ID" in result["soil_data"][0]["env_broad_scale"]
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert len(result[0]) == 3
+    assert "Could not parse ontology ID" in result[0]["env_broad_scale"]
 
 
-def test_term_not_in_database(db: Session, ontology_hierarchy, logged_in_user):
+def test_term_not_in_database(db: Session, ontology_hierarchy):
     """Terms with valid CURIE format but not in the database should fail."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "nonexistent [ENVO:00000000]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "nonexistent [ENVO:00000000]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert "not found" in result["soil_data"][0]["env_broad_scale"]
-    assert "env_local_scale" not in result["soil_data"][0]
-    assert "env_medium" not in result["soil_data"][0]
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "not found" in result[0]["env_broad_scale"]
+    assert "env_local_scale" not in result[0]
+    assert "env_medium" not in result[0]
 
 
-def test_obsolete_term_rejected(db: Session, ontology_hierarchy, logged_in_user):
+def test_obsolete_term_rejected(db: Session, ontology_hierarchy):
     """Obsolete terms should fail validation."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "obsolete term [ENVO:99999999]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "obsolete term [ENVO:99999999]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert "obsolete" in result["soil_data"][0]["env_broad_scale"]
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "obsolete" in result[0]["env_broad_scale"]
 
 
-def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy, logged_in_user):
+def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy):
     """env_broad_scale must be a subclass of biome."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    # soil is environmental material, not biome
-                    "env_broad_scale": "soil [ENVO:00001998]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            # soil is environmental material, not biome
+            "env_broad_scale": "soil [ENVO:00001998]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert "not a subclass of biome" in result["soil_data"][0]["env_broad_scale"]
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "not a subclass of biome" in result[0]["env_broad_scale"]
 
 
-def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy, logged_in_user):
+def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy):
     """env_medium should NOT be a subclass of biome."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    # biome term used as medium - wrong
-                    "env_medium": "terrestrial biome [ENVO:00000446]",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            # biome term used as medium - wrong
+            "env_medium": "terrestrial biome [ENVO:00000446]",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert "should not be a subclass of biome" in result["soil_data"][0]["env_medium"]
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert "should not be a subclass of biome" in result[0]["env_medium"]
 
 
-def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy, logged_in_user):
+def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy):
     """Same ontology ID used in multiple triad slots should produce cross-field error."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Sample 1",
-                    "env_broad_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_local_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "terrestrial biome [ENVO:00000446]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
     # Cross-field error gets appended to the duplicate field (env_local_scale)
-    assert "ENVO:00000446" in result["soil_data"][0]["env_local_scale"]
+    assert "ENVO:00000446" in result[0]["env_local_scale"]
 
 
-def test_po_term_allowed_for_plant_associated_local_scale(
-    db: Session, ontology_hierarchy, logged_in_user
-):
+def test_po_term_allowed_for_plant_associated_local_scale(db: Session, ontology_hierarchy):
     """PO terms should be allowed for env_local_scale in plant_associated_data."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "plant_associated_data": [
-                {
-                    "samp_name": "Plant Sample 1",
-                    "env_broad_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_local_scale": "tepal apex [PO:0025143]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+    samples = [
+        {
+            "samp_name": "Plant Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "tepal apex [PO:0025143]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",
-    )
+    ]
 
-    result = validate_submission_triad(db, submission)
+    result = validate_sample_data_triad(
+        db, samples, "not-a-confirmed-env", "plant_associated_data"
+    )
     # PO term should not produce hierarchy errors for local_scale
-    plant_errors = result.get("plant_associated_data", {}).get(0, {})
-    assert "env_local_scale" not in plant_errors
+    row_errors = result.get(0, {})
+    assert "env_local_scale" not in row_errors
 
 
-def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy, logged_in_user):
-    """Submission with mix of valid and invalid samples should fail overall."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
-                {
-                    "samp_name": "Good Sample",
-                    "env_broad_scale": "terrestrial biome [ENVO:00000446]",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-                {
-                    "samp_name": "Bad Sample",
-                    "env_broad_scale": "no brackets here",
-                    "env_local_scale": "cave [ENVO:00000067]",
-                    "env_medium": "soil [ENVO:00001998]",
-                },
-            ],
+def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy):
+    """Mix of valid and invalid samples should return errors only for invalid ones."""
+    samples = [
+        {
+            "samp_name": "Good Sample",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
         },
-        package_name="not-a-confirmed-env",
-    )
+        {
+            "samp_name": "Bad Sample",
+            "env_broad_scale": "no brackets here",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
+        },
+    ]
 
-    result = validate_submission_triad(db, submission)
-    assert 0 not in result.get("soil_data", {})  # first sample is valid
-    assert "env_broad_scale" in result["soil_data"][1]  # second sample has error
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert 0 not in result  # first sample is valid
+    assert "env_broad_scale" in result[1]  # second sample has error
+
+
+def test_empty_samples_list(db: Session, ontology_hierarchy):
+    """Empty samples list should return empty result."""
+    result = validate_sample_data_triad(db, [], "soil", "soil_data")
+    assert result == {}
 
 
 # --- API endpoint tests ---
 
 
-def test_validate_env_triad_single_endpoint(
+def test_validate_env_triad_endpoint(
     db: Session, client: TestClient, logged_in_user, ontology_hierarchy
 ):
-    """POST /metadata_submission/{id}/validate_env_triad returns validation results."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
+    """POST /metadata_submission/validate_env_triad validates sample data."""
+    response = client.post(
+        "/api/metadata_submission/validate_env_triad",
+        json={
+            "samples": [
                 {
                     "samp_name": "Sample 1",
                     "env_broad_scale": "terrestrial biome [ENVO:00000446]",
@@ -459,25 +317,23 @@ def test_validate_env_triad_single_endpoint(
                     "env_medium": "soil [ENVO:00001998]",
                 },
             ],
+            "env_package": "not-a-confirmed-env",
+            "template_type": "soil_data",
         },
-        package_name="not-a-confirmed-env",
     )
-
-    response = client.post(f"/api/metadata_submission/{submission.id}/validate_env_triad")
     assert response.status_code == 200
     body = response.json()
     assert body == {}
 
 
-def test_validate_env_triad_single_endpoint_with_errors(
+def test_validate_env_triad_endpoint_with_errors(
     db: Session, client: TestClient, logged_in_user, ontology_hierarchy
 ):
-    """Endpoint returns field errors keyed by template, row, and field name."""
-    submission = _make_submission_with_samples(
-        db,
-        logged_in_user,
-        sample_data={
-            "soil_data": [
+    """Endpoint returns field errors keyed by row and field name."""
+    response = client.post(
+        "/api/metadata_submission/validate_env_triad",
+        json={
+            "samples": [
                 {
                     "samp_name": "Bad Sample",
                     "env_broad_scale": "no brackets",
@@ -485,14 +341,13 @@ def test_validate_env_triad_single_endpoint_with_errors(
                     "env_medium": "obsolete term [ENVO:99999999]",
                 },
             ],
+            "env_package": "not-a-confirmed-env",
+            "template_type": "soil_data",
         },
-        package_name="not-a-confirmed-env",
     )
-
-    response = client.post(f"/api/metadata_submission/{submission.id}/validate_env_triad")
     assert response.status_code == 200
     body = response.json()
-    row_errors = body["soil_data"]["0"]  # JSON keys are strings
+    row_errors = body["0"]  # JSON keys are strings
     assert "env_broad_scale" in row_errors
     assert "env_local_scale" in row_errors
     assert "env_medium" in row_errors

@@ -12,6 +12,7 @@ import {
   PaginatedResponse,
   SignedUploadUrlRequest,
   SignedUrl,
+  EnvTriadValidationRequest,
   EnvTriadValidationResult,
   SubmissionImageType,
   SuggestionType,
@@ -175,8 +176,8 @@ async function deleteSubmissionImage(submissionId: string, imageType: Submission
   await client.delete<MetadataSubmissionRecord>(endpoint);
 }
 
-async function validateEnvTriad(submissionId: string) {
-  const resp = await client.post<EnvTriadValidationResult>(`metadata_submission/${submissionId}/validate_env_triad`);
+async function validateEnvTriad(request: EnvTriadValidationRequest) {
+  const resp = await client.post<EnvTriadValidationResult>('metadata_submission/validate_env_triad', request);
   return resp.data;
 }
 

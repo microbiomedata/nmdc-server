@@ -292,6 +292,12 @@ class MetadataSuggestionRequest(BaseModel):
     data: Dict[str, str]
 
 
+class EnvTriadValidationRequest(BaseModel):
+    samples: List[Dict[str, Any]]
+    env_package: str
+    template_type: str
+
+
 class MetadataSuggestionType(str, Enum):
     ADD = "add"
     """Indicates that a value is being suggested for a metadata slot that does not currently have a value."""

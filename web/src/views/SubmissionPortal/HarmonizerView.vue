@@ -422,23 +422,16 @@ async function validate() {
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
 
-  // Save draft to server, then validate env triad against saved data
-  try {
-    await incrementalSaveRecord(props.id);
-  } catch (e) {
-    console.error('Failed to save record before env triad validation:', e);
-  }
-  let triadResult;
-  try {
-    triadResult = await validateEnvTriad(props.id);
-  } catch (e) {
-    console.error('Env triad validation failed:', e);
-  }
-  if (triadResult) {
-    const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
-    const templateErrors = sampleDataSlot ? triadResult[sampleDataSlot] : undefined;
-    if (templateErrors) {
-      for (const [rowStr, fieldErrors] of Object.entries(templateErrors)) {
+  // Validate env triad fields against the current template's data
+  const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
+  if (sampleDataSlot) {
+    try {
+      const triadResult = await validateEnvTriad({
+        samples: data,
+        env_package: activeTemplateKey.value!,
+        template_type: sampleDataSlot,
+      });
+      for (const [rowStr, fieldErrors] of Object.entries(triadResult)) {
         const row = parseInt(rowStr, 10);
         for (const [fieldName, errorMsg] of Object.entries(fieldErrors as Record<string, string>)) {
           const colInfo = harmonizerApi.slotInfo.get(fieldName);
@@ -449,6 +442,8 @@ async function validate() {
           }
         }
       }
+    } catch (e) {
+      console.error('Env triad validation failed:', e);
     }
   }
 

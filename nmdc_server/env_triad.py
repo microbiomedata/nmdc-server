@@ -15,14 +15,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from nmdc_server.models import (
-    ENVIRONMENTAL_DATA_SLOTS,
     EnvoAncestor,
     EnvoTerm,
     OntologyClass,
 )
 
-# Return type: template_name -> {row_index -> {field_name -> error_string}}
-InvalidCellsByTemplate = dict[str, dict[int, dict[str, str]]]
+# Return type: row_index -> {field_name -> error_string}
+InvalidCellsByRow = dict[int, dict[str, str]]
 
 # Regex to extract ontology ID from "label [ONTOLOGY_ID]" format
 ONTOLOGY_ID_PATTERN = re.compile(r"\[([A-Za-z_]+:\d+)\]\s*$")
@@ -305,62 +304,53 @@ def _validate_sample_triad(
     return field_errors
 
 
-def _collect_ids_needing_lookup(sample_data: dict, schema_enums: dict, env_pkg: str) -> set[str]:
-    """First pass: collect ontology IDs that need DB lookup (didn't pass enum check)."""
+def _collect_ids_from_samples(
+    samples: list[dict[str, Any]], schema_enums: dict[str, frozenset[str]], env_pkg: str
+) -> set[str]:
+    """Collect ontology IDs that need DB lookup from a flat list of samples."""
     ids_needing_lookup: set[str] = set()
-    for template_type in sample_data:
-        if template_type not in ENVIRONMENTAL_DATA_SLOTS:
-            continue
-        samples = sample_data[template_type] or []
-        for sample in samples:
-            for field_name in ENV_TRIAD_FIELDS:
-                value = sample.get(field_name)
-                if not value or not str(value).strip():
-                    continue
-                cleaned = str(value).strip().lstrip("_")
-                if _check_enum_membership(cleaned, field_name, env_pkg, schema_enums):
-                    continue
-                ontology_id = parse_ontology_id(cleaned)
-                if ontology_id:
-                    ids_needing_lookup.add(ontology_id)
+    for sample in samples:
+        for field_name in ENV_TRIAD_FIELDS:
+            value = sample.get(field_name)
+            if not value or not str(value).strip():
+                continue
+            cleaned = str(value).strip().lstrip("_")
+            if _check_enum_membership(cleaned, field_name, env_pkg, schema_enums):
+                continue
+            ontology_id = parse_ontology_id(cleaned)
+            if ontology_id:
+                ids_needing_lookup.add(ontology_id)
     return ids_needing_lookup
 
 
-def validate_submission_triad(db: Session, submission: Any) -> InvalidCellsByTemplate:
-    """Validate all env triad fields across all samples in a submission.
+def validate_sample_data_triad(
+    db: Session,
+    samples: list[dict[str, Any]],
+    env_package: str,
+    template_type: str,
+) -> InvalidCellsByRow:
+    """Validate env triad fields for a list of samples.
 
-    Returns a dict of template_name -> {row_index -> {field_name -> error_string}}.
+    Returns a dict of row_index -> {field_name -> error_string}.
     Empty dict means all fields are valid.
     """
-    metadata = submission.metadata_submission or {}
-    sample_data = metadata.get("sampleData", {})
-    env_pkg = metadata.get("packageName", "")
+    if not samples:
+        return {}
 
-    # If packageName is a list, take the first element
-    if isinstance(env_pkg, list):
-        env_pkg = env_pkg[0] if env_pkg else ""
-
-    # Load schema enums once
     schema_enums = fetch_submission_schema_enums()
 
     # First pass: collect IDs needing DB lookup, then batch prefetch
-    ids_needing_lookup = _collect_ids_needing_lookup(sample_data, schema_enums, env_pkg)
+    ids_needing_lookup = _collect_ids_from_samples(samples, schema_enums, env_package)
     prefetched = _prefetch_term_data(db, ids_needing_lookup)
 
     # Second pass: validate each sample
-    result: InvalidCellsByTemplate = {}
+    result: InvalidCellsByRow = {}
 
-    for template_type in sample_data:
-        if template_type not in ENVIRONMENTAL_DATA_SLOTS:
-            continue
-        samples = sample_data[template_type] or []
-        for i, sample in enumerate(samples):
-            field_errors = _validate_sample_triad(
-                sample, template_type, env_pkg, schema_enums, prefetched
-            )
-            if field_errors:
-                if template_type not in result:
-                    result[template_type] = {}
-                result[template_type][i] = field_errors
+    for i, sample in enumerate(samples):
+        field_errors = _validate_sample_triad(
+            sample, template_type, env_package, schema_enums, prefetched
+        )
+        if field_errors:
+            result[i] = field_errors
 
     return result

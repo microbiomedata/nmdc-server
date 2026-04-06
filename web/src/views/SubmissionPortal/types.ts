@@ -344,8 +344,14 @@ export interface UploadCompleteRequest {
 
 export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
 
-// template_name -> { row_index -> { field_name -> error_string } }
-export type EnvTriadValidationResult = Record<string, Record<number, Record<string, string>>>;
+// row_index -> { field_name -> error_string }
+export type EnvTriadValidationResult = Record<number, Record<string, string>>;
+
+export interface EnvTriadValidationRequest {
+  samples: Record<string, string>[];
+  env_package: string;
+  template_type: string;
+}
 export interface StatusOption {
   value: string;
   title: string;

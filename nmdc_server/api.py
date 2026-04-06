@@ -1681,20 +1681,19 @@ async def update_submission_status(
 
 
 @router.post(
-    "/metadata_submission/{id}/validate_env_triad",
+    "/metadata_submission/validate_env_triad",
     tags=["metadata_submission"],
     responses=login_required_responses,
 )
-async def validate_env_triad_single(
-    id: str,
+async def validate_env_triad(
+    body: schemas_submission.EnvTriadValidationRequest,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    """Validate env triad fields for a single submission."""
-    from nmdc_server.env_triad import validate_submission_triad
+    """Validate env triad fields for sample data."""
+    from nmdc_server.env_triad import validate_sample_data_triad
 
-    submission = get_submission_for_user(db, id, user)
-    return validate_submission_triad(db, submission)
+    return validate_sample_data_triad(db, body.samples, body.env_package, body.template_type)
 
 
 @router.post(
