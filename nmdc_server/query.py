@@ -246,10 +246,10 @@ def _biosample_ids_via_workflow(
     db: Session,
     activity_model: Any,
     data_generation_assoc: Any,
-    term: str,
+    workflow_id: str,
 ) -> Query:
     """
-    Return biosample IDs linked to a workflow activity whose ID starts with `term`.
+    Return biosample IDs linked to a workflow activity whose ID starts with `workflow_id`.
     Join path: biosample_input_association > {activity}_data_generation_association,
     matched on their shared omics_processing_id / data_generation_id column.
     """
@@ -262,7 +262,7 @@ def _biosample_ids_via_workflow(
             data_generation_assoc.c.data_generation_id
             == models.biosample_input_association.c.omics_processing_id,
         )
-        .filter(activity_id_col.like(f"{term}%"))
+        .filter(activity_id_col.like(f"{workflow_id}%"))
         .distinct()
     )
 
