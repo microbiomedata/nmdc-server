@@ -102,7 +102,7 @@ function fullTextSearch(): void {
     value: filterText,
     table: 'full_text_search',
   };
-  emit('select', condition)
+  emit('select', condition);
 }
 
 function handleSearchFocus(focused: boolean): void {
