@@ -435,40 +435,6 @@ def search_biosample(
     ).execute(db, prefetch_omics_processing_data)
 
 
-def full_text_search_biosample(
-    db: Session,
-    term: str,
-    limit: int = 6,
-) -> Dict[str, Any]:
-    search_fields = func.concat_ws(
-        " ",
-        models.Biosample.id,
-        models.Biosample.name,
-        models.Biosample.description,
-        models.Biosample.alternate_identifiers,
-        models.Biosample.annotations,
-        models.Biosample.collection_date,
-        models.Biosample.study_id,
-        models.Biosample.env_broad_scale_id,
-        models.Biosample.env_local_scale_id,
-        models.Biosample.env_medium_id,
-        models.Biosample.ecosystem,
-        models.Biosample.ecosystem_category,
-        models.Biosample.ecosystem_type,
-        models.Biosample.ecosystem_subtype,
-        models.Biosample.specific_ecosystem,
-    )
-
-    base_query = db.query(models.Biosample).filter(
-        func.to_tsvector("simple", search_fields).op("@@")(func.plainto_tsquery("simple", term))
-    )
-
-    results = base_query.options(noload("*")).limit(limit).all()
-    count = base_query.count()
-
-    return {"count": count, "results": results}
-
-
 def get_biosample_ids(
     db: Session,
     conditions: List[query.ConditionSchema],
