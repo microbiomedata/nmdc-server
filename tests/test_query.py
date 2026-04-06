@@ -537,7 +537,14 @@ def test_full_text_search(db: Session):
 
     # Search by biosample name, only sample1 matches
     q = query.BiosampleQuerySchema(
-        conditions=[{"table": "full_text_search", "field": "search", "op": "like", "value": "uniquebiosamplename"}]
+        conditions=[
+            {
+                "table": "full_text_search",
+                "field": "search",
+                "op": "like",
+                "value": "uniquebiosamplename",
+            }
+        ]
     )
     results = {s.id for s in q.execute(db)}
     assert results == {"sample1"}
@@ -545,14 +552,28 @@ def test_full_text_search(db: Session):
 
     # Search by study name, all biosamples belonging to that study match
     q = query.BiosampleQuerySchema(
-        conditions=[{"table": "full_text_search", "field": "search", "op": "like", "value": "uniquestudyname"}]
+        conditions=[
+            {
+                "table": "full_text_search",
+                "field": "search",
+                "op": "like",
+                "value": "uniquestudyname",
+            }
+        ]
     )
     results = {s.id for s in q.execute(db)}
     assert results == {"sample1", "sample2"}
 
     # Search with a term that matches nothing
     q = query.BiosampleQuerySchema(
-        conditions=[{"table": "full_text_search", "field": "search", "op": "like", "value": "nonexistentterm"}]
+        conditions=[
+            {
+                "table": "full_text_search",
+                "field": "search",
+                "op": "like",
+                "value": "nonexistentterm",
+            }
+        ]
     )
     results = {s.id for s in q.execute(db)}
     assert results == set()
