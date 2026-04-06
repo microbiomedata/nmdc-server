@@ -1504,6 +1504,7 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
         "multiOmicsForm",
         "sampleData",
         "validationState",
+        "field_notes_metadata",
         "metadata_submission",
     }
     attempted_patch_fields = set(

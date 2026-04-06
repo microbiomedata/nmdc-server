@@ -194,7 +194,7 @@ include = ["nmdc_server*"]
 [tool.black]
 line-length = 100
 skip-string-normalization = false
-target-version = ['py37']
+target-version = ['py312']
 exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist'
 
 [tool.isort]
