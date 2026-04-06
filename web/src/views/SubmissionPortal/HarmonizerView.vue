@@ -403,6 +403,57 @@ function errorClick(index: number) {
   }
 }
 
+function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number, Record<number, string>>> {
+  const duplicateErrors: Record<string, Record<number, Record<number, string>>> = {};
+
+  // Track sample names and which tabs/rows they appear in
+  const sampleNameMap = new Map<string, Array<{ templateKey: string; rowIndex: number }>>();
+
+  // Collect all sample names from all tabs
+  templateList.value.forEach((templateKey) => {
+    const template = HARMONIZER_TEMPLATES[templateKey];
+    if (!template?.sampleDataSlot || !template?.schemaClass) {
+      return;
+    }
+
+    const tabData = sampleData.value[template.sampleDataSlot] || [];
+    tabData.forEach((row, rowIndex) => {
+      const sampleName = row[SAMP_NAME];
+      if (sampleName && sampleName.trim()) {
+        if (!sampleNameMap.has(sampleName)) {
+          sampleNameMap.set(sampleName, []);
+        }
+        sampleNameMap.get(sampleName)!.push({ templateKey, rowIndex });
+      }
+    });
+  });
+
+  // Find duplicates and add errors
+  sampleNameMap.forEach((occurrences, sampleName) => {
+    if (occurrences.length > 1) {
+      const errorMessage = `Duplicate sample name "${sampleName}" found in multiple tabs`;
+      occurrences.forEach(({ templateKey, rowIndex }) => {
+        if (!duplicateErrors[templateKey]) {
+          duplicateErrors[templateKey] = {};
+        }
+        if (!duplicateErrors[templateKey][rowIndex]) {
+          duplicateErrors[templateKey][rowIndex] = {};
+        }
+
+        // Find the column index for SAMP_NAME in this template
+        const template = HARMONIZER_TEMPLATES[templateKey];
+        const orderedAttrs = harmonizerApi.getOrderedAttributeNames(template!.schemaClass!);
+        const colIndex = orderedAttrs.indexOf(SAMP_NAME);
+        if (colIndex >= 0) {
+          duplicateErrors[templateKey][rowIndex][colIndex] = errorMessage;
+        }
+      });
+    }
+  });
+
+  return duplicateErrors;
+}
+
 async function validate() {
   const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
 
@@ -420,6 +471,20 @@ async function validate() {
 
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
+
+  // Add cross-tab duplicate sample name validation
+  const crossTabDuplicates = validateDuplicateSampleNamesAcrossTabs();
+  const crossTabDuplicatesForCurrentTab = crossTabDuplicates[activeTemplateKey.value!] || {};
+
+  // Merge the cross-tab duplicate errors into the current tab's validation result
+  Object.entries(crossTabDuplicatesForCurrentTab).forEach(([rowStr, colErrors]) => {
+    const rowNum = parseInt(rowStr, 10);
+    if (!result[rowNum]) {
+      result[rowNum] = {};
+    }
+    Object.assign(result[rowNum], colErrors);
+  });
+
   const valid = Object.keys(result).length === 0;
   if (!valid && !sidebarOpen.value) {
     sidebarOpen.value = true;
