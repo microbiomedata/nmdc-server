@@ -138,6 +138,7 @@ const validationSuccessSnackbar = ref(false);
 const importErrorSnackbar = ref(false);
 const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
+const envTriadErrors = ref<Record<string, string | null>>({});
 
 watch(activeTemplate, () => {
   // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -431,6 +432,7 @@ async function validate() {
         env_package: activeTemplateKey.value!,
         template_type: sampleDataSlot,
       });
+      envTriadErrors.value[activeTemplateKey.value!] = null; // Clear error on success
       for (const [rowStr, fieldErrors] of Object.entries(triadResult)) {
         const row = parseInt(rowStr, 10);
         for (const [fieldName, errorMsg] of Object.entries(fieldErrors as Record<string, string>)) {
@@ -444,6 +446,11 @@ async function validate() {
       }
     } catch (e) {
       console.error('Env triad validation failed:', e);
+      envTriadErrors.value[activeTemplateKey.value!] = String(e);
+      setTabInvalidCells(activeTemplateKey.value!, result);
+      setTabValidated(activeTemplateKey.value!, false);
+      saveRecord();
+      return;
     }
   }
 
@@ -768,6 +775,15 @@ const appBannerHeight = inject(AppBannerHeightKey);
           >
             The spreadsheet is empty. Please add data.
           </v-snackbar>
+          <v-alert
+            v-if="envTriadErrors[activeTemplateKey!]"
+            type="error"
+            class="my-2"
+            closable
+            @click:close="envTriadErrors[activeTemplateKey!] = null"
+          >
+            Environmental validation failed. Please try validating again.
+          </v-alert>
           <v-card
             v-if="validationErrorGroups.length"
             color="error"

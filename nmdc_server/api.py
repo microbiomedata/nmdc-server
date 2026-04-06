@@ -21,7 +21,6 @@ from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
 from nmdc_server import crud, models, query, schemas, schemas_submission
-from nmdc_server.env_triad import validate_sample_data_triad
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -34,6 +33,7 @@ from nmdc_server.crud import (
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
+from nmdc_server.env_triad import validate_sample_data_triad
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester

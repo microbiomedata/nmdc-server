@@ -90,6 +90,7 @@ def ontology_hierarchy(db: Session):
 
     # Populate envo_term and envo_ancestor from the ontology tables
     envo.load(db)
+    db.commit()  # Commit so endpoint tests (which use a separate session) can see the data
 
 
 # --- Unit tests for parse_ontology_id ---
