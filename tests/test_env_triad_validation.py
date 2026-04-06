@@ -263,9 +263,7 @@ def test_po_term_allowed_for_plant_associated_local_scale(db: Session, ontology_
         },
     ]
 
-    result = validate_sample_data_triad(
-        db, samples, "not-a-confirmed-env", "plant_associated_data"
-    )
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "plant_associated_data")
     # PO term should not produce hierarchy errors for local_scale
     row_errors = result.get(0, {})
     assert "env_local_scale" not in row_errors
