@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Query, Session, noload
+from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
