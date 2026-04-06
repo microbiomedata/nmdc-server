@@ -1490,19 +1490,22 @@ async def get_submission(
 
 def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     """Compare a patch payload with what the user can actually save."""
-    metadata_contributor_fields = set(["sampleData", "metadata_submission"])
-    editor_fields = set(
-        [
-            "packageName",
-            "contextForm",
-            "addressForm",
-            "templates",
-            "studyForm",
-            "multiOmicsForm",
-            "sampleData",
-            "metadata_submission",
-        ]
-    )
+    metadata_contributor_fields = {
+        "sampleData",
+        "validationState",
+        "metadata_submission",
+    }
+    editor_fields = {
+        "packageName",
+        "contextForm",
+        "addressForm",
+        "templates",
+        "studyForm",
+        "multiOmicsForm",
+        "sampleData",
+        "validationState",
+        "metadata_submission",
+    }
     attempted_patch_fields = set(
         [key for key in data] + [key for key in data.get("metadata_submission", {})]
     )
@@ -2009,7 +2012,7 @@ async def submit_metadata(
     tags=["metadata_submission"],
     responses=login_required_responses,
 )
-async def suggest_meta_from_study(
+def suggest_meta_from_study(
     id: str,
     db: Session = Depends(get_db),
     suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),

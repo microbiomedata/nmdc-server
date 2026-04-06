@@ -671,7 +671,9 @@ watch(templateList, (newList, oldList) => {
   hasChanged.value += 1;
 });
 
-/** Submit page */
+// *** IMPORTANT ***
+// If you add a new field here, check whether the list of fields in the `can_save_submission` function
+// in `nmdc_server/api.py` also needs to be updated.
 const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
   addressForm,
