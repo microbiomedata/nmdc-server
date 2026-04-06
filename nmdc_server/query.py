@@ -172,8 +172,10 @@ class WorkflowTypecodeEntry(TypedDict):
     data_generation_association_table: Any
 
 
-# Maps each NMDC typecode to the workflow activity model and its data generation
+# Maps each NMDC workflow typecode to the workflow activity model and its data generation
 # association table, used to join back to Biosample via OmicsProcessing.
+# An NMDC workflow typecode are all that start with "wf". 
+# See https://microbiomedata.github.io/nmdc-schema/typecode-to-class-map/
 _WORKFLOW_TYPECODE_MAP: Dict[NmdcTypecode, WorkflowTypecodeEntry] = {
     NmdcTypecode.read_qc_analysis: {
         "workflow_activity_model": models.ReadsQC,
