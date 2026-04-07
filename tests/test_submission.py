@@ -11,7 +11,10 @@ from starlette.testclient import TestClient
 
 from nmdc_server import fakes
 from nmdc_server.models import SubmissionEditorRole, SubmissionImagesObject, SubmissionRole
-from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
+from nmdc_server.schemas_submission import (
+    SubmissionMetadataSchema,
+    SubmissionMetadataSchemaPatch,
+)
 from nmdc_server.storage import BucketName, storage
 
 
@@ -611,21 +614,42 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
     assert response.status_code == code
 
 
-@pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
+@pytest.mark.parametrize(
+    "role,code",
+    [
+        (SubmissionEditorRole.owner, 200),
+        (SubmissionEditorRole.editor, 200),
+        (SubmissionEditorRole.metadata_contributor, 200),
+        (SubmissionEditorRole.viewer, 403),
+        (SubmissionEditorRole.reviewer, 403),
+        (None, 403),
+    ],
+)
 def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
-    if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory()
-        payload = SubmissionMetadataSchema.model_validate(submission)
-        db.commit()
-        role = fakes.SubmissionRoleFactory(
+    submission = fakes.MetadataSubmissionFactory()
+    if role is not None:
+        fakes.SubmissionRoleFactory(
             submission=submission,
             submission_id=submission.id,
             user_orcid=logged_in_user.orcid,
+            role=role,
         )
-    else:
-        submission = fakes.MetadataSubmissionFactory()
-        payload = SubmissionMetadataSchema.model_validate(submission)
     db.commit()
+
+    match role:
+        case SubmissionEditorRole.owner:
+            payload = {
+                "metadata_submission": submission.metadata_submission,
+                "permissions": {"0000-0000-0000-0000": SubmissionEditorRole.viewer.value},
+            }
+        case SubmissionEditorRole.editor:
+            payload = {"metadata_submission": submission.metadata_submission}
+        case SubmissionEditorRole.metadata_contributor:
+            payload = {
+                "metadata_submission": {"sampleData": submission.metadata_submission["sampleData"]}
+            }
+        case _:
+            payload = {"metadata_submission": submission.metadata_submission}
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
