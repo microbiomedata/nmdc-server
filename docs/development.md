@@ -160,7 +160,7 @@ To see all CLI options run:
 nmdc-server load-db --help
 ```
 
-**Note**: if you already have a local database set up, the first time you attempt to load from a production backup you may see an error about a missing `nmdc_data_reader` role. If you see this error, run the following command to remove existing docker volumes:
+**Note**: if you already have a local database set up, the first time you attempt to load from a production backup you may see an error about a missing `nmdc_data_reader` or `nmdc_reader` role. If you see this error, run the following command to remove existing docker volumes:
 
 ```bash
 docker compose down -v
