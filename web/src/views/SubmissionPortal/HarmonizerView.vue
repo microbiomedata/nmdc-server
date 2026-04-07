@@ -409,8 +409,8 @@ function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number,
   // Track sample names and which tabs/rows they appear in
   const sampleNameMap = new Map<string, Array<{ templateKey: string; rowIndex: number }>>();
 
-  // Collect all sample names from all tabs
-  templateList.value.forEach((templateKey) => {
+  // Collect all sample names from environmental tabs
+  packageName.value.forEach((templateKey) => {
     const template = HARMONIZER_TEMPLATES[templateKey];
     if (!template?.sampleDataSlot || !template?.schemaClass) {
       return;
