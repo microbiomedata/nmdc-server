@@ -475,7 +475,6 @@ def load_db(key_file, user, host, list_backups, backup_file):
             settings.current_db_uri,
             "--clean",
             "--if-exists",
-            "--no-privileges",
             "--verbose",
             "--single-transaction",
             backup_file,
