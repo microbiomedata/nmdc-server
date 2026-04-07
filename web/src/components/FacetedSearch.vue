@@ -1,5 +1,5 @@
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
 import { groupBy } from 'lodash';
 
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
@@ -26,111 +26,151 @@ export interface SearchFacet {
 
 type KeyedFieldData = encoding.FieldsData & SearchFacet & { key: string; };
 
-export default defineComponent({
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-    fields: {
-      type: Array as PropType<SearchFacet[]>,
-      required: true,
-    },
-    filterText: {
-      type: String,
-      required: true,
-    },
-    facetValues: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-  },
-  emits: ['update:filterText', 'select'],
-  data() {
-    return {
-      menuState: {} as Record<string, boolean>,
-    };
-  },
-  computed: {
-    privatefilteredFields(): SearchFacet[] {
-      const { filterText } = this;
-      if (filterText) {
-        return this.fields.filter(({ field, table }) => {
-          const lower = filterText.toLowerCase();
-          return (
-            field.toLowerCase().indexOf(lower) >= 0
-            || fieldDisplayName(field, table).toLowerCase().indexOf(lower) >= 0
-          );
-        });
-      }
-      return this.fields;
-    },
-    groupedFields(): [string, KeyedFieldData[]][] {
-      const fieldsWithMeta = this.privatefilteredFields
-        .map((sf) => ({
-          key: `${sf.table}_${sf.field}`,
-          ...sf,
-          ...encoding.getField(sf.field, sf.table),
-        }))
-        .filter(({ hideFacet }) => !hideFacet)
-        .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
-      return Object.entries(groupBy(fieldsWithMeta, 'group'))
-        .sort(([a], [b]) => {
-          const ai = groupOrders.indexOf(a.toLowerCase());
-          const bi = groupOrders.indexOf(b.toLowerCase());
-          return ai - bi;
-        });
-    },
-    goldDescription(): string {
-      return NmdcSchema.slots.gold_path_field.annotations.tooltip.value;
-    },
-    mixsDescription(): string {
-      return NmdcSchema.slots.mixs_env_triad_field.annotations.tooltip.value;
-    },
-  },
-  methods: {
-    fieldDisplayName,
-    toggleMenu(category: string, value: boolean): void {
-      this.menuState[category] = value;
-    },
-    hasActiveConditions(category: string): boolean {
-      return this.conditions.some((cond) => `${cond.table}_${cond.field}` === category);
-    },
-    tableName(table: string): string {
-      if (table === 'study') {
-        return 'Study';
-      }
-      if (table === 'biosample') {
-        return 'Biosample';
-      }
-      if (table === 'omics_processing') {
-        return 'Omics Processing';
-      }
-      return '';
-    },
-  },
+const { conditions, fields, filterText, facetValues } = defineProps<{
+  conditions: Condition[];
+  fields: SearchFacet[];
+  filterText: string;
+  facetValues: Condition[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:filterText', value: string): void;
+  (e: 'select', condition: Condition): void;
+}>();
+
+const menuState = ref({} as Record<string, boolean>);
+const showSearchHelp = ref(false);
+
+const privatefilteredFields = computed((): SearchFacet[] => {
+  if (filterText) {
+    return fields.filter(({ field, table }) => {
+      const lower = filterText.toLowerCase();
+      return (
+        field.toLowerCase().indexOf(lower) >= 0
+        || fieldDisplayName(field, table).toLowerCase().indexOf(lower) >= 0
+      );
+    });
+  }
+  return fields;
+});
+
+const groupedFields = computed((): [string, KeyedFieldData[]][] => {
+  const fieldsWithMeta = privatefilteredFields.value
+    .map((sf) => ({
+      key: `${sf.table}_${sf.field}`,
+      ...sf,
+      ...encoding.getField(sf.field, sf.table),
+    }))
+    .filter(({ hideFacet }) => !hideFacet)
+    .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
+  return Object.entries(groupBy(fieldsWithMeta, 'group'))
+    .sort(([a], [b]) => {
+      const ai = groupOrders.indexOf(a.toLowerCase());
+      const bi = groupOrders.indexOf(b.toLowerCase());
+      return ai - bi;
+    });
+});
+
+const goldDescription = computed((): string => NmdcSchema.slots.gold_path_field.annotations.tooltip.value);
+const mixsDescription = computed((): string => NmdcSchema.slots.mixs_env_triad_field.annotations.tooltip.value);
+
+function toggleMenu(category: string, value: boolean): void {
+  menuState.value[category] = value;
+}
+
+function hasActiveConditions(category: string): boolean {
+  return conditions.some((cond) => `${cond.table}_${cond.field}` === category);
+}
+
+function tableName(table: string): string {
+  if (table === 'study') {
+    return 'Study';
+  }
+  if (table === 'biosample') {
+    return 'Biosample';
+  }
+  if (table === 'omics_processing') {
+    return 'Omics Processing';
+  }
+  return '';
+}
+
+function fullTextSearch(): void {
+  const condition: Condition = {
+    op: 'like',
+    field: 'search',
+    value: filterText,
+    table: 'full_text_search',
+  };
+  emit('select', condition);
+}
+
+function handleSearchFocus(focused: boolean): void {
+  if (!focused || filterText.length > 0) {
+    showSearchHelp.value = false;
+  } else {
+    showSearchHelp.value = true;
+  }
+}
+
+watch(() => filterText, (newVal) => {
+  if (newVal.length > 0) {
+    showSearchHelp.value = false;
+  }
 });
 </script>
 
 <template>
   <div>
-    <v-text-field
-      :model-value="filterText"
-      label="search"
-      clearable
-      class="mx-3 pt-1"
-      hide-details
-      variant="outlined"
-      density="compact"
-      append-inner-icon="mdi-magnify"
-      @update:model-value="$emit('update:filterText', $event || '')"
-    />
+    <v-tooltip
+      v-model="showSearchHelp"
+      location="bottom"
+      :open-on-hover="false"
+    >
+      <template #activator="{ props }">
+        <v-text-field
+          :model-value="filterText"
+          v-bind="props"
+          label="search"
+          autocomplete="off"
+          clearable
+          class="mx-3 pt-1"
+          hide-details
+          variant="outlined"
+          density="compact"
+          append-inner-icon="mdi-magnify"
+          @update:model-value="$emit('update:filterText', $event || '')"
+          @keydown.enter="fullTextSearch"
+          @update:focused="handleSearchFocus"
+        />
+      </template>
+      <span>Type to find a filter or perform a full text search.</span>
+    </v-tooltip>
     <v-list
       ref="list"
       density="compact"
       shaped
       class="compact"
     >
+      <div v-if="filterText">
+        <v-divider
+          class="my-2"
+        />
+        <v-list-subheader>
+          Full Text Search
+        </v-list-subheader>
+        <v-list-item @click="fullTextSearch">
+          <v-list-item-title>
+            "{{ filterText }}"
+          </v-list-item-title>
+          <template #append>
+            <v-icon>mdi-text-search</v-icon>
+          </template>
+        </v-list-item>
+        <v-divider
+          class="my-2"
+        />
+      </div>
       <div
         v-for="[groupname, filteredFields] in groupedFields"
         :key="groupname"
@@ -207,7 +247,7 @@ export default defineComponent({
                 v-bind="{
                   field: sf.field,
                   table: sf.table,
-                  isOpen: menuState[sf.key],
+                  isOpen: menuState[sf.key] ?? false,
                   toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
                 }"
               />

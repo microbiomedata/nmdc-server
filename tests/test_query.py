@@ -526,3 +526,54 @@ def test_query_multiomics(db: Session, value: int, result: bool):
         conditions=[{"table": "biosample", "field": "multiomics", "op": "has", "value": value}]
     )
     assert bool(list(qs.execute(db))) is result
+
+
+def test_full_text_search(db: Session):
+    study = fakes.StudyFactory(name="uniquestudyname")
+    fakes.BiosampleFactory(id="sample1", name="uniquebiosamplename", study=study)
+    fakes.BiosampleFactory(id="sample2", name="somethingelse", study=study)
+    fakes.BiosampleFactory(id="sample3", name="anothervalue")
+    db.commit()
+
+    # Search by biosample name, only sample1 matches
+    q = query.BiosampleQuerySchema(
+        conditions=[
+            {
+                "table": "full_text_search",
+                "field": "search",
+                "op": "like",
+                "value": "uniquebiosamplename",
+            }
+        ]
+    )
+    results = {s.id for s in q.execute(db)}
+    assert results == {"sample1"}
+    assert q.count(db) == 1
+
+    # Search by study name, all biosamples belonging to that study match
+    q = query.BiosampleQuerySchema(
+        conditions=[
+            {
+                "table": "full_text_search",
+                "field": "search",
+                "op": "like",
+                "value": "uniquestudyname",
+            }
+        ]
+    )
+    results = {s.id for s in q.execute(db)}
+    assert results == {"sample1", "sample2"}
+
+    # Search with a term that matches nothing
+    q = query.BiosampleQuerySchema(
+        conditions=[
+            {
+                "table": "full_text_search",
+                "field": "search",
+                "op": "like",
+                "value": "nonexistentterm",
+            }
+        ]
+    )
+    results = {s.id for s in q.execute(db)}
+    assert results == set()

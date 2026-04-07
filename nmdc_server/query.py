@@ -7,7 +7,19 @@ import re
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
-from typing import Any, Dict, Generic, Iterator, List, Optional, Tuple, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
@@ -108,6 +120,151 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 
 NumericValue = Union[float, int, datetime]
 RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_items=2)]
+
+# Matches any NMDC-style compact URI, e.g. "nmdc:bsm-11-abc123" or "gold:Gp0123".
+_NMDC_ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\.]+:[a-zA-Z0-9_][a-zA-Z0-9_\-\/\.,]*$")
+
+
+# A definitive list of typecodes used in NMDC IDs.
+# This should probably live in nmdc-schema somewhere instead.
+# Based on https://microbiomedata.github.io/nmdc-schema/typecode-to-class-map/
+class NmdcTypecode(Enum):
+    biosample = "bsm"
+    calibration_information = "calib"
+    chemical_conversion_process = "chcpr"
+    chromatography_configuration = "chrcon"
+    collecting_biosamples_from_site = "clsite"
+    chromatographic_separation_process = "cspro"
+    mass_spectrometry = "dgms"
+    nucleotide_sequencing = "dgns"
+    dissolving_process = "dispro"
+    data_object = "dobj"
+    extraction = "extrp"
+    filtration_process = "filtpr"
+    field_research_site = "frsite"
+    instrument = "inst"
+    library_preparation = "libprp"
+    manifest = "manif"
+    mixing_process = "mixpro"
+    mass_spectrometry_configuration = "mscon"
+    # OmicsProcessing is not an official schema class but it is a typecode
+    omics_processing = "omprc"
+    pooling = "poolp"
+    processed_sample = "procsm"
+    storage_process = "storpr"
+    study = "sty"
+    sub_sampling_process = "subspr"
+    mags_analysis = "wfmag"
+    metabolomics_analysis = "wfmb"
+    metagenome_annotation = "wfmgan"
+    metagenome_assembly = "wfmgas"
+    metaproteomics_analysis = "wfmp"
+    metatranscriptome_annotation = "wfmtan"
+    metatranscriptome_assembly = "wfmtas"
+    metatranscriptome_expression_analysis = "wfmtex"
+    nom_analysis = "wfnom"
+    read_based_taxonomy_analysis = "wfrbt"
+    read_qc_analysis = "wfrqc"
+
+
+class WorkflowTypecodeEntry(TypedDict):
+    workflow_activity_model: Any
+    data_generation_association_table: Any
+
+
+# Maps each NMDC workflow typecode to the workflow activity model and its data generation
+# association table, used to join back to Biosample via OmicsProcessing.
+# An NMDC workflow typecode are all that start with "wf".
+# See https://microbiomedata.github.io/nmdc-schema/typecode-to-class-map/
+_WORKFLOW_TYPECODE_MAP: Dict[NmdcTypecode, WorkflowTypecodeEntry] = {
+    NmdcTypecode.read_qc_analysis: {
+        "workflow_activity_model": models.ReadsQC,
+        "data_generation_association_table": models.reads_qc_data_generation_association,
+    },
+    NmdcTypecode.metagenome_assembly: {
+        "workflow_activity_model": models.MetagenomeAssembly,
+        "data_generation_association_table": models.metagenome_assembly_data_generation_association,
+    },
+    NmdcTypecode.metatranscriptome_assembly: {
+        "workflow_activity_model": models.MetatranscriptomeAssembly,
+        "data_generation_association_table": models.metatranscriptome_assembly_data_generation_association,
+    },
+    NmdcTypecode.metagenome_annotation: {
+        "workflow_activity_model": models.MetagenomeAnnotation,
+        "data_generation_association_table": models.metagenome_annotation_data_generation_association,
+    },
+    NmdcTypecode.metatranscriptome_annotation: {
+        "workflow_activity_model": models.MetatranscriptomeAnnotation,
+        "data_generation_association_table": models.metatranscriptome_annotation_data_generation_association,
+    },
+    NmdcTypecode.metaproteomics_analysis: {
+        "workflow_activity_model": models.MetaproteomicAnalysis,
+        "data_generation_association_table": models.metaproteomic_analysis_data_generation_association,
+    },
+    NmdcTypecode.mags_analysis: {
+        "workflow_activity_model": models.MAGsAnalysis,
+        "data_generation_association_table": models.mags_analysis_data_generation_association,
+    },
+    NmdcTypecode.read_based_taxonomy_analysis: {
+        "workflow_activity_model": models.ReadBasedAnalysis,
+        "data_generation_association_table": models.read_based_analysis_data_generation_association,
+    },
+    NmdcTypecode.nom_analysis: {
+        "workflow_activity_model": models.NOMAnalysis,
+        "data_generation_association_table": models.nom_analysis_data_generation_association,
+    },
+    NmdcTypecode.metabolomics_analysis: {
+        "workflow_activity_model": models.MetabolomicsAnalysis,
+        "data_generation_association_table": models.metabolomics_analysis_data_generation_association,
+    },
+    NmdcTypecode.metatranscriptome_expression_analysis: {
+        "workflow_activity_model": models.Metatranscriptome,
+        "data_generation_association_table": models.metatranscriptome_data_generation_association,
+    },
+}
+
+
+_NMDC_TYPECODE_BY_VALUE: Dict[str, NmdcTypecode] = {tc.value: tc for tc in NmdcTypecode}
+
+
+def _extract_nmdc_typecode(term: str) -> Optional[NmdcTypecode]:
+    """
+    Extract the typecode from an NMDC ID (e.g. 'nmdc:wfmtan-11-abc.1' > NmdcTypecode.metatranscriptome_annotation).
+    Returns None if the term does not match the NMDC ID pattern or the typecode is not recognized.
+    """
+    if not _NMDC_ID_RE.match(term):
+        return None
+    try:
+        remainder = term.split(":", 1)[1]
+        typecode_str = remainder.split("-")[0]
+    except (IndexError, ValueError):
+        return None
+    return _NMDC_TYPECODE_BY_VALUE.get(typecode_str)
+
+
+def _biosample_ids_via_workflow(
+    db: Session,
+    activity_model: Any,
+    data_generation_assoc: Any,
+    workflow_id: str,
+) -> Query:
+    """
+    Return biosample IDs linked to a workflow activity whose ID starts with `workflow_id`.
+    Join path: biosample_input_association > {activity}_data_generation_association,
+    matched on their shared omics_processing_id / data_generation_id column.
+    """
+    table_name = activity_model.__tablename__
+    activity_id_col = data_generation_assoc.c[f"{table_name}_id"]
+    return (
+        db.query(models.biosample_input_association.c.biosample_id.label("id"))
+        .join(
+            data_generation_assoc,
+            data_generation_assoc.c.data_generation_id
+            == models.biosample_input_association.c.omics_processing_id,
+        )
+        .filter(activity_id_col.like(f"{workflow_id}%"))
+        .distinct()
+    )
 
 
 class GoldTreeValue(BaseModel):
@@ -255,7 +412,18 @@ class MultiomicsConditionSchema(BaseConditionSchema):
         return and_(*and_args)
 
 
+# A special condition type for full-text search.  Unlike other conditions, this does not
+# map to a specific column or table — it triggers a tsvector search across a pre-defined
+# set of fields in BaseQuerySchema subclasses that override _fts_subquery.
+class FullTextSearchConditionSchema(BaseModel):
+    table: Literal["full_text_search"] = "full_text_search"
+    field: Literal["search"] = "search"
+    op: Literal["like"] = "like"
+    value: str
+
+
 ConditionSchema = Union[
+    FullTextSearchConditionSchema,
     RangeConditionSchema,
     SimpleConditionSchema,
     GoldConditionSchema,
@@ -293,7 +461,11 @@ class BaseQuerySchema(BaseModel):
 
     @property
     def sorted_conditions(self) -> List[BaseConditionSchema]:
-        conditions = [c.__class__.from_schema(c, self.table) for c in self.conditions]
+        conditions = [
+            c.__class__.from_schema(c, self.table)
+            for c in self.conditions
+            if not isinstance(c, FullTextSearchConditionSchema)
+        ]
         return sorted(conditions, key=lambda c: c.key)
 
     @property
@@ -424,6 +596,15 @@ class BaseQuerySchema(BaseModel):
             else:
                 matches.append(filter.matches(db, self.table))
 
+        # Handle full-text search conditions by delegating to the per-entity subquery method.
+        for fts_cond in [
+            c for c in self.conditions if isinstance(c, FullTextSearchConditionSchema)
+        ]:
+            fts_match = self._fts_subquery(db, fts_cond.value)
+            if fts_match is not None:
+                matches.append(fts_match)
+                has_filters = True
+
         query = db.query(self.table.model.id.label("id"))
         if has_filters:
             matches_query = intersect(*matches).alias("intersect")
@@ -442,6 +623,14 @@ class BaseQuerySchema(BaseModel):
     def count(self, db: Session) -> int:
         """Return the number of matched entities for the query."""
         return self.query(db).count()
+
+    def _fts_subquery(self, db: Session, term: str) -> Optional[Query]:
+        """Return a subquery of entity IDs matching a full-text search term.
+
+        Override in subclasses to support full-text search for that entity type.
+        Returns None by default, which causes the FTS condition to be silently ignored.
+        """
+        return None
 
     def get_query_range(
         self,
@@ -639,7 +828,7 @@ class StudyQuerySchema(BaseQuerySchema):
         return q
 
     def _count_omics_processing_summary(
-        self, db: Session, conditions: List[ConditionSchema]
+        self, db: Session, conditions: Sequence[ConditionSchema]
     ) -> Query:
         """Aggregate omics types into a custom jsonb response."""
         op_summary_alias = aliased(models.OmicsProcessing)
@@ -682,7 +871,8 @@ class StudyQuerySchema(BaseQuerySchema):
             filter_conditions = [
                 c
                 for c in self.conditions
-                if c.table.value in {"omics_processing", table_name, "biosample"}
+                if not isinstance(c, FullTextSearchConditionSchema)
+                and c.table.value in {"omics_processing", table_name, "biosample"}
             ]
 
             # generate a filtered subquery of the given omics type
@@ -705,7 +895,8 @@ class StudyQuerySchema(BaseQuerySchema):
         op_filter_conditions = [
             c
             for c in self.conditions
-            if c.table.value
+            if not isinstance(c, FullTextSearchConditionSchema)
+            and c.table.value
             in {"omics_processing", "biosample", "gene_function", "metaproteomic_analysis"}
         ]
         op_summary_subquery = self._count_omics_processing_summary(
@@ -728,20 +919,25 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def query(self, db: Session):
         study_query = super().query(db)
+        fts_condition_exists = any(
+            isinstance(c, FullTextSearchConditionSchema) for c in self.conditions
+        )
         biosample_condition_exists = any(
             [condition.table == Table.biosample for condition in self.conditions]
         )
         omics_condition_exists = any(
             [condition.table == Table.omics_processing for condition in self.conditions]
         )
-        if biosample_condition_exists:
-            sample_query = BiosampleQuerySchema(conditions=self.conditions).query(db)
-            studies_from_sample_query = sample_query.with_entities(
-                models.Biosample.study_id
-            ).distinct()
-            study_query = study_query.where(  # type: ignore
-                self.table.model.id.in_(studies_from_sample_query)
+        if fts_condition_exists or biosample_condition_exists:
+            biosample_ids_subquery = (
+                BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
             )
+            study_ids_from_biosamples = (
+                db.query(models.Biosample.study_id)
+                .join(biosample_ids_subquery, models.Biosample.id == biosample_ids_subquery.c.id)
+                .distinct()
+            )
+            study_query = study_query.filter(self.table.model.id.in_(study_ids_from_biosamples))
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
             studies_from_omics_query = omics_query.with_entities(
@@ -807,6 +1003,24 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
             return {value: count for count, value in aggregated_query if value is not None}
         return super().facet(db, attribute)
 
+    def _fts_subquery(self, db: Session, term: str) -> Optional[Query]:
+        """Return OmicsProcessing IDs linked to biosamples matching the full-text search."""
+        biosample_fts_subquery = BiosampleQuerySchema()._fts_subquery(db, term)
+        biosample_subquery = biosample_fts_subquery.subquery()
+        return (
+            db.query(models.OmicsProcessing.id.label("id"))
+            .join(
+                models.biosample_input_association,
+                models.biosample_input_association.c.omics_processing_id
+                == models.OmicsProcessing.id,
+            )
+            .join(
+                biosample_subquery,
+                models.biosample_input_association.c.biosample_id == biosample_subquery.c.id,
+            )
+            .distinct()
+        )
+
     def omics_processing_for_biosample_ids(self, db: Session, biosample_ids):
         # Do the normal query with the conditions
         query = self.execute(db)
@@ -825,6 +1039,134 @@ class BiosampleQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.biosample
+
+    def _fts_subquery(self, db: Session, term: str) -> Query:
+        """Return biosample IDs whose text fields match the full-text search term.
+
+        If the term looks like an NMDC ID (e.g. "nmdc:wfmtan-11-abc.1"), a targeted
+        join query is used instead of a tsvector scan.  This is more efficient because
+        the typecode tells us exactly which table holds the ID and how to traverse back
+        to Biosample. The match is a prefix LIKE so partial IDs work as well.
+        """
+        typecode = _extract_nmdc_typecode(term)
+
+        if typecode == NmdcTypecode.biosample:
+            return db.query(models.Biosample.id.label("id")).filter(
+                models.Biosample.id.like(f"{term}%")
+            )
+
+        if typecode == NmdcTypecode.study:
+            return (
+                db.query(models.Biosample.id.label("id"))
+                .join(models.Study, models.Biosample.study_id == models.Study.id)
+                .filter(models.Study.id.like(f"{term}%"))
+            )
+
+        if typecode in (
+            NmdcTypecode.omics_processing,
+            NmdcTypecode.mass_spectrometry,
+            NmdcTypecode.nucleotide_sequencing,
+        ):
+            return (
+                db.query(models.biosample_input_association.c.biosample_id.label("id"))
+                .join(
+                    models.OmicsProcessing,
+                    models.OmicsProcessing.id
+                    == models.biosample_input_association.c.omics_processing_id,
+                )
+                .filter(models.OmicsProcessing.id.like(f"{term}%"))
+                .distinct()
+            )
+
+        if typecode == NmdcTypecode.data_object:
+            return (
+                db.query(models.biosample_input_association.c.biosample_id.label("id"))
+                .join(
+                    models.omics_processing_output_association,
+                    models.omics_processing_output_association.c.omics_processing_id
+                    == models.biosample_input_association.c.omics_processing_id,
+                )
+                .join(
+                    models.DataObject,
+                    models.DataObject.id
+                    == models.omics_processing_output_association.c.data_object_id,
+                )
+                .filter(models.DataObject.id.like(f"{term}%"))
+                .distinct()
+            )
+
+        # Handle workflow ID searches
+        if typecode is not None:
+            entry = _WORKFLOW_TYPECODE_MAP.get(typecode)
+            if entry is not None:
+                return _biosample_ids_via_workflow(
+                    db,
+                    entry["workflow_activity_model"],
+                    entry["data_generation_association_table"],
+                    term,
+                )
+
+        # Fallback: tsvector full-text search on biosample fields
+        envo_broad_scale = aliased(models.EnvoTerm)
+        envo_local_scale = aliased(models.EnvoTerm)
+        envo_medium = aliased(models.EnvoTerm)
+
+        biosample_search_fields = func.concat_ws(
+            " ",
+            models.Biosample.id,
+            models.Biosample.name,
+            models.Biosample.description,
+            models.Biosample.alternate_identifiers,
+            models.Biosample.annotations,
+            models.Biosample.collection_date,
+            models.Biosample.study_id,
+            models.Biosample.env_broad_scale_id,
+            envo_broad_scale.label,
+            models.Biosample.env_local_scale_id,
+            envo_local_scale.label,
+            models.Biosample.env_medium_id,
+            envo_medium.label,
+            models.Biosample.ecosystem,
+            models.Biosample.ecosystem_category,
+            models.Biosample.ecosystem_type,
+            models.Biosample.ecosystem_subtype,
+            models.Biosample.specific_ecosystem,
+        )
+        biosample_fts_query = (
+            db.query(models.Biosample.id.label("id"))
+            .outerjoin(envo_broad_scale, envo_broad_scale.id == models.Biosample.env_broad_scale_id)
+            .outerjoin(envo_local_scale, envo_local_scale.id == models.Biosample.env_local_scale_id)
+            .outerjoin(envo_medium, envo_medium.id == models.Biosample.env_medium_id)
+            .filter(
+                func.to_tsvector("simple", biosample_search_fields).op("@@")(
+                    func.plainto_tsquery("simple", term)
+                )
+            )
+        )
+
+        # Also search study fields and return all biosamples belonging to matching studies
+        study_search_fields = func.concat_ws(
+            " ",
+            models.Study.id,
+            models.Study.name,
+            models.Study.description,
+            models.Study.gold_name,
+            models.Study.gold_description,
+            models.Study.scientific_objective,
+            models.Study.annotations,
+            models.Study.alternate_identifiers,
+        )
+        study_fts_query = (
+            db.query(models.Biosample.id.label("id"))
+            .join(models.Study, models.Biosample.study_id == models.Study.id)
+            .filter(
+                func.to_tsvector("simple", study_search_fields).op("@@")(
+                    func.plainto_tsquery("simple", term)
+                )
+            )
+        )
+
+        return biosample_fts_query.union(study_fts_query)
 
     def query(self, db: Session):
         sample_query = super().query(db)
