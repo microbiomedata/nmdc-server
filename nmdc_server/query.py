@@ -1106,63 +1106,20 @@ class BiosampleQuerySchema(BaseQuerySchema):
                     term,
                 )
 
-        # Fallback: tsvector full-text search on biosample fields
-        envo_broad_scale = aliased(models.EnvoTerm)
-        envo_local_scale = aliased(models.EnvoTerm)
-        envo_medium = aliased(models.EnvoTerm)
-
-        biosample_search_fields = func.concat_ws(
-            " ",
-            models.Biosample.id,
-            models.Biosample.name,
-            models.Biosample.description,
-            models.Biosample.alternate_identifiers,
-            models.Biosample.annotations,
-            models.Biosample.collection_date,
-            models.Biosample.study_id,
-            models.Biosample.env_broad_scale_id,
-            envo_broad_scale.label,
-            models.Biosample.env_local_scale_id,
-            envo_local_scale.label,
-            models.Biosample.env_medium_id,
-            envo_medium.label,
-            models.Biosample.ecosystem,
-            models.Biosample.ecosystem_category,
-            models.Biosample.ecosystem_type,
-            models.Biosample.ecosystem_subtype,
-            models.Biosample.specific_ecosystem,
-        )
+        # Fallback: tsvector full-text search on biosample fields.
         biosample_fts_query = (
             db.query(models.Biosample.id.label("id"))
-            .outerjoin(envo_broad_scale, envo_broad_scale.id == models.Biosample.env_broad_scale_id)
-            .outerjoin(envo_local_scale, envo_local_scale.id == models.Biosample.env_local_scale_id)
-            .outerjoin(envo_medium, envo_medium.id == models.Biosample.env_medium_id)
             .filter(
-                func.to_tsvector("simple", biosample_search_fields).op("@@")(
-                    func.plainto_tsquery("simple", term)
-                )
+                models.Biosample.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
             )
         )
 
-        # Also search study fields and return all biosamples belonging to matching studies
-        study_search_fields = func.concat_ws(
-            " ",
-            models.Study.id,
-            models.Study.name,
-            models.Study.description,
-            models.Study.gold_name,
-            models.Study.gold_description,
-            models.Study.scientific_objective,
-            models.Study.annotations,
-            models.Study.alternate_identifiers,
-        )
+        # Also search study fields and return all biosamples belonging to matching studies.
         study_fts_query = (
             db.query(models.Biosample.id.label("id"))
             .join(models.Study, models.Biosample.study_id == models.Study.id)
             .filter(
-                func.to_tsvector("simple", study_search_fields).op("@@")(
-                    func.plainto_tsquery("simple", term)
-                )
+                models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
             )
         )
 
