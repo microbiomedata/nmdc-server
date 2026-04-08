@@ -57,6 +57,18 @@ def ontology_hierarchy(db: Session):
     )
     # Non-ENVO term (Plant Ontology)
     fakes.OntologyClassFactory(id="PO:0025143", name="tepal apex")
+    fakes.OntologyClassFactory(id="PO:0025034", name="leaf")
+    # Organism-determined environmental system
+    fakes.OntologyClassFactory(
+        id="ENVO:01001000",
+        name="environmental system determined by an organism",
+        is_root=True,
+    )
+    fakes.OntologyClassFactory(
+        id="ENVO:01001001",
+        name="plant-associated environment",
+        definition="An environmental system determined by a plant",
+    )
     db.commit()
 
     # Relationships: rdfs:subClassOf (direct parents)
@@ -74,6 +86,10 @@ def ontology_hierarchy(db: Session):
     )
     fakes.OntologyRelationFactory(
         subject="ENVO:00000067", predicate="rdfs:subClassOf", object="ENVO:01000813"
+    )
+
+    fakes.OntologyRelationFactory(
+        subject="ENVO:01001001", predicate="rdfs:subClassOf", object="ENVO:01001000"
     )
 
     # Transitive closure entries
@@ -212,11 +228,11 @@ def test_obsolete_term_rejected(db: Session, ontology_hierarchy):
 
 
 def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy):
-    """env_broad_scale must be a subclass of biome."""
+    """env_broad_scale must be a subclass of biome or organism-determined env system."""
     samples = [
         {
             "samp_name": "Sample 1",
-            # soil is environmental material, not biome
+            # soil is environmental material, not biome or organism-determined env system
             "env_broad_scale": "soil [ENVO:00001998]",
             "env_local_scale": "cave [ENVO:00000067]",
             "env_medium": "soil [ENVO:00001998]",
@@ -224,7 +240,8 @@ def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy):
     ]
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
-    assert "not a subclass of biome" in result[0]["env_broad_scale"]
+    assert "not a subclass of" in result[0]["env_broad_scale"]
+    assert "biome" in result[0]["env_broad_scale"]
 
 
 def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy):
@@ -305,6 +322,68 @@ def test_po_term_allowed_for_plant_associated_local_scale(db: Session, ontology_
 
     result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "plant_associated_data")
     assert result.get(0) is None  # PO term allowed for plant_associated local_scale
+
+
+def test_po_term_allowed_for_plant_associated_env_medium(db: Session, ontology_hierarchy):
+    """PO terms should be allowed for env_medium in plant_associated_data."""
+    samples = [
+        {
+            "samp_name": "Plant Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "leaf [PO:0025034]",
+        },
+    ]
+
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "plant_associated_data")
+    assert result.get(0) is None  # PO term allowed for plant_associated env_medium
+
+
+def test_po_term_allowed_for_soil_env_medium(db: Session, ontology_hierarchy):
+    """PO terms should be allowed for env_medium in soil_data (schema permits PO)."""
+    samples = [
+        {
+            "samp_name": "Soil Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "leaf [PO:0025034]",
+        },
+    ]
+
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "soil_data")
+    assert result.get(0) is None  # PO term allowed for soil env_medium per schema
+
+
+def test_po_term_rejected_for_sediment_env_medium(db: Session, ontology_hierarchy):
+    """PO terms should NOT be allowed for env_medium in sediment_data (schema restricts to ENVO)."""
+    samples = [
+        {
+            "samp_name": "Sediment Sample 1",
+            "env_broad_scale": "terrestrial biome [ENVO:00000446]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "leaf [PO:0025034]",
+        },
+    ]
+
+    result = validate_sample_data_triad(db, samples, "not-a-confirmed-env", "sediment_data")
+    assert "not a subclass of" in result[0]["env_medium"]
+
+
+def test_organism_determined_env_system_allowed_for_broad_scale(db: Session, ontology_hierarchy):
+    """Terms that are subclasses of ENVO:01001000 should be allowed for env_broad_scale."""
+    samples = [
+        {
+            "samp_name": "Plant Sample 1",
+            "env_broad_scale": "plant-associated environment [ENVO:01001001]",
+            "env_local_scale": "cave [ENVO:00000067]",
+            "env_medium": "soil [ENVO:00001998]",
+        },
+    ]
+
+    result = validate_sample_data_triad(
+        db, samples, "not-a-confirmed-env", "plant_associated_data"
+    )
+    assert result.get(0) is None  # organism-determined env system accepted for broad_scale
 
 
 def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy):

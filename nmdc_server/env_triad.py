@@ -31,23 +31,19 @@ ONTOLOGY_ID_PATTERN = re.compile(r"\[([A-Za-z_]+:\d+)\]\s*$")
 BIOME = "ENVO:00000428"
 ENVIRONMENTAL_MATERIAL = "ENVO:00010483"
 ASTRONOMICAL_BODY_PART = "ENVO:01000813"
+ORGANISM_DETERMINED_ENV_SYSTEM = "ENVO:01001000"
 
 # Environment types that have curated enum PVs in the submission schema
 CONFIRMED_ENUM_PACKAGES = ["water", "soil", "sediment", "plant-associated"]
 
-# Non-ENVO prefixes allowed for env_local_scale per template type
-LOCAL_SCALE_EXTRA_PREFIXES: dict[str, list[str]] = {
-    "plant_associated_data": ["PO"],
-    "host_associated_data": ["UBERON"],
-}
-
 ENV_TRIAD_FIELDS = ["env_broad_scale", "env_local_scale", "env_medium"]
 
-# Hierarchy requirements per field: (required_ancestor, disallowed_ancestors)
-FIELD_HIERARCHY_RULES: dict[str, tuple[str, list[str]]] = {
-    "env_broad_scale": (BIOME, []),
-    "env_medium": (ENVIRONMENTAL_MATERIAL, [BIOME]),
-    "env_local_scale": (ASTRONOMICAL_BODY_PART, [BIOME]),
+# Hierarchy requirements per field: (required_ancestors, disallowed_ancestors)
+# required_ancestors: term must be a subclass of at least ONE of these (OR logic)
+FIELD_HIERARCHY_RULES: dict[str, tuple[list[str], list[str]]] = {
+    "env_broad_scale": ([BIOME, ORGANISM_DETERMINED_ENV_SYSTEM], []),
+    "env_medium": ([ENVIRONMENTAL_MATERIAL], [BIOME]),
+    "env_local_scale": ([ASTRONOMICAL_BODY_PART], [BIOME]),
 }
 
 
@@ -68,15 +64,21 @@ def _env_pkg_to_enum_prefix(env_pkg: str) -> str:
 
 
 @lru_cache(maxsize=1)
+def _load_submission_schema_view() -> SchemaView:
+    """Load and cache the NMDC submission schema as a SchemaView."""
+    submission_schema_files = resources.files("nmdc_submission_schema")
+    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
+    return SchemaView(str(schema_path))
+
+
+@lru_cache(maxsize=1)
 def fetch_submission_schema_enums() -> dict[str, frozenset[str]]:
     """Load env-related enum PVs from the NMDC submission schema.
 
     Returns a dict mapping enum name -> frozenset of permissible value strings.
     Results are cached; call fetch_submission_schema_enums.cache_clear() to invalidate.
     """
-    submission_schema_files = resources.files("nmdc_submission_schema")
-    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
-    sv = SchemaView(str(schema_path))
+    sv = _load_submission_schema_view()
     enum_view = sv.all_enums()
 
     return {
@@ -87,6 +89,57 @@ def fetch_submission_schema_enums() -> dict[str, frozenset[str]]:
         or ("EnvBroadScale" in enum_name)
         or ("EnvLocalScale" in enum_name)
     }
+
+
+@lru_cache(maxsize=1)
+def _fetch_schema_field_patterns() -> dict[str, dict[str, re.Pattern]]:
+    """Load per-interface regex patterns for env triad fields from the submission schema.
+
+    Parses slot_usage from each *Interface class to extract field-level regex patterns.
+    Returns a dict mapping interface_class_name -> field_name -> compiled regex pattern.
+    """
+    sv = _load_submission_schema_view()
+
+    result: dict[str, dict[str, re.Pattern]] = {}
+    for class_name, class_def in sv.all_classes().items():
+        if not class_name.endswith("Interface"):
+            continue
+        slot_usage = class_def.slot_usage or {}
+        field_patterns: dict[str, re.Pattern] = {}
+        for field_name in ENV_TRIAD_FIELDS:
+            if field_name in slot_usage:
+                pattern_str = slot_usage[field_name].pattern
+                if pattern_str:
+                    field_patterns[field_name] = re.compile(pattern_str)
+        if field_patterns:
+            result[class_name] = field_patterns
+
+    return result
+
+
+def _template_type_to_interface_name(template_type: str) -> str:
+    """Convert template_type to schema interface class name.
+
+    e.g. 'plant_associated_data' -> 'PlantAssociatedInterface'
+    """
+    base = template_type.removesuffix("_data")
+    camel = base.replace("_", " ").title().replace(" ", "")
+    return f"{camel}Interface"
+
+
+def _matches_schema_field_pattern(value: str, field_name: str, template_type: str) -> bool:
+    """Check if value matches the schema regex pattern for this template+field.
+
+    Used as a last-resort fallback to allow non-ENVO terms that match the schema's
+    expected format (e.g. PO terms for plant-associated, UBERON for host-associated).
+    """
+    interface_name = _template_type_to_interface_name(template_type)
+    patterns = _fetch_schema_field_patterns()
+    interface_patterns = patterns.get(interface_name, {})
+    pattern = interface_patterns.get(field_name)
+    if pattern is None:
+        return False
+    return bool(pattern.match(value))
 
 
 def _check_enum_membership(
@@ -229,24 +282,33 @@ def _validate_field(
 
     # Hierarchy checks
     term_ancestors = prefetched.ancestors.get(ontology_id, set())
-    required_ancestor, disallowed_ancestors = FIELD_HIERARCHY_RULES.get(field_name, (None, []))
+    required_ancestors, disallowed_ancestors = FIELD_HIERARCHY_RULES.get(
+        field_name, ([], [])
+    )
 
-    if required_ancestor:
-        # For env_local_scale, allow non-ENVO terms from permitted ontologies
-        prefix = ontology_id.split(":")[0] if ":" in ontology_id else ""
-        allowed_prefixes = LOCAL_SCALE_EXTRA_PREFIXES.get(template_type, [])
-
-        if field_name == "env_local_scale" and prefix in allowed_prefixes:
-            # Non-ENVO term from an allowed ontology — skip hierarchy check
-            pass
-        elif required_ancestor not in term_ancestors:
-            ancestor_labels = {
-                BIOME: "biome (ENVO:00000428)",
-                ENVIRONMENTAL_MATERIAL: "environmental material (ENVO:00010483)",
-                ASTRONOMICAL_BODY_PART: "astronomical body part (ENVO:01000813)",
-            }
-            label = ancestor_labels.get(required_ancestor, required_ancestor)
-            errors.append(f"Term '{ontology_id}' is not a subclass of {label}")
+    if required_ancestors:
+        if not any(ancestor in term_ancestors for ancestor in required_ancestors):
+            # Hierarchy check failed. For non-ENVO terms, fall back to the schema's
+            # regex pattern for this template+field as a last resort. This allows
+            # ontologies like PO (plant-associated) or UBERON (host-associated)
+            # when the schema explicitly permits them.
+            prefix = ontology_id.split(":")[0] if ":" in ontology_id else ""
+            if prefix == "ENVO" or not _matches_schema_field_pattern(
+                cleaned, field_name, template_type
+            ):
+                ancestor_labels = {
+                    BIOME: "biome (ENVO:00000428)",
+                    ENVIRONMENTAL_MATERIAL: "environmental material (ENVO:00010483)",
+                    ASTRONOMICAL_BODY_PART: "astronomical body part (ENVO:01000813)",
+                    ORGANISM_DETERMINED_ENV_SYSTEM: (
+                        "environmental system determined by an organism (ENVO:01001000)"
+                    ),
+                }
+                labels = [
+                    ancestor_labels.get(a, a) for a in required_ancestors
+                ]
+                label = " or ".join(labels)
+                errors.append(f"Term '{ontology_id}' is not a subclass of {label}")
 
     for disallowed in disallowed_ancestors:
         if disallowed in term_ancestors and ontology_id != disallowed:
