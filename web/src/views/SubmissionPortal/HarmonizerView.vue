@@ -4,6 +4,7 @@ import { useTimeoutFn } from '@vueuse/core';
 import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
+import { validateEnvTriad } from './store/api';
 import useRequest from '@/use/useRequest';
 
 import {
@@ -137,6 +138,7 @@ const validationSuccessSnackbar = ref(false);
 const importErrorSnackbar = ref(false);
 const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
+const envTriadErrors = ref<Record<string, string | null>>({});
 
 watch(activeTemplate, () => {
   // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -420,6 +422,41 @@ async function validate() {
 
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
+
+  // Validate env triad fields against the current template's data
+  // Only run if the template contains at least one env triad field
+  const sampleDataSlot = activeTemplate.value?.sampleDataSlot;
+  const envTriadFields = ['env_broad_scale', 'env_local_scale', 'env_medium'];
+  const hasEnvTriadFields = envTriadFields.some((field) => harmonizerApi.slotInfo.has(field));
+  if (sampleDataSlot && hasEnvTriadFields) {
+    try {
+      const triadResult = await validateEnvTriad({
+        samples: data,
+        env_package: activeTemplateKey.value!,
+        template_type: sampleDataSlot,
+      });
+      envTriadErrors.value[activeTemplateKey.value!] = null; // Clear error on success
+      for (const [rowStr, fieldErrors] of Object.entries(triadResult)) {
+        const row = parseInt(rowStr, 10);
+        for (const [fieldName, errorMsg] of Object.entries(fieldErrors as Record<string, string>)) {
+          const colInfo = harmonizerApi.slotInfo.get(fieldName);
+          if (colInfo) {
+            if (!result[row]) result[row] = {};
+            const existing = result[row][colInfo.columnIndex];
+            result[row][colInfo.columnIndex] = existing ? `${existing}; ${errorMsg}` : errorMsg;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Env triad validation failed:', e);
+      envTriadErrors.value[activeTemplateKey.value!] = String(e);
+      setTabInvalidCells(activeTemplateKey.value!, result);
+      setTabValidated(activeTemplateKey.value!, false);
+      saveRecord();
+      return;
+    }
+  }
+
   const valid = Object.keys(result).length === 0;
   if (!valid && !sidebarOpen.value) {
     sidebarOpen.value = true;
@@ -741,6 +778,15 @@ const appBannerHeight = inject(AppBannerHeightKey);
           >
             The spreadsheet is empty. Please add data.
           </v-snackbar>
+          <v-alert
+            v-if="envTriadErrors[activeTemplateKey!]"
+            type="error"
+            class="my-2"
+            closable
+            @click:close="envTriadErrors[activeTemplateKey!] = null"
+          >
+            Environmental validation failed. Please try validating again.
+          </v-alert>
           <v-card
             v-if="validationErrorGroups.length"
             color="error"

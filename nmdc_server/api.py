@@ -33,6 +33,7 @@ from nmdc_server.crud import (
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
+from nmdc_server.env_triad import validate_sample_data_triad
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
@@ -1648,6 +1649,7 @@ async def update_submission_status(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid status transition.",
             )
+
     db.commit()
 
     # If the new status is "Submitted - Pending Review", create or update the GitHub issue
@@ -1673,6 +1675,20 @@ async def update_submission_status(
                     detail=f"Failed to update GitHub issue: {str(e)}",
                 )
     return submission
+
+
+@router.post(
+    "/metadata_submission/validate_env_triad",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def validate_env_triad(
+    body: schemas_submission.EnvTriadValidationRequest,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Validate env triad fields for sample data."""
+    return validate_sample_data_triad(db, body.samples, body.env_package, body.template_type)
 
 
 @router.post(
