@@ -1107,20 +1107,15 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 )
 
         # Fallback: tsvector full-text search on biosample fields.
-        biosample_fts_query = (
-            db.query(models.Biosample.id.label("id"))
-            .filter(
-                models.Biosample.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
-            )
+        biosample_fts_query = db.query(models.Biosample.id.label("id")).filter(
+            models.Biosample.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
         )
 
         # Also search study fields and return all biosamples belonging to matching studies.
         study_fts_query = (
             db.query(models.Biosample.id.label("id"))
             .join(models.Study, models.Biosample.study_id == models.Study.id)
-            .filter(
-                models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
-            )
+            .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
         )
 
         return biosample_fts_query.union(study_fts_query)

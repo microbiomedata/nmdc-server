@@ -5,17 +5,17 @@ Revises: 87821b18f9e3
 Create Date: 2026-04-08 15:51:00.970401
 
 """
+
 from typing import Optional
 
 from alembic import op
 
-# The function DDL lives in models.py next to the classes that use it — see
-# STUDY_FTS_FUNCTION_DDL and BIOSAMPLE_FTS_FUNCTION_DDL defined there.
+# The function DDL lives in models.py next to the classes that use it.
 from nmdc_server.models import BIOSAMPLE_FTS_FUNCTION_DDL, STUDY_FTS_FUNCTION_DDL
 
 # revision identifiers, used by Alembic.
-revision: str = 'b7d4b19db410'
-down_revision: Optional[str] = '87821b18f9e3'
+revision: str = "b7d4b19db410"
+down_revision: Optional[str] = "87821b18f9e3"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
