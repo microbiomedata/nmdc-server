@@ -92,6 +92,7 @@ BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
     $$
 --end-sql"""
 
+
 def upgrade():
     op.execute(BIOSAMPLE_FTS_FUNCTION_DDL)
     op.execute(STUDY_FTS_FUNCTION_DDL)
