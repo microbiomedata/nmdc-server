@@ -370,32 +370,74 @@ class AnnotatedModel:
 # The event listeners below ensure metadata.create_all() (used by the test suite)
 # emits them before attempting to create the GIN indexes that depend on them.
 # --------------------------------------------------------------------------------------
-STUDY_FTS_FUNCTION_DDL = """\
-CREATE OR REPLACE FUNCTION nmdc_study_fts(
-    p_id text, p_name text, p_description text,
-    p_gold_name text, p_gold_description text, p_scientific_objective text,
-    p_annotations jsonb
-) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
-    SELECT to_tsvector('simple', concat_ws(' ',
-        p_id, p_name, p_description, p_gold_name, p_gold_description, p_scientific_objective
-    )) || to_tsvector('simple', p_annotations)
-$$"""
+#
+# Note: The `--sql` SQL comment is a token that some code editor plugins look for in order to enable
+#       SQL syntax highlighting within literal strings. An example of such a code editor plugin is:
+#       https://marketplace.visualstudio.com/items?itemName=ptweir.python-string-sql
+#
+STUDY_FTS_FUNCTION_DDL = """--sql
+    CREATE OR REPLACE FUNCTION nmdc_study_fts(
+        p_id text,
+        p_name text,
+        p_description text,
+        p_gold_name text,
+        p_gold_description text,
+        p_scientific_objective text,
+        p_annotations jsonb
+    ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    AS $$
+        SELECT to_tsvector(
+            'simple',
+            concat_ws(
+                ' ',
+                p_id,
+                p_name,
+                p_description,
+                p_gold_name,
+                p_gold_description,
+                p_scientific_objective
+            )
+        ) || to_tsvector('simple', p_annotations)
+    $$
+"""
 
-BIOSAMPLE_FTS_FUNCTION_DDL = """\
-CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
-    p_id text, p_name text, p_description text,
-    p_study_id text, p_env_broad_scale_id text, p_env_local_scale_id text,
-    p_env_medium_id text, p_ecosystem text, p_ecosystem_category text,
-    p_ecosystem_type text, p_ecosystem_subtype text, p_specific_ecosystem text,
-    p_annotations jsonb
-) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
-    SELECT to_tsvector('simple', concat_ws(' ',
-        p_id, p_name, p_description, p_study_id,
-        p_env_broad_scale_id, p_env_local_scale_id, p_env_medium_id,
-        p_ecosystem, p_ecosystem_category, p_ecosystem_type,
-        p_ecosystem_subtype, p_specific_ecosystem
-    )) || to_tsvector('simple', p_annotations)
-$$"""
+BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
+    CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
+        p_id text,
+        p_name text,
+        p_description text,
+        p_study_id text,
+        p_env_broad_scale_id text,
+        p_env_local_scale_id text,
+        p_env_medium_id text,
+        p_ecosystem text,
+        p_ecosystem_category text,
+        p_ecosystem_type text,
+        p_ecosystem_subtype text,
+        p_specific_ecosystem text,
+        p_annotations jsonb
+    ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    AS $$
+        SELECT to_tsvector(
+            'simple',
+            concat_ws(
+                ' ',
+                p_id,
+                p_name,
+                p_description,
+                p_study_id,
+                p_env_broad_scale_id,
+                p_env_local_scale_id,
+                p_env_medium_id,
+                p_ecosystem,
+                p_ecosystem_category,
+                p_ecosystem_type,
+                p_ecosystem_subtype,
+                p_specific_ecosystem
+            )
+        ) || to_tsvector('simple', p_annotations)
+    $$
+"""
 
 # These event listeners ensure that the above SQL functions are created
 # before any attempt to create the GIN indexes that depend on them.

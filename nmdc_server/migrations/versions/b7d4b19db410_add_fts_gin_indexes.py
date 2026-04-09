@@ -23,21 +23,34 @@ depends_on: Optional[str] = None
 def upgrade():
     op.execute(BIOSAMPLE_FTS_FUNCTION_DDL)
     op.execute(STUDY_FTS_FUNCTION_DDL)
-    op.execute("""
+    op.execute("""--sql
         CREATE INDEX ix_biosample_fts ON biosample USING gin (
             nmdc_biosample_fts(
-                id, name, description, study_id,
-                env_broad_scale_id, env_local_scale_id, env_medium_id,
-                ecosystem, ecosystem_category, ecosystem_type,
-                ecosystem_subtype, specific_ecosystem,
+                id,
+                name,
+                description,
+                study_id,
+                env_broad_scale_id,
+                env_local_scale_id,
+                env_medium_id,
+                ecosystem,
+                ecosystem_category,
+                ecosystem_type,
+                ecosystem_subtype,
+                specific_ecosystem,
                 annotations
             )
         )
     """)
-    op.execute("""
+    op.execute("""--sql
         CREATE INDEX ix_study_fts ON study USING gin (
             nmdc_study_fts(
-                id, name, description, gold_name, gold_description, scientific_objective,
+                id,
+                name,
+                description,
+                gold_name,
+                gold_description,
+                scientific_objective,
                 annotations
             )
         )
