@@ -360,20 +360,23 @@ class AnnotatedModel:
     annotations = Column(JSONB, nullable=False, default=dict)
 
 
-# ---- Full-text search helper functions -----------------------------------------------
-# These SQL wrapper functions are IMMUTABLE (output depends solely on inputs),
-# which enables functional GIN indexes on the study and biosample tables.
+# Note: The following SQL function definitions (i.e. CREATE statements) were copied verbatim
+#       from an Alembic migration (i.e. `b7d4b19db410_add_fts_gin_indexes.py`). We opted to
+#       not `import` the definitions from the migration to this module because that would be
+#       the only occurrence of that pattern in the repo (and importing from an Alembic migration
+#       just... feels... wrong). We also opted to not `import` the definitions from this module
+#       into the migration because that would expose us to the risk of the migration effectively
+#       getting redefined over time, which would "break version history." That is our rationale
+#       for having copied them verbatim.
 #
-# The DDL strings are kept here, next to the models that use them, so the index
-# definition and the underlying function are easy to find together.  The Alembic
-# migration (b7d4b19db410) imports and executes these constants for existing databases.
-# The event listeners below ensure metadata.create_all() (used by the test suite)
-# emits them before attempting to create the GIN indexes that depend on them.
-# --------------------------------------------------------------------------------------
+# Note: The following are comments from original author of these SQL function definitions:
 #
-# Note: The `--sql` SQL comment is a token that some code editor plugins look for in order to enable
-#       SQL syntax highlighting within literal strings. An example of such a code editor plugin is:
-#       https://marketplace.visualstudio.com/items?itemName=ptweir.python-string-sql
+#       > The event listeners below ensure `metadata.create_all()` (used by the test suite)
+#       > emits these statements before attempting to create the GIN indexes that depend on
+#       > the SQL functions.
+#
+# TODO: Update the `nmdc-server` test suite so that it uses the Alembic migrations to set up the
+#       test database. Then, we'll be able to eliminate this "copy" of these function definitions.
 #
 STUDY_FTS_FUNCTION_DDL = """--sql
     CREATE OR REPLACE FUNCTION nmdc_study_fts(
@@ -399,7 +402,7 @@ STUDY_FTS_FUNCTION_DDL = """--sql
             )
         ) || to_tsvector('simple', p_annotations)
     $$
-"""
+--end-sql"""
 
 BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
     CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
@@ -437,7 +440,7 @@ BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
             )
         ) || to_tsvector('simple', p_annotations)
     $$
-"""
+--end-sql"""
 
 # These event listeners ensure that the above SQL functions are created
 # before any attempt to create the GIN indexes that depend on them.
