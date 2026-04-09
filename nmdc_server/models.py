@@ -21,7 +21,9 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    column,
     event,
+    func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -29,6 +31,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
+from sqlalchemy.schema import DDL
 
 from nmdc_server.database import Base, update_multiomics_sql
 
@@ -357,8 +360,114 @@ class AnnotatedModel:
     annotations = Column(JSONB, nullable=False, default=dict)
 
 
+# Note: The following SQL function definitions (i.e. CREATE statements) were copied verbatim
+#       from an Alembic migration (i.e. `b7d4b19db410_add_fts_gin_indexes.py`). We opted to
+#       not `import` the definitions from the migration to this module because that would be
+#       the only occurrence of that pattern in the repo (and importing from an Alembic migration
+#       just... feels... wrong). We also opted to not `import` the definitions from this module
+#       into the migration because that would expose us to the risk of the migration effectively
+#       getting redefined over time, which would "break version history." That is our rationale
+#       for having copied them verbatim.
+#
+# Note: The following is a comment from the original author of these SQL function definitions:
+#       > The event listeners below ensure `metadata.create_all()` (used by the test suite)
+#       > emits these statements before attempting to create the GIN indexes that depend on
+#       > the SQL functions.
+#
+# TODO: Update the `nmdc-server` test suite so that it uses the Alembic migrations to set up the
+#       test database. Then, we'll be able to eliminate this "copy" of these function definitions.
+#
+STUDY_FTS_FUNCTION_DDL = """--sql
+    CREATE OR REPLACE FUNCTION nmdc_study_fts(
+        p_id text,
+        p_name text,
+        p_description text,
+        p_gold_name text,
+        p_gold_description text,
+        p_scientific_objective text,
+        p_annotations jsonb
+    ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    AS $$
+        SELECT to_tsvector(
+            'simple',
+            concat_ws(
+                ' ',
+                p_id,
+                p_name,
+                p_description,
+                p_gold_name,
+                p_gold_description,
+                p_scientific_objective
+            )
+        ) || to_tsvector('simple', p_annotations)
+    $$
+--end-sql"""
+
+BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
+    CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
+        p_id text,
+        p_name text,
+        p_description text,
+        p_study_id text,
+        p_env_broad_scale_id text,
+        p_env_local_scale_id text,
+        p_env_medium_id text,
+        p_ecosystem text,
+        p_ecosystem_category text,
+        p_ecosystem_type text,
+        p_ecosystem_subtype text,
+        p_specific_ecosystem text,
+        p_annotations jsonb
+    ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    AS $$
+        SELECT to_tsvector(
+            'simple',
+            concat_ws(
+                ' ',
+                p_id,
+                p_name,
+                p_description,
+                p_study_id,
+                p_env_broad_scale_id,
+                p_env_local_scale_id,
+                p_env_medium_id,
+                p_ecosystem,
+                p_ecosystem_category,
+                p_ecosystem_type,
+                p_ecosystem_subtype,
+                p_specific_ecosystem
+            )
+        ) || to_tsvector('simple', p_annotations)
+    $$
+--end-sql"""
+
+# These event listeners ensure that the above SQL functions are created
+# before any attempt to create the GIN indexes that depend on them.
+event.listen(Base.metadata, "before_create", DDL(STUDY_FTS_FUNCTION_DDL))
+event.listen(Base.metadata, "before_create", DDL(BIOSAMPLE_FTS_FUNCTION_DDL))
+
+
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
+
+    # Index Creation (for FTS) Part 1:
+    # bare column() refs, used only for __table_args__
+    # (DDL context requires unqualified names)
+    __table_args__ = (
+        Index(
+            "ix_study_fts",
+            func.nmdc_study_fts(
+                column("id"),
+                column("name"),
+                column("description"),
+                column("gold_name"),
+                column("gold_description"),
+                column("scientific_objective"),
+                column("annotations"),
+            ),
+            postgresql_using="gin",
+        ),
+    )
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
@@ -428,6 +537,19 @@ class Study(Base, AnnotatedModel):
         return doi_info
 
 
+# Index Creation (for FTS) Part 2:
+# __ts_vector__ is assigned after class creation using fully-qualified ORM
+# column attrs (e.g. Study.id), so it can be used directly in query filters
+Study.__ts_vector__ = func.nmdc_study_fts(
+    Study.id,
+    Study.name,
+    Study.description,
+    Study.gold_name,
+    Study.gold_description,
+    Study.scientific_objective,
+    Study.annotations,
+)
+
 biosample_input_association = Table(
     "biosample_input_association",
     Base.metadata,
@@ -438,6 +560,31 @@ biosample_input_association = Table(
 
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
+
+    # Index Creation (for FTS) Part 1:
+    # bare column() refs, used only for __table_args__
+    # (DDL context requires unqualified names)
+    __table_args__ = (
+        Index(
+            "ix_biosample_fts",
+            func.nmdc_biosample_fts(
+                column("id"),
+                column("name"),
+                column("description"),
+                column("study_id"),
+                column("env_broad_scale_id"),
+                column("env_local_scale_id"),
+                column("env_medium_id"),
+                column("ecosystem"),
+                column("ecosystem_category"),
+                column("ecosystem_type"),
+                column("ecosystem_subtype"),
+                column("specific_ecosystem"),
+                column("annotations"),
+            ),
+            postgresql_using="gin",
+        ),
+    )
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
@@ -496,6 +643,26 @@ class Biosample(Base, AnnotatedModel):
     def populate_multiomics(cls, db: Session):
         db.execute(update_multiomics_sql)
         db.commit()
+
+
+# Index Creation (for FTS) Part 2:
+# __ts_vector__ is assigned after class creation using fully-qualified ORM
+# column attrs (e.g. Biosample.id), so it can be used directly in query filters
+Biosample.__ts_vector__ = func.nmdc_biosample_fts(
+    Biosample.id,
+    Biosample.name,
+    Biosample.description,
+    Biosample.study_id,
+    Biosample.env_broad_scale_id,
+    Biosample.env_local_scale_id,
+    Biosample.env_medium_id,
+    Biosample.ecosystem,
+    Biosample.ecosystem_category,
+    Biosample.ecosystem_type,
+    Biosample.ecosystem_subtype,
+    Biosample.specific_ecosystem,
+    Biosample.annotations,
+)
 
 
 class BiosampleRelatedDocument(Base):
