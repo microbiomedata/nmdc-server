@@ -17,8 +17,7 @@ branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
 
-# Note: The following are comments from original author of these SQL function definitions:
-#
+# Note: The following is a comment from the original author of these SQL function definitions:
 #       > Full-text search helper functions
 #       >
 #       > These SQL wrapper functions are IMMUTABLE (output depends solely on inputs),

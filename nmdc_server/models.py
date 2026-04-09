@@ -369,8 +369,7 @@ class AnnotatedModel:
 #       getting redefined over time, which would "break version history." That is our rationale
 #       for having copied them verbatim.
 #
-# Note: The following are comments from original author of these SQL function definitions:
-#
+# Note: The following is a comment from the original author of these SQL function definitions:
 #       > The event listeners below ensure `metadata.create_all()` (used by the test suite)
 #       > emits these statements before attempting to create the GIN indexes that depend on
 #       > the SQL functions.
