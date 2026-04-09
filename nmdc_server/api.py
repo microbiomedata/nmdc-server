@@ -1364,16 +1364,21 @@ async def get_metadata_submissions_report(
         for sample_type in sample_data:
             sample_count += len(sample_data[sample_type])
 
-        # Get the award information from the submission, prioritizing the predefined ones.
+        # Get the award information from the submission.
+        #
         # Note: On the submission portal, this value is solicited from the user by prompting
-        #       them for the "kind of project you have been awarded".
+        #       them for the "kind of project you have been awarded". When the user marks the
+        #       "Other" radio button (in which case, "OTHER" gets stored in the `award` field),
+        #       the user can enter a custom string, which gets stored in the `otherAward` field.
+        #
+        SENTINEL_VALUE_FOR_OTHER = "OTHER"
         multi_omics_form = metadata["multiOmicsForm"] if "multiOmicsForm" in metadata else {}
         predefined_award = multi_omics_form["award"] if "award" in multi_omics_form else ""
         custom_award = multi_omics_form["otherAward"] if "otherAward" in multi_omics_form else ""
         award = ""
-        if isinstance(predefined_award, str) and len(predefined_award) > 0:
+        if isinstance(predefined_award, str) and predefined_award != SENTINEL_VALUE_FOR_OTHER:
             award = predefined_award
-        elif isinstance(custom_award, str) and len(custom_award) > 0:
+        elif isinstance(custom_award, str):
             award = custom_award
 
         author_user = s.author  # note: `s.author` is a `models.User` instance
