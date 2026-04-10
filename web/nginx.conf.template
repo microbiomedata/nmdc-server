@@ -20,6 +20,7 @@ http {
         location = /health {
             access_log off;
             default_type application/json;
+            add_header Cache-Control no-store;
             return 200 '{"web_server": true}';
         }
 
