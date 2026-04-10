@@ -1372,9 +1372,9 @@ async def get_metadata_submissions_report(
         #       the user can enter a custom string, which gets stored in the `otherAward` field.
         #
         sentinel_value_for_other = "OTHER"
-        multi_omics_form = metadata["multiOmicsForm"] if "multiOmicsForm" in metadata else {}
-        predefined_award = multi_omics_form["award"] if "award" in multi_omics_form else ""
-        custom_award = multi_omics_form["otherAward"] if "otherAward" in multi_omics_form else ""
+        multi_omics_form = metadata.get("multiOmicsForm", {})
+        predefined_award = multi_omics_form.get("award", "")
+        custom_award = multi_omics_form.get("otherAward", "")
         award = ""
         if isinstance(predefined_award, str) and predefined_award != sentinel_value_for_other:
             award = predefined_award
