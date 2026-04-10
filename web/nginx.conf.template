@@ -15,6 +15,14 @@ http {
 
         client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
 
+        # Configure a health check endpoint, which HTTP clients can use to
+        # check whether this web server is responding to HTTP requests.
+        location = /health {
+            access_log off;
+            default_type application/json;
+            return 200 '{"web_server": true}';
+        }
+
         location / {
             try_files ${DOLLAR}uri ${DOLLAR}uri/ /index.html;
         }
