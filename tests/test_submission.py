@@ -268,7 +268,7 @@ def test_get_metadata_submissions_report_as_admin(
                 "doe": None,
                 "dataGenerated": None,
                 "facilityGenerated": None,
-                "award": None,
+                "award": "MONet",
                 "awardDois": [],
                 "mgCompatible": None,
             },
@@ -343,6 +343,7 @@ def test_get_metadata_submissions_report_as_admin(
         "Date Last Modified",
         "Date Created",
         "Number of Samples",
+        "Award",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
@@ -362,6 +363,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Status"] == SubmissionStatusEnum.InProgress.text
     assert data_row["Is Test Submission"] == "True"
     assert data_row["Number of Samples"] == "4"
+    assert data_row["Award"] == "MONet"
     assert isinstance(data_row["Date Last Modified"], str)
     assert isinstance(data_row["Date Created"], str)
 
@@ -378,6 +380,7 @@ def test_get_metadata_submissions_report_as_admin(
     )  # matches value in upstream faker
     assert data_row["Is Test Submission"] == "False"
     assert data_row["Number of Samples"] == "0"
+    assert data_row["Award"] == ""
     assert isinstance(data_row["Date Last Modified"], str)
     assert isinstance(data_row["Date Created"], str)
 

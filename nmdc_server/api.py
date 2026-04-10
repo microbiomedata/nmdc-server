@@ -1350,6 +1350,7 @@ async def get_metadata_submissions_report(
         "Date Last Modified",
         "Date Created",
         "Number of Samples",
+        "Award",
     ]
     data_rows = []
     for s in submissions:
@@ -1362,6 +1363,23 @@ async def get_metadata_submissions_report(
         sample_data = metadata["sampleData"]
         for sample_type in sample_data:
             sample_count += len(sample_data[sample_type])
+
+        # Get the award information from the submission.
+        #
+        # Note: On the submission portal, this value is solicited from the user by prompting
+        #       them for the "kind of project you have been awarded". When the user marks the
+        #       "Other" radio button (in which case, "OTHER" gets stored in the `award` field),
+        #       the user can enter a custom string, which gets stored in the `otherAward` field.
+        #
+        sentinel_value_for_other = "OTHER"
+        multi_omics_form = metadata.get("multiOmicsForm", {})
+        predefined_award = multi_omics_form.get("award", "")
+        custom_award = multi_omics_form.get("otherAward", "")
+        award = ""
+        if isinstance(predefined_award, str) and predefined_award != sentinel_value_for_other:
+            award = predefined_award
+        elif isinstance(custom_award, str):
+            award = custom_award
 
         author_user = s.author  # note: `s.author` is a `models.User` instance
         study_form = metadata["studyForm"] if "studyForm" in metadata else {}
@@ -1381,6 +1399,7 @@ async def get_metadata_submissions_report(
             s.date_last_modified,
             s.created,
             sample_count,
+            award,
         ]
         data_rows.append(data_row)
 
