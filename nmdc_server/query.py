@@ -919,25 +919,35 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def query(self, db: Session):
         study_query = super().query(db)
-        fts_condition_exists = any(
-            isinstance(c, FullTextSearchConditionSchema) for c in self.conditions
-        )
+        fts_condition_value = None
+        for c in self.conditions:
+            if isinstance(c, FullTextSearchConditionSchema):
+                fts_condition_value = c.value
+                break
         biosample_condition_exists = any(
             [condition.table == Table.biosample for condition in self.conditions]
         )
         omics_condition_exists = any(
             [condition.table == Table.omics_processing for condition in self.conditions]
         )
-        if fts_condition_exists or biosample_condition_exists:
+        if fts_condition_value or biosample_condition_exists:
             biosample_ids_subquery = (
                 BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
             )
+            # Find all study IDs linked to biosamples matching the conditions
             study_ids_from_biosamples = (
                 db.query(models.Biosample.study_id)
                 .join(biosample_ids_subquery, models.Biosample.id == biosample_ids_subquery.c.id)
                 .distinct()
             )
-            study_query = study_query.filter(self.table.model.id.in_(study_ids_from_biosamples))
+            # Ensure the study query finds all studies linked to matching biosamples,
+            # and also, if there is a full-text search condition, any studies matching the FTS on their own fields.
+            study_query = study_query.filter(
+                self.table.model.id.in_(study_ids_from_biosamples)
+                | models.Study.__ts_vector__.op("@@")(
+                    func.plainto_tsquery("simple", fts_condition_value)
+                )
+            )
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
             studies_from_omics_query = omics_query.with_entities(

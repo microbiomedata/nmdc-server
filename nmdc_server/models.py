@@ -385,7 +385,9 @@ STUDY_FTS_FUNCTION_DDL = """--sql
         p_gold_name text,
         p_gold_description text,
         p_scientific_objective text,
-        p_annotations jsonb
+        p_annotations jsonb,
+        p_part_of jsonb,
+        p_children jsonb
     ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
     AS $$
         SELECT to_tsvector(
@@ -399,7 +401,7 @@ STUDY_FTS_FUNCTION_DDL = """--sql
                 p_gold_description,
                 p_scientific_objective
             )
-        ) || to_tsvector('simple', p_annotations)
+        ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_part_of) || to_tsvector('simple', p_children)
     $$
 --end-sql"""
 
@@ -464,6 +466,8 @@ class Study(Base, AnnotatedModel):
                 column("gold_description"),
                 column("scientific_objective"),
                 column("annotations"),
+                column("part_of"),
+                column("children"),
             ),
             postgresql_using="gin",
         ),
@@ -548,6 +552,8 @@ Study.__ts_vector__ = func.nmdc_study_fts(
     Study.gold_description,
     Study.scientific_objective,
     Study.annotations,
+    Study.part_of,
+    Study.children,
 )
 
 biosample_input_association = Table(
