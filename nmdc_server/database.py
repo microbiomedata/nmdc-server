@@ -231,7 +231,7 @@ AS $$
             p_scientific_objective
         )
     ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_part_of) || to_tsvector('simple', p_children)
-$$
+$$;
                                 
 CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
     p_id text,
@@ -268,7 +268,7 @@ AS $$
             p_specific_ecosystem
         )
     ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_alternate_identifiers)
-$$
+$$;
     """)
 
 # Define SQL functions used throughout the codebase.
