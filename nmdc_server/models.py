@@ -419,7 +419,8 @@ BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
         p_ecosystem_type text,
         p_ecosystem_subtype text,
         p_specific_ecosystem text,
-        p_annotations jsonb
+        p_annotations jsonb,
+        p_alternate_identifiers jsonb
     ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
     AS $$
         SELECT to_tsvector(
@@ -439,7 +440,7 @@ BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
                 p_ecosystem_subtype,
                 p_specific_ecosystem
             )
-        ) || to_tsvector('simple', p_annotations)
+        ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_alternate_identifiers)
     $$
 --end-sql"""
 
@@ -587,6 +588,7 @@ class Biosample(Base, AnnotatedModel):
                 column("ecosystem_subtype"),
                 column("specific_ecosystem"),
                 column("annotations"),
+                column("alternate_identifiers"),
             ),
             postgresql_using="gin",
         ),
@@ -668,6 +670,7 @@ Biosample.__ts_vector__ = func.nmdc_biosample_fts(
     Biosample.ecosystem_subtype,
     Biosample.specific_ecosystem,
     Biosample.annotations,
+    Biosample.alternate_identifiers,
 )
 
 
