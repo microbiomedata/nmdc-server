@@ -673,11 +673,29 @@ class BiosampleRelatedDocument(Base):
 
     __tablename__ = "biosample_related_document"
 
-    id = Column(String, primary_key=True)
-    biosample_ids = Column(ARRAY(String), nullable=False, default=list)
-    high_level_type = Column(String, nullable=False)
-    document = Column(JSONB, nullable=False)
-    downstream_neighbor_ids = Column(ARRAY(String), nullable=False, default=list)
+    id = Column(String, primary_key=True, comment="The value in the document's 'id' field")
+    biosample_ids = Column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+        comment="The IDs of all biosamples downstream of, upstream of, or representing the document",
+    )
+    high_level_type = Column(
+        String,
+        nullable=False,
+        comment="High-level type of the document (e.g., 'nmdc:WorkflowExecution')",
+    )
+    document = Column(
+        JSONB,
+        nullable=False,
+        comment="NMDC Schema-compliant document downstream of, upstream of, or representing the subject biosample",
+    )
+    downstream_neighbor_ids = Column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+        comment="IDs of documents that are immediately downstream of the document",
+    )
 
 
 omics_processing_output_association = output_association("omics_processing")
