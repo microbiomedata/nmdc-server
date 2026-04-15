@@ -31,7 +31,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy.schema import DDL
 
 from nmdc_server.database import Base, update_multiomics_sql
 

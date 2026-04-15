@@ -206,7 +206,7 @@ $$ LANGUAGE plpgsql;
 Functions to generate full text search vectors for studies and biosamples.
 These SQL wrapper functions are IMMUTABLE (output depends solely on inputs),
 which enables functional GIN indexes on the study and biosample tables.
-*/                       
+*/
 CREATE OR REPLACE FUNCTION nmdc_study_fts(
     p_id text,
     p_name text,
@@ -232,7 +232,7 @@ AS $$
         )
     ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_part_of) || to_tsvector('simple', p_children)
 $$;
-                                
+
 CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
     p_id text,
     p_name text,
@@ -269,7 +269,7 @@ AS $$
         )
     ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_alternate_identifiers)
 $$;
-    """)
+""")
 
 # Define SQL functions used throughout the codebase.
 # This listener ensures that the functions are created before any tables are created.

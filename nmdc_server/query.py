@@ -1078,9 +1078,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
             child_study_query = (
                 db.query(models.Biosample.id.label("id"))
                 .join(models.Study, models.Biosample.study_id == models.Study.id)
-                .filter(
-                    models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
-                )
+                .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
             )
             return direct_query.union(child_study_query)
 
