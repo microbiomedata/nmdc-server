@@ -1066,11 +1066,23 @@ class BiosampleQuerySchema(BaseQuerySchema):
             )
 
         if typecode == NmdcTypecode.study:
-            return (
+            # Direct biosamples of a study whose ID matches the prefix.
+            direct_query = (
                 db.query(models.Biosample.id.label("id"))
                 .join(models.Study, models.Biosample.study_id == models.Study.id)
                 .filter(models.Study.id.like(f"{term}%"))
             )
+            # Also include biosamples from child studies whose part_of field references
+            # this study.  Study.__ts_vector__ indexes part_of, so an FTS match here
+            # will find studies that list the searched ID as a parent.
+            child_study_query = (
+                db.query(models.Biosample.id.label("id"))
+                .join(models.Study, models.Biosample.study_id == models.Study.id)
+                .filter(
+                    models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
+                )
+            )
+            return direct_query.union(child_study_query)
 
         if typecode in (
             NmdcTypecode.omics_processing,
