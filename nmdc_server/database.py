@@ -201,9 +201,78 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
+
+/*
+Functions to generate full text search vectors for studies and biosamples.
+These SQL wrapper functions are IMMUTABLE (output depends solely on inputs),
+which enables functional GIN indexes on the study and biosample tables.
+*/                       
+CREATE OR REPLACE FUNCTION nmdc_study_fts(
+    p_id text,
+    p_name text,
+    p_description text,
+    p_gold_name text,
+    p_gold_description text,
+    p_scientific_objective text,
+    p_annotations jsonb,
+    p_part_of jsonb,
+    p_children jsonb
+) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
+AS $$
+    SELECT to_tsvector(
+        'simple',
+        concat_ws(
+            ' ',
+            p_id,
+            p_name,
+            p_description,
+            p_gold_name,
+            p_gold_description,
+            p_scientific_objective
+        )
+    ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_part_of) || to_tsvector('simple', p_children)
+$$
+                                
+CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
+    p_id text,
+    p_name text,
+    p_description text,
+    p_study_id text,
+    p_env_broad_scale_id text,
+    p_env_local_scale_id text,
+    p_env_medium_id text,
+    p_ecosystem text,
+    p_ecosystem_category text,
+    p_ecosystem_type text,
+    p_ecosystem_subtype text,
+    p_specific_ecosystem text,
+    p_annotations jsonb,
+    p_alternate_identifiers jsonb
+) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
+AS $$
+    SELECT to_tsvector(
+        'simple',
+        concat_ws(
+            ' ',
+            p_id,
+            p_name,
+            p_description,
+            p_study_id,
+            p_env_broad_scale_id,
+            p_env_local_scale_id,
+            p_env_medium_id,
+            p_ecosystem,
+            p_ecosystem_category,
+            p_ecosystem_type,
+            p_ecosystem_subtype,
+            p_specific_ecosystem
+        )
+    ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_alternate_identifiers)
+$$
     """)
 
-# define functions used for comparison between arbitrary types
+# Define SQL functions used throughout the codebase.
+# This listener ensures that the functions are created before any tables are created.
 listen(
     metadata,
     "before_create",
