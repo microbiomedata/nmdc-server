@@ -590,7 +590,7 @@ def test_full_text_search_studies(db: Session):
     db.commit()
 
     # Search studies by study name but no biosamples
-    q = query.StudyQuerySchema(
+    study_q = query.StudyQuerySchema(
         conditions=[
             {
                 "table": "full_text_search",
@@ -600,11 +600,11 @@ def test_full_text_search_studies(db: Session):
             }
         ]
     )
-    results = {s.id for s in q.execute(db)}
+    results = {s.id for s in study_q.execute(db)}
     assert results == {"study3"}
 
     # Search biosamples by parent study name, both biosamples in the child study match
-    q = query.BiosampleQuerySchema(
+    sample_q = query.BiosampleQuerySchema(
         conditions=[
             {
                 "table": "full_text_search",
@@ -614,5 +614,5 @@ def test_full_text_search_studies(db: Session):
             }
         ]
     )
-    results = {s.id for s in q.execute(db)}
+    results = {s.id for s in sample_q.execute(db)}
     assert results == {"sample1", "sample2"}
