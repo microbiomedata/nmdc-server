@@ -157,7 +157,7 @@ watch(() => filterText, (newVal) => {
           class="my-2"
         />
         <v-list-subheader>
-          Full Text Search
+          Text Search
         </v-list-subheader>
         <v-list-item @click="fullTextSearch">
           <v-list-item-title>
