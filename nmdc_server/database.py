@@ -230,7 +230,7 @@ AS $$
             p_gold_description,
             p_scientific_objective
         )
-    ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_part_of) || to_tsvector('simple', p_children)
+    ) || COALESCE(to_tsvector('simple', p_annotations), ''::tsvector) || COALESCE(to_tsvector('simple', p_part_of), ''::tsvector) || COALESCE(to_tsvector('simple', p_children), ''::tsvector)
 $$;
 
 CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
@@ -267,7 +267,7 @@ AS $$
             p_ecosystem_subtype,
             p_specific_ecosystem
         )
-    ) || to_tsvector('simple', p_annotations) || to_tsvector('simple', p_alternate_identifiers)
+    ) || COALESCE(to_tsvector('simple', p_annotations), ''::tsvector) || COALESCE(to_tsvector('simple', p_alternate_identifiers), ''::tsvector)
 $$;
 """)
 
