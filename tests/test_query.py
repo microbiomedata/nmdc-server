@@ -581,8 +581,8 @@ def test_full_text_search_biosamples(db: Session):
 
 def test_full_text_search_studies(db: Session):
     study1 = fakes.StudyFactory(id="study1", name="childstudy")
-    study2 = fakes.StudyFactory(id="study2", name="parentstudy", children=[study1])
-    study1.part_of = [study2]
+    study2 = fakes.StudyFactory(id="study2", name="parentstudy", children=[study1.id])
+    study1.part_of = [study2.id]
     fakes.StudyFactory(id="study3", name="studywithoutbiosamples")
     fakes.BiosampleFactory(id="sample1", name="uniquebiosamplename", study=study1)
     fakes.BiosampleFactory(id="sample2", name="somethingelse", study=study1)
