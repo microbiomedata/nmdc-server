@@ -19,7 +19,7 @@ depends_on: Optional[str] = None
 
 
 def upgrade():
-    op.drop_index("ix_study_fts", table_name="study", postgresql_using="gin")
+    op.drop_index("ix_study_fts", table_name="study")
     op.create_index(
         "ix_study_fts",
         "study",
@@ -34,7 +34,7 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_index("ix_study_fts", table_name="study", postgresql_using="gin")
+    op.drop_index("ix_study_fts", table_name="study")
     op.create_index(
         "ix_study_fts",
         "study",
