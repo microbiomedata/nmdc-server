@@ -581,7 +581,7 @@ def test_full_text_search_biosamples(db: Session):
 
 def test_full_text_search_studies(db: Session):
     study1 = fakes.StudyFactory(id="study1", name="childstudy")
-    study2 = fakes.StudyFactory(id="study2", name="parentstudy", children=[study1.id])
+    study2 = fakes.StudyFactory(id="nmdc:sty-11-msexsy29", name="parentstudy", children=[study1.id])
     study1.part_of = [study2.id]
     fakes.StudyFactory(id="study3", name="studywithoutbiosamples")
     fakes.BiosampleFactory(id="sample1", name="uniquebiosamplename", study=study1)
@@ -603,14 +603,14 @@ def test_full_text_search_studies(db: Session):
     results = {s.id for s in study_q.execute(db)}
     assert results == {"study3"}
 
-    # Search biosamples by parent study name, both biosamples in the child study match
+    # Search biosamples by parent study ID, both biosamples in the child study match
     sample_q = query.BiosampleQuerySchema(
         conditions=[
             {
                 "table": "full_text_search",
                 "field": "search",
                 "op": "like",
-                "value": "parentstudy",
+                "value": "nmdc:sty-11-msexsy29",
             }
         ]
     )
