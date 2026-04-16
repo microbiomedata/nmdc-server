@@ -96,6 +96,9 @@ function tableName(table: string): string {
 }
 
 function fullTextSearch(): void {
+  if (!filterText) {
+    return;
+  }
   const condition: Condition = {
     op: 'like',
     field: 'search',
