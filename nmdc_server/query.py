@@ -8,11 +8,13 @@ from datetime import datetime
 from enum import Enum
 from itertools import groupby
 from typing import (
+    Annotated,
     Any,
     Dict,
     Generic,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Tuple,
@@ -27,7 +29,6 @@ from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expressio
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
 from sqlalchemy.sql.selectable import CTE
-from typing_extensions import Annotated, Literal
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
