@@ -54,6 +54,7 @@ dev = [
 ]
 lint = [
     "black",
+    "deptry",
     "mypy",
     "flake8",
     "flake8-isort",
@@ -63,11 +64,20 @@ lint = [
     "types-python-dateutil",
     "types-requests",
     "types-click",
-    "deptry>=0.25.1",
 ]
 
 [project.scripts]
 nmdc-server = "nmdc_server.cli:cli"
+
+[tool.deptry.per_rule_ignores]
+DEP002 = [
+    # itsdangerous is a extra dependency required for `SessionMiddleware` (from `starlette`) to work, but there is no
+    # package extra specifically for it.
+    # See: https://github.com/Kludex/starlette/blob/1.0.0/README.md#dependencies
+    "itsdangerous",
+    # nmdc-submission-schema is not directly imported, but static_files.py loads resource files from it.
+    "nmdc-submission-schema",
+]
 
 [tool.setuptools]
 include-package-data = true
