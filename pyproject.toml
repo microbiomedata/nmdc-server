@@ -45,7 +45,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest",
-    "pytest-logging",
     "tox",
     "tox-uv",
     "tox-gh-actions",
