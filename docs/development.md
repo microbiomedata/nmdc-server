@@ -175,7 +175,7 @@ Although the project is designed to be run in Docker, having the dependencies in
 
 1. Install the backend dependencies using `uv`. This will create a new virtual environment in the `.venv` directory if one does not already exist.
     ```bash
-    uv sync
+    uv sync --all-groups
     ```
 
 ### Frontend dependencies
