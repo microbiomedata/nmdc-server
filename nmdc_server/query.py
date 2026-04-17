@@ -919,9 +919,13 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def query(self, db: Session):
         study_query = super().query(db)
-        fts_condition_exists = any(
-            isinstance(c, FullTextSearchConditionSchema) for c in self.conditions
-        )
+        fts_condition_value = None
+        fts_condition_exists = False
+        for c in self.conditions:
+            if isinstance(c, FullTextSearchConditionSchema):
+                fts_condition_value = c.value
+                fts_condition_exists = True
+                break
         biosample_condition_exists = any(
             [condition.table == Table.biosample for condition in self.conditions]
         )
@@ -932,12 +936,20 @@ class StudyQuerySchema(BaseQuerySchema):
             biosample_ids_subquery = (
                 BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
             )
+            # Find all study IDs linked to biosamples matching the conditions
             study_ids_from_biosamples = (
                 db.query(models.Biosample.study_id)
                 .join(biosample_ids_subquery, models.Biosample.id == biosample_ids_subquery.c.id)
                 .distinct()
             )
-            study_query = study_query.filter(self.table.model.id.in_(study_ids_from_biosamples))
+            # Ensure the study query finds all studies linked to matching biosamples,
+            # and also, if there is a non-empty full-text search condition, any studies matching the FTS on their own fields.
+            study_id_filter = self.table.model.id.in_(study_ids_from_biosamples)
+            if fts_condition_exists and fts_condition_value:
+                study_id_filter = study_id_filter | models.Study.__ts_vector__.op("@@")(
+                    func.plainto_tsquery("simple", fts_condition_value)
+                )
+            study_query = study_query.filter(study_id_filter)
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
             studies_from_omics_query = omics_query.with_entities(
@@ -1056,11 +1068,21 @@ class BiosampleQuerySchema(BaseQuerySchema):
             )
 
         if typecode == NmdcTypecode.study:
-            return (
+            # Direct biosamples of a study whose ID matches the prefix.
+            direct_query = (
                 db.query(models.Biosample.id.label("id"))
                 .join(models.Study, models.Biosample.study_id == models.Study.id)
                 .filter(models.Study.id.like(f"{term}%"))
             )
+            # Also include biosamples from child studies whose part_of field references
+            # this study.  Study.__ts_vector__ indexes part_of, so an FTS match here
+            # will find studies that list the searched ID as a parent.
+            child_study_query = (
+                db.query(models.Biosample.id.label("id"))
+                .join(models.Study, models.Biosample.study_id == models.Study.id)
+                .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
+            )
+            return direct_query.union(child_study_query)
 
         if typecode in (
             NmdcTypecode.omics_processing,
