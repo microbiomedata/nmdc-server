@@ -9,13 +9,17 @@ from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
-from nmdc_server import fakes
-from nmdc_server.models import SubmissionEditorRole, SubmissionImagesObject, SubmissionRole
+from nmdc_server.models import (
+    SubmissionEditorRole,
+    SubmissionImagesObject,
+    SubmissionRole,
+)
 from nmdc_server.schemas_submission import (
     SubmissionMetadataSchema,
     SubmissionMetadataSchemaPatch,
 )
 from nmdc_server.storage import BucketName, storage
+from tests import fakes
 
 
 @pytest.fixture

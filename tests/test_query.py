@@ -4,7 +4,8 @@ from typing import Dict, Tuple
 import pytest
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import fakes, models, query
+from nmdc_server import models, query
+from tests import fakes
 
 date0 = datetime(1990, 1, 1)
 date1 = datetime(2000, 1, 1)
