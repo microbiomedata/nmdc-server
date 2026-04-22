@@ -1788,9 +1788,7 @@ def create_github_issue(submission_model: SubmissionMetadata, user: User) -> str
             fields.append((field_name, field_value))
     body = "\n".join([f"**{name}:** {value}" for name, value in fields])
 
-    # Create the GitHub issue and return the issue number (PyGithub and the GitHub API return the
-    # issue number as an integer, but we record it as a string in Postgres. Convert it to a string
-    # here before returning.)
+    # Create the GitHub issue and return the issue number.
     return github.create_issue(
         title=f"NMDC Submission: {submission.id}",
         body=body,

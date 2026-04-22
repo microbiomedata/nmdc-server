@@ -34,9 +34,7 @@ async def lifespan(app: FastAPI):
     > [It will be] executed once, after [the application has] handled possibly many requests.
     """
 
-    # Print the active/portal database name to the console.
-    # TODO: Print this via `logging` (instead of `print`) so it is treated the same way as other
-    #       log entries. When testing using `logging`, keep in mind your log level/threshold.
+    # Log the active/portal database name to the console.
     portal_database_name = get_database_name_safely_for_logging(settings.database_uri)
     logger.info(f"Portal database: {portal_database_name}")
 

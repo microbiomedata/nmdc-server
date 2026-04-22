@@ -232,7 +232,7 @@ class Settings(BaseSettings):
     If needed for local development, get this file from an NMDC team member. The file should be
     copied into the auth subfolder of this project, and the corresponding environment variable
     should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth`
-    in the docker container.
+    in the Docker container.
     """
 
     llm_service_account_credentials_file: Optional[str] = None
@@ -241,7 +241,7 @@ class Settings(BaseSettings):
     If needed for local development, get this file from an NMDC team member. The file should be
     copied into the auth subfolder of this project, and the corresponding environment variable
     should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth`
-    in the docker container.
+    in the Docker container.
     """
 
     @property
