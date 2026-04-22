@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from pint import Quantity, UnitRegistry
 from pint.facets.plain.unit import PlainUnit
 
-_registry = UnitRegistry()
+_registry: UnitRegistry = UnitRegistry()
 
 # TODO: This information should come from the upstream schema.  For now, we
 #       hard code relevant attributes here.

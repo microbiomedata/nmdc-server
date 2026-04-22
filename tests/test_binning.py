@@ -4,8 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import fakes, query
+from nmdc_server import query
 from nmdc_server.binning import DateBinResolution
+from tests import fakes
 
 
 @pytest.fixture
