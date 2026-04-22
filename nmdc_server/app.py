@@ -19,6 +19,8 @@ from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
 
 
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -36,7 +38,7 @@ async def lifespan(app: FastAPI):
     # TODO: Print this via `logging` (instead of `print`) so it is treated the same way as other
     #       log entries. When testing using `logging`, keep in mind your log level/threshold.
     portal_database_name = get_database_name_safely_for_logging(settings.database_uri)
-    print(f"Portal database: {portal_database_name}")
+    logger.info(f"Portal database: {portal_database_name}")
 
     yield
 
