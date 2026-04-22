@@ -4,8 +4,7 @@
 
 * [Docker](https://docs.docker.com/get-started/)
 * [Docker Compose](https://docs.docker.com/compose/install/) (does not need to be installed separately if using Docker Desktop)
-* Python 3.9
-  * Optional: [pyenv](https://github.com/pyenv/pyenv) for managing Python versions
+* [uv](https://docs.astral.sh/uv/) for Python project management
 * Node.js >= 20
   * Optional: [nvm](https://github.com/nvm-sh/nvm) for managing Node.js versions
 * Yarn 1.x
@@ -174,14 +173,9 @@ Although the project is designed to be run in Docker, having the dependencies in
 
 ### Backend dependencies
 
-1. If necessary, create a new virtual environment.
+1. Install the backend dependencies using `uv`. This will create a new virtual environment in the `.venv` directory if one does not already exist.
     ```bash
-    python -m venv .venv
-    ````
-2. Activate your virtual environment and install the backend dependencies.
-    ```bash
-    source .venv/bin/activate
-    pip install -e .
+    uv sync --all-groups
     ```
 
 ### Frontend dependencies

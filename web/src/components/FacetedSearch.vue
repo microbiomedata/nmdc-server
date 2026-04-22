@@ -96,6 +96,9 @@ function tableName(table: string): string {
 }
 
 function fullTextSearch(): void {
+  if (!filterText) {
+    return;
+  }
   const condition: Condition = {
     op: 'like',
     field: 'search',
@@ -157,7 +160,7 @@ watch(() => filterText, (newVal) => {
           class="my-2"
         />
         <v-list-subheader>
-          Full Text Search
+          Text Search
         </v-list-subheader>
         <v-list-item @click="fullTextSearch">
           <v-list-item-title>

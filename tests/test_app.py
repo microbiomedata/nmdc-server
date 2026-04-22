@@ -12,8 +12,8 @@ from sqlalchemy.orm.session import Session
 from starlette import status as http_status
 
 import nmdc_server
-from nmdc_server import fakes
 from nmdc_server.schemas import DatabaseSummary
+from tests import fakes
 
 
 def assert_status(response: Response, status: int = 200):

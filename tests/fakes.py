@@ -5,7 +5,16 @@ from uuid import UUID, uuid4
 
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
+from faker.providers import (
+    BaseProvider,
+    date_time,
+    geo,
+    internet,
+    lorem,
+    misc,
+    person,
+    python,
+)
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.scoping import scoped_session
 

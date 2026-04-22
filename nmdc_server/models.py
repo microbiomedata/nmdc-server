@@ -31,7 +31,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy.schema import DDL
 
 from nmdc_server.database import Base, update_multiomics_sql
 
@@ -360,93 +359,6 @@ class AnnotatedModel:
     annotations = Column(JSONB, nullable=False, default=dict)
 
 
-# Note: The following SQL function definitions (i.e. CREATE statements) were copied verbatim
-#       from an Alembic migration (i.e. `b7d4b19db410_add_fts_gin_indexes.py`). We opted to
-#       not `import` the definitions from the migration to this module because that would be
-#       the only occurrence of that pattern in the repo (and importing from an Alembic migration
-#       just... feels... wrong). We also opted to not `import` the definitions from this module
-#       into the migration because that would expose us to the risk of the migration effectively
-#       getting redefined over time, which would "break version history." That is our rationale
-#       for having copied them verbatim.
-#
-# Note: The following is a comment from the original author of these SQL function definitions:
-#       > The event listeners below ensure `metadata.create_all()` (used by the test suite)
-#       > emits these statements before attempting to create the GIN indexes that depend on
-#       > the SQL functions.
-#
-# TODO: Update the `nmdc-server` test suite so that it uses the Alembic migrations to set up the
-#       test database. Then, we'll be able to eliminate this "copy" of these function definitions.
-#
-STUDY_FTS_FUNCTION_DDL = """--sql
-    CREATE OR REPLACE FUNCTION nmdc_study_fts(
-        p_id text,
-        p_name text,
-        p_description text,
-        p_gold_name text,
-        p_gold_description text,
-        p_scientific_objective text,
-        p_annotations jsonb
-    ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
-    AS $$
-        SELECT to_tsvector(
-            'simple',
-            concat_ws(
-                ' ',
-                p_id,
-                p_name,
-                p_description,
-                p_gold_name,
-                p_gold_description,
-                p_scientific_objective
-            )
-        ) || to_tsvector('simple', p_annotations)
-    $$
---end-sql"""
-
-BIOSAMPLE_FTS_FUNCTION_DDL = """--sql
-    CREATE OR REPLACE FUNCTION nmdc_biosample_fts(
-        p_id text,
-        p_name text,
-        p_description text,
-        p_study_id text,
-        p_env_broad_scale_id text,
-        p_env_local_scale_id text,
-        p_env_medium_id text,
-        p_ecosystem text,
-        p_ecosystem_category text,
-        p_ecosystem_type text,
-        p_ecosystem_subtype text,
-        p_specific_ecosystem text,
-        p_annotations jsonb
-    ) RETURNS tsvector LANGUAGE sql IMMUTABLE PARALLEL SAFE
-    AS $$
-        SELECT to_tsvector(
-            'simple',
-            concat_ws(
-                ' ',
-                p_id,
-                p_name,
-                p_description,
-                p_study_id,
-                p_env_broad_scale_id,
-                p_env_local_scale_id,
-                p_env_medium_id,
-                p_ecosystem,
-                p_ecosystem_category,
-                p_ecosystem_type,
-                p_ecosystem_subtype,
-                p_specific_ecosystem
-            )
-        ) || to_tsvector('simple', p_annotations)
-    $$
---end-sql"""
-
-# These event listeners ensure that the above SQL functions are created
-# before any attempt to create the GIN indexes that depend on them.
-event.listen(Base.metadata, "before_create", DDL(STUDY_FTS_FUNCTION_DDL))
-event.listen(Base.metadata, "before_create", DDL(BIOSAMPLE_FTS_FUNCTION_DDL))
-
-
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
@@ -464,6 +376,8 @@ class Study(Base, AnnotatedModel):
                 column("gold_description"),
                 column("scientific_objective"),
                 column("annotations"),
+                column("part_of"),
+                column("children"),
             ),
             postgresql_using="gin",
         ),
@@ -548,6 +462,8 @@ Study.__ts_vector__ = func.nmdc_study_fts(
     Study.gold_description,
     Study.scientific_objective,
     Study.annotations,
+    Study.part_of,
+    Study.children,
 )
 
 biosample_input_association = Table(
@@ -581,6 +497,7 @@ class Biosample(Base, AnnotatedModel):
                 column("ecosystem_subtype"),
                 column("specific_ecosystem"),
                 column("annotations"),
+                column("alternate_identifiers"),
             ),
             postgresql_using="gin",
         ),
@@ -662,6 +579,7 @@ Biosample.__ts_vector__ = func.nmdc_biosample_fts(
     Biosample.ecosystem_subtype,
     Biosample.specific_ecosystem,
     Biosample.annotations,
+    Biosample.alternate_identifiers,
 )
 
 
@@ -673,11 +591,29 @@ class BiosampleRelatedDocument(Base):
 
     __tablename__ = "biosample_related_document"
 
-    id = Column(String, primary_key=True)
-    biosample_ids = Column(ARRAY(String), nullable=False, default=list)
-    high_level_type = Column(String, nullable=False)
-    document = Column(JSONB, nullable=False)
-    downstream_neighbor_ids = Column(ARRAY(String), nullable=False, default=list)
+    id = Column(String, primary_key=True, comment="The value in the document's 'id' field")
+    biosample_ids = Column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+        comment="The IDs of all biosamples downstream of, upstream of, or representing the document",
+    )
+    high_level_type = Column(
+        String,
+        nullable=False,
+        comment="High-level type of the document (e.g., 'nmdc:WorkflowExecution')",
+    )
+    document = Column(
+        JSONB,
+        nullable=False,
+        comment="NMDC Schema-compliant document downstream of, upstream of, or representing the subject biosample",
+    )
+    downstream_neighbor_ids = Column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+        comment="IDs of documents that are immediately downstream of the document",
+    )
 
 
 omics_processing_output_association = output_association("omics_processing")
