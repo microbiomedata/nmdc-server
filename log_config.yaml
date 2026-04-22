@@ -37,4 +37,3 @@ root:
   level: WARNING
   handlers:
     - default
-  propagate: no
