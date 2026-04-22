@@ -1678,14 +1678,18 @@ def update_submission_status(
             except github.MissingCredentialsError:
                 # Log this as a warning because local development instances may not have GitHub
                 # credentials configured (expected).
-                logger.warning("GitHub credentials not found. Skipping GitHub issue creation.")
+                logger.warning(
+                    f"GitHub credentials not found. Skipping GitHub issue creation for submission {submission.id}."
+                )
         else:
             try:
                 update_github_issue_for_resubmission(submission.submission_issue, user)
             except github.MissingCredentialsError:
                 # Log this as a warning because local development instances may not have GitHub
                 # credentials configured (expected).
-                logger.warning("GitHub credentials not found. Skipping GitHub issue update.")
+                logger.warning(
+                    f"GitHub credentials not found. Skipping update of GitHub Issue #{submission.submission_issue} for submission {submission.id}."
+                )
 
     db.commit()
     return submission
