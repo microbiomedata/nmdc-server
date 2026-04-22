@@ -358,13 +358,20 @@ class AnnotatedModel:
     alternate_identifiers = Column(JSONB, nullable=False, default=list)
     annotations = Column(JSONB, nullable=False, default=dict)
 
+# -- Updating Full Text Search (FTS) --
+# To update the fields that are included and indexed for FTS, update the following:
+# 1. The arguments in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
+# 2. The columns in the SELECT statements in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
+# 3. The columns included in the `__table_args__` Index definitions in the `Study` model below.
+# 4. The columns included in the `__ts_vector__` assignment after the `Study` model definition below.
+# 5. The columns included in the `__table_args__` Index definitions in the `Biosample` model below.
+# 6. The columns included in the `__ts_vector__` assignment after the `Biosample` model definition below.
+# 7. Update the Text Search section of the Data Portal User Guide documentation (https://github.com/microbiomedata/docs/blob/main/content/home/src/howto_guides/portal_guide.md#text-search).
 
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
-    # Index Creation (for FTS) Part 1:
-    # bare column() refs, used only for __table_args__
-    # (DDL context requires unqualified names)
+    # Study Index Creation (for FTS) Part 1:
     __table_args__ = (
         Index(
             "ix_study_fts",
@@ -451,9 +458,7 @@ class Study(Base, AnnotatedModel):
         return doi_info
 
 
-# Index Creation (for FTS) Part 2:
-# __ts_vector__ is assigned after class creation using fully-qualified ORM
-# column attrs (e.g. Study.id), so it can be used directly in query filters
+# Study Index Creation (for FTS) Part 2:
 Study.__ts_vector__ = func.nmdc_study_fts(
     Study.id,
     Study.name,
@@ -477,9 +482,7 @@ biosample_input_association = Table(
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
-    # Index Creation (for FTS) Part 1:
-    # bare column() refs, used only for __table_args__
-    # (DDL context requires unqualified names)
+    # Biosample Index Creation (for FTS) Part 1:
     __table_args__ = (
         Index(
             "ix_biosample_fts",
@@ -562,9 +565,7 @@ class Biosample(Base, AnnotatedModel):
         db.commit()
 
 
-# Index Creation (for FTS) Part 2:
-# __ts_vector__ is assigned after class creation using fully-qualified ORM
-# column attrs (e.g. Biosample.id), so it can be used directly in query filters
+# Biosample Index Creation (for FTS) Part 2:
 Biosample.__ts_vector__ = func.nmdc_biosample_fts(
     Biosample.id,
     Biosample.name,
