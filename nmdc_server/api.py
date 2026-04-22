@@ -1,4 +1,5 @@
 import csv
+import datetime
 import json
 import time
 import zipfile
@@ -496,7 +497,12 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                 if filename is None:
                     continue
 
-                with zf.open(f"{filename}.json", "w") as jf:
+                zinfo = zipfile.ZipInfo(
+                    filename=f"{filename}.json",
+                    date_time=datetime.datetime.now().timetuple()[:6],  # default is 1980-01-01
+                )
+                zinfo.compress_type = zipfile.ZIP_DEFLATED
+                with zf.open(zinfo, "w") as jf:
                     if not biosample_ids:
                         # Write an empty list if there are no biosamples matching the query
                         jf.write(b"[]")
