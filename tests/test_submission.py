@@ -1793,6 +1793,51 @@ def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_a
     assert response.status_code == 422
 
 
+def test_github_issue_creation_on_submission(db: Session, client: TestClient, logged_in_user):
+    """
+    Confirm that when a submission status becomes 'SubmittedPendingReview'
+    and no GitHub issue number exists, a new GitHub issue is created.
+    """
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        status=SubmissionStatusEnum.InProgress.text,
+        is_test_submission=False,
+        submission_issue=None,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    with (
+        patch("nmdc_server.api.github.get_issue", return_value=None),
+        patch("nmdc_server.api.github.create_issue", return_value="9876") as mock_create_issue,
+    ):
+        response = client.request(
+            method="PATCH",
+            url=f"/api/metadata_submission/{submission.id}/status",
+            json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
+        )
+
+        # Verify the request was handled successfully
+        assert response.status_code == 200
+
+        # Verify that create_issue was called
+        assert mock_create_issue.call_count == 1
+
+        # Verify the create_issue function was called with the correct arguments
+        assert str(submission.id) in mock_create_issue.call_args.kwargs["title"]
+        assert logged_in_user.name in mock_create_issue.call_args.kwargs["body"]
+
+        # Verify that the submission_issue field was updated with the new issue number
+        db.refresh(submission)
+        assert submission.submission_issue == "9876"
+
+
 def test_github_issue_resubmission_creates_comment_only(
     db: Session, client: TestClient, logged_in_user
 ):
