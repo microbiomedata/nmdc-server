@@ -124,7 +124,14 @@ def load_biosample(db: Session, obj: Dict[str, Any]) -> bool:
 
     obj["study_id"] = associated_studies[0]
     depth_obj = obj.get("depth", {})
-    obj["depth"] = extract_quantity(depth_obj, "biosample", "depth")
+
+    # Handle depth, which may be a range or a single value
+    if "has_numeric_value" in depth_obj:
+        obj["depth_min"] = extract_quantity(depth_obj, "biosample", "depth", "has_numeric_value")
+        obj["depth_max"] = extract_quantity(depth_obj, "biosample", "depth", "has_numeric_value")
+    elif "has_minimum_numeric_value" in depth_obj and "has_maximum_numeric_value" in depth_obj:
+        obj["depth_min"] = extract_quantity(depth_obj, "biosample", "depth", "has_minimum_numeric_value")
+        obj["depth_max"] = extract_quantity(depth_obj, "biosample", "depth", "has_maximum_numeric_value")
 
     biosample = Biosample(**obj)
 
