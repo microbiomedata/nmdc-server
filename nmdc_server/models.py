@@ -358,6 +358,7 @@ class AnnotatedModel:
     alternate_identifiers = Column(JSONB, nullable=False, default=list)
     annotations = Column(JSONB, nullable=False, default=dict)
 
+
 # -- Updating Full Text Search (FTS) --
 # To update the fields that are included and indexed for FTS, update the following:
 # 1. The arguments in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
@@ -367,6 +368,7 @@ class AnnotatedModel:
 # 5. The columns included in the `__table_args__` Index definitions in the `Biosample` model below.
 # 6. The columns included in the `__ts_vector__` assignment after the `Biosample` model definition below.
 # 7. Update the Text Search section of the Data Portal User Guide documentation (https://github.com/microbiomedata/docs/blob/main/content/home/src/howto_guides/portal_guide.md#text-search).
+
 
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
