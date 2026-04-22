@@ -9,7 +9,6 @@ from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
-import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
@@ -20,7 +19,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, models, query, schemas, schemas_submission
+from nmdc_server import crud, github, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -1626,7 +1625,7 @@ async def get_transitions():
     responses=login_required_responses,
     response_model=schemas_submission.SubmissionMetadataSchema,
 )
-async def update_submission_status(
+def update_submission_status(
     id: str,
     body: schemas_submission.SubmissionMetadataStatusPatch,
     db: Session = Depends(get_db),
@@ -1667,7 +1666,6 @@ async def update_submission_status(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid status transition.",
             )
-    db.commit()
 
     # If the new status is "Submitted - Pending Review", create or update the GitHub issue
     if (
@@ -1677,20 +1675,19 @@ async def update_submission_status(
         if submission.submission_issue is None:
             try:
                 submission.submission_issue = create_github_issue(submission, user)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to create GitHub issue: {str(e)}",
-                )
-            db.commit()
+            except github.MissingCredentialsError:
+                # Log this as a warning because local development instances may not have GitHub
+                # credentials configured (expected).
+                logger.warning("GitHub credentials not found. Skipping GitHub issue creation.")
         else:
             try:
                 update_github_issue_for_resubmission(submission.submission_issue, user)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to update GitHub issue: {str(e)}",
-                )
+            except github.MissingCredentialsError:
+                # Log this as a warning because local development instances may not have GitHub
+                # credentials configured (expected).
+                logger.warning("GitHub credentials not found. Skipping GitHub issue update.")
+
+    db.commit()
     return submission
 
 
@@ -1750,137 +1747,78 @@ async def remove_submission_role(
     return submission
 
 
-def create_github_issue(submission_model: SubmissionMetadata, user):
+def create_github_issue(submission_model: SubmissionMetadata, user: User) -> str:
     """
-    Create a Github issue for the submission.
+    Create a GitHub issue for the submission.
     Return the issue number.
     """
+    # Load the submission data into a Pydantic model for easier access to nested properties
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    gh_url = str(settings.github_issue_url)
-    token = settings.github_authentication_token
-    assignee = settings.github_issue_assignee
 
-    # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url is None or token is None:
-        return None
-
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-
-    # Gathering the fields we want to display in the issue
+    # Build the body of the GitHub issue with relevant information from the submission
     study_form = submission.metadata_submission.studyForm
     multiomics_form = submission.metadata_submission.multiOmicsForm
-    pi_name = study_form.piName
-    pi_orcid = study_form.piOrcid
-    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
-    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
-    sample_types = ", ".join(submission.metadata_submission.templates)
-    num_samples = submission.sample_count
 
-    # some variable data to supply depending on if data has been generated or not
-    id_dict = {
-        "NCBI ID: ": study_form.NCBIBioProjectId,
-        "GOLD ID: ": study_form.GOLDStudyId,
-        "JGI ID: ": multiomics_form.JGIStudyId,
-        "EMSL ID: ": multiomics_form.studyNumber,
-        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
-    }
-    valid_ids = []
-    for key, value in id_dict.items():
-        if str(value) != "":
-            valid_ids.append(key + value)
+    fields = [
+        ("Issue created from host", settings.host),
+        ("Submitter", f"{user.name}, {user.orcid}"),
+        ("Submission ID", submission.id),
+        ("Has data been generated", "Yes" if multiomics_form.dataGenerated else "No"),
+        ("PI name", study_form.piName),
+        ("PI orcid", study_form.piOrcid),
+        ("Status", SubmissionStatusEnum.SubmittedPendingReview.text),
+        ("Data types", ", ".join(multiomics_form.omicsProcessingTypes)),
+        ("Sample type", ", ".join(submission.metadata_submission.templates)),
+        ("Number of samples", submission.sample_count),
+    ]
 
-    # assemble the body of the API request
-    body_lis = [
-        f"Issue created from host: {settings.host}",
-        f"Submitter: {user.name}, {user.orcid}",
-        f"Submission ID: {submission.id}",
-        f"Has data been generated: {data_generated}",
-        f"PI name: {pi_name}",
-        f"PI orcid: {pi_orcid}",
-        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
-        f"Data types: {omics_processing_types}",
-        f"Sample type: {sample_types}",
-        f"Number of samples: {num_samples}",
-    ] + valid_ids
-    body_string = " \n ".join(body_lis)
-    payload_dict = {
-        "title": f"NMDC Submission: {submission.id}",
-        "body": body_string,
-        "assignees": [assignee],
-    }
+    optional_fields = (
+        ("NCBI ID", study_form.NCBIBioProjectId),
+        ("GOLD ID", study_form.GOLDStudyId),
+        ("JGI ID", multiomics_form.JGIStudyId),
+        ("EMSL ID", multiomics_form.studyNumber),
+        ("Alternative IDs", ", ".join(study_form.alternativeNames)),
+    )
+    for field_name, field_value in optional_fields:
+        if field_value:
+            fields.append((field_name, field_value))
+    body = "\n".join([f"**{name}:** {value}" for name, value in fields])
 
-    payload = json.dumps(payload_dict)
-
-    res = requests.post(url=gh_url, data=payload, headers=headers)
-    if res.status_code != 201:
-        raise HTTPException(
-            status_code=res.status_code,
-            detail=f"Github issue creation failed: {res.reason}",
-        )
-
-    return res.json()["number"]
+    # Create the GitHub issue and return the issue number (PyGithub and the GitHub API return the
+    # issue number as an integer, but we record it as a string in Postgres. Convert it to a string
+    # here before returning.)
+    return github.create_issue(
+        title=f"NMDC Submission: {submission.id}",
+        body=body,
+        assignee=settings.github_issue_assignee,
+    )
 
 
-def update_github_issue_for_resubmission(existing_issue, user):
+def update_github_issue_for_resubmission(issue_number: str, user: User) -> None:
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
     Adds a comment and reopens the issue if it was closed.
     Return nothing.
     """
 
-    # Create a comment noting the resubmission
-    from datetime import datetime
-
-    gh_url = str(settings.github_issue_url)
-    issue_url = f"{gh_url}/{existing_issue}"
-    token = settings.github_authentication_token
-
-    # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url is None or token is None:
-        return None
-
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-
-    # Make comment
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    # Make comment body
     comment_body = f"""
 ## 🔄 Submission Resubmitted
 
 **Resubmitted by:** {user.name} ({user.orcid})
-**Timestamp:** {timestamp}
 **Status:** {SubmissionStatusEnum.SubmittedPendingReview.text}
 
 The submission has been updated and resubmitted for review.
     """.strip()
 
+    # Look up the issue by its number
+    issue = github.get_issue(issue_number)
+
     # Add comment to the issue
-    comment_url = f"{issue_url}/comments"
-    comment_payload = {"body": comment_body}
-    comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
-    if comment_response.status_code != 201:
-        raise HTTPException(
-            status_code=comment_response.status_code,
-            detail=f"Failed to add comment to GitHub issue: {comment_response.reason}",
-        )
+    github.add_issue_comment(issue, comment_body)
 
     # If the issue is closed, reopen it
-    res = requests.get(url=issue_url, headers=headers)
-    if res.status_code != 200:
-        raise HTTPException(
-            status_code=res.status_code,
-            detail=f"Failed to fetch GitHub issue: {res.reason}",
-        )
-    existing_issue = res.json()
-    if existing_issue.get("state") == "closed":
-        reopen_payload = {"state": "open", "state_reason": "reopened"}
-        reopen_response = requests.patch(
-            issue_url, headers=headers, data=json.dumps(reopen_payload)
-        )
-        if reopen_response.status_code != 200:
-            raise HTTPException(
-                status_code=reopen_response.status_code,
-                detail=f"Failed to reopen GitHub issue: {reopen_response.reason}",
-            )
+    github.reopen_issue(issue)
 
 
 @router.delete(
