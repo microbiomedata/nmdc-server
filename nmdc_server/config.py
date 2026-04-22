@@ -217,13 +217,13 @@ class Settings(BaseSettings):
     github_issues_repo: str = "microbiomedata/issues"
     """Full name of the NMDC generic issues repository
 
-    This should the full name of the repo (in "org/repo" format) that the NMDC Submission Bot will
+    This should be the full name of the repo (in "org/repo" format) that the NMDC Submission Bot will
     use when creating or updating issues related to submissions.
     """
     github_issue_assignee: str | None = None
     """The GitHub username of the assignee for issues created by the NMDC Submission Bot.
 
-    If notset, issues will be unassigned."""
+    If not set, issues will be unassigned."""
     github_submission_bot_app_id: str | None = None
     """The GitHub App ID for the NMDC Submission Bot GitHub App."""
     github_submission_bot_private_key_file: str | None = None
