@@ -1,12 +1,12 @@
 import threading
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
 
+from github import Auth, Github, GithubIntegration
+from github.GithubObject import NotSet
+from github.Issue import Issue
 from github.Repository import Repository
 
 from nmdc_server.config import settings
-from github import GithubIntegration, Github, Auth
-from github.GithubObject import NotSet
-from github.Issue import Issue
 
 # Refresh the token when it has fewer than this many minutes remaining, so that we don't attempt to
 # use a token that may expire mid-request.
@@ -18,13 +18,17 @@ _token_expires_at: datetime | None = None
 _private_key: str | None = None
 
 if settings.github_submission_bot_private_key_file is not None:
-    with open(settings.github_submission_bot_private_key_file) as f:
-        _private_key = f.read()
+    try:
+        with open(settings.github_submission_bot_private_key_file) as f:
+            _private_key = f.read()
+    except OSError:
+        # If the file can't be read, we leave _private_key as None and let the error be raised
+        # later when we try to get a token.
+        pass
 
 
 class MissingCredentialsError(Exception):
     """Raised when GitHub credentials are missing or incomplete."""
-    pass
 
 
 def _get_installation_token() -> str:
@@ -59,14 +63,17 @@ def _get_installation_token() -> str:
 
         return _cached_token
 
+
 def _get_issues_repo() -> Repository:
     """Return the GitHub repository object for the configured issues repository."""
     client = get_client()
     return client.get_repo(settings.github_issues_repo)
 
+
 def get_client() -> Github:
     """Return an authenticated GitHub client using a cached installation token."""
     return Github(auth=Auth.Token(_get_installation_token()))
+
 
 def create_issue(title: str, body: str, assignee: str | None = None) -> str:
     """Create a GitHub issue in the configured repository and return the issue number as a string."""
@@ -74,15 +81,18 @@ def create_issue(title: str, body: str, assignee: str | None = None) -> str:
     issue = repo.create_issue(title=title, body=body, assignee=assignee or NotSet)
     return str(issue.number)
 
+
 def get_issue(issue_number: str) -> Issue:
     """Get a GitHub issue by its number."""
     repo = _get_issues_repo()
     return repo.get_issue(int(issue_number))
 
+
 def add_issue_comment(issue: str | Issue, comment: str) -> None:
     """Add a comment to an existing GitHub issue."""
     issue_obj = issue if isinstance(issue, Issue) else get_issue(issue)
     issue_obj.create_comment(comment)
+
 
 def reopen_issue(issue: str | Issue) -> None:
     """Reopen a closed GitHub issue.

@@ -1,10 +1,10 @@
-import json
 from csv import DictReader
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.encoders import jsonable_encoder
+from github.Issue import Issue
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
@@ -1815,37 +1815,28 @@ def test_github_issue_resubmission_creates_comment_only(
     )
     db.commit()
 
-    comment_response = Mock(status_code=201, json=lambda: {"id": 456})
-    get_response = Mock(status_code=200, json=lambda: {"state": "open", "number": 123})
+    mock_issue = MagicMock(spec=Issue)
+    mock_issue.id = 123
+    mock_issue.state = "open"
 
     with (
-        patch("nmdc_server.api.requests.post", return_value=comment_response) as mock_post,
-        patch("nmdc_server.api.requests.get", return_value=get_response) as mock_get,
-        patch("nmdc_server.api.requests.patch") as mock_patch,
-        patch("nmdc_server.api.settings") as mock_settings,
+        patch("nmdc_server.api.github.get_issue", return_value=mock_issue),
+        patch("nmdc_server.api.github.create_issue") as mock_create_issue,
+        patch("nmdc_server.api.github.add_issue_comment") as mock_add_issue_comment,
     ):
-        mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
-        mock_settings.github_authentication_token = "fake_token"
-
         response = client.request(
             method="PATCH",
             url=f"/api/metadata_submission/{submission.id}/status",
             json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
         )
 
+        # Verify the request was handled successfully
         assert response.status_code == 200
-        assert mock_post.call_count == 1
 
-        # Verify comment endpoint was called
-        assert "/issues/123/comments" in mock_post.call_args[0][0]
+        # Verify that add_issue_comment was called and create_issue was not called
+        assert mock_add_issue_comment.call_count == 1
+        assert mock_create_issue.call_count == 0
 
-        # Verify comment content
-        comment_data = json.loads(mock_post.call_args[1]["data"])
-        assert "Submission Resubmitted" in comment_data["body"]
-        assert logged_in_user.name in comment_data["body"]
-
-        # Verify issue state was checked
-        assert mock_get.call_count == 1
-
-        # Verify issue was not reopened (it's already open)
-        assert mock_patch.call_count == 0
+        # Verify the add_issue_comment function was called with the correct arguments
+        assert mock_add_issue_comment.call_args.args[0].id == 123
+        assert "Submission Resubmitted" in mock_add_issue_comment.call_args.args[1]

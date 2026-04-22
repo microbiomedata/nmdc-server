@@ -216,22 +216,22 @@ class Settings(BaseSettings):
     # GitHub integration settings
     github_issues_repo: str = "microbiomedata/issues"
     """Full name of the NMDC generic issues repository
-     
+
     This should the full name of the repo (in "org/repo" format) that the NMDC Submission Bot will
     use when creating or updating issues related to submissions.
     """
     github_issue_assignee: str | None = None
-    """The GitHub username of the assignee for issues created by the NMDC Submission Bot. 
-    
+    """The GitHub username of the assignee for issues created by the NMDC Submission Bot.
+
     If notset, issues will be unassigned."""
     github_submission_bot_app_id: str | None = None
     """The GitHub App ID for the NMDC Submission Bot GitHub App."""
     github_submission_bot_private_key_file: str | None = None
     """Path to the private key (PEM) file for the NMDC Submission Bot GitHub App.
-    
+
     If needed for local development, get this file from an NMDC team member. The file should be
     copied into the auth subfolder of this project, and the corresponding environment variable
-    should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth` 
+    should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth`
     in the docker container.
     """
 

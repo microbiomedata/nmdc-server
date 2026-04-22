@@ -18,8 +18,8 @@ from nmdc_server.database import after_cursor_execute, before_cursor_execute, li
 from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
 
-
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
