@@ -565,7 +565,6 @@ def create_file_download(
     return db_file_download
 
 
-
 def safe_name(name: str) -> str:
     """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
     return name.replace("/", "_").replace("\\", "_").replace(":", "_")
