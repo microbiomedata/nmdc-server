@@ -703,6 +703,12 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     base = settings.portal_api_internal_url
     file_descriptions.append(
         {
+            "url": f"{base}/api/bulk_download/{id}/ro-crate-metadata.json",
+            "zipPath": "ro-crate-metadata.json",
+        }
+    )
+    file_descriptions.append(
+        {
             "url": f"{base}/api/bulk_download/{id}/README.md",
             "zipPath": "README.md",
         }
