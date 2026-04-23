@@ -22,6 +22,7 @@ def get_rocrate_base_bulk_download():
                 "name": "NMDC Data Portal Bulk Download",
                 "description": "autogenerate-me",
                 "datePublished": "2026",
+                "license": "https://creativecommons.org/licenses/by/4.0/",
                 "additionalProperty": [
                     {
                         "@type": "PropertyValue",
