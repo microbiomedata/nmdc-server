@@ -21,7 +21,7 @@ def get_rocrate_base_bulk_download():
                 "@type": "Dataset",
                 "name": "NMDC Data Portal Bulk Download",
                 "description": "autogenerate-me",
-                "datePublished": "2026",
+                "datePublished": "autogenerate-me",
                 "license": "https://creativecommons.org/licenses/by/4.0/",
                 "additionalProperty": [
                     {
@@ -91,6 +91,7 @@ def generate_rocrate_for_bulk_download(bulk_download):
     root_data_entity = get_root_data_entity(rocrate_dict)
     if not root_data_entity:
         raise ValueError("RO-Crate structure is missing the root data entity with @id './'")
+    root_data_entity["datePublished"] = bulk_download.created.isoformat()
     root_data_entity["description"] = (
         f"Bulk download of data files from the NMDC Data Portal, generated on {datetime.now().strftime("%Y-%m-%d")} at {datetime.now().strftime("%H:%M")}. The files included in the data directory are determined by the `query_conditions` and `selected_file_types` specified for this bulk download."
     )
