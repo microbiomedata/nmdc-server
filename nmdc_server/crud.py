@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 from fastapi import HTTPException, status

@@ -120,6 +120,10 @@ def generate_rocrate_for_bulk_download(bulk_download):
     data_directory_entity = next(
         (item for item in rocrate_dict["@graph"] if item["@id"] == "data/"), None
     )
+    if not data_directory_entity:
+        raise ValueError(
+            "RO-Crate structure is missing the data directory entity with @id 'data/'"
+        )
     data_directory_entity["description"] = (
         f"Directory containing the {len(bulk_download.files)} data files for this bulk download. The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name, where ':' (colons) in the IDs are replaced with '_' (underscore) for file system safety. Each file is prefixed by its sanitized `DataObject` ID, followed by '__' (double underscore), followed by its sanitized `DataObject` name."
     )
