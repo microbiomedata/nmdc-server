@@ -91,7 +91,7 @@ def generate_rocrate_for_bulk_download(bulk_download):
     root_data_entity = get_root_data_entity(rocrate_dict)
     if not root_data_entity:
         raise ValueError("RO-Crate structure is missing the root data entity with @id './'")
-    root_data_entity["description"] = f"Bulk download of data files from the NMDC Data Portal, generated on {datetime.now().strftime("%Y-%m-%d %H:%M")}. The files included in the data directory are determined by the `query_conditions` and `selected_file_types` specified for this bulk download."
+    root_data_entity["description"] = f"Bulk download of data files from the NMDC Data Portal, generated on {datetime.now().strftime("%Y-%m-%d")} at {datetime.now().strftime("%H:%M")}. The files included in the data directory are determined by the `query_conditions` and `selected_file_types` specified for this bulk download."
     query_conditions_property = next((prop for prop in root_data_entity["additionalProperty"] if prop["name"] == "query_conditions"), None)
     if not query_conditions_property:
         raise ValueError("RO-Crate structure is missing the 'query_conditions' additional property")
@@ -101,5 +101,5 @@ def generate_rocrate_for_bulk_download(bulk_download):
         raise ValueError("RO-Crate structure is missing the 'selected_file_types' additional property")
     selected_file_types_property["value"] = bulk_download.filter
     data_directory_entity = next((item for item in rocrate_dict["@graph"] if item["@id"] == "data/"), None)
-    data_directory_entity["description"] = f"Directory containing the {len(bulk_download.files)} data files for this bulk download. The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name."
+    data_directory_entity["description"] = f"Directory containing the {len(bulk_download.files)} data files for this bulk download. The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name, where ':' (colons) in the IDs are replaced with '_' (underscore) for file system safety. Each file is prefixed by its sanitized `DataObject` ID, followed by '__' (double underscore), followed by its sanitized `DataObject` name."
     return rocrate_dict
