@@ -30,7 +30,10 @@ COPY . /app/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
+# Activate the virtual environment
+ENV PATH="/app/.venv/bin:$PATH"
+
 COPY .env.production /app/.env
 RUN chmod +x /app/start.sh
 WORKDIR /app/
-CMD ["uv", "run", "/app/start.sh"]
+CMD ["/app/start.sh"]
