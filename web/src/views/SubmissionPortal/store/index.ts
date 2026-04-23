@@ -30,6 +30,7 @@ import {
   SubmissionStatusKey,
   SubmissionValidationState,
   SuggestionsMode,
+  SuggestionFill,
   SuggestionType,
 } from '@/views/SubmissionPortal/types';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
@@ -624,6 +625,7 @@ const templateList = computed<string[]>((prevTemplates) => {
 const sampleData = shallowRef({} as Record<string, any[]>);
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
+const suggestionFill = ref(SuggestionFill.BY_ROW);
 const suggestionType = ref(SuggestionType.ALL);
 
 watch(templateList, (newList, oldList) => {
@@ -1009,6 +1011,7 @@ export {
   piImageUrl,
   metadataSuggestions,
   suggestionMode,
+  suggestionFill,
   suggestionType,
   SubmissionStatusEnum,
   submissionPages,

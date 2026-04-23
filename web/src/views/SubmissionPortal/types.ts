@@ -185,6 +185,12 @@ export enum SuggestionsMode {
   OFF = 'Off',
 }
 
+export enum SuggestionFill {
+  BY_COLUMN = 'By Column',
+  BY_ROW = 'By Row',
+  BY_SAMPLE_TYPE = 'By Sample Type',
+}
+
 export interface CellData {
   row: number,
   col: number,
