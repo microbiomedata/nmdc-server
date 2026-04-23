@@ -6,23 +6,19 @@ The following document explains the structure of the archive you have downloaded
 
 ## Data Product Files
 
-Each file you have downloaded is nested inside of a series of folders that organize the files by their associated counterparts. The hierarchy uses the following structure:
+The data files can be found in the `data/` folder after unzipping your archive. The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name, where ':' (colons) in the IDs are replaced with '_' (underscore) for file system safety. Each file is prefixed by its sanitized `DataObject` ID, followed by '__' (double underscore), followed by its sanitized `DataObject` name.
 
-- `Study`
-  - `Biosample`
-    - `DataGeneration`
-      - Data Product File
+For example: `nmdc_dobj-11-wyam2520__nmdc_wfrqc-11-k1c92g17.1_filterStats.txt`
 
-The name of each folder is a sanitized version of the object's ID (`:` replaced by `_`). For example:
+Note that some `DataObject` names include references to other related NMDC identifiers, but this is not an enforced standard.
 
-- `nmdc_sty-11-8ws97026`
-  - `nmdc_bsm-11-127y7152`
-    - `nmdc_dgms-11-5fd4qm69`
-      - `nmdc_dobj-11-dhdvdf46_kaiko_QC_metrics.tsv`
+## RO-Crate Metadata Document
 
-## Metadata
+Included at the top level of every download is a file called `ro-crate-metadata.json`. This is a machine-readable document that describes the contents of this archive. To learn more about RO-Crate, check out the [RO-Crate specification docs](https://www.researchobject.org/ro-crate/specification/1.2/introduction.html).
 
-At the top level of the download is a folder called `metadata`. This includes two JSON files that are intended to help you understand more about how each data product file was generated and how to relate them back to `Biosample`s.
+## Metadata Folder
+
+At the top level of the download is a folder called `metadata/`. This includes two JSON files that are intended to help you understand more about how each data product file was generated and how to relate them back to `Biosample`s.
 
 ### `data_objects.json`
 
@@ -30,7 +26,7 @@ This file includes a list of JSON objects where each object represents a `DataOb
 
 > An object that primarily consists of symbols that represent information. Files, records, and omics data are examples of data objects.
 
-Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). You can tell which file the ID relates to by looking at the `name` field. The `name` value is equal to the name of the data product file (e.g. `nmdc_dobj-11-xmvv4977_nmdc_dobj-11-f6nr5w60_QC_metrics.tsv`).
+Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). You can tell which file the ID relates to by looking at the `id` and `name` fields. Each file name in the `data/` folder is prefixed with a sanitized version of the `id`. See the [Data Prodct Files](#data-product-files) section above.
 
 ### `related_biosamples.json`
 

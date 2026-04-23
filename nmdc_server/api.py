@@ -44,6 +44,7 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 from nmdc_server.storage import BucketName, sanitize_filename, storage
 from nmdc_server.table import Table
 
@@ -1096,6 +1097,29 @@ async def get_bulk_download_readme(
     readme_content = readme_path.read_text(encoding="utf-8")
 
     return Response(content=readme_content, media_type="text/markdown")
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/ro-crate-metadata.json",
+    tags=["download"],
+)
+async def get_bulk_download_rocrate(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON object representing the RO-Crate metadata for the bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    rocrate_dict = generate_rocrate_for_bulk_download(bulk_download)
+
+    return JSONResponse(content=rocrate_dict)
 
 
 @router.get(
