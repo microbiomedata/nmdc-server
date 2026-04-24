@@ -27,7 +27,7 @@ const client = setupCache(axiosApiInstance, {
   enabled: false,
   methods: ["get", "post"],
   ttl: 15 * 60 * 1000,
-})
+});
 
 const staticFileClient = axios.create({
   baseURL: "/static",
