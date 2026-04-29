@@ -23,7 +23,7 @@ dependencies = [
     "itsdangerous",
     "linkml-runtime",
     "nmdc-geoloc-tools",
-    "nmdc-metadata-suggestor-ai-tool==1.1.1",
+    "nmdc-metadata-suggestor-ai-tool==1.1.2",
     "nmdc-schema==11.18.0",
     "nmdc-submission-schema==11.18.1",
     "nmdc_api_utilities",
