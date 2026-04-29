@@ -134,7 +134,7 @@ watch(() => filterText, (newVal) => {
         <v-text-field
           :model-value="filterText"
           v-bind="props"
-          label="search"
+          label="Search"
           autocomplete="off"
           clearable
           class="mx-3 pt-1"
@@ -160,7 +160,30 @@ watch(() => filterText, (newVal) => {
           class="my-2"
         />
         <v-list-subheader>
-          Text Search
+          <div class="d-flex align-center">
+            <span>Text Search</span>
+            <v-tooltip
+              location="bottom"
+              open-delay="600"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  icon
+                  href="https://docs.microbiomedata.org/howto_guides/portal_guide/#text-search"
+                  target="_blank"
+                  rel="noopener"
+                  variant="text"
+                  color="grey-darken-1"
+                  size="small"
+                  v-bind="props"
+                  density="comfortable"
+                >
+                  <v-icon>mdi-help-circle</v-icon>
+                </v-btn>
+              </template>
+              <span>Click to learn more about how our text search works.</span>
+            </v-tooltip>
+          </div>
         </v-list-subheader>
         <v-list-item @click="fullTextSearch">
           <v-list-item-title>
