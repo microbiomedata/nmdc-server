@@ -126,6 +126,13 @@ You also must generate a local object name prefix. This prefix is used to differ
    NMDC_GCS_OBJECT_NAME_PREFIX=local_1234abcd  # replace 1234abcd with your random suffix
    ```
 
+### Google Cloud LLM Access
+To test LLM features locally, you will need to get the `nmdc-llm` GCP service account credential file from an NMDC team member. The file should be copied into the `nmdc-server/auth/` directory of this project. Then add the following variable in `.env`:
+    
+```bash
+NMDC_LLM_SERVICE_ACCOUNT_CREDENTIALS_FILE=/auth/name-of-your-file.json
+```
+This path is used by nmdc-metadata-suggestor-ai-tool on the backend
 
 ## Load production data
 
