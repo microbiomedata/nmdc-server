@@ -519,12 +519,6 @@ const submissionState = computed(() => {
   };
 });
 
-const handleSubmitClick = () => {
-  if (submissionState.value.canSubmit) {
-    submitDialog.value = true;
-  }
-};
-
 const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
   .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
     const val = {
@@ -561,7 +555,19 @@ const selectedHelpDict = computed(() => {
   return null;
 });
 
-const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+const {
+  request: submitRequest,
+  loading: submitLoading,
+  count: submitCount,
+  error: submitError,
+  reset: submitReset,
+} = useRequest();
+const handleSubmitClick = () => {
+  if (submissionState.value.canSubmit) {
+    submitReset();
+    submitDialog.value = true;
+  }
+};
 const doSubmit = () => submitRequest(async () => {
   const data = await harmonizerApi.exportJson();
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
@@ -1116,7 +1122,6 @@ const appBannerHeight = inject(AppBannerHeightKey);
               >
                 <v-btn
                   color="success"
-                  depressed
                   :disabled="!submissionState.canSubmit"
                   :loading="submitLoading"
                   @click="handleSubmitClick"
@@ -1132,39 +1137,47 @@ const appBannerHeight = inject(AppBannerHeightKey);
                     v-model="submitDialog"
                     width="auto"
                   >
-                    <v-card v-if="isTestSubmission">
-                      <v-card-title>
-                        Submit
-                      </v-card-title>
-                      <v-card-text>
-                        Test submissions cannot be submitted for NMDC review.
-                      </v-card-text>
+                    <v-card
+                      v-if="isTestSubmission"
+                      title="Submit"
+                      text="Test submissions cannot be submitted for NMDC review."
+                    >
                       <v-card-actions>
                         <v-btn
-                          text
                           @click="submitDialog = false"
                         >
                           Close
                         </v-btn>
                       </v-card-actions>
                     </v-card>
-                    <v-card v-else>
-                      <v-card-title>
-                        Submit
-                      </v-card-title>
+                    <v-card
+                      v-else
+                      title="Submit"
+                    >
                       <v-card-text>
-                        You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                        <p>You are about to submit this study and metadata for NMDC review. Would you like to continue?</p>
+                        <p
+                          v-if="submitError"
+                          class="text-red-darken-2"
+                        >
+                          An error occurred while processing your submission. Please try again. If the problem persists, contact support.
+                        </p>
                       </v-card-text>
                       <v-card-actions>
                         <v-btn
-                          color="primary"
-                          class="mr-2"
+                          :disabled="submitLoading"
+                          @click="submitDialog = false"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          color="success"
+                          :disabled="submitLoading"
+                          variant="elevated"
+                          :loading="submitLoading"
                           @click="doSubmit"
                         >
-                          Yes- Submit
-                        </v-btn>
-                        <v-btn @click="submitDialog = false">
-                          Cancel
+                          Yes - Submit
                         </v-btn>
                       </v-card-actions>
                     </v-card>
