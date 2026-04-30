@@ -26,7 +26,7 @@ This file includes a list of JSON objects where each object represents a `DataOb
 
 > An object that primarily consists of symbols that represent information. Files, records, and omics data are examples of data objects.
 
-Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). You can tell which file the ID relates to by looking at the `id` and `name` fields. Each file name in the `data/` folder is prefixed with a sanitized version of the `id`. See the [Data Prodct Files](#data-product-files) section above.
+Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). You can tell which file the ID relates to by looking at the `id` and `name` fields. Each file name in the `data/` folder is prefixed with a sanitized version of the `id`. See the [Data Product Files](#data-product-files) section above.
 
 ### `related_biosamples.json`
 
