@@ -6,7 +6,7 @@ The following document explains the structure of the archive you have downloaded
 
 ## Data Product Files
 
-The data files can be found in the `data/` folder after unzipping your archive. The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name, where ':' (colons) in the IDs are replaced with '_' (underscore) for file system safety. Each file is prefixed by its sanitized `DataObject` ID, followed by '__' (double underscore), followed by its sanitized `DataObject` name.
+The data files can be found in the `data/` folder after unzipping your archive. Each data product file is considered a `DataObject`, as defined in the [NMDC Schema Documentation](https://microbiomedata.github.io/nmdc-schema/DataObject/). The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name, where ':' (colons) in the IDs are replaced with '_' (underscore) for file system safety. Each file is prefixed by its sanitized `DataObject` ID, followed by '__' (double underscore), followed by its sanitized `DataObject` name.
 
 For example: `nmdc_dobj-11-wyam2520__nmdc_wfrqc-11-k1c92g17.1_filterStats.txt`
 
