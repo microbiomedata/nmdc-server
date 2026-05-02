@@ -2,7 +2,7 @@
 /**
  * Component to display metadata suggestions and allow users to accept or reject them.
  */
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import {
   fetchSuggestionsFromSampleRows,
   removeMetadataSuggestions,
@@ -43,8 +43,14 @@ interface MetadataSuggesterProps {
   schemaClassName: string;
 }
 
-const aiMenuOpen = ref(false);
 const selectedAiOption = ref<string | null>(null);
+const suggestionStarted = ref(false);
+
+watch(selectedAiOption, () => {
+  metadataSuggestions.value = [];
+  dismissedGroups.value = [];
+  suggestionStarted.value = false;
+});
 
 const aiSuggestionOptions = [
   { label: 'By Row', value: 'by_row' },
@@ -61,7 +67,7 @@ const mockSuggestions: Record<string, MetadataSuggestion[]> = {
       value: '278.3',
       current_value: '325',
       source: 'Suggested based on other metadata in the same row',
-      is_ai_generated: true,
+      is_ai_generated: false,
     },
     {
       type: 'add',
@@ -70,7 +76,7 @@ const mockSuggestions: Record<string, MetadataSuggestion[]> = {
       value: '0.15',
       current_value: null,
       source: 'Suggested based on other metadata in the same row',
-      is_ai_generated: true,
+      is_ai_generated: false,
     },
   ],
   'by_column': [
@@ -184,10 +190,10 @@ function handleAcceptGroup(group: SuggestionGroup) {
   dismissedGroups.value.push(group.label);
 }
 
-const aiButtonLabel = computed(() => {
-  if (selectedAiOption.value === null) return "Start AI Suggestion";
-  return aiSuggestionOptions.find((option) => option.value === selectedAiOption.value)?.label ?? "Start AI Suggestion";
-});
+// const aiButtonLabel = computed(() => {
+//   if (selectedAiOption.value === null) return "Start AI Suggestion";
+//   return aiSuggestionOptions.find((option) => option.value === selectedAiOption.value)?.label ?? "Start AI Suggestion";
+// });
 
 // const suggestionModeOptions = Object.values(SuggestionsMode);
 // const suggestionFillOptions = Object.values(SuggestionFill);
@@ -337,16 +343,14 @@ function handleRejectAllSuggestions() {
  * This will get the data for the selected rows, send it to the backend to get suggestions, and then add the
  * suggestions to the store.
  */
-function handleAiSuggestionOption(option: string) {
-  selectedAiOption.value = option;
-  if (option === 'by_sample_type') {
-    metadataSuggestions.value = [];
-    dismissedGroups.value = [];
-  } else {
-    metadataSuggestions.value = mockSuggestions[option] ?? [];
+function handleStartSuggestion() {
+  if (selectedAiOption.value === null) {
+    return;
   }
-  // metadataSuggestions.value = mockSuggestions[option] ?? [];
-  // await handleSuggestForSelectedRows();
+  suggestionStarted.value = true;
+  if(selectedAiOption.value !== 'by_sample_type') {
+    metadataSuggestions.value = mockSuggestions[selectedAiOption.value] ?? [];
+  }
 }
 
 async function handleSuggestForSelectedRows() {
@@ -442,7 +446,17 @@ const loading = computed(() => (
       <v-card-text v-if="enabled">
         <v-row dense>
           <v-col>
-            <v-menu
+            <v-select
+              v-model="selectedAiOption"
+              :items="aiSuggestionOptions"
+              item-title="label"
+              item-value="value"
+              label="Suggestion Mode"
+              hide-details
+              clearable
+            />
+
+            <!-- <v-menu
               v-model="aiMenuOpen"
               :close-on-content-click="true"
             >
@@ -472,7 +486,7 @@ const loading = computed(() => (
                   @click="handleAiSuggestionOption(option.value)"
                 />
               </v-list>
-            </v-menu>
+            </v-menu> -->
           </v-col>
         </v-row>
 
@@ -582,12 +596,23 @@ const loading = computed(() => (
         </v-row> -->
 
 
+        <v-row-dense>
+          <v-col>
+            <v-btn
+              color="primary"
+              block
+              :disabled="selectedAiOption === null"
+              @click="handleStartSuggestion"
+            >
+              Start Metadata Suggestion
+            </v-btn>
+          </v-col>
+        </v-row-dense>
 
-
-        <v-row v-if="selectedAiOption === 'by_sample_type'">
+        <v-row v-if="selectedAiOption === 'by_sample_type' && suggestionStarted">
           <v-col>
             <div
-              v-if="visibleGroups.length === 0"
+              v-if="suggestionStarted && visibleGroups.length === 0"
               class="text--disabled"
             >
               No suggestions available.
@@ -697,7 +722,7 @@ const loading = computed(() => (
         <v-row v-if="selectedAiOption !== 'by_sample_type'">
           <v-col>
             <div
-              v-if="selectedAiOption !== null && !hasSuggestions"
+              v-if="suggestionStarted && !hasSuggestions"
               class="text--disabled"
             >
               No suggestions available.
