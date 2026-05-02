@@ -2001,7 +2001,7 @@ wheels = [
 
 [[package]]
 name = "nmdc-schema"
-version = "11.18.0"
+version = "11.18.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2018,9 +2018,9 @@ dependencies = [
     { name = "rdflib" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/8f/a3792322b7894806112901f271bffea71101240429bb77480ff7f89d529e/nmdc_schema-11.18.0.tar.gz", hash = "sha256:efba19d87f5b5a765bc4acf073f99a7390f9cb6b5491b2068bfe8632d8584351", size = 718695, upload-time = "2026-04-09T21:18:40.756Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/97/ae8a5d821555ad2d833ecb81968c768cc51425b1abb851401bc87bec6ff7/nmdc_schema-11.18.1.tar.gz", hash = "sha256:e9bcc699bc5bec2a093cfcc47ef0dc8c995c574dca0c7683634d7ff87be8f23a", size = 719526, upload-time = "2026-05-01T22:39:43.441Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/f5/02c47de90a1f77ba878c4e78ab59b369f0c3fed5b540fe83ae2d1980bc5b/nmdc_schema-11.18.0-py3-none-any.whl", hash = "sha256:86696614881c8389f205289ee351f54a332a54e41897b4602996ac25587aec77", size = 792075, upload-time = "2026-04-09T21:18:38.486Z" },
+    { url = "https://files.pythonhosted.org/packages/40/01/6cc4bc748c4ea169ad8e6521ae51b6537ebde5000ef789432a614a67fb7b/nmdc_schema-11.18.1-py3-none-any.whl", hash = "sha256:f2cab9f83a9706bf5f61c5ecec8c1a200ca3b3f06b24bb27675ae8a2cf7606eb", size = 792944, upload-time = "2026-05-01T22:39:41.503Z" },
 ]
 
 [[package]]
@@ -2098,7 +2098,7 @@ requires-dist = [
     { name = "nmdc-api-utilities" },
     { name = "nmdc-geoloc-tools" },
     { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.1.1" },
-    { name = "nmdc-schema", specifier = "==11.18.0" },
+    { name = "nmdc-schema", specifier = "==11.18.1" },
     { name = "nmdc-submission-schema", specifier = "==11.18.1" },
     { name = "pint" },
     { name = "pydantic" },

@@ -24,7 +24,8 @@ dependencies = [
     "linkml-runtime",
     "nmdc-geoloc-tools",
     "nmdc-metadata-suggestor-ai-tool==1.1.1",
-    "nmdc-schema==11.18.0",
+    "nmdc-schema==11.18.1",
+    # Note: `nmdc-submission-schema` version 11.18.1 is based on `nmdc-schema` 11.18.0, NOT 11.18.1.
     "nmdc-submission-schema==11.18.1",
     "nmdc_api_utilities",
     "pint",
