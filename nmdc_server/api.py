@@ -1516,7 +1516,6 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     """Compare a patch payload with what the user can actually save."""
     metadata_contributor_fields = {
         "sampleData",
-        "validationState",
         "metadata_submission",
     }
     editor_fields = {
@@ -1527,7 +1526,8 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
         "studyForm",
         "multiOmicsForm",
         "sampleData",
-        "validationState",
+        "sampleEnvironmentValidationState",
+        "sampleDataValidationState",
         "field_notes_metadata",
         "metadata_submission",
     }
@@ -1616,7 +1616,6 @@ async def update_submission(
         crud.update_submission_contributor_roles(db, submission, new_permissions)
 
     crud.update_submission_lock(db, submission.id)
-
     return submission
 
 

@@ -1,6 +1,6 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { computed, reactive, Ref, ref, shallowRef, watch, } from 'vue';
-import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
+import { chunk, clone, forEach, isEqual, isString, sample, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
 import {
@@ -143,19 +143,12 @@ const hasChanged = ref(0);
 /**
  * Validating forms
 */
-
-const validationStateDefault: SubmissionValidationState = {
-  studyForm: null,
-  multiOmicsForm: null,
-  sampleEnvironmentForm: null,
-  senderShippingInfoForm: null,
-  sampleMetadata: null,
-};
-const validationState = reactive(clone(validationStateDefault));
+const sampleEnvironmentValidationState = ref<string[] | null>(null);
+const sampleDataValidationState = ref<SampleMetadataValidationState | null>(null);
 
 function setTabValidated(tabName: string, validated: boolean) {
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleDataValidationState.value === null) {
+      sampleDataValidationState.value = {
       invalidCells: {},
       tabsValidated: {},
     };
@@ -163,12 +156,12 @@ function setTabValidated(tabName: string, validated: boolean) {
   if (!templateList.value.includes(tabName)) {
     return;
   }
-  validationState.sampleMetadata.tabsValidated[tabName] = validated;
+  sampleDataValidationState.value.tabsValidated[tabName] = validated;
 }
 
 function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record<number, string>>) {
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleDataValidationState.value === null) {
+    sampleDataValidationState.value = {
       invalidCells: {},
       tabsValidated: {},
     };
@@ -176,49 +169,49 @@ function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record
   if (!templateList.value.includes(tabName)) {
     return;
   }
-  validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
+  sampleDataValidationState.value.invalidCells[tabName] = invalidCells;
 }
 
 function resetSampleMetadataValidation() {
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleDataValidationState.value === null) {
+    sampleDataValidationState.value = {
       invalidCells: {},
       tabsValidated: {},
     };
   }
-  validationState.sampleMetadata.invalidCells = {};
-  Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
-    validationState.sampleMetadata!.tabsValidated[tab] = false;
+  sampleDataValidationState.value.invalidCells = {};
+  Object.keys(sampleDataValidationState.value.tabsValidated).forEach((tab) => {
+    sampleDataValidationState.value!.tabsValidated[tab] = false;
   });
 }
 
 function isSubmissionValid() {
   // The required forms must be validated with no errors
-  if (!isEqual(validationState.studyForm, [])) {
+  if (!isEqual(studyForm.validationState, [])) {
     return false;
   }
-  if (!isEqual(validationState.multiOmicsForm, [])) {
+  if (!isEqual(multiOmicsForm.validationState, [])) {
     return false;
   }
-  if (!isEqual(validationState.sampleEnvironmentForm, [])) {
+  if (!isEqual(sampleEnvironmentValidationState.value, [])) {
     return false;
   }
   // The sender shipping info form is optional. If it has been validated, it must have no errors
-  if (validationState.senderShippingInfoForm != null && !isEqual(validationState.senderShippingInfoForm, [])) {
+  if (addressForm.validationState != null && !isEqual(addressForm.validationState, [])) {
     return false;
   }
   // The sample metadata must be validated with no errors
-  if (validationState.sampleMetadata == null) {
+  if (sampleDataValidationState.value == null) {
     return false;
   }
-  const tabsValidatedValues = Object.values(validationState.sampleMetadata.tabsValidated);
+  const tabsValidatedValues = Object.values(sampleDataValidationState.value.tabsValidated);
   if (tabsValidatedValues.length === 0) {
     return false;
   }
   if (tabsValidatedValues.some((validated) => !validated)) {
     return false;
   }
-  if (Object.values(validationState.sampleMetadata.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
+  if (Object.values(sampleDataValidationState.value.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
     return false;
   }
   return true;
@@ -269,22 +262,22 @@ const submissionPages = computed<SubmissionPage[]>(() => ([
   {
     title: 'Study Information',
     link: { name: 'Study Form' },
-    validationMessages: validationState.studyForm,
+    validationMessages: studyForm.validationState,
   },
   {
     title: 'Multi-omics Data',
     link: { name: 'Multiomics Form' },
-    validationMessages: combineErrors(validationState.multiOmicsForm, validationState.senderShippingInfoForm),
+    validationMessages: combineErrors(multiOmicsForm.validationState, addressForm.validationState),
   },
   {
     title: 'Sample Environment',
     link: { name: 'Sample Environment' },
-    validationMessages: validationState.sampleEnvironmentForm,
+    validationMessages: sampleEnvironmentValidationState.value,
   },
   {
     title: 'Sample Metadata',
     link: { name: 'Submission Sample Editor' },
-    validationMessages: combineSampleMetadataErrors(validationState.sampleMetadata),
+    validationMessages: combineSampleMetadataErrors(sampleDataValidationState.value),
   },
 ]));
 
@@ -313,6 +306,7 @@ const addressFormDefault = {
   biosafetyLevel: '',
   irbOrHipaa: undefined as undefined | boolean,
   comments: '',
+  validationState: null as null | string[],
 };
 
 const addressForm = reactive(clone(addressFormDefault));
@@ -341,6 +335,7 @@ const studyFormDefault = {
   alternativeNames: [] as string[],
   GOLDStudyId: '',
   NCBIBioProjectId: '',
+  validationState: null as null | string[],
 };
 const studyForm = reactive(clone(studyFormDefault));
 
@@ -381,6 +376,7 @@ const multiOmicsFormDefault = {
   lipProtocols: null as null | Protocols,
   nomProtocols: null as null | Protocols,
   nomLcProtocols: null as null | Protocols,
+  validationState: null as null | string[],
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
@@ -530,7 +526,7 @@ watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
 // reset the sender shipping info form validation state to null (untouched).
 watch(() => multiOmicsForm.ship, (newVal) => {
   if (newVal !== true) {
-    validationState.senderShippingInfoForm = null;
+    addressForm.validationState = null;
   }
 });
 
@@ -636,20 +632,20 @@ watch(templateList, (newList, oldList) => {
   }
   if (packageName.value.length === 0) {
     // If no package is selected, set the sample metadata validation to an untouched state
-    validationState.sampleMetadata = null;
+    sampleDataValidationState.value = null;
     return;
   }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
   });
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleDataValidationState.value === null) {
+    sampleDataValidationState.value = {
       invalidCells: {},
       tabsValidated: {},
     };
   }
-  validationState.sampleMetadata.tabsValidated = newTabsValidated;
+  sampleDataValidationState.value.tabsValidated = newTabsValidated;
 
   // Remove sampleData and validation state for any templates that are no longer included in the package
   const removedTemplates = oldList.filter((template) => !newList.includes(template));
@@ -661,9 +657,9 @@ watch(templateList, (newList, oldList) => {
         return;
       }
       delete newSampleData[sampleDataSlot];
-      if (validationState.sampleMetadata) {
-        delete validationState.sampleMetadata.tabsValidated[template];
-        delete validationState.sampleMetadata.invalidCells[template];
+      if (sampleDataValidationState.value) {
+        delete sampleDataValidationState.value.tabsValidated[template];
+        delete sampleDataValidationState.value.invalidCells[template];
       }
     });
     sampleData.value = newSampleData;
@@ -681,7 +677,8 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
-  validationState,
+  sampleEnvironmentValidationState: sampleEnvironmentValidationState.value,
+  sampleDataValidationState: sampleDataValidationState.value,
 }));
 
 function templateHasData(templateName: string = ''): boolean {
@@ -765,7 +762,6 @@ function reset() {
   Object.assign(addressForm, addressFormDefault);
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  Object.assign(validationState, validationStateDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
@@ -775,6 +771,8 @@ function reset() {
   isTestSubmission.value = false;
   primaryStudyImageUrl.value = null;
   piImageUrl.value = null;
+  sampleEnvironmentValidationState.value = null;
+  sampleDataValidationState.value = null;
 }
 
 const incrementalSaveRecordRequest = useRequest();
@@ -804,6 +802,7 @@ async function incrementalSaveRecord(id: string): Promise<void> {
       () => api.updateRecord(id, payload, permissions)
     );
     if (response) {
+      console.log(response);
       updateStateFromRecord(response);
     }
     return;
@@ -831,9 +830,6 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
   }
-  if (!isEqual(validationState, record.metadata_submission.validationState)) {
-    Object.assign(validationState, record.metadata_submission.validationState);
-  }
   createdDate.value = new Date(record.created + 'Z');
   modifiedDate.value = new Date(record.date_last_modified + 'Z');
   sampleData.value = record.metadata_submission.sampleData;
@@ -847,6 +843,8 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   piImageUrl.value = record.pi_image_url;
   hasChanged.value = 0;
   author.value = record.author;
+  sampleEnvironmentValidationState.value = record.metadata_submission.sampleEnvironmentValidationState;
+  sampleDataValidationState.value = record.metadata_submission.sampleDataValidationState;
 }
 
 async function lockRecord(id: string) {
@@ -992,7 +990,6 @@ export {
   addressForm,
   addressFormDefault,
   studyForm,
-  validationState,
   submitPayload,
   packageName,
   templateList,
@@ -1014,6 +1011,8 @@ export {
   submissionPages,
   fetchSuggestionsFromSampleRowsRequest,
   fetchSuggestionsFromStudyInfoRequest,
+  sampleEnvironmentValidationState,
+  sampleDataValidationState,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,

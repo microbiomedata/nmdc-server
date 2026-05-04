@@ -275,6 +275,7 @@ def test_get_metadata_submissions_report_as_admin(
                 "award": "MONet",
                 "awardDois": [],
                 "mgCompatible": None,
+                "validationState": None,
             },
             "studyForm": {
                 "studyName": "My study name",
@@ -289,6 +290,7 @@ def test_get_metadata_submissions_report_as_admin(
                 "alternativeNames": [],
                 "GOLDStudyId": "",
                 "NCBIBioProjectId": "",
+                "validationState": None,
             },
             "templates": [],
             "addressForm": {
@@ -312,13 +314,8 @@ def test_get_metadata_submissions_report_as_admin(
                 "biosafetyLevel": "",
                 "comments": "",
             },
-            "validationState": {
-                "studyForm": None,
-                "multiOmicsForm": None,
-                "sampleEnvironmentForm": None,
-                "senderShippingInfoForm": None,
-                "sampleMetadata": None,
-            },
+            "sampleDataValidationState": None,
+            "sampleEnvironmentValidationState": None,
             "packageName": [],
         },
         is_test_submission=True,

@@ -404,6 +404,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "award": None,
             "awardDois": [],
             "mgCompatible": None,
+            "validationState": None,
         },
         "studyForm": {
             "studyName": "",
@@ -419,8 +420,11 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "alternativeNames": [],
             "GOLDStudyId": "",
             "NCBIBioProjectId": "",
+            "validationState": None,
         },
         "templates": [],
+        "sampleEnvironmentValidationState": None,
+        "sampleDataValidationState": None,
         "addressForm": {
             "shipper": {
                 "name": "",
@@ -441,13 +445,6 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "permitNumber": "",
             "biosafetyLevel": "",
             "comments": "",
-        },
-        "validationState": {
-            "studyForm": None,
-            "multiOmicsForm": None,
-            "sampleEnvironmentForm": None,
-            "senderShippingInfoForm": None,
-            "sampleMetadata": None,
         },
         "packageName": [],
     }

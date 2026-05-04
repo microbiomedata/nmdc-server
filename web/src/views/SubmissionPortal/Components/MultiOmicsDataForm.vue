@@ -14,7 +14,6 @@ import {
   multiOmicsForm,
   removeAwardDoi,
   templateHasData,
-  validationState,
 } from '../store';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -128,7 +127,6 @@ export default defineComponent({
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
-      validationState,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,
@@ -154,7 +152,7 @@ export default defineComponent({
     </PageTitle>
     <SubmissionForm
       ref="formRef"
-      @valid-state-changed="(state) => validationState.multiOmicsForm = state"
+      @valid-state-changed="(state) => multiOmicsForm.validationState = state"
     >
       <v-radio-group
         v-model="multiOmicsForm.dataGenerated"

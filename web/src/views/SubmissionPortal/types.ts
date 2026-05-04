@@ -238,25 +238,18 @@ export interface SampleMetadataValidationState {
   tabsValidated: Record<string, boolean>;
 }
 
-// null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
-// an array of strings indicates validation errors for the form
-// an empty array indicates the form has been validated with no errors
-export interface SubmissionValidationState {
-  studyForm: string[] | null;
-  multiOmicsForm: string[] | null;
-  sampleEnvironmentForm: string[] | null;
-  senderShippingInfoForm: string[] | null;
-  sampleMetadata: SampleMetadataValidationState | null;
-}
-
+//Validation states are null if they have not been checked, 
+//and an object with details if they have been checked and issues were found. 
+//If no issues are found, the object will be empty.
 export interface MetadataSubmission {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
   addressForm: any;
   templates: string[];
+  sampleEnvironmentValidationState: string[] | null;
+  sampleDataValidationState: SampleMetadataValidationState | null;
   studyForm: any;
   multiOmicsForm: any;
   sampleData: Record<string, any[]>;
-  validationState: SubmissionValidationState;
 }
 
 export interface MetadataSubmissionRecordSlim {

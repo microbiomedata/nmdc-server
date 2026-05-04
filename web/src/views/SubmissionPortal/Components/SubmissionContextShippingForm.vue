@@ -2,7 +2,7 @@
 import { computed, defineComponent, ref, useTemplateRef, watch, } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
-import { addressForm, canEditSubmissionMetadata, validationState, } from '../store';
+import { addressForm, canEditSubmissionMetadata, } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
@@ -13,7 +13,7 @@ export default defineComponent({
   components: { SubmissionForm, SubmissionContextShippingSummary },
   setup() {
     const addressFormRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('addressFormRef');
-    const addressFormValid = computed(() => validationState.senderShippingInfoForm?.length === 0);
+    const addressFormValid = computed(() => addressForm.validationState?.length === 0);
     const showAddressForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
@@ -71,7 +71,6 @@ export default defineComponent({
       addressFormRef,
       addressForm,
       addressFormValid,
-      validationState,
       showAddressForm,
       datePicker,
       expectedShippingDate,
@@ -147,7 +146,7 @@ export default defineComponent({
           <v-card-text>
             <SubmissionForm
               ref="addressFormRef"
-              @valid-state-changed="(state) => validationState.senderShippingInfoForm = state"
+              @valid-state-changed="(state) => addressForm.validationState = state"
             >
               <v-list-subheader>
                 <span class="text-h6">Sender</span>
