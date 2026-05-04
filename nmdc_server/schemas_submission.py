@@ -125,10 +125,6 @@ class SampleMetadataValidationState(BaseModel):
     tabsValidated: Dict[str, bool]
 
 
-class SubmissionValidationState(BaseModel):
-    sampleMetadata: Optional[SampleMetadataValidationState] = None
-
-
 class MetadataSubmissionRecordCreate(BaseModel):
     packageName: List[str]
     addressForm: AddressForm
