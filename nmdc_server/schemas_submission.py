@@ -36,6 +36,7 @@ class StudyFormCreate(BaseModel):
     description: str
     notes: str
     contributors: List[Contributor]
+    validationState: Optional[List[str]] = None
     # These are optional here to allow temporary Field Notes compatibility
     alternativeNames: Optional[List[str]] = None
     GOLDStudyId: Optional[str] = None
