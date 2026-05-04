@@ -5,9 +5,9 @@ import {
   canEditSubmissionByStatus,
   canEditSubmissionMetadata,
   packageName,
+  sampleEnvironmentValidationState,
   templateHasData,
   templateList,
-  validationState,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
@@ -20,6 +20,10 @@ export default defineComponent({
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
 
+    const handleStateChanged = (state: string[] | null) => {
+      sampleEnvironmentValidationState.value = state;
+    };
+
     return {
       packageName,
       HARMONIZER_TEMPLATES,
@@ -28,7 +32,8 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      validationState,
+      sampleEnvironmentValidationState,
+      handleStateChanged,
     };
   },
 });
@@ -53,7 +58,7 @@ export default defineComponent({
       </template>
     </PageTitle>
     <SubmissionForm
-      @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
+      @valid-state-changed="handleStateChanged"
     >
       <v-input
         :model-value="packageName"
