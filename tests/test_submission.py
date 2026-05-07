@@ -716,7 +716,7 @@ def test_piecewise_patch_metadata_contributor(
 
     if samples_only:
         request_dict = {
-            "metadata_submission": {"sampleData": full_payload.metadata_submission.sampleData.data}
+            "metadata_submission": {"sampleData": full_payload.metadata_submission.sampleData}
         }
         request_payload = jsonable_encoder(
             SubmissionMetadataSchemaPatch.model_validate(request_dict), exclude_unset=True

@@ -1,6 +1,6 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import { computed, reactive, Ref, ref, shallowRef, watch, } from 'vue';
-import { chunk, clone, forEach, isEqual, isString, sample, } from 'lodash';
+import { computed, reactive, Ref, ref, watch, } from 'vue';
+import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
 import {

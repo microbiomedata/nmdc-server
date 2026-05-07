@@ -1168,7 +1168,7 @@ async def get_metadata_submissions_mixs(
             if "sampleData" in metadata and "data" in metadata["sampleData"]
             else {}
         )
-        env_pkg = metadata.sampleEnvironmentForm.get("packageName", "")
+        env_pkg = metadata["sampleEnvironmentForm"].get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:

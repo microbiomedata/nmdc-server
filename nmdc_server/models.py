@@ -1401,7 +1401,7 @@ class SubmissionMetadata(Base):
     def sample_count(self) -> int:
         if not self.metadata_submission or not isinstance(self.metadata_submission, dict):
             return 0
-        sample_data = self.metadata_submission.sampleData.get("data", {})
+        sample_data = self.metadata_submission["sampleData"].get("data", {})
         if not sample_data:
             return 0
         count = 0
