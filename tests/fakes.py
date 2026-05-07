@@ -391,7 +391,10 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     date_last_modified = created
     # TODO specify all fields!
     metadata_submission = {
-        "sampleData": {},
+        "sampleData": {
+            "data": {},
+            "_validation": None,
+        },
         "multiOmicsForm": {
             "studyNumber": "",
             "JGIStudyId": "",
@@ -404,7 +407,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "award": None,
             "awardDois": [],
             "mgCompatible": None,
-            "validationState": None,
+            "_validation": None,
         },
         "studyForm": {
             "studyName": "",
@@ -420,12 +423,10 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "alternativeNames": [],
             "GOLDStudyId": "",
             "NCBIBioProjectId": "",
-            "validationState": None,
+            "_validation": None,
         },
         "templates": [],
-        "sampleEnvironmentValidationState": None,
-        "sampleDataValidationState": None,
-        "addressForm": {
+        "senderShippingInfoForm": {
             "shipper": {
                 "name": "",
                 "email": "",
@@ -445,8 +446,12 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "permitNumber": "",
             "biosafetyLevel": "",
             "comments": "",
+            "_validation": None,
         },
-        "packageName": [],
+        "sampleEnvironmentForm": {
+            "packageName": [],
+            "_validation": None,
+        },
     }
     locked_by = None
     lock_updated = None

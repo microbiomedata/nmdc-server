@@ -163,7 +163,7 @@ export default defineComponent({
     </PageTitle>
     <SubmissionForm
       ref="formRef"
-      @valid-state-changed="(state) => studyForm.validationState = state"
+      @valid-state-changed="(state) => studyForm._validation = state"
     >
       <PageSection>
         <div class="stack-md">

@@ -238,18 +238,26 @@ export interface SampleMetadataValidationState {
   tabsValidated: Record<string, boolean>;
 }
 
+export interface SampleData {
+  data: Record<string, any[]>;
+  _validation: SampleMetadataValidationState | null;
+}
+
+export interface SampleEnvironmentForm {
+  packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
+  _validation: Record<string, any> | null;
+}
+
 //Validation states are null if they have not been checked, 
 //and an object with details if they have been checked and issues were found. 
 //If no issues are found, the object will be empty.
 export interface MetadataSubmission {
-  packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  addressForm: any;
+  sampleEnvironmentForm: SampleEnvironmentForm;
+  senderShippingInfoForm: any;
   templates: string[];
-  sampleEnvironmentValidationState: string[] | null;
-  sampleDataValidationState: SampleMetadataValidationState | null;
   studyForm: any;
   multiOmicsForm: any;
-  sampleData: Record<string, any[]>;
+  sampleData: SampleData;
 }
 
 export interface MetadataSubmissionRecordSlim {

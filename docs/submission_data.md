@@ -22,11 +22,11 @@ The structure of the objects stored in the `metadata_submission` column is gover
 This record includes several sub-forms:
 - `studyForm`: General information about the study.
 - `multiOmicsForm`: Details about the omics processing types and protocols.
-- `addressForm`: Shipping and contact information.
+- `senderShippingInfoForm`: Shipping and contact information.
 - `sampleData`: The actual sample metadata.
 
 ### Sample Metadata
-The `sampleData` field within the `metadata_submission` JSONB object contains the rows of metadata edited via DataHarmonizer.
+The `sampleData` field within the `metadata_submission` JSONB object contains the `data` field which are the rows of metadata edited via DataHarmonizer.
 - The structure of this field follows the [NMDC Submission Schema `SampleData` class](https://microbiomedata.github.io/submission-schema/SampleData/).
 - It is stored as a dictionary where keys are template names and values are lists of sample rows.
 
