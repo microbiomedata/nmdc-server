@@ -20,7 +20,7 @@ export default defineComponent({
       .join(' + '));
 
     const handleStateChanged = (state: string[] | null) => {
-      sampleEnvironmentForm._validation = state;
+      sampleEnvironmentForm.validation = state;
     };
 
     return {

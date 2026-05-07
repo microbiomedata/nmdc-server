@@ -393,7 +393,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     metadata_submission = {
         "sampleData": {
             "data": {},
-            "_validation": None,
+            "validation": None,
         },
         "multiOmicsForm": {
             "studyNumber": "",
@@ -407,7 +407,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "award": None,
             "awardDois": [],
             "mgCompatible": None,
-            "_validation": None,
+            "validation": None,
         },
         "studyForm": {
             "studyName": "",
@@ -423,7 +423,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "alternativeNames": [],
             "GOLDStudyId": "",
             "NCBIBioProjectId": "",
-            "_validation": None,
+            "validation": None,
         },
         "templates": [],
         "senderShippingInfoForm": {
@@ -446,11 +446,11 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "permitNumber": "",
             "biosafetyLevel": "",
             "comments": "",
-            "_validation": None,
+            "validation": None,
         },
         "sampleEnvironmentForm": {
             "packageName": [],
-            "_validation": None,
+            "validation": None,
         },
     }
     locked_by = None

@@ -127,9 +127,9 @@ const activeTemplateData = computed(() => {
   }
   return sampleData.data[activeTemplate.value.sampleDataSlot] || [];
 });
-const hasValidSampleEnvironmentSelection = computed(() => isEqual(sampleEnvironmentForm._validation, []));
-const hasValidUserFacilitySelection = computed(() => isEqual(multiOmicsForm._validation, []));
-const tabsValidated = computed(() => sampleData._validation?.tabsValidated || {});
+const hasValidSampleEnvironmentSelection = computed(() => isEqual(sampleEnvironmentForm.validation, []));
+const hasValidUserFacilitySelection = computed(() => isEqual(multiOmicsForm.validation, []));
+const tabsValidated = computed(() => sampleData.validation?.tabsValidated || {});
 
 const submitDialog = ref(false);
 
@@ -150,13 +150,13 @@ watch(activeTemplate, () => {
     harmonizerApi.setMaxRows(activeTemplateData.value.length);
   }
   harmonizerApi.loadData(activeTemplateData.value);
-  harmonizerApi.setInvalidCells(sampleData._validation?.invalidCells[activeTemplateKey.value!] || {});
+  harmonizerApi.setInvalidCells(sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
   harmonizerApi.changeVisibility(columnVisibility.value);
 });
 
 const validationErrors = computed(() => {
   const remapped: ValidationErrors = {};
-  const invalid: Record<number, Record<number, string>> = sampleData._validation?.invalidCells[activeTemplateKey.value!] || {};
+  const invalid: Record<number, Record<number, string>> = sampleData.validation?.invalidCells[activeTemplateKey.value!] || {};
   if (Object.keys(invalid).length) {
     remapped['All Errors'] = [];
   }
@@ -178,7 +178,7 @@ const validationErrors = computed(() => {
 const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
 const validationTotalCounts = computed(() => Object.fromEntries(
-  Object.entries(sampleData._validation?.invalidCells || {}).map(([template, cells]) => ([
+  Object.entries(sampleData.validation?.invalidCells || {}).map(([template, cells]) => ([
     template,
     sum(Object.values(cells).map((row) => Object.keys(row).length)),
   ])),
@@ -497,7 +497,7 @@ async function validate() {
   if (valid === false) {
     errorClick(0);
   }
-  validationSuccessSnackbar.value = Object.values(sampleData._validation?.tabsValidated || {}).every((value) => value);
+  validationSuccessSnackbar.value = Object.values(sampleData.validation?.tabsValidated || {}).every((value) => value);
 }
 
 const submissionState = computed(() => {
@@ -726,9 +726,9 @@ onMounted(async () => {
     await nextTick();
     // Load data and invalid cells for the active tab
     harmonizerApi.loadData(activeTemplateData.value);
-    harmonizerApi.setInvalidCells(sampleData._validation?.invalidCells[activeTemplateKey.value!] || {});
+    harmonizerApi.setInvalidCells(sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
     // If the tab has no validation state from the server, mark it as unvalidated
-    if (!sampleData._validation || !has(sampleData._validation.tabsValidated, activeTemplateKey.value!)) {
+    if (!sampleData.validation || !has(sampleData.validation.tabsValidated, activeTemplateKey.value!)) {
       setTabValidated(activeTemplateKey.value!, false);
     }
     addHooks();

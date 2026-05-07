@@ -240,12 +240,12 @@ export interface SampleMetadataValidationState {
 
 export interface SampleData {
   data: Record<string, any[]>;
-  _validation: SampleMetadataValidationState | null;
+  validation: SampleMetadataValidationState | null;
 }
 
 export interface SampleEnvironmentForm {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  _validation: Record<string, any> | null;
+  validation: Record<string, any> | null;
 }
 
 //Validation states are null if they have not been checked, 

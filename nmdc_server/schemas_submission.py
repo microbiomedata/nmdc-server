@@ -36,7 +36,7 @@ class StudyFormCreate(BaseModel):
     description: str
     notes: str
     contributors: List[Contributor]
-    _validation: Optional[List[str]] = None
+    validation: Optional[List[str]] = None
     # These are optional here to allow temporary Field Notes compatibility
     alternativeNames: Optional[List[str]] = None
     GOLDStudyId: Optional[str] = None
@@ -85,7 +85,7 @@ class MultiOmicsForm(BaseModel):
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
     nomLcProtocols: Optional[Protocols] = None
-    _validation: Optional[List[str]] = None
+    validation: Optional[List[str]] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
@@ -117,12 +117,12 @@ class SenderShippingInfoForm(BaseModel):
     biosafetyLevel: str
     irbOrHipaa: Optional[bool] = None
     comments: str
-    _validation: Optional[List[str]] = None
+    validation: Optional[List[str]] = None
 
 
 class SampleEnvironmentForm(BaseModel):
     packageName: List[str]
-    _validation: Optional[List[str]] = None
+    validation: Optional[List[str]] = None
 
 
 class SampleMetadataValidationState(BaseModel):
@@ -132,7 +132,7 @@ class SampleMetadataValidationState(BaseModel):
 
 class SampleData(BaseModel):
     data: Dict[str, List[Any]]
-    _validation: SampleMetadataValidationState
+    validation: SampleMetadataValidationState
 
 
 class MetadataSubmissionRecordCreate(BaseModel):

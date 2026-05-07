@@ -13,7 +13,7 @@ export default defineComponent({
   components: { SubmissionForm, SubmissionContextShippingSummary },
   setup() {
     const senderShippingInfoFormRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('senderShippingInfoFormRef');
-    const senderShippingInfoFormValid = computed(() => senderShippingInfoForm._validation?.length === 0);
+    const senderShippingInfoFormValid = computed(() => senderShippingInfoForm.validation?.length === 0);
     const showsenderShippingInfoForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
@@ -146,7 +146,7 @@ export default defineComponent({
           <v-card-text>
             <SubmissionForm
               ref="senderShippingInfoFormRef"
-              @valid-state-changed="(state) => senderShippingInfoForm._validation = state"
+              @valid-state-changed="(state) => senderShippingInfoForm.validation = state"
             >
               <v-list-subheader>
                 <span class="text-h6">Sender</span>

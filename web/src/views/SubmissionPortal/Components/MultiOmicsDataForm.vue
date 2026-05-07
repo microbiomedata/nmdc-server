@@ -152,7 +152,7 @@ export default defineComponent({
     </PageTitle>
     <SubmissionForm
       ref="formRef"
-      @valid-state-changed="(state) => multiOmicsForm._validation = state"
+      @valid-state-changed="(state) => multiOmicsForm.validation = state"
     >
       <v-radio-group
         v-model="multiOmicsForm.dataGenerated"

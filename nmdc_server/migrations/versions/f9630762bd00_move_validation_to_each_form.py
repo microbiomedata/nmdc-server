@@ -43,8 +43,8 @@ def _ensure_list(v):
 
 def upgrade():
     """
-    Moves old validationState.* into per-form _validation fields.
-    Ensures _validation is present on all new forms
+    Moves old validationState.* into per-form validation fields.
+    Ensures validation is present on all new forms
     """
     connection = op.get_bind()
     session = sa.orm.Session(bind=connection)
@@ -63,27 +63,27 @@ def upgrade():
         validation_state = _ensure_dict(ms.get("validationState"))
 
         # ALWAYS set per-form validation lists (empty list if missing)
-        study_form["_validation"] = _ensure_list(validation_state.get("studyForm"))
-        multiomics_form["_validation"] = _ensure_list(validation_state.get("multiOmicsForm"))
+        study_form["validation"] = _ensure_list(validation_state.get("studyForm"))
+        multiomics_form["validation"] = _ensure_list(validation_state.get("multiOmicsForm"))
 
         sender_shipping_info_form = dict(address_form)
-        sender_shipping_info_form["_validation"] = _ensure_list(
+        sender_shipping_info_form["validation"] = _ensure_list(
             validation_state.get("senderShippingInfoForm")
         )
 
         sample_environment_form = {
             "packageName": package_name,
-            "_validation": _ensure_list(validation_state.get("sampleEnvironmentForm")),
+            "validation": _ensure_list(validation_state.get("sampleEnvironmentForm")),
         }
 
-        # sampleData becomes an object with {data, _validation}
+        # sampleData becomes an object with {data, validation}
         sample_metadata_validation = validation_state.get("sampleMetadata")
         new_sample_data = {"data": sample_data}
         if isinstance(sample_metadata_validation, dict):
-            new_sample_data["_validation"] = sample_metadata_validation
+            new_sample_data["validation"] = sample_metadata_validation
         else:
             # if old value missing, backfill an empty validation state object
-            new_sample_data["_validation"] = {"invalidCells": {}, "tabsValidated": {}}
+            new_sample_data["validation"] = {"invalidCells": {}, "tabsValidated": {}}
 
         new_ms = dict(ms)
         # Add/overwrite the new shape keys
@@ -106,7 +106,7 @@ def upgrade():
 
 def downgrade():
     """
-    Reconstructs old shape and puts per-form _validation back into validationState,
+    Reconstructs old shape and puts per-form validation back into validationState,
     while preserving any extra/unknown keys on metadata_submission.
     """
     connection = op.get_bind()
@@ -127,24 +127,24 @@ def downgrade():
 
         # Old addressForm is senderShippingInfoForm without _validation
         address_form = dict(sender_ship_form)
-        address_form.pop("_validation", None)
+        address_form.pop("validation", None)
 
         # Rebuild validationState (ensure lists are lists)
         validation_state = {
-            "studyForm": _ensure_list(study_form.get("_validation")),
-            "multiOmicsForm": _ensure_list(multiomics_form.get("_validation")),
-            "sampleEnvironmentForm": _ensure_list(sample_env_form.get("_validation")),
-            "senderShippingInfoForm": _ensure_list(sender_ship_form.get("_validation")),
-            "sampleMetadata": sample_data_obj.get("_validation")
+            "studyForm": _ensure_list(study_form.get("validation")),
+            "multiOmicsForm": _ensure_list(multiomics_form.get("validation")),
+            "sampleEnvironmentForm": _ensure_list(sample_env_form.get("validation")),
+            "senderShippingInfoForm": _ensure_list(sender_ship_form.get("validation")),
+            "sampleMetadata": sample_data_obj.get("validation")
             or {"invalidCells": {}, "tabsValidated": {}},
         }
 
-        # Strip per-form _validation for old shape
+        # Strip per-form validation for old shape
         study_form_old = dict(study_form)
-        study_form_old.pop("_validation", None)
+        study_form_old.pop("validation", None)
 
         multiomics_form_old = dict(multiomics_form)
-        multiomics_form_old.pop("_validation", None)
+        multiomics_form_old.pop("validation", None)
 
         old_sample_data = sample_data_obj.get("data")
 

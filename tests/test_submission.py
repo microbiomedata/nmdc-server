@@ -89,9 +89,9 @@ def test_get_metadata_submissions_mixs_as_admin(
                         },
                     ]
                 },
-                "_validation": None,
+                "validation": None,
             },
-            "sampleEnvironmentForm": {"packageName": "Env Pkg 1", "_validation": None},
+            "sampleEnvironmentForm": {"packageName": "Env Pkg 1", "validation": None},
         },
     )
     db.commit()
@@ -267,7 +267,7 @@ def test_get_metadata_submissions_report_as_admin(
                         {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
                     ],
                 },
-                "_validation": None,
+                "validation": None,
             },
             "multiOmicsForm": {
                 "studyNumber": "",
@@ -281,7 +281,7 @@ def test_get_metadata_submissions_report_as_admin(
                 "award": "MONet",
                 "awardDois": [],
                 "mgCompatible": None,
-                "_validation": None,
+                "validation": None,
             },
             "studyForm": {
                 "studyName": "My study name",
@@ -296,7 +296,7 @@ def test_get_metadata_submissions_report_as_admin(
                 "alternativeNames": [],
                 "GOLDStudyId": "",
                 "NCBIBioProjectId": "",
-                "_validation": None,
+                "validation": None,
             },
             "templates": [],
             "senderShippingInfoForm": {
@@ -319,11 +319,11 @@ def test_get_metadata_submissions_report_as_admin(
                 "permitNumber": "",
                 "biosafetyLevel": "",
                 "comments": "",
-                "_validation": None,
+                "validation": None,
             },
             "sampleEnvironmentForm": {
                 "packageName": [],
-                "_validation": None,
+                "validation": None,
             },
         },
         is_test_submission=True,
