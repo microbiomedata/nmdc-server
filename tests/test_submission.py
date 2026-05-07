@@ -89,7 +89,10 @@ def test_get_metadata_submissions_mixs_as_admin(
                         },
                     ]
                 },
-                "validation": None,
+                "validation": {
+                    "invalidCells": {},
+                    "tabsValidated": {},
+                },
             },
             "sampleEnvironmentForm": {"packageName": "Env Pkg 1", "validation": None},
         },
@@ -267,7 +270,10 @@ def test_get_metadata_submissions_report_as_admin(
                         {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
                     ],
                 },
-                "validation": None,
+                "validation": {
+                    "invalidCells": {},
+                    "tabsValidated": {},
+                },
             },
             "multiOmicsForm": {
                 "studyNumber": "",

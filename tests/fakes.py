@@ -393,7 +393,10 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     metadata_submission = {
         "sampleData": {
             "data": {},
-            "validation": None,
+            "validation": {
+                "invalidCells": {},
+                "tabsValidated": {},
+            },
         },
         "multiOmicsForm": {
             "studyNumber": "",
