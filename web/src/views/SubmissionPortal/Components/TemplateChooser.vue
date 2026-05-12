@@ -19,10 +19,6 @@ export default defineComponent({
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
 
-    const handleStateChanged = (state: string[] | null) => {
-      sampleEnvironmentForm.validation = state;
-    };
-
     return {
       sampleEnvironmentForm,
       HARMONIZER_TEMPLATES,
@@ -31,7 +27,6 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      handleStateChanged,
     };
   },
 });
@@ -56,7 +51,7 @@ export default defineComponent({
       </template>
     </PageTitle>
     <SubmissionForm
-      @valid-state-changed="handleStateChanged"
+      @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >
       <v-input
         :model-value="sampleEnvironmentForm.packageName"

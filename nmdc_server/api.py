@@ -1510,7 +1510,6 @@ async def get_submission(
             submission
         )
         submission_metadata_schema.permission_level = permission_level
-        print(submission_metadata_schema)
         return submission_metadata_schema
 
     raise HTTPException(status_code=403, detail="Must have access.")

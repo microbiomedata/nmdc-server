@@ -33,14 +33,6 @@ class SubmissionMetadata(Base):
     metadata_submission = Column(JSONB, nullable=False)
 
 
-def _ensure_dict(v):
-    return v if isinstance(v, dict) else {}
-
-
-def _ensure_list(v):
-    return v if isinstance(v, list) else []
-
-
 def upgrade():
     """
     Moves old validationState.* into per-form validation fields.
@@ -51,29 +43,40 @@ def upgrade():
 
     submissions = session.query(SubmissionMetadata).yield_per(2000)
     for row in submissions:
-        ms = _ensure_dict(row.metadata_submission)
+        ms = row.metadata_submission
 
-        address_form = _ensure_dict(ms.get("addressForm"))
-        package_name = _ensure_list(ms.get("packageName"))
-        templates = _ensure_list(ms.get("templates"))
-        study_form = _ensure_dict(ms.get("studyForm"))
-        multiomics_form = _ensure_dict(ms.get("multiOmicsForm"))
+        if not isinstance(ms, dict):
+            continue
+
+        address_form = ms.get("addressForm")
+        package_name = ms.get("packageName")
+        templates = ms.get("templates")
+        study_form = ms.get("studyForm")
+        multiomics_form = ms.get("multiOmicsForm")
         sample_data = ms.get("sampleData")  # keep as-is
 
-        validation_state = _ensure_dict(ms.get("validationState"))
+        validation_state = ms.get("validationState")
 
-        # ALWAYS set per-form validation lists (empty list if missing)
-        study_form["validation"] = _ensure_list(validation_state.get("studyForm"))
-        multiomics_form["validation"] = _ensure_list(validation_state.get("multiOmicsForm"))
+        if not isinstance(study_form, dict):
+            study_form = {}
+        if not isinstance(multiomics_form, dict):
+            multiomics_form = {}
+        if not isinstance(validation_state, dict):
+            validation_state = {}
 
-        sender_shipping_info_form = dict(address_form)
-        sender_shipping_info_form["validation"] = _ensure_list(
-            validation_state.get("senderShippingInfoForm")
-        )
+        # Set per-form validation from old validationState
+        study_form["validation"] = validation_state.get("studyForm")
+        multiomics_form["validation"] = validation_state.get("multiOmicsForm")
+
+        if isinstance(address_form, dict):
+            sender_shipping_info_form = dict(address_form)
+        else:
+            sender_shipping_info_form = {}
+        sender_shipping_info_form["validation"] = validation_state.get("senderShippingInfoForm")
 
         sample_environment_form = {
             "packageName": package_name,
-            "validation": _ensure_list(validation_state.get("sampleEnvironmentForm")),
+            "validation": validation_state.get("sampleEnvironmentForm"),
         }
 
         # sampleData becomes an object with {data, validation}
@@ -85,7 +88,7 @@ def upgrade():
             # if old value missing, backfill an empty validation state object
             new_sample_data["validation"] = {"invalidCells": {}, "tabsValidated": {}}
 
-        new_ms = dict(ms)
+        new_ms = ms
         # Add/overwrite the new shape keys
         new_ms["sampleEnvironmentForm"] = sample_environment_form
         new_ms["senderShippingInfoForm"] = sender_shipping_info_form
@@ -114,16 +117,30 @@ def downgrade():
 
     submissions = session.query(SubmissionMetadata).yield_per(2000)
     for row in submissions:
-        ms = _ensure_dict(row.metadata_submission)
+        ms = row.metadata_submission
 
-        sample_env_form = _ensure_dict(ms.get("sampleEnvironmentForm"))
-        sender_ship_form = _ensure_dict(ms.get("senderShippingInfoForm"))
-        templates = _ensure_list(ms.get("templates"))
-        study_form = _ensure_dict(ms.get("studyForm"))
-        multiomics_form = _ensure_dict(ms.get("multiOmicsForm"))
-        sample_data_obj = _ensure_dict(ms.get("sampleData"))
+        if not isinstance(ms, dict):
+            continue
 
-        package_name = _ensure_list(sample_env_form.get("packageName"))
+        sample_env_form = ms.get("sampleEnvironmentForm")
+        sender_ship_form = ms.get("senderShippingInfoForm")
+        templates = ms.get("templates")
+        study_form = ms.get("studyForm")
+        multiomics_form = ms.get("multiOmicsForm")
+        sample_data_obj = ms.get("sampleData")
+
+        if not isinstance(sample_env_form, dict):
+            sample_env_form = {}
+        if not isinstance(sender_ship_form, dict):
+            sender_ship_form = {}
+        if not isinstance(study_form, dict):
+            study_form = {}
+        if not isinstance(multiomics_form, dict):
+            multiomics_form = {}
+        if not isinstance(sample_data_obj, dict):
+            sample_data_obj = {}
+
+        package_name = sample_env_form.get("packageName")
 
         # Old addressForm is senderShippingInfoForm without _validation
         address_form = dict(sender_ship_form)
@@ -131,10 +148,10 @@ def downgrade():
 
         # Rebuild validationState (ensure lists are lists)
         validation_state = {
-            "studyForm": _ensure_list(study_form.get("validation")),
-            "multiOmicsForm": _ensure_list(multiomics_form.get("validation")),
-            "sampleEnvironmentForm": _ensure_list(sample_env_form.get("validation")),
-            "senderShippingInfoForm": _ensure_list(sender_ship_form.get("validation")),
+            "studyForm": study_form.get("validation"),
+            "multiOmicsForm": multiomics_form.get("validation"),
+            "sampleEnvironmentForm": sample_env_form.get("validation"),
+            "senderShippingInfoForm": sender_ship_form.get("validation"),
             "sampleMetadata": sample_data_obj.get("validation")
             or {"invalidCells": {}, "tabsValidated": {}},
         }
