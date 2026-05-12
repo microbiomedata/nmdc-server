@@ -2,7 +2,7 @@
 /**
  * Component to display metadata suggestions and allow users to accept or reject them.
  */
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import {
   fetchSuggestionsFromSampleRows,
   removeMetadataSuggestions,
@@ -43,161 +43,97 @@ interface MetadataSuggesterProps {
   schemaClassName: string;
 }
 
-const selectedAiOption = ref<string | null>(null);
+const displayFilter = ref<string | null>(null);
 const suggestionStarted = ref(false);
 
-watch(selectedAiOption, () => {
-  metadataSuggestions.value = [];
-  dismissedGroups.value = [];
-  suggestionStarted.value = false;
-});
-
-const aiSuggestionOptions = [
+const filterOptions = [
   { label: 'By Row', value: 'by_row' },
   { label: 'By Column', value: 'by_column' },
-  { label: 'By Sample Type', value: 'by_sample_type' },
 ];
 
-const mockSuggestions: Record<string, MetadataSuggestion[]> = {
-  'by_row': [
-    {
-      type: 'replace',
-      row: 0,
-      slot: 'elev',
-      value: '278.3',
-      current_value: '325',
-      source: 'Suggested based on other metadata in the same row',
-      is_ai_generated: false,
-    },
-    {
-      type: 'add',
-      row: 1,
-      slot: 'depth',
-      value: '0.15',
-      current_value: null,
-      source: 'Suggested based on other metadata in the same row',
-      is_ai_generated: false,
-    },
-  ],
-  'by_column': [
-    {
-      type: 'attention',
-      row: null,
-      slot: 'ecosystem',
-      value: 'Environmental',
-      current_value: 'null',
-      source: 'Suggested based on values entered in the same column',
-      is_ai_generated: true,
-    },
-    {
-      type: 'add',
-      row: null,
-      slot: 'env_broad_scale',
-      value: '__temperate woodland biome [ENVO:01000221]',
-      current_value: null,
-      source: 'Based on the study context, samples were collected from woodland biomes',
-      is_ai_generated: true,
-    },
-  ],
-  // 'by_sample_type': [
-  //   {
-  //     type: 'replace',
-  //     row: 0,
-  //     slot: 'samp_name',
-  //     value: 'Soil_ex_1',
-  //     current_value: 'sample_1',
-  //     source: 'Sample name follows convention for soil core samples based on study methodology',
-  //     is_ai_generated: true,
-  //   },
-  //   {
-  //     type: 'add',
-  //     row: 1,
-  //     slot: 'metagenomics; natural organic matter',
-  //     value: 'core',
-  //     current_value: null,
-  //     source: 'Sample type inferred from study description and selected sample environment',
-  //     is_ai_generated: true,
-  //   },
-  // ],
-};
-
-interface SuggestionGroup {
-  label: string;
-  suggestions: MetadataSuggestion[];
-}
-
-const mockGroupSuggestions: SuggestionGroup[] = [
+const allMockSuggestions: MetadataSuggestion[] = [
   {
-    label: 'Soil Samples',
-    suggestions: [
-      {
-        type: 'add',
-        row: 0, 
-        slot: 'env_broad_scale',
-        value: '__temperate woodland biome [ENVO:01000221]',
-        current_value: null,
-        is_ai_generated: true,
-        source: 'Based on the study context, samples were collected from woodland biomes',
-      },
-      {
-        type: 'replace',
-        row: 1,
-        slot: 'elev',
-        value: '278.3',
-        current_value: '325',
-        is_ai_generated: false,
-        source: 'Suggested based on other metadata in the same row',
-      },
-    ],
+    type: 'replace', 
+    row: 0,
+    slot: 'elev',
+    value: '278.3',
+    current_value: '325',
+    is_ai_generated: false,
+    source: null,
   },
   {
-    label: 'Water Samples',
-    suggestions: [
-      {
-        type: 'add',
-        row: 6,
-        slot: 'env_broad_scale',
-        value: '__oceanic epipelagic zone biome [ENVO:01000035]',
-        current_value: 'null',
-        is_ai_generated: true,
-        source: 'Suggested based on values entered in the same column',
-      },
-      {
-        type: 'add',
-        row: 7,
-        slot: 'depth',
-        value: '2.5',
-        current_value: null,
-        is_ai_generated: true,
-        source: 'Typical depth for water samples based on this study',
-      },
-    ],
+    type: 'add',
+    row: 1,
+    slot: 'depth',
+    value: '0.15',
+    current_value: null,
+    is_ai_generated: false,
+    source: null,
+  },
+  {
+    type: 'add', 
+    row: 1,
+    slot: 'env_broad_scale',
+    value: '__temperate woodland biome [ENVO:01000221]',
+    current_value: null,
+    is_ai_generated: false,
+    source: null,
+  },
+  {
+    type: 'add', 
+    row: 2,
+    slot: 'env_broad_scale',
+    value: '__temperate woodland biome [ENVO:01000221]',
+    current_value: null,
+    is_ai_generated: false,
+    source: null,
+  },
+  {
+    type: 'add', 
+    row: 3,
+    slot: 'env_broad_scale',
+    value: '__temperate woodland biome [ENVO:01000221]',
+    current_value: null,
+    is_ai_generated: false,
+    source: null,
+  },
+  {
+    type: 'add', 
+    row: 4,
+    slot: 'env_broad_scale',
+    value: '__temperate woodland biome [ENVO:01000221]',
+    current_value: null,
+    is_ai_generated: false,
+    source: null,
+  },
+  {
+    type: 'add', 
+    row: 0,
+    slot: 'env_broad_scale',
+    value: '__temperate woodland biome [ENVO:01000221]',
+    current_value: null,
+    is_ai_generated: false,
+    source: null,
+  },
+  {
+    type: 'attention',
+    row: null,
+    slot: 'ecosystem',
+    value: 'Environmental',
+    current_value: 'null',
+    is_ai_generated: true,
+    source: null,
+  },
+  {
+    type: 'add',
+    row: null,
+    slot: 'env_broad_scale',
+    value: '__temperate woodland biome [ENVO:01000221]',
+    current_value: null,
+    is_ai_generated: true,
+    source: null,
   },
 ];
-
-const dismissedGroups = ref<string[]>([]);
-
-const visibleGroups = computed(() => (
-  mockGroupSuggestions.filter((group) => !dismissedGroups.value.includes(group.label))
-));
-
-function handleDismissGroup(label: string) {
-  dismissedGroups.value.push(label);
-}
-
-function handleAcceptGroup(group: SuggestionGroup) {
-  acceptSuggestions(group.suggestions.filter(canAcceptSuggestion));
-  dismissedGroups.value.push(group.label);
-}
-
-// const aiButtonLabel = computed(() => {
-//   if (selectedAiOption.value === null) return "Start AI Suggestion";
-//   return aiSuggestionOptions.find((option) => option.value === selectedAiOption.value)?.label ?? "Start AI Suggestion";
-// });
-
-// const suggestionModeOptions = Object.values(SuggestionsMode);
-// const suggestionFillOptions = Object.values(SuggestionFill);
-// const suggestionTypeOptions = Object.values(SuggestionType);
 
 function getSuggestionKey(suggestion: MetadataSuggestion) {
   return `${suggestion.row}__${suggestion.slot}__${suggestion.value}`;
@@ -238,6 +174,48 @@ const pendingSuggestions = computed(() => (
 ));
 
 const hasSuggestions = computed(() => pendingSuggestions.value.length > 0);
+
+const filteredSuggestions = computed(() => {
+  if (displayFilter.value === 'by_row') {
+    return pendingSuggestions.value.filter((s) => s.row !== null);
+  }
+  if (displayFilter.value === 'by_column') {
+    return pendingSuggestions.value.filter((s) => s.row === null);
+  }
+  return pendingSuggestions.value;
+});
+
+interface SuggestionCluster {
+  key: string;
+  suggestions: MetadataSuggestion[];
+  isCollapsible: boolean;
+}
+
+const groupedFilteredSuggestions = computed<SuggestionCluster[]>(() => {
+  const groups = new Map<string, MetadataSuggestion[]>();
+  filteredSuggestions.value.forEach((s) => {
+    // column level suggestions (row = null) always stand alone 
+    const key = s.row === null ? getSuggestionKey(s) : `${s.slot}__${s.value}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(s);
+  });
+  return [...groups.entries()].map(([key, suggestions]) => ({
+    key,
+    suggestions,
+    isCollapsible: suggestions.length > 1,
+  }));
+});
+
+const expandedGroups = ref<string[]>([]);
+
+function toggleGroup(key: string) {
+  const idx = expandedGroups.value.indexOf(key);
+  if(idx >= 0) {
+    expandedGroups.value.splice(idx, 1);
+  } else {
+    expandedGroups.value.push(key);
+  }
+}
 
 /**
  * Accepts the given suggestions by setting the cell data via the Harmonizer API and removing the suggestions from
@@ -327,14 +305,14 @@ function canAcceptSuggestion(suggestion: MetadataSuggestion) {
  * Handle clicking the accept all button.
  */
 function handleAcceptAllSuggestions() {
-  acceptSuggestions(pendingSuggestions.value.filter(canAcceptSuggestion));
+  acceptSuggestions(filteredSuggestions.value.filter(canAcceptSuggestion));
 }
 
 /**
  * Handle clicking the reject all button.
  */
 function handleRejectAllSuggestions() {
-  rejectSuggestions(pendingSuggestions.value);
+  rejectSuggestions(filteredSuggestions.value);
 }
 
 /**
@@ -344,13 +322,8 @@ function handleRejectAllSuggestions() {
  * suggestions to the store.
  */
 function handleStartSuggestion() {
-  if (selectedAiOption.value === null) {
-    return;
-  }
+  metadataSuggestions.value = allMockSuggestions;
   suggestionStarted.value = true;
-  if(selectedAiOption.value !== 'by_sample_type') {
-    metadataSuggestions.value = mockSuggestions[selectedAiOption.value] ?? [];
-  }
 }
 
 async function handleSuggestForSelectedRows() {
@@ -446,290 +419,54 @@ const loading = computed(() => (
       <v-card-text v-if="enabled">
         <v-row dense>
           <v-col>
+            <v-btn
+              color="primary"
+              block
+              @click="handleStartSuggestion"
+            >
+              <v-icon
+                v-if="suggestionStarted"
+                start
+              >
+                mdi-refresh
+              </v-icon>
+              Suggest Metadata
+            </v-btn>
+          </v-col>
+        </v-row>
+          <v-row v-if="!suggestionStarted">
+            <v-col>
+              <p class="text-body-2 text-medium-emphasis mb-1">
+                Click <strong>Suggest Metadata</strong> to get suggestions for metadata values based on the content of the submission summary and any metadata you've already entered. Suggestions can be accepted or rejected, and will be hidden if rejected, but can be reset if you change your mind. You can re-run suggestions at any time as you add/edit your data.
+              </p>
+            </v-col>
+          </v-row>
+
+        <v-row v-if="suggestionStarted">
+          <v-col>
             <v-select
-              v-model="selectedAiOption"
-              :items="aiSuggestionOptions"
+              v-model="displayFilter"
+              :items="filterOptions"
               item-title="label"
               item-value="value"
-              label="Suggestion Mode"
+              label="Filter by"
               hide-details
               clearable
             />
-
-            <!-- <v-menu
-              v-model="aiMenuOpen"
-              :close-on-content-click="true"
-            >
-              <template #activator="{ props: menuProps }">
-                <v-btn
-                  color="primary"
-                  block
-                  v-bind="menuProps"
-                >
-                  {{ aiButtonLabel }}
-                  <v-icon end>
-                    mdi-chevron-down
-                  </v-icon>
-                </v-btn>
-                <div 
-                  v-if="selectedAiOption !== null"
-                  class="text-caption text-medium-emphasis text-center mt-1"
-                >
-                  Click to change mode
-                </div>
-              </template>
-              <v-list>
-                <v-list-item
-                  v-for="option in aiSuggestionOptions"
-                  :key="option.value"
-                  :title="option.label"
-                  @click="handleAiSuggestionOption(option.value)"
-                />
-              </v-list>
-            </v-menu> -->
           </v-col>
         </v-row>
 
-
-        <!-- <v-row>
-          <v-col>
-            <v-btn
-              color="primary"
-              block
-              @click="aiSuggestionStarted = true"
-            >
-              Start AI Suggestion
-            </v-btn>
-          </v-col>
-        </v-row>
-
-        <v-row v-if="suggestionMode === SuggestionFill.BY_ROW && aiSuggestionStarted">
-          <v-col cols="12">
-            <v-select
-              v-model="suggestionFill"
-              :items="suggestionFillOptions"
-              hide-details
-              label="Suggestion Fill"
-            />
-          </v-col>
-        </v-row> -->
-
-        <!-- <v-row dense>
-          <v-col cols="6">
-            <v-select
-              v-model="suggestionMode"
-              :items="suggestionModeOptions"
-              hide-details
-              label="Suggestion Mode"
-            />
-          </v-col>
-          <v-col cols="6">
-            <v-select
-              v-model="suggestionType"
-              :items="suggestionTypeOptions"
-              hide-details
-              label="Suggestion Type"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row v-if="suggestionMode === SuggestionsMode.ON_DEMAND">
-          <v-col>
-            <v-btn
-              color="primary"
-              block
-              :loading="onDemandSuggestionsLoading"
-              @click="handleSuggestForSelectedRows"
-            >
-              Suggest for Selected Rows
-            </v-btn>
-          </v-col>
-        </v-row> -->
-
-
-
-        <!-- <v-row v-if="hasSuggestions && selectedAiOption === 'by_sample_type'">
-          <v-col class="py-0">
-            <div class="d-flex justify-space-between align-center">
-              <div class="text-body-1 font-weight-medium">
-                All Suggestions
-              </div>
-              <div>
-                <v-tooltip>
-                  <template #activator="{ props: activatorProps }">
-                    <v-btn
-                      variant="text"
-                      density="comfortable"
-                      color="primary"
-                      icon
-                      v-bind="activatorProps"
-                      @click="handleRejectAllSuggestions"
-                    >
-                      <v-icon>
-                        mdi-close
-                      </v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Reject all suggestions</span>
-                </v-tooltip>
-
-                <v-tooltip>
-                  <template #activator="{ props: activatorProps }">
-                    <v-btn
-                      variant="text"
-                      density="comfortable"
-                      color="primary"
-                      icon
-                      v-bind="activatorProps"
-                      @click="handleAcceptAllSuggestions"
-                    >
-                      <v-icon>
-                        mdi-check
-                      </v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Accept all suggestions that apply to specific cells</span>
-                </v-tooltip>
-              </div>
-            </div>
-          </v-col>
-        </v-row> -->
-
-
-        <v-row-dense>
-          <v-col>
-            <v-btn
-              color="primary"
-              block
-              :disabled="selectedAiOption === null"
-              @click="handleStartSuggestion"
-            >
-              Start Metadata Suggestion
-            </v-btn>
-          </v-col>
-        </v-row-dense>
-
-        <v-row v-if="selectedAiOption === 'by_sample_type' && suggestionStarted">
+        <v-row v-if="suggestionStarted">
           <v-col>
             <div
-              v-if="suggestionStarted && visibleGroups.length === 0"
-              class="text--disabled"
-            >
-              No suggestions available.
-            </div>
-            <v-expansion-panels
-                        v-else
-                        variant="accordion"
-                        class="mx-n2"
-            >
-              <v-expansion-panel
-                v-for="group in visibleGroups"
-                :key="group.label"
-              >
-                <v-expansion-panel-title>
-                  <div class="d-flex align-center justify-space-between w-100 pr-2">
-                    <span class="font-weight-medium">{{ group.label }}</span>
-                    <v-chip
-                      size="x-small"
-                      color="primary"
-                      variant="tonal"
-                    >
-                      {{ group.suggestions.length }} suggestion{{ group.suggestions.length !== 1 ? 's' : '' }}
-                    </v-chip>
-                  </div>
-                </v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-0">
-                  <div
-                    v-for="suggestion in group.suggestions"
-                    :key="getSuggestionKey(suggestion)"
-                  >
-                    <v-card
-                      class="mb-2"
-                      elevation="1"
-                      density="default"
-                      :color="suggestion.is_ai_generated ? AI_SUGGESTION_BG : undefined"
-                      @mouseenter="handleSuggestionHover(suggestion)"
-                      @mouseleave="handleSuggestionLeave"
-                    >
-                      <v-card-text class="pa-2">
-                        <div class="text-body-2">
-                          <div
-                            class="d-flex align-baseline mb-1 text-blue-darken-4 font-weight-medium"
-                          >
-                            <v-icon size="x-small" class="mr-1">mdi-creation</v-icon>
-                            AI Suggested
-                          </div>
-                          <div v-if="suggestion.row !== null">
-                            <span class="font-weight-medium">Row:</span> {{ suggestion.row + 1 }}
-                          </div>
-                          <div>
-                            <span class="font-weight-medium">Column:</span> {{ getSlotTitle(suggestion.slot) }}
-                          </div>
-                          <div v-if="suggestion.source" class="text-caption text-medium-emphasis mt-1">
-                            {{ suggestion.source }}
-                          </div>
-                        </div> 
-                        <div class="d-flex flex-wrap align-center justify-end mt-1">
-                          <div class="flex-grow-1">
-                            <span
-                              v-if="suggestion.current_value"
-                              class="value previous"
-                              v-text="suggestion.current_value"
-                            />
-                            <span
-                              v-if="suggestion.value"
-                              class="value suggested"
-                              v-text="suggestion.value"
-                            />
-                          </div>
-                          <v-btn
-                            size="x-small"
-                            variant="text"
-                            icon
-                            color="primary"
-                            @click="handleJumpToCell(suggestion)"
-                          >
-                            <v-icon>mdi-target</v-icon>
-                          </v-btn>
-                        </div>
-                      </v-card-text>
-                    </v-card>
-                  </div>
-                  <div class="d-flex justify-end mt-1 mb-2">
-                    <v-btn
-                      size="small"
-                      variant="text"
-                      color="grey"
-                      @click="handleDismissGroup(group.label)"
-                    >
-                      Dismiss all
-                    </v-btn>
-                    <v-btn
-                      size="small"
-                      variant="text"
-                      color="primary"
-                      @click="handleAcceptGroup(group)"
-                    >
-                      Accept all
-                    </v-btn>
-                  </div>
-                </v-expansion-panel-text>
-              </v-expansion-panel>
-            </v-expansion-panels>
-          </v-col>
-        </v-row>
-
-        <v-row v-if="selectedAiOption !== 'by_sample_type'">
-          <v-col>
-            <div
-              v-if="suggestionStarted && !hasSuggestions"
+              v-if="filteredSuggestions.length === 0"
               class="text--disabled"
             >
               No suggestions available.
             </div>
 
-            <!-- <div
-              v-if="hasSuggestions"
+            <div
+              v-if="filteredSuggestions.length > 0"
               class="d-flex justify-end mb-2"
             >
               <v-btn
@@ -748,26 +485,109 @@ const loading = computed(() => (
               > 
                 Accept all
               </v-btn>
-            </div> -->
-
+            </div>
 
             <div
-              v-for="suggestion in pendingSuggestions"
-              :key="getSuggestionKey(suggestion)"
+              v-for="cluster in groupedFilteredSuggestions"
+              :key="cluster.key"
             >
+              <!-- collapsed cluster - multiple rows, same slot and value -->
               <v-card
+                v-if="cluster.isCollapsible"
+                class="mb-4 mx-n2"
+                elevation="2"
+              >
+                <v-card-text class="pa-2">
+                  <div class="d-flex align-center justify-space-between">
+                    <div class="d-flex align-center flex-wrap ga-1">
+                      <v-chip size="x-small">
+                        {{ cluster.suggestions.length }} rows
+                      </v-chip>
+                      <span class="text-body-2 font-weight-medium">
+                        {{ getSlotTitle(cluster.suggestions[0].slot) }}
+                      </span>
+                      <span
+                        v-if="cluster.suggestions[0].value"
+                        class="value suggested"
+                        v-text="cluster.suggestions[0].value"
+                      />
+                    </div>
+                    <div class="d-flex align-center flex-shrink-0">
+                      <v-tooltip>
+                        <template #activator="{ props: activatorProps }">
+                          <v-btn
+                            variant="text"
+                            density="comfortable"
+                            icon
+                            color="primary"
+                            v-bind="activatorProps"
+                            @click="rejectSuggestions(cluster.suggestions)"
+                          >
+                            <v-icon>mdi-close</v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Reject all {{ cluster.suggestions.length }} suggestions</span>
+                      </v-tooltip>
+                      <v-tooltip>
+                        <template #activator="{ props: activatorProps }">
+                          <v-btn
+                            variant="text"
+                            density="comfortable"
+                            icon
+                            color="primary"
+                            v-bind="activatorProps"
+                            @click="acceptSuggestions(cluster.suggestions.filter(canAcceptSuggestion))"
+                          >
+                            <v-icon>mdi-check</v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Accept all {{ cluster.suggestions.length }} suggestions</span>
+                      </v-tooltip>
+                      <v-btn
+                        variant="text"
+                        density="comfortable"
+                        icon
+                        @click="toggleGroup(cluster.key)"
+                      >
+                        <v-icon>
+                          {{ expandedGroups.includes(cluster.key) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                        </v-icon>
+                      </v-btn>
+                    </div>
+                  </div>
+                  <div
+                    v-if="expandedGroups.includes(cluster.key)"
+                    class="mt-2 d-flex flex-wrap ga-1"
+                  >
+                    <v-chip
+                      v-for="s in cluster.suggestions"
+                      :key="getSuggestionKey(s)"
+                      size="small"
+                      variant="outlined"
+                      @mouseenter="handleSuggestionHover(s)"
+                      @mouseleave="handleSuggestionLeave()"
+                    >
+                      Row {{ s.row! + 1 }} 
+                    </v-chip>
+                  </div>
+                </v-card-text>
+              </v-card>
+
+              <!-- Single suggestion (row-specific or column-level) -->
+              <v-card
+                v-else
                 class="mb-4 mx-n2"
                 elevation="2"
                 density="default"
-                :color="suggestion.is_ai_generated ? AI_SUGGESTION_BG : undefined"
-                @mouseenter="handleSuggestionHover(suggestion)"
+                :color="cluster.suggestions[0].is_ai_generated ? AI_SUGGESTION_BG : undefined"
+                @mouseenter="handleSuggestionHover(cluster.suggestions[0])"
                 @mouseleave="handleSuggestionLeave()"
               >
                 <v-card-text class="pa-2">
                   <div class="flex-grow-1 full-width">
                     <div class="text-body-2">
                       <div
-                        v-if="suggestion.is_ai_generated"
+                        v-if="cluster.suggestions[0].is_ai_generated"
                         class="d-flex justify-space-between align-center mb-1 text-blue-darken-4 font-weight-medium"
                       >
                         <div class="d-flex align-baseline">
@@ -792,14 +612,14 @@ const loading = computed(() => (
                           <span>AI recommends areas of interest based on the content of the submission summary. To dismiss, select the X to remove it.</span>
                         </v-tooltip>
                       </div>
-                      <div v-if="suggestion.row !== null">
-                        <span class="font-weight-medium">Row:</span> {{ suggestion.row + 1 }}
+                      <div v-if="cluster.suggestions[0].row !== null">
+                        <span class="font-weight-medium">Row:</span> {{ cluster.suggestions[0].row + 1 }}
                       </div>
                       <div>
-                        <span class="font-weight-medium">Column:</span> {{ getSlotTitle(suggestion.slot) }}
+                        <span class="font-weight-medium">Column:</span> {{ getSlotTitle(cluster.suggestions[0].slot) }}
                       </div>
-                      <div v-if="suggestion.source">
-                        <span class="font-weight-medium">Source:</span> {{ suggestion.source }}
+                      <div v-if="cluster.suggestions[0].source">
+                        <span class="font-weight-medium">Source:</span> {{ cluster.suggestions[0].source }}
                       </div>
                     </div>
                   </div>
@@ -807,14 +627,14 @@ const loading = computed(() => (
                   <div class="d-flex flex-wrap align-center justify-end">
                     <div class="flex-grow-1">
                       <span
-                        v-if="suggestion.current_value"
+                        v-if="cluster.suggestions[0].current_value"
                         class="value previous"
-                        v-text="suggestion.current_value"
+                        v-text="cluster.suggestions[0].current_value"
                       />
                       <span
-                        v-if="suggestion.value"
+                        v-if="cluster.suggestions[0].value"
                         class="value suggested"
-                        v-text="suggestion.value"
+                        v-text="cluster.suggestions[0].value"
                       />
                     </div>
 
@@ -827,7 +647,7 @@ const loading = computed(() => (
                             icon
                             color="primary"
                             v-bind="activatorProps"
-                            @click="handleJumpToCell(suggestion)"
+                            @click="handleJumpToCell(cluster.suggestions[0])"
                           >
                             <v-icon>
                               mdi-target
@@ -845,7 +665,7 @@ const loading = computed(() => (
                             icon
                             color="primary"
                             v-bind="activatorProps"
-                            @click="handleRejectSuggestion(suggestion)"
+                            @click="handleRejectSuggestion(cluster.suggestions[0])"
                           >
                             <v-icon>
                               mdi-close
@@ -856,7 +676,7 @@ const loading = computed(() => (
                       </v-tooltip>
 
                       <v-tooltip
-                        v-if="canAcceptSuggestion(suggestion)"
+                        v-if="canAcceptSuggestion(cluster.suggestions[0])"
                       >
                         <template #activator="{ props: activatorProps }">
                           <v-btn
@@ -865,7 +685,7 @@ const loading = computed(() => (
                             icon
                             color="primary"
                             v-bind="activatorProps"
-                            @click="handleAcceptSuggestion(suggestion)"
+                            @click="handleAcceptSuggestion(cluster.suggestions[0])"
                           >
                             <v-icon>
                               mdi-check
