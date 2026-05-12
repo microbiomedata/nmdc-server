@@ -117,6 +117,11 @@ const highlightedValidationError = ref(0);
 const validationActiveCategory = ref('All Errors');
 const columnVisibility = ref('all');
 const sidebarOpen = ref(true);
+const showSuggesterBadge = ref(false);
+
+watch(hasChanged, () => {
+  showSuggesterBadge.value = true;
+});
 
 const activeTemplateKey = ref(templateList.value[0]);
 const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
@@ -1074,8 +1079,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
             :metadata-editing-allowed="canEditSampleMetadata()"
+            :show-suggester-badge="showSuggesterBadge"
             @import-xlsx="openFile"
             @export-xlsx="downloadSamples"
+            @clear-suggester-badge="showSuggesterBadge = false"
           />
         </v-navigation-drawer>
       </v-layout>
