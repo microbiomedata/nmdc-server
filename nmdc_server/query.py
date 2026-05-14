@@ -1117,6 +1117,21 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 .filter(models.DataObject.id.like(f"{term}%"))
                 .distinct()
             )
+        
+        # TODO: This case should probably apply to several typecodes
+        if typecode == NmdcTypecode.library_preparation:
+            brd_subquery = (
+                db.query(
+                    func.unnest(models.BiosampleRelatedDocument.biosample_ids).label("biosample_id")
+                )
+                .filter(models.BiosampleRelatedDocument.id.like(f"{term}%"))
+                .subquery()
+            )
+            return (
+                db.query(models.Biosample.id.label("id"))
+                .join(brd_subquery, models.Biosample.id == brd_subquery.c.biosample_id)
+                .distinct()
+            )
 
         # Handle workflow ID searches
         if typecode is not None:
