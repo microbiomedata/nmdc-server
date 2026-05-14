@@ -36,6 +36,7 @@ class StudyFormCreate(BaseModel):
     description: str
     notes: str
     contributors: List[Contributor]
+    validation: Optional[List[str]] = None
     # These are optional here to allow temporary Field Notes compatibility
     alternativeNames: Optional[List[str]] = None
     GOLDStudyId: Optional[str] = None
@@ -84,6 +85,7 @@ class MultiOmicsForm(BaseModel):
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
     nomLcProtocols: Optional[Protocols] = None
+    validation: Optional[List[str]] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
@@ -102,7 +104,7 @@ class NmdcAddress(BaseModel):
     country: str
 
 
-class AddressForm(BaseModel):
+class SenderShippingInfoForm(BaseModel):
     shipper: NmdcAddress
     expectedShippingDate: Optional[datetime] = None
     shippingConditions: str
@@ -115,6 +117,12 @@ class AddressForm(BaseModel):
     biosafetyLevel: str
     irbOrHipaa: Optional[bool] = None
     comments: str
+    validation: Optional[List[str]] = None
+
+
+class SampleEnvironmentForm(BaseModel):
+    packageName: List[str]
+    validation: Optional[List[str]] = None
 
 
 class SampleMetadataValidationState(BaseModel):
@@ -122,36 +130,31 @@ class SampleMetadataValidationState(BaseModel):
     tabsValidated: Dict[str, bool]
 
 
-class SubmissionValidationState(BaseModel):
-    studyForm: Optional[List[str]] = None
-    multiOmicsForm: Optional[List[str]] = None
-    sampleEnvironmentForm: Optional[List[str]] = None
-    senderShippingInfoForm: Optional[List[str]] = None
-    sampleMetadata: Optional[SampleMetadataValidationState] = None
+class SampleData(BaseModel):
+    data: Dict[str, List[Any]]
+    validation: SampleMetadataValidationState
 
 
 class MetadataSubmissionRecordCreate(BaseModel):
-    packageName: List[str]
-    addressForm: AddressForm
+    sampleEnvironmentForm: SampleEnvironmentForm
+    senderShippingInfoForm: SenderShippingInfoForm
     templates: List[str]
     studyForm: StudyFormCreate
     multiOmicsForm: MultiOmicsForm
-    sampleData: Dict[str, List[Any]]
+    sampleData: SampleData
 
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
     studyForm: StudyForm
-    validationState: SubmissionValidationState = Field(default_factory=SubmissionValidationState)
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
-    packageName: Optional[List[str]] = None
-    addressForm: Optional[AddressForm] = None
+    sampleEnvironmentForm: Optional[SampleEnvironmentForm] = None
+    senderShippingInfoForm: Optional[SenderShippingInfoForm] = None
     templates: Optional[List[str]] = None
     studyForm: Optional[StudyForm] = None
     multiOmicsForm: Optional[MultiOmicsForm] = None
-    sampleData: Optional[Dict[str, List[Any]]] = None
-    validationState: Optional[SubmissionValidationState] = None
+    sampleData: Optional[SampleData] = None
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):

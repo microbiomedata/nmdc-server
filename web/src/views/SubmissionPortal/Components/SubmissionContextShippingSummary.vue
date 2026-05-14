@@ -1,6 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent } from 'vue';
-import { addressForm } from '../store';
+import { senderShippingInfoForm } from '../store';
 import { addressToString } from '../store/api';
 import { formatShippingDate } from '../utils';
 
@@ -8,27 +8,27 @@ export default defineComponent({
   setup() {
     const shipperAddressOneLiner = computed(() => {
       const shipperData = [
-        addressForm.shipper.name,
-        addressForm.shipper.line1,
-        addressForm.shipper.line2,
-        addressForm.shipper.city,
-        addressForm.shipper.state,
-        addressForm.shipper.postalCode,
-        addressForm.shipper.country,
+        senderShippingInfoForm.shipper.name,
+        senderShippingInfoForm.shipper.line1,
+        senderShippingInfoForm.shipper.line2,
+        senderShippingInfoForm.shipper.city,
+        senderShippingInfoForm.shipper.state,
+        senderShippingInfoForm.shipper.postalCode,
+        senderShippingInfoForm.shipper.country,
       ];
       const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
       return existingShipperData.join(', ');
     });
 
-    const shipperAddressString = computed(() => addressToString(addressForm.shipper));
+    const shipperAddressString = computed(() => addressToString(senderShippingInfoForm.shipper));
     const shipperSummary = computed(() => {
       let result = '';
       result += shipperAddressString.value.trim();
-      if (addressForm.shippingConditions) {
-        result += `\nShipping Conditions: ${addressForm.shippingConditions}`;
+      if (senderShippingInfoForm.shippingConditions) {
+        result += `\nShipping Conditions: ${senderShippingInfoForm.shippingConditions}`;
       }
-      if (addressForm.expectedShippingDate) {
-        const date = new Date(addressForm.expectedShippingDate);
+      if (senderShippingInfoForm.expectedShippingDate) {
+        const date = new Date(senderShippingInfoForm.expectedShippingDate);
         result += `\nExpected Shipping Date: ${formatShippingDate(date)}`;
       }
 
@@ -38,42 +38,42 @@ export default defineComponent({
     const sampleProperties = computed(() => [
       {
         title: 'Sample Name',
-        value: addressForm.sample,
+        value: senderShippingInfoForm.sample,
       },
       {
         title: 'Sample Description',
-        value: addressForm.description,
+        value: senderShippingInfoForm.description,
       },
       {
         title: 'Experiment Goals',
-        value: addressForm.experimentalGoals,
+        value: senderShippingInfoForm.experimentalGoals,
       },
       {
         title: 'Randomization',
-        value: addressForm.randomization,
+        value: senderShippingInfoForm.randomization,
       },
       {
         title: 'USDA Regulated',
-        value: addressForm.usdaRegulated,
+        value: senderShippingInfoForm.usdaRegulated,
       },
       {
         title: 'Permit Number',
-        value: addressForm.permitNumber,
+        value: senderShippingInfoForm.permitNumber,
       },
       {
         title: 'Biosafety Level',
-        value: addressForm.biosafetyLevel,
+        value: senderShippingInfoForm.biosafetyLevel,
       },
       {
         title: 'IRB/HIPAA Compliance?',
-        value: (addressForm.irbOrHipaa ? 'Yes' : 'No'),
+        value: (senderShippingInfoForm.irbOrHipaa ? 'Yes' : 'No'),
       },
     ]);
 
     return {
       shipperAddressOneLiner,
       shipperSummary,
-      addressForm,
+      senderShippingInfoForm,
       sampleProperties,
       formatShippingDate,
     };
@@ -147,7 +147,7 @@ export default defineComponent({
         <span
           style="white-space: pre-line;"
         >
-          {{ addressForm.comments }}
+          {{ senderShippingInfoForm.comments }}
         </span>
       </v-expansion-panel-text>
     </v-expansion-panel>

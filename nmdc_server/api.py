@@ -1163,8 +1163,12 @@ async def get_metadata_submissions_mixs(
     for s in submissions:
 
         metadata = s.metadata_submission  # creates a concise alias
-        sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_pkg = metadata.get("packageName", "")
+        sample_data = (
+            metadata["sampleData"]["data"]
+            if "sampleData" in metadata and "data" in metadata["sampleData"]
+            else {}
+        )
+        env_pkg = metadata["sampleEnvironmentForm"].get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -1362,10 +1366,10 @@ async def get_metadata_submissions_report(
         sample_count = 0
         metadata = s.metadata_submission  # creates a concise alias
         # find the number of samples in the submission
-        # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
+        # Note: `metadata["sampleData"]["data"]` is a dictionary where keys are sample types
         #       and values are lists of samples of that type.
         # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
-        sample_data = metadata["sampleData"]
+        sample_data = metadata["sampleData"]["data"]
         for sample_type in sample_data:
             sample_count += len(sample_data[sample_type])
 
@@ -1506,7 +1510,6 @@ async def get_submission(
             submission
         )
         submission_metadata_schema.permission_level = permission_level
-
         return submission_metadata_schema
 
     raise HTTPException(status_code=403, detail="Must have access.")
@@ -1516,18 +1519,16 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     """Compare a patch payload with what the user can actually save."""
     metadata_contributor_fields = {
         "sampleData",
-        "validationState",
         "metadata_submission",
     }
     editor_fields = {
-        "packageName",
+        "sampleEnvironmentForm",
         "contextForm",
-        "addressForm",
+        "senderShippingInfoForm",
         "templates",
         "studyForm",
         "multiOmicsForm",
         "sampleData",
-        "validationState",
         "field_notes_metadata",
         "metadata_submission",
     }
@@ -1616,7 +1617,6 @@ async def update_submission(
         crud.update_submission_contributor_roles(db, submission, new_permissions)
 
     crud.update_submission_lock(db, submission.id)
-
     return submission
 
 

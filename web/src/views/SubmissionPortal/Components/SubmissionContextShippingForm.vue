@@ -2,7 +2,7 @@
 import { computed, defineComponent, ref, useTemplateRef, watch, } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
-import { addressForm, canEditSubmissionMetadata, validationState, } from '../store';
+import { senderShippingInfoForm, canEditSubmissionMetadata, } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
@@ -12,9 +12,9 @@ import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.v
 export default defineComponent({
   components: { SubmissionForm, SubmissionContextShippingSummary },
   setup() {
-    const addressFormRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('addressFormRef');
-    const addressFormValid = computed(() => validationState.senderShippingInfoForm?.length === 0);
-    const showAddressForm = ref(false);
+    const senderShippingInfoFormRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('senderShippingInfoFormRef');
+    const senderShippingInfoFormValid = computed(() => senderShippingInfoForm.validation?.length === 0);
+    const showsenderShippingInfoForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
     const sampleEnumValues = Object.keys(NmdcSchema.enums.SampleTypeEnum.permissible_values);
@@ -28,7 +28,7 @@ export default defineComponent({
 
     const shipperSummary = computed(() => {
       let result = '';
-      result += addressToString(addressForm.shipper);
+      result += addressToString(senderShippingInfoForm.shipper);
 
       return result;
     });
@@ -43,12 +43,12 @@ export default defineComponent({
 
     const expectedShippingDate = computed({
       get: () => {
-        return addressForm.expectedShippingDate
-          ? new Date(addressForm.expectedShippingDate)
+        return senderShippingInfoForm.expectedShippingDate
+          ? new Date(senderShippingInfoForm.expectedShippingDate)
           : undefined;
       },
       set: (newValue: Date | undefined) => {
-        addressForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
+        senderShippingInfoForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
       },
     });
 
@@ -59,8 +59,8 @@ export default defineComponent({
       ];
     }
 
-    watch(showAddressForm, () => {
-      addressFormRef.value?.validate();
+    watch(showsenderShippingInfoForm, () => {
+      senderShippingInfoFormRef.value?.validate();
     });
 
     function handleExpectedShippingDateClear() {
@@ -68,11 +68,10 @@ export default defineComponent({
     }
 
     return {
-      addressFormRef,
-      addressForm,
-      addressFormValid,
-      validationState,
-      showAddressForm,
+      senderShippingInfoFormRef,
+      senderShippingInfoForm,
+      senderShippingInfoFormValid,
+      showsenderShippingInfoForm,
       datePicker,
       expectedShippingDate,
       sampleItems,
@@ -95,15 +94,15 @@ export default defineComponent({
     <v-card
       class="mt-4 pa-0"
       variant="outlined"
-      :style="addressFormValid ? '' : 'border: 2px solid red'"
+      :style="senderShippingInfoFormValid ? '' : 'border: 2px solid red'"
     >
       <v-card-text
         class="pt-2"
         style="min-height: 100px;"
       >
-        <span :class="{'error--text': !addressFormValid}">EMSL Shipping Info *</span>
+        <span :class="{'error--text': !senderShippingInfoFormValid}">EMSL Shipping Info *</span>
         <p
-          v-if="!addressFormValid"
+          v-if="!senderShippingInfoFormValid"
           class="error--text"
         >
           Sender's shipping information is required
@@ -111,7 +110,7 @@ export default defineComponent({
         <submission-context-shipping-summary class="mt-6" />
       </v-card-text>
       <v-dialog
-        v-model="showAddressForm"
+        v-model="showsenderShippingInfoForm"
         scrollable
         width="1200"
         eager
@@ -146,8 +145,8 @@ export default defineComponent({
           </v-card-title>
           <v-card-text>
             <SubmissionForm
-              ref="addressFormRef"
-              @valid-state-changed="(state) => validationState.senderShippingInfoForm = state"
+              ref="senderShippingInfoFormRef"
+              @valid-state-changed="(state) => senderShippingInfoForm.validation = state"
             >
               <v-list-subheader>
                 <span class="text-h6">Sender</span>
@@ -156,7 +155,7 @@ export default defineComponent({
               <!-- Shipper Name, E-mail address, etc. -->
               <div class="stack-sm mb-4">
                 <v-text-field
-                  v-model="addressForm.shipper.name"
+                  v-model="senderShippingInfoForm.shipper.name"
                   :rules="requiredRules('Name is required', [])"
                   label="Sender Name *"
                   variant="outlined"
@@ -164,7 +163,7 @@ export default defineComponent({
                   class="mt-2"
                 />
                 <v-text-field
-                  v-model="addressForm.shipper.email"
+                  v-model="senderShippingInfoForm.shipper.email"
                   :rules="requiredRules('E-mail is required', [
                     v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
                   ])"
@@ -173,46 +172,46 @@ export default defineComponent({
                   density="compact"
                 />
                 <v-text-field
-                  v-model="addressForm.shipper.phone"
+                  v-model="senderShippingInfoForm.shipper.phone"
                   label="Phone Number"
                   variant="outlined"
                   density="compact"
                 />
                 <v-text-field
-                  v-model="addressForm.shipper.line1"
+                  v-model="senderShippingInfoForm.shipper.line1"
                   label="Address Line 1"
                   variant="outlined"
                   density="compact"
                 />
                 <v-text-field
-                  v-model="addressForm.shipper.line2"
+                  v-model="senderShippingInfoForm.shipper.line2"
                   label="Address Line 2"
                   variant="outlined"
                   density="compact"
                 />
                 <v-text-field
-                  v-model="addressForm.shipper.city"
+                  v-model="senderShippingInfoForm.shipper.city"
                   label="City"
                   variant="outlined"
                   density="compact"
                 />
                 <div class="d-flex">
                   <v-text-field
-                    v-model="addressForm.shipper.state"
+                    v-model="senderShippingInfoForm.shipper.state"
                     label="State"
                     variant="outlined"
                     density="compact"
                     class="mr-4"
                   />
                   <v-text-field
-                    v-model="addressForm.shipper.postalCode"
+                    v-model="senderShippingInfoForm.shipper.postalCode"
                     label="Zip Code"
                     variant="outlined"
                     density="compact"
                     class="mr-4"
                   />
                   <v-text-field
-                    v-model="addressForm.shipper.country"
+                    v-model="senderShippingInfoForm.shipper.country"
                     :rules="requiredRules('Country is required', [])"
                     label="Country *"
                     variant="outlined"
@@ -220,7 +219,7 @@ export default defineComponent({
                   />
                 </div>
                 <v-combobox
-                  v-model="addressForm.shippingConditions"
+                  v-model="senderShippingInfoForm.shippingConditions"
                   :rules="requiredRules('Shipping conditions are required', [])"
                   label="Shipping Conditions *"
                   :items="shippingConditionsItems"
@@ -263,7 +262,7 @@ export default defineComponent({
               <v-divider />
               <div class="stack-sm mb-4">
                 <v-select
-                  v-model="addressForm.sample"
+                  v-model="senderShippingInfoForm.sample"
                   class="mt-2"
                   :rules="requiredRules('Sample Type/Species is required', [])"
                   :items="sampleEnumValues"
@@ -272,7 +271,7 @@ export default defineComponent({
                   density="compact"
                 />
                 <v-textarea
-                  v-model="addressForm.description"
+                  v-model="senderShippingInfoForm.description"
                   label="Sample Description"
                   :rules="requiredRules('Sample Description is required', [])"
                   hint="Number of samples, sample container type..."
@@ -281,7 +280,7 @@ export default defineComponent({
                   rows="2"
                 />
                 <v-textarea
-                  v-model="addressForm.experimentalGoals"
+                  v-model="senderShippingInfoForm.experimentalGoals"
                   :rules="requiredRules('Experiment Goals are required', [])"
                   label="Experiment Goals *"
                   hint="Briefly describe the goal for your experiment"
@@ -290,7 +289,7 @@ export default defineComponent({
                   rows="2"
                 />
                 <v-textarea
-                  v-model="addressForm.randomization"
+                  v-model="senderShippingInfoForm.randomization"
                   label="Randomization"
                   hint="What experimental conditions will be used for"
                   variant="outlined"
@@ -299,13 +298,13 @@ export default defineComponent({
                 />
                 <div class="d-flex">
                   <v-checkbox
-                    v-model="addressForm.usdaRegulated"
+                    v-model="senderShippingInfoForm.usdaRegulated"
                     class="mr-4 mt-0"
                     label="USDA Regulated?"
                     density="compact"
                   />
                   <v-text-field
-                    v-model="addressForm.permitNumber"
+                    v-model="senderShippingInfoForm.permitNumber"
                     label="Permit Number"
                     variant="outlined"
                     density="compact"
@@ -314,7 +313,7 @@ export default defineComponent({
                 </div>
                 <div class="d-flex">
                   <v-select
-                    v-model="addressForm.biosafetyLevel as BiosafetyLevels"
+                    v-model="senderShippingInfoForm.biosafetyLevel as BiosafetyLevels"
                     class="mr-4"
                     :items="biosafetyLevelValues"
                     label="Biosafety Level"
@@ -322,7 +321,7 @@ export default defineComponent({
                     density="compact"
                   />
                   <v-checkbox
-                    v-model="addressForm.irbOrHipaa"
+                    v-model="senderShippingInfoForm.irbOrHipaa"
                     class="mt-0"
                     label="IRB/HIPAA Compliance?"
                     density="compact"
@@ -335,7 +334,7 @@ export default defineComponent({
               </v-list-subheader>
               <v-divider class="mb-2" />
               <v-textarea
-                v-model="addressForm.comments"
+                v-model="senderShippingInfoForm.comments"
                 label="Comments"
                 variant="outlined"
                 density="compact"
@@ -348,7 +347,7 @@ export default defineComponent({
             <v-btn
               color="primary"
               variant="elevated"
-              @click="showAddressForm = false"
+              @click="showsenderShippingInfoForm = false"
             >
               Save
             </v-btn>
@@ -359,7 +358,7 @@ export default defineComponent({
     </v-card>
   </div>
   <div
-    v-if="!addressFormValid"
+    v-if="!senderShippingInfoFormValid"
     class="text-red text-caption px-4 pt-1"
   >
     Sender's shipping information is required.

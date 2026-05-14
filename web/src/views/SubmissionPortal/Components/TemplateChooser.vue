@@ -4,10 +4,9 @@ import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   canEditSubmissionByStatus,
   canEditSubmissionMetadata,
-  packageName,
+  sampleEnvironmentForm,
   templateHasData,
   templateList,
-  validationState,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
@@ -21,14 +20,13 @@ export default defineComponent({
       .join(' + '));
 
     return {
-      packageName,
+      sampleEnvironmentForm,
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
       templateListDisplayNames,
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      validationState,
     };
   },
 });
@@ -53,10 +51,10 @@ export default defineComponent({
       </template>
     </PageTitle>
     <SubmissionForm
-      @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
+      @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >
       <v-input
-        :model-value="packageName"
+        :model-value="sampleEnvironmentForm.packageName"
         validate-on="input eager"
         :rules="[(v) => (!!v && v.length > 0) || 'Please select at least one template.']"
       >
@@ -65,7 +63,7 @@ export default defineComponent({
             <v-checkbox
               v-for="option in templates.filter((v) => v[1].status === 'published')"
               :key="option[0]"
-              v-model="packageName"
+              v-model="sampleEnvironmentForm.packageName"
               hide-details
               :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
               :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
@@ -85,7 +83,7 @@ export default defineComponent({
           Sample Metadata Template Choice
         </p>
         <template
-          v-if="packageName.length!=0"
+          v-if="sampleEnvironmentForm.packageName.length!=0"
         >
           Your Sample Metadata template is "{{ templateListDisplayNames }}".
         </template>
@@ -109,7 +107,7 @@ export default defineComponent({
       </v-alert>
     </template>
     <v-alert
-      v-if="!canEditSubmissionByStatus() && packageName.length > 0"
+      v-if="!canEditSubmissionByStatus() && sampleEnvironmentForm.packageName.length > 0"
       color="grey lighten-2"
       class="my-3"
     >
