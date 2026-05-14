@@ -248,9 +248,6 @@ export default defineComponent({
           <v-text-field
             v-model="studyForm.piOrcid"
             label="ORCID iD"
-            :rules="[
-              v => !v || /(\d{4}-){3}\d{3}(\d|X)/.test(v) || 'ORCID iD must be in valid format (0000-0000-0000-0000)',
-            ]"
             :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
             variant="outlined"
             :hint="Definitions.piOrcid"
