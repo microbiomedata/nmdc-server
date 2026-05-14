@@ -74,7 +74,7 @@ const allMockSuggestions: MetadataSuggestion[] = [
     type: 'add', 
     row: 1,
     slot: 'env_broad_scale',
-    value: '__temperate woodland biome [ENVO:01000221]',
+    value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
     is_ai_generated: false,
     source: null,
@@ -83,7 +83,7 @@ const allMockSuggestions: MetadataSuggestion[] = [
     type: 'add', 
     row: 2,
     slot: 'env_broad_scale',
-    value: '__temperate woodland biome [ENVO:01000221]',
+    value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
     is_ai_generated: false,
     source: null,
@@ -92,16 +92,16 @@ const allMockSuggestions: MetadataSuggestion[] = [
     type: 'add', 
     row: 3,
     slot: 'env_broad_scale',
-    value: '__temperate woodland biome [ENVO:01000221]',
+    value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
     is_ai_generated: false,
     source: null,
   },
   {
     type: 'add', 
-    row: 4,
+    row: 6,
     slot: 'env_broad_scale',
-    value: '__temperate woodland biome [ENVO:01000221]',
+    value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
     is_ai_generated: false,
     source: null,
@@ -110,7 +110,7 @@ const allMockSuggestions: MetadataSuggestion[] = [
     type: 'add', 
     row: 0,
     slot: 'env_broad_scale',
-    value: '__temperate woodland biome [ENVO:01000221]',
+    value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
     is_ai_generated: false,
     source: null,
@@ -122,16 +122,16 @@ const allMockSuggestions: MetadataSuggestion[] = [
     value: 'Environmental',
     current_value: 'null',
     is_ai_generated: true,
-    source: null,
+    source: "Based on the study description, samples were collected from an environmental ecosystem. 'Environmental' is the recommended broad ecosystem classification for this context.",
   },
   {
     type: 'add',
     row: null,
     slot: 'env_broad_scale',
-    value: '__temperate woodland biome [ENVO:01000221]',
+    value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
     is_ai_generated: true,
-    source: null,
+    source: "Based on the study description, samples were collected from a temperate woodland biome. This is the recommended broad scale environment classification for this context.",
   },
 ];
 
@@ -215,6 +215,24 @@ function toggleGroup(key: string) {
   } else {
     expandedGroups.value.push(key);
   }
+}
+
+function formatRowRanges(suggestions: MetadataSuggestion[]): string {
+  const rows = suggestions.map((s) => s.row!).sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = rows[0];
+  let end = rows[0];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i] === end + 1) {
+      end = rows[i];
+    } else {
+      ranges.push(start === end ? `${start + 1}` : `${start + 1}-${end + 1}`);
+      start = rows[i];
+      end = rows[i]; 
+    }
+  }
+  ranges.push(start === end ? `${start + 1}` : `${start + 1}-${end + 1}`);
+  return `Row${rows.length > 1 ? 's' : ''} ${ranges.join(', ')}`;
 }
 
 /**
@@ -449,7 +467,7 @@ const loading = computed(() => (
               :items="filterOptions"
               item-title="label"
               item-value="value"
-              label="Filter by"
+              label="Group by"
               hide-details
               clearable
             />
@@ -500,8 +518,8 @@ const loading = computed(() => (
                 <v-card-text class="pa-2">
                   <div class="d-flex align-center justify-space-between">
                     <div class="d-flex align-center flex-wrap ga-1">
-                      <v-chip size="x-small">
-                        {{ cluster.suggestions.length }} rows
+                      <v-chip size="small" color="primary" variant="tonal">
+                        {{ formatRowRanges(cluster.suggestions) }}
                       </v-chip>
                       <span class="text-body-2 font-weight-medium">
                         {{ getSlotTitle(cluster.suggestions[0].slot) }}
@@ -513,6 +531,16 @@ const loading = computed(() => (
                       />
                     </div>
                     <div class="d-flex align-center flex-shrink-0">
+                      <v-btn
+                        variant="text"
+                        density="comfortable"
+                        icon
+                        @click="toggleGroup(cluster.key)"
+                      >
+                        <v-icon>
+                          {{ expandedGroups.includes(cluster.key) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                        </v-icon>
+                      </v-btn>
                       <v-tooltip>
                         <template #activator="{ props: activatorProps }">
                           <v-btn
@@ -543,32 +571,56 @@ const loading = computed(() => (
                         </template>
                         <span>Accept all {{ cluster.suggestions.length }} suggestions</span>
                       </v-tooltip>
-                      <v-btn
-                        variant="text"
-                        density="comfortable"
-                        icon
-                        @click="toggleGroup(cluster.key)"
-                      >
-                        <v-icon>
-                          {{ expandedGroups.includes(cluster.key) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
-                        </v-icon>
-                      </v-btn>
                     </div>
                   </div>
                   <div
                     v-if="expandedGroups.includes(cluster.key)"
-                    class="mt-2 d-flex flex-wrap ga-1"
+                    class="mt-2"
                   >
-                    <v-chip
+                    <v-divider class="mb-1" />
+                    <div
                       v-for="s in cluster.suggestions"
                       :key="getSuggestionKey(s)"
-                      size="small"
-                      variant="outlined"
+                      class="d-flex align-center justify-space-between py-1"
                       @mouseenter="handleSuggestionHover(s)"
                       @mouseleave="handleSuggestionLeave()"
                     >
-                      Row {{ s.row! + 1 }} 
-                    </v-chip>
+                      <span class="text-body-2">Row {{ s.row! + 1 }}</span>
+                      <div class="d-flex align-center">
+                        <v-tooltip>
+                          <template #activator="{ props: activatorProps }">
+                            <v-btn
+                              variant="text"
+                              density="comfortable"
+                              icon
+                              size="small"
+                              color="primary"
+                              v-bind="activatorProps"
+                              @click="handleRejectSuggestion(s)"
+                            >
+                              <v-icon size="small">mdi-close</v-icon>
+                            </v-btn>
+                          </template>
+                          <span>Reject row {{ s.row! + 1 }}</span>
+                        </v-tooltip>
+                        <v-tooltip v-if="canAcceptSuggestion(s)">
+                          <template #activator="{ props: activatorProps }">
+                            <v-btn
+                              variant="text"
+                              density="comfortable"
+                              icon
+                              size="small"
+                              color="primary"
+                              v-bind="activatorProps"
+                              @click="handleAcceptSuggestion(s)"
+                            >
+                              <v-icon size="small">mdi-check</v-icon>
+                            </v-btn>
+                          </template>
+                          <span>Accept row {{ s.row! + 1 }}</span>
+                        </v-tooltip>
+                      </div>
+                    </div>   
                   </div>
                 </v-card-text>
               </v-card>

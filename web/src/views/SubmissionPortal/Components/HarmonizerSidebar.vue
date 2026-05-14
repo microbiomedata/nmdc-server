@@ -2,7 +2,7 @@
 /**
  * The tabbed Data Harmonizer sidebar.
  */
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
@@ -32,33 +32,19 @@ interface HarmonizerSidebarProps {
    * The Harmonizer API instance.
    */
   harmonizerApi: HarmonizerApi;
-  /**
-   * Whether to show the notification badge on Metadata Suggester tab icon.
-   */
-  showSuggesterBadge?: boolean;
 }
 
-const props =withDefaults(defineProps<HarmonizerSidebarProps>(), {
+withDefaults(defineProps<HarmonizerSidebarProps>(), {
   columnHelp: null,
   metadataEditingAllowed: false,
-  showSuggesterBadge: false,
 });
 
 const emit = defineEmits<{
   'export-xlsx': [];
   'import-xlsx': [file: File];
-  'clear-suggester-badge': [];
 }>();
 
 const tabModel = ref(0);
-const SUGGESTER_TAB_INDEX = 1;
-
-// Emit up to parent to clear badge when user opens suggester tab
-watch(tabModel, (newTab) => {
-  if (newTab === SUGGESTER_TAB_INDEX) {
-    emit('clear-suggester-badge');
-  }
-});
 
 const TABS = [
   {
@@ -97,34 +83,16 @@ const handleImport = (file: File) => {
         grow
       >
         <v-tooltip
-          v-for="(tab, tabIndex) in TABS"
+          v-for="tab in TABS"
           :key="tab.label"
           open-delay="600"
           location="top"
         >
-          <template #activator="{ props: tooltipProps }">
-            <v-tab v-bind="tooltipProps" >
-              <div style="position: relative; display: inline-flex">
-                <v-icon size="x-large">{{ tab.icon }}</v-icon>
-                <span 
-                  v-if="tabIndex === SUGGESTER_TAB_INDEX && props.showSuggesterBadge" 
-                  style="position: absolute; top: -2px; right: -4px; width: 8px; height: 8px; background: rgb(var(--v-theme-error)); border-radius: 50%;"
-                />
-              </div>
-              <!-- <v-badge
-                v-if="tabIndex === SUGGESTER_TAB_INDEX && showSuggesterBadge"
-                color="error"
-                dot
-                floating
-              >
-                <v-icon size="x-large">{{ tab.icon }}</v-icon>
-              </v-badge>
-              <v-icon
-                v-else
-                size="x-large"
-              >
-                {{ tab.icon }}
-              </v-icon> -->
+          <template #activator="{ props }">
+            <v-tab
+              v-bind="props"
+            >
+              <v-icon size="x-large">{{ tab.icon }}</v-icon>
             </v-tab>
           </template>
           <span>{{ tab.label }}</span>
