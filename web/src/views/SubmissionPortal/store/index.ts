@@ -883,6 +883,30 @@ async function loadRecord(id: string) {
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
+// Add PI as contributor with editor role access when added via piOrcid. 
+// If the PI changes, remove the previously auto-added entry.
+watch(
+  () => studyForm.piOrcid,
+  (newPiOrcid, oldPiOrcid) => {
+    if (oldPiOrcid) {
+      const idx = studyForm.contributors.findIndex(
+        (c) => c.orcid === oldPiOrcid && c.roles.length === 0,
+      );
+      if (idx !== -1) {
+        studyForm.contributors.splice(idx, 1);
+      }
+    }
+    if (newPiOrcid && !studyForm.contributors.some((c) => c.orcid === newPiOrcid)) {
+      studyForm.contributors.push({
+        name: studyForm.piName,
+        orcid: newPiOrcid,
+        roles: ['editor'],
+        permissionLevel: SubmissionEditorRole.Editor,
+      });
+    }
+  }
+);
+
 function mergeSampleData(key: string | undefined, data: any[]) {
   if (!key) {
     return;
