@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # history for all branches and tags is needed for setuptools-scm
           fetch-depth: 0
@@ -38,7 +38,7 @@ jobs:
       #
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
             ghcr.io/microbiomedata/nmdc-server/${{ matrix.image }}
@@ -51,14 +51,14 @@ jobs:
             type=sha,format=long
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: ${{ matrix.image == 'client' && 'web' || '.' }}
           push: ${{ env.IS_ORIGINAL_REPO }}
@@ -138,7 +138,7 @@ jobs:
     steps:
       - name: Redeploy nmdc-dev:portal-${{ matrix.deployment }}
         if: ${{ env.IS_PROD_RELEASE == 'false' && env.IS_ORIGINAL_REPO == 'true' }}
-        uses: fjogeleit/http-request-action@v1
+        uses: fjogeleit/http-request-action@551353b829c3646756b2ec2b3694f819d7957495 # v2.0.0
         with:
           url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-dev:portal-${{ matrix.deployment }}?action=redeploy
           method: POST
@@ -147,7 +147,7 @@ jobs:
 
       - name: Redeploy nmdc:portal-${{ matrix.deployment }}
         if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
-        uses: fjogeleit/http-request-action@v1
+        uses: fjogeleit/http-request-action@551353b829c3646756b2ec2b3694f819d7957495 # v2.0.0
         with:
           url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:portal-${{ matrix.deployment }}?action=redeploy
           method: POST
