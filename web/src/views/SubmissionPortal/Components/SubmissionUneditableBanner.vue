@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { SubmissionEditorRole } from '@/views/SubmissionPortal/types.ts';
 import { getSubmissionUneditableReason, submissionLockedBy, statusDisplay } from '@/views/SubmissionPortal/store';
+import { computed } from 'vue';
 
-const { minimumPermissionLevel } = defineProps<{
+const props = defineProps<{
   minimumPermissionLevel: SubmissionEditorRole;
 }>();
 
-const reason = getSubmissionUneditableReason(minimumPermissionLevel);
+const reason = computed(() => getSubmissionUneditableReason(props.minimumPermissionLevel));
 </script>
 
 <template>
