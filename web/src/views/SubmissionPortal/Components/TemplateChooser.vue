@@ -1,9 +1,7 @@
 <script lang="ts">
-import { computed, defineComponent } from 'vue';
+import { computed, defineComponent, useTemplateRef } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
   packageName,
   templateHasData,
   templateList,
@@ -16,18 +14,18 @@ import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.v
 export default defineComponent({
   components: { SubmissionForm, SubmissionDocsLink, PageTitle },
   setup() {
+    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
 
     return {
+      formRef,
       packageName,
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
       templateListDisplayNames,
-      canEditSubmissionMetadata,
       templateHasData,
-      canEditSubmissionByStatus,
       validationState,
     };
   },
@@ -53,6 +51,7 @@ export default defineComponent({
       </template>
     </PageTitle>
     <SubmissionForm
+      ref="formRef"
       @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
     >
       <v-input
@@ -67,7 +66,7 @@ export default defineComponent({
               :key="option[0]"
               v-model="packageName"
               hide-details
-              :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
+              :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || formRef?.isDisabled"
               :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
               :value="option[0]"
             />
@@ -75,7 +74,7 @@ export default defineComponent({
         </template>
       </v-input>
     </SubmissionForm>
-    <template v-if="canEditSubmissionByStatus()">
+    <template v-if="formRef && !formRef.isDisabled">
       <v-alert
         v-if="!templateHasData('all')"
         color="grey lighten-2"
@@ -109,7 +108,7 @@ export default defineComponent({
       </v-alert>
     </template>
     <v-alert
-      v-if="!canEditSubmissionByStatus() && packageName.length > 0"
+      v-if="formRef?.isDisabled && packageName.length > 0"
       color="grey lighten-2"
       class="my-3"
     >

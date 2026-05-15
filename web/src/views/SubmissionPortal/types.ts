@@ -277,7 +277,7 @@ export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   author_orcid: string;
   metadata_submission: MetadataSubmission;
   nmdc_study_id: string | null;
-  locked_by: User;
+  locked_by: User | null;
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
@@ -319,6 +319,8 @@ export interface SampleProtocol extends AcquisitionProtocol {
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
+
+export type UneditableReason = 'locked_by_other' | 'insufficient_permissions' | 'uneditable_status';
 
 export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
 

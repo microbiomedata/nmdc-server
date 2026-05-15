@@ -4,8 +4,6 @@ import { computed, defineComponent, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
   checkDoiFormat,
   isOwner,
   permissionTitleToDbValueMap,
@@ -138,7 +136,6 @@ export default defineComponent({
       requiredRules,
       permissionLevelChoices,
       isOwner,
-      canEditSubmissionMetadata,
       orcidRequiredRule,
       uniqueOrcidRule,
       currentUserOrcid,
@@ -146,7 +143,6 @@ export default defineComponent({
       checkDoiFormat,
       primaryStudyImageUrl,
       piImageUrl,
-      canEditSubmissionByStatus,
       revalidate,
     };
   },
@@ -316,7 +312,7 @@ export default defineComponent({
         </div>
         <v-btn-grey
           class="mb-4"
-          :disabled="!canEditSubmissionMetadata()"
+          :disabled="formRef?.isDisabled"
           @click="addFundingSource"
         >
           <v-icon class="pr-1">
@@ -432,7 +428,7 @@ export default defineComponent({
           </v-btn>
         </div>
         <v-btn-grey
-          :disabled="!canEditSubmissionMetadata()"
+          :disabled="formRef?.isDisabled"
           class="mb-4"
           @click="addContributor"
         >
@@ -467,7 +463,7 @@ export default defineComponent({
           <v-btn
             icon
             variant="plain"
-            :disabled="!canEditSubmissionMetadata()"
+            :disabled="formRef?.isDisabled"
             @click="studyForm.publicationDois?.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>
@@ -475,7 +471,7 @@ export default defineComponent({
         </div>
         <v-btn-grey
           class="mb-4"
-          :disabled="!canEditSubmissionMetadata()"
+          :disabled="formRef?.isDisabled"
           @click="addPublicationDoi"
         >
           <v-icon class="pr-1">
@@ -538,7 +534,7 @@ export default defineComponent({
             v-if="studyForm.dataDois !== null"
             icon
             variant="plain"
-            :disabled="!canEditSubmissionMetadata()"
+            :disabled="formRef?.isDisabled"
             @click="studyForm.dataDois.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>
@@ -546,7 +542,7 @@ export default defineComponent({
         </div>
         <v-btn-grey
           class="mb-4"
-          :disabled="!canEditSubmissionMetadata()"
+          :disabled="formRef?.isDisabled"
           @click="addDataDoi"
         >
           <v-icon class="pr-1">
