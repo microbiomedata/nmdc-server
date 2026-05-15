@@ -168,63 +168,6 @@ class NmdcTypecode(Enum):
     read_qc_analysis = "wfrqc"
 
 
-class WorkflowTypecodeEntry(TypedDict):
-    workflow_activity_model: Any
-    data_generation_association_table: Any
-
-
-# Maps each NMDC workflow typecode to the workflow activity model and its data generation
-# association table, used to join back to Biosample via OmicsProcessing.
-# An NMDC workflow typecode are all that start with "wf".
-# See https://microbiomedata.github.io/nmdc-schema/typecode-to-class-map/
-_WORKFLOW_TYPECODE_MAP: Dict[NmdcTypecode, WorkflowTypecodeEntry] = {
-    NmdcTypecode.read_qc_analysis: {
-        "workflow_activity_model": models.ReadsQC,
-        "data_generation_association_table": models.reads_qc_data_generation_association,
-    },
-    NmdcTypecode.metagenome_assembly: {
-        "workflow_activity_model": models.MetagenomeAssembly,
-        "data_generation_association_table": models.metagenome_assembly_data_generation_association,
-    },
-    NmdcTypecode.metatranscriptome_assembly: {
-        "workflow_activity_model": models.MetatranscriptomeAssembly,
-        "data_generation_association_table": models.metatranscriptome_assembly_data_generation_association,
-    },
-    NmdcTypecode.metagenome_annotation: {
-        "workflow_activity_model": models.MetagenomeAnnotation,
-        "data_generation_association_table": models.metagenome_annotation_data_generation_association,
-    },
-    NmdcTypecode.metatranscriptome_annotation: {
-        "workflow_activity_model": models.MetatranscriptomeAnnotation,
-        "data_generation_association_table": models.metatranscriptome_annotation_data_generation_association,
-    },
-    NmdcTypecode.metaproteomics_analysis: {
-        "workflow_activity_model": models.MetaproteomicAnalysis,
-        "data_generation_association_table": models.metaproteomic_analysis_data_generation_association,
-    },
-    NmdcTypecode.mags_analysis: {
-        "workflow_activity_model": models.MAGsAnalysis,
-        "data_generation_association_table": models.mags_analysis_data_generation_association,
-    },
-    NmdcTypecode.read_based_taxonomy_analysis: {
-        "workflow_activity_model": models.ReadBasedAnalysis,
-        "data_generation_association_table": models.read_based_analysis_data_generation_association,
-    },
-    NmdcTypecode.nom_analysis: {
-        "workflow_activity_model": models.NOMAnalysis,
-        "data_generation_association_table": models.nom_analysis_data_generation_association,
-    },
-    NmdcTypecode.metabolomics_analysis: {
-        "workflow_activity_model": models.MetabolomicsAnalysis,
-        "data_generation_association_table": models.metabolomics_analysis_data_generation_association,
-    },
-    NmdcTypecode.metatranscriptome_expression_analysis: {
-        "workflow_activity_model": models.Metatranscriptome,
-        "data_generation_association_table": models.metatranscriptome_data_generation_association,
-    },
-}
-
-
 _NMDC_TYPECODE_BY_VALUE: Dict[str, NmdcTypecode] = {tc.value: tc for tc in NmdcTypecode}
 
 
@@ -241,31 +184,6 @@ def _extract_nmdc_typecode(term: str) -> Optional[NmdcTypecode]:
     except (IndexError, ValueError):
         return None
     return _NMDC_TYPECODE_BY_VALUE.get(typecode_str)
-
-
-def _biosample_ids_via_workflow(
-    db: Session,
-    activity_model: Any,
-    data_generation_assoc: Any,
-    workflow_id: str,
-) -> Query:
-    """
-    Return biosample IDs linked to a workflow activity whose ID starts with `workflow_id`.
-    Join path: biosample_input_association > {activity}_data_generation_association,
-    matched on their shared omics_processing_id / data_generation_id column.
-    """
-    table_name = activity_model.__tablename__
-    activity_id_col = data_generation_assoc.c[f"{table_name}_id"]
-    return (
-        db.query(models.biosample_input_association.c.biosample_id.label("id"))
-        .join(
-            data_generation_assoc,
-            data_generation_assoc.c.data_generation_id
-            == models.biosample_input_association.c.omics_processing_id,
-        )
-        .filter(activity_id_col.like(f"{workflow_id}%"))
-        .distinct()
-    )
 
 
 class GoldTreeValue(BaseModel):
@@ -1063,13 +981,15 @@ class BiosampleQuerySchema(BaseQuerySchema):
         """
         typecode = _extract_nmdc_typecode(term)
 
+        # Biosample ID searches
         if typecode == NmdcTypecode.biosample:
             return db.query(models.Biosample.id.label("id")).filter(
                 models.Biosample.id.like(f"{term}%")
             )
 
+        # Study ID searches
         if typecode == NmdcTypecode.study:
-            # Direct biosamples of a study whose ID matches the prefix.
+            # Direct biosamples of a study whose ID matches the search term.
             direct_query = (
                 db.query(models.Biosample.id.label("id"))
                 .join(models.Study, models.Biosample.study_id == models.Study.id)
@@ -1084,42 +1004,12 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
             )
             return direct_query.union(child_study_query)
-
-        if typecode in (
-            NmdcTypecode.omics_processing,
-            NmdcTypecode.mass_spectrometry,
-            NmdcTypecode.nucleotide_sequencing,
-        ):
-            return (
-                db.query(models.biosample_input_association.c.biosample_id.label("id"))
-                .join(
-                    models.OmicsProcessing,
-                    models.OmicsProcessing.id
-                    == models.biosample_input_association.c.omics_processing_id,
-                )
-                .filter(models.OmicsProcessing.id.like(f"{term}%"))
-                .distinct()
-            )
-
-        if typecode == NmdcTypecode.data_object:
-            return (
-                db.query(models.biosample_input_association.c.biosample_id.label("id"))
-                .join(
-                    models.omics_processing_output_association,
-                    models.omics_processing_output_association.c.omics_processing_id
-                    == models.biosample_input_association.c.omics_processing_id,
-                )
-                .join(
-                    models.DataObject,
-                    models.DataObject.id
-                    == models.omics_processing_output_association.c.data_object_id,
-                )
-                .filter(models.DataObject.id.like(f"{term}%"))
-                .distinct()
-            )
         
-        # TODO: This case should probably apply to several typecodes
-        if typecode == NmdcTypecode.library_preparation:
+        # All other NMDC ID searches
+        # This uses the BiosampleRelatedDocument table which links biosamples to most NMDC IDs.
+        # There are some NMDC ID types that exist in `NmdcTypecode` but don't exist in BiosampleRelatedDocument table.
+        # These searches will return 0 results.
+        if typecode is not None:
             brd_subquery = (
                 db.query(
                     func.unnest(models.BiosampleRelatedDocument.biosample_ids).label("biosample_id")
@@ -1132,17 +1022,6 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 .join(brd_subquery, models.Biosample.id == brd_subquery.c.biosample_id)
                 .distinct()
             )
-
-        # Handle workflow ID searches
-        if typecode is not None:
-            entry = _WORKFLOW_TYPECODE_MAP.get(typecode)
-            if entry is not None:
-                return _biosample_ids_via_workflow(
-                    db,
-                    entry["workflow_activity_model"],
-                    entry["data_generation_association_table"],
-                    term,
-                )
 
         # Fallback: tsvector full-text search on biosample fields.
         biosample_fts_query = db.query(models.Biosample.id.label("id")).filter(
