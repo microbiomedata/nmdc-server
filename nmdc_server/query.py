@@ -18,7 +18,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    TypedDict,
     TypeVar,
     Union,
 )
