@@ -1004,7 +1004,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
             )
             return direct_query.union(child_study_query)
-        
+
         # All other NMDC ID searches
         # This uses the BiosampleRelatedDocument table which links biosamples to most NMDC IDs.
         # There are some NMDC ID types that exist in `NmdcTypecode` but don't exist in BiosampleRelatedDocument table.
