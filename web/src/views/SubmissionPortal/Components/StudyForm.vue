@@ -304,7 +304,7 @@ export default defineComponent({
             v-if="studyForm.fundingSources !== null"
             icon
             variant="plain"
-            :disabled="!isOwner()"
+            :disabled="!isOwner() || formRef?.isDisabled"
             @click="studyForm.fundingSources.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>
@@ -421,7 +421,7 @@ export default defineComponent({
           <v-btn
             icon
             variant="plain"
-            :disabled="!isOwner() || currentUserOrcid === contributor.orcid || undefined"
+            :disabled="!isOwner() || currentUserOrcid === contributor.orcid || formRef?.isDisabled"
             @click="studyForm.contributors.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>
