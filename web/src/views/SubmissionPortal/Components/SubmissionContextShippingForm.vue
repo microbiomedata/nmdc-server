@@ -2,7 +2,7 @@
 import { computed, defineComponent, ref, useTemplateRef, watch, } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
-import { senderShippingInfoForm, canEditSubmissionMetadata, } from '../store';
+import { senderShippingInfoForm } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
@@ -80,7 +80,6 @@ export default defineComponent({
       addressSummary,
       sampleEnumValues,
       shippingConditionsItems,
-      canEditSubmissionMetadata,
       requiredRules,
       handleExpectedShippingDateClear,
       formatShippingDate,
@@ -117,7 +116,7 @@ export default defineComponent({
       >
         <template #activator="{ props }">
           <v-btn
-            :disabled="!canEditSubmissionMetadata()"
+            :disabled="senderShippingInfoFormRef?.isDisabled"
             class="topRightButton"
             color="primary"
             v-bind="props"
