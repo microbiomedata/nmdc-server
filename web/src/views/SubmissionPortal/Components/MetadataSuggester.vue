@@ -768,7 +768,7 @@ const loading = computed(() => (
                 </v-card-text>
               </v-card>
             </div>
-            <div 
+            <!-- <div 
               v-if="hasSuggestions"
               class="d-flex justify-end mt-1"
             >
@@ -788,7 +788,7 @@ const loading = computed(() => (
               >
                 Accept all
               </v-btn>
-            </div> 
+            </div>  -->
           </v-col>
         </v-row>
 
