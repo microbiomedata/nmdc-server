@@ -6,8 +6,6 @@ import doiProviderValues from '@/schema';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   addAwardDoi,
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
   checkDoiFormat,
   checkJGITemplates,
   multiOmicsAssociations,
@@ -133,10 +131,8 @@ export default defineComponent({
       HARMONIZER_TEMPLATES,
       doiProviderValues,
       /* functions */
-      canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
-      canEditSubmissionByStatus,
     };
   },
 });

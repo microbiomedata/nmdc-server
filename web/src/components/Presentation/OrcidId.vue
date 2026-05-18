@@ -43,7 +43,10 @@ export default defineComponent({
     </span>
     <a
       :href="`${orcidBaseUrl}/${orcidId}`"
-      :style="{display: 'flex'}"
+      :style="{
+        display: 'flex',
+        color: 'inherit',
+      }"
     >
       <span
         v-if="name && isNameLinked"
