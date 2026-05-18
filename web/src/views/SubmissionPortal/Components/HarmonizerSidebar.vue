@@ -2,7 +2,7 @@
 /**
  * The tabbed Data Harmonizer sidebar.
  */
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
@@ -10,6 +10,7 @@ import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExpor
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
 import MetadataSuggester from '@/views/SubmissionPortal/Components/MetadataSuggester.vue';
 import { ColumnHelpInfo, HarmonizerTemplateInfo } from '@/views/SubmissionPortal/types';
+import { hasChanged, sampleData } from '../store';
 
 interface HarmonizerSidebarProps {
   /**
@@ -45,6 +46,30 @@ const emit = defineEmits<{
 }>();
 
 const tabModel = ref(0);
+const SUGGESTER_TAB_INDEX = 1;
+const showBadge = ref(false);
+
+// Show badge when a cell in the spreadsheet changes and suggester tab is not active
+watch(hasChanged, (newVal: number, oldVal: number) => {
+  if (newVal > oldVal && tabModel.value !== SUGGESTER_TAB_INDEX) {
+    showBadge.value = true;
+  }
+});
+
+// Show badge on page load/reload if the submission already has sample data
+watch(sampleData, (newData: Record<string, any[]>) => {
+  const hasData = Object.values(newData).some(rows => rows.length > 0);
+  if (hasData && tabModel.value !== SUGGESTER_TAB_INDEX) {
+    showBadge.value = true;
+  }
+}, { immediate: true });
+
+// Clear badge when suggester tab is selected
+watch(tabModel, (newTab: number) => {
+  if (newTab === SUGGESTER_TAB_INDEX) {
+    showBadge.value = false;
+  }
+});
 
 const TABS = [
   {
@@ -83,16 +108,21 @@ const handleImport = (file: File) => {
         grow
       >
         <v-tooltip
-          v-for="tab in TABS"
+          v-for="(tab, tabIndex) in TABS"
           :key="tab.label"
           open-delay="600"
           location="top"
         >
-          <template #activator="{ props }">
+          <template #activator="{ props: tabActivatorProps }">
             <v-tab
-              v-bind="props"
+              v-bind="tabActivatorProps"
+              style="overflow: visible;"
             >
               <v-icon size="x-large">{{ tab.icon }}</v-icon>
+              <span
+                v-if="tabIndex === SUGGESTER_TAB_INDEX && showBadge"
+                class="suggester-dot"
+              />
             </v-tab>
           </template>
           <span>{{ tab.label }}</span>
@@ -146,5 +176,21 @@ const handleImport = (file: File) => {
   .v-tab {
     min-width: 10px;
   }
+}
+
+.tab-with-badge {
+  overflow: visible !important;
+  position: relative
+}
+
+.suggester-dot {
+  position: absolute;
+  top: 9px;
+  right: 18px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff5330;
+  border-radius: 50%;
+  pointer-events: none;
 }
 </style>

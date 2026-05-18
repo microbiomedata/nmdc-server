@@ -232,7 +232,7 @@ function formatRowRanges(suggestions: MetadataSuggestion[]): string {
     }
   }
   ranges.push(start === end ? `${start + 1}` : `${start + 1}-${end + 1}`);
-  return `Row${rows.length > 1 ? 's' : ''} ${ranges.join(', ')}`;
+  return `${ranges.join(', ')}`;
 }
 
 /**
@@ -518,9 +518,10 @@ const loading = computed(() => (
                 <v-card-text class="pa-2">
                   <div class="d-flex align-center justify-space-between">
                     <div class="d-flex align-center flex-wrap ga-1">
-                      <v-chip size="small" color="primary" variant="tonal">
-                        {{ formatRowRanges(cluster.suggestions) }}
-                      </v-chip>
+                      <div class="text-body-2">
+                        <span class="font-weight-medium">Rows:</span>
+                        {{ formatRowRanges(cluster.suggestions).replace(/^Rows?: /, '') }}
+                      </div>
                       <span class="text-body-2 font-weight-medium">
                         {{ getSlotTitle(cluster.suggestions[0].slot) }}
                       </span>
