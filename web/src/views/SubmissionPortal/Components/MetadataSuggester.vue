@@ -597,6 +597,22 @@ const loading = computed(() => (
                               size="small"
                               color="primary"
                               v-bind="activatorProps"
+                              @click="handleJumpToCell(s)"
+                            >
+                              <v-icon size="small">mdi-target</v-icon>
+                            </v-btn>
+                          </template>
+                          <span>Jump to cell</span>
+                        </v-tooltip>
+                        <v-tooltip>
+                          <template #activator="{ props: activatorProps }">
+                            <v-btn
+                              variant="text"
+                              density="comfortable"
+                              icon
+                              size="small"
+                              color="primary"
+                              v-bind="activatorProps"
                               @click="handleRejectSuggestion(s)"
                             >
                               <v-icon size="small">mdi-close</v-icon>
