@@ -1,4 +1,6 @@
-"""This migration moves validation from the `validationState` form field to each individual form, so that we can track validation state separately for each form.
+"""move_validation_to_each_form
+
+This migration moves validation from the `validationState` form field to each individual form, so that we can track validation state separately for each form.
 This is in preparation for the upcoming addition of having multiple sample sets per submission.
 
 Revision ID: f9630762bd00
@@ -9,6 +11,7 @@ Create Date: 2026-05-07 18:56:05.537522
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Optional
 from uuid import uuid4
 
@@ -88,7 +91,7 @@ def upgrade():
             # if old value missing, backfill an empty validation state object
             new_sample_data["validation"] = {"invalidCells": {}, "tabsValidated": {}}
 
-        new_ms = ms
+        new_ms = deepcopy(ms)
         # Add/overwrite the new shape keys
         new_ms["sampleEnvironmentForm"] = sample_environment_form
         new_ms["senderShippingInfoForm"] = sender_shipping_info_form
