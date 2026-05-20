@@ -31,11 +31,13 @@ import {
   SubmissionValidationState,
   SuggestionsMode,
   SuggestionType,
+  UneditableReason,
 } from '@/views/SubmissionPortal/types';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
 import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
+import { stateRefs } from '@/store';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -102,18 +104,24 @@ const author = ref<User | null>(null);
 /**
  * Submission record locking information
  */
-let _submissionLockedBy: User | null = null;
-function getSubmissionLockedBy(): User | null {
-  return _submissionLockedBy;
-}
+const submissionLockedBy = ref<User | null>(null);
+const loggedInUserHasLock = computed(() => {
+  const lockedByUser = submissionLockedBy.value;
+  if (!lockedByUser) {
+    return true;
+  }
+  if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
+    return true;
+  }
+  return false;
+});
 
 let _permissionLevel: SubmissionEditorRole | null = null;
-function getPermissionLevel(): SubmissionEditorRole | null {
-  return _permissionLevel;
-}
 
 function isOwner(): boolean {
-  if (!_permissionLevel) return false;
+  if (!_permissionLevel) {
+    return false;
+  }
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
@@ -126,16 +134,36 @@ function canEditSubmissionByStatus(): boolean {
   return editableByStatus(status.value);
 }
 
-function canEditSubmissionMetadata(): boolean {
-  if (!_permissionLevel) return false;
-  if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
+/**
+ * Check if the given permission level meets the minimum required permission level
+ * @param permissionLevel
+ * @param minimumPermissionLevel
+ */
+function hasMinimumPermissionLevel(permissionLevel: SubmissionEditorRole | null, minimumPermissionLevel: SubmissionEditorRole): boolean {
+  return permissionLevel !== null && permissionLevelHierarchy[permissionLevel] >= permissionLevelHierarchy[minimumPermissionLevel];
 }
 
-function canEditSampleMetadata(): boolean {
-  if (!_permissionLevel) return false;
-  if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
+/**
+ * Get the reason why the submission is not editable, if applicable. This checks
+ * for lock status, permission level, and submission status.
+ *
+ * @param minimumPermissionLevel The minimum permission level required to edit the submission
+ * @returns A string describing the reason why the submission is not editable, or undefined if it is editable
+ */
+function getSubmissionUneditableReason(minimumPermissionLevel: SubmissionEditorRole): UneditableReason | undefined {
+  if (!loggedInUserHasLock.value) {
+    return 'locked_by_other';
+  }
+
+  if (!hasMinimumPermissionLevel(_permissionLevel, minimumPermissionLevel)) {
+    return 'insufficient_permissions'
+  }
+
+  if (!canEditSubmissionByStatus()) {
+    return 'uneditable_status'
+  }
+
+  return undefined;
 }
 
 const hasChanged = ref(0);
@@ -748,11 +776,9 @@ const submitPayload = computed(() => {
 });
 
 async function submit(id: string, status?: SubmissionStatusKey) {
-  if (!canEditSubmissionMetadata()) {
-    throw new Error('Unable to submit due to inadequate permission level for this submission.');
-  }
-  if (!canEditSubmissionByStatus()) {
-    throw new Error('Unable to submit with current submission status.');
+  const uneditableReason = getSubmissionUneditableReason('owner');
+  if (uneditableReason) {
+    throw new Error(`Unable to submit: ${ uneditableReason }`);
   }
   let record = await api.updateRecord(id, payloadObject.value);
   if (status) {
@@ -779,10 +805,8 @@ function reset() {
 
 const incrementalSaveRecordRequest = useRequest();
 async function incrementalSaveRecord(id: string): Promise<void> {
-  if (!canEditSampleMetadata()) {
-    return;
-  }
-  if (!canEditSubmissionByStatus()) {
+  const uneditableReason = getSubmissionUneditableReason('metadata_contributor');
+  if (uneditableReason) {
     return;
   }
 
@@ -791,9 +815,9 @@ async function incrementalSaveRecord(id: string): Promise<void> {
   if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
-  } else if (canEditSubmissionMetadata()) {
+  } else if (hasMinimumPermissionLevel(_permissionLevel, "editor")) {
     payload = payloadObject.value;
-  } else if (canEditSampleMetadata()) {
+  } else if (hasMinimumPermissionLevel(_permissionLevel, "metadata_contributor")) {
     payload = {
       sampleData: payloadObject.value.sampleData,
     };
@@ -847,21 +871,22 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   piImageUrl.value = record.pi_image_url;
   hasChanged.value = 0;
   author.value = record.author;
+  submissionLockedBy.value = record.locked_by;
 }
 
 async function lockRecord(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
-    _submissionLockedBy = lockResponse.locked_by || null;
+    submissionLockedBy.value = lockResponse.locked_by || null;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 409) {
         // Another user has the lock
-        _submissionLockedBy = error.response.data.locked_by || null;
+        submissionLockedBy.value = error.response.data.locked_by || null;
       }
     } else {
       // Something went wrong, and we don't know who has the lock
-      _submissionLockedBy = null;
+      submissionLockedBy.value = null;
     }
   }
 }
@@ -869,7 +894,7 @@ async function lockRecord(id: string) {
 async function unlockRecord(id: string) {
   try {
     await api.unlockSubmission(id);
-    _submissionLockedBy = null;
+    submissionLockedBy.value = null;
   } catch {
     // Ignore errors when unlocking
   }
@@ -1003,6 +1028,8 @@ export {
   studyName,
   createdDate,
   modifiedDate,
+  submissionLockedBy,
+  loggedInUserHasLock,
   isTestSubmission,
   incrementalSaveRecordRequest,
   primaryStudyImageUrl,
@@ -1015,8 +1042,7 @@ export {
   fetchSuggestionsFromSampleRowsRequest,
   fetchSuggestionsFromStudyInfoRequest,
   /* functions */
-  getSubmissionLockedBy,
-  getPermissionLevel,
+  getSubmissionUneditableReason,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
@@ -1025,9 +1051,6 @@ export {
   submit,
   mergeSampleData,
   isOwner,
-  canEditSampleMetadata,
-  canEditSubmissionMetadata,
-  canEditSubmissionByStatus,
   editableByStatus,
   fetchSuggestionsFromSampleRows,
   fetchSuggestionsFromStudyInfo,
