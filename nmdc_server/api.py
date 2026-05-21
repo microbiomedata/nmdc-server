@@ -965,7 +965,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
     # Note: We added these statements to help with debugging when this functionality was new.
-    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    # logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     async with (
         httpx.AsyncClient(timeout=None) as client,
@@ -1003,15 +1003,19 @@ async def get_bulk_download_data_object_metadata(
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
-    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
+    # data_object_ids_list = [file.data_object.id for file in bulk_download.files]
 
-    # If there were no files specified, return no documents.
-    if len(data_object_ids_list) == 0:
-        return []
+    # # If there were no files specified, return no documents.
+    # if len(data_object_ids_list) == 0:
+    #     return []
 
-    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+    # data_object_documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
 
-    return JSONResponse(content=documents)
+    # for document, biosample_ids in data_object_documents:
+    #     document["_bulk_download_filename"] = crud.construct_data_object_filename(document)
+    #     document["_related_biosample_ids"] = biosample_ids
+
+    return JSONResponse(content=[])
 
 
 @router.get(

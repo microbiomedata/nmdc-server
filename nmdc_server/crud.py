@@ -503,13 +503,36 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        select(models.BiosampleRelatedDocument.document, models.BiosampleRelatedDocument.biosample_ids)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.id.in_(ids_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
 
     rows = db.execute(statement).all()
     return [row[0] for row in rows]
+
+
+def get_related_biosamples_by_data_object_ids(
+    db: Session, data_object_ids: list[str]
+) -> list[dict]:
+    """
+    Take a list of `DataObject` IDs and map each one to its related biosamples.
+    """
+    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
+    statement = (
+        select(
+            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
+            models.BiosampleRelatedDocument.biosample_ids,
+        )
+        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    for row in rows:
+        data_object_id_to_biosample_ids_map[row[0]] = row[1]
+
+    return data_object_id_to_biosample_ids_map
 
 
 def get_documents_by_biosample_ids(
@@ -570,7 +593,7 @@ def safe_name(name: str) -> str:
     return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
 
-def construct_data_object_file_name(data_object: models.DataObject) -> str:
+def construct_data_object_filename(data_object: models.DataObject) -> str:
     """
     Construct a unique file name for the data object that is safe to use in a zip file.
     The file name becomes `<data_object.id>__<data_object.name>` with any characters that are not safe for file names replaced with underscores.
@@ -601,7 +624,7 @@ def create_bulk_download(
                 models.BulkDownloadDataObject(
                     bulk_download=bulk_download_model,
                     data_object=data_object,
-                    path=f"data/{construct_data_object_file_name(data_object)}",
+                    path=f"data/{construct_data_object_filename(data_object)}",
                 )
             )
 
