@@ -647,7 +647,7 @@ const templateList = computed<string[]>((prevTemplates) => {
  */
 const sampleDataDefault = {
   data: {} as Record<string, any[]>,
-  validation: ref<SampleMetadataValidationState | null>(null),
+  validation: null as SampleMetadataValidationState | null,
 };
 const sampleData = reactive(clone(sampleDataDefault));
 const metadataSuggestions = ref([] as MetadataSuggestion[]);

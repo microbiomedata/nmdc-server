@@ -132,7 +132,7 @@ class SampleMetadataValidationState(BaseModel):
 
 class SampleData(BaseModel):
     data: Dict[str, List[Any]]
-    validation: SampleMetadataValidationState
+    validation: Optional[SampleMetadataValidationState] = None
 
 
 class MetadataSubmissionRecordCreate(BaseModel):
