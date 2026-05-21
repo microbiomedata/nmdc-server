@@ -49,12 +49,12 @@ const tabModel = ref(0);
 const SUGGESTER_TAB_INDEX = 1;
 const showBadge = ref(false);
 
-// Show badge when a cell in the spreadsheet changes and suggester tab is not active
-watch(hasChanged, (newVal: number, oldVal: number) => {
-  if (newVal > oldVal && tabModel.value !== SUGGESTER_TAB_INDEX) {
-    showBadge.value = true;
-  }
-});
+// // Show badge when a cell in the spreadsheet changes and suggester tab is not active
+// watch(hasChanged, (newVal: number, oldVal: number) => {
+//   if (newVal > oldVal && tabModel.value !== SUGGESTER_TAB_INDEX) {
+//     showBadge.value = true;
+//   }
+// });
 
 // Show badge on page load/reload if the submission already has sample data
 watch(sampleData, (newData: Record<string, any[]>) => {

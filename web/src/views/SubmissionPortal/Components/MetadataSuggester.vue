@@ -76,8 +76,8 @@ const allMockSuggestions: MetadataSuggestion[] = [
     slot: 'env_broad_scale',
     value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
-    is_ai_generated: false,
-    source: null,
+    is_ai_generated: true,
+    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
   },
   {
     type: 'add', 
@@ -85,8 +85,8 @@ const allMockSuggestions: MetadataSuggestion[] = [
     slot: 'env_broad_scale',
     value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
-    is_ai_generated: false,
-    source: null,
+    is_ai_generated: true,
+    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
   },
   {
     type: 'add', 
@@ -94,8 +94,8 @@ const allMockSuggestions: MetadataSuggestion[] = [
     slot: 'env_broad_scale',
     value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
-    is_ai_generated: false,
-    source: null,
+    is_ai_generated: true,
+    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
   },
   {
     type: 'add', 
@@ -103,8 +103,8 @@ const allMockSuggestions: MetadataSuggestion[] = [
     slot: 'env_broad_scale',
     value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
-    is_ai_generated: false,
-    source: null,
+    is_ai_generated: true,
+    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
   },
   {
     type: 'add', 
@@ -112,8 +112,8 @@ const allMockSuggestions: MetadataSuggestion[] = [
     slot: 'env_broad_scale',
     value: 'temperate woodland biome [ENVO:01000221]',
     current_value: null,
-    is_ai_generated: false,
-    source: null,
+    is_ai_generated: true,
+    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
   },
   {
     type: 'attention',
@@ -514,8 +514,30 @@ const loading = computed(() => (
                 v-if="cluster.isCollapsible"
                 class="mb-4 mx-n2"
                 elevation="2"
+                :color="cluster.suggestions[0].is_ai_generated ? AI_SUGGESTION_BG : undefined"
               >
                 <v-card-text class="pa-2">
+                  <div
+                    v-if="cluster.suggestions[0].is_ai_generated"
+                    class="d-flex justify-space-between align-center mb-1 text-blue-darken-4 font-weight-medium"
+                  >
+                    <div class=""d-flex align-baseline>
+                      <v-icon size="x-small" class="mr-1">mdi-creation</v-icon>
+                      AI Suggested
+                    </div>
+                    <v-tooltip max-width="500px">
+                      <template #activator="{ props: activatorProps }">
+                        <v-icon
+                          size="small"
+                          color="blue-darken-4"
+                          v-bind="activatorProps"
+                        >
+                          mdi-information-outline
+                        </v-icon>
+                      </template>
+                      <span>AI recommends areas of interest based on the content of the submission summary. To dismiss, select the X to remove it.</span>
+                    </v-tooltip>
+                  </div>
                   <div class="d-flex align-center justify-space-between">
                     <div class="d-flex align-center flex-wrap ga-1">
                       <div class="text-body-2">
@@ -586,7 +608,10 @@ const loading = computed(() => (
                       @mouseenter="handleSuggestionHover(s)"
                       @mouseleave="handleSuggestionLeave()"
                     >
-                      <span class="text-body-2">Row {{ s.row! + 1 }}</span>
+                      <!-- <span class="text-body-2">Row {{ s.row! + 1 }}</span> -->
+                      <div class="flex-grow-1 mr-2">
+                        <div class="text-body-2 font-weight-medium">Row {{ s.row! + 1 }}</div>
+                      </div>
                       <div class="d-flex align-center">
                         <v-tooltip>
                           <template #activator="{ props: activatorProps }">
@@ -688,7 +713,7 @@ const loading = computed(() => (
                         <span class="font-weight-medium">Column:</span> {{ getSlotTitle(cluster.suggestions[0].slot) }}
                       </div>
                       <div v-if="cluster.suggestions[0].source">
-                        <span class="font-weight-medium">Source:</span> {{ cluster.suggestions[0].source }}
+                        <span class="font-weight-medium">Reasoning:</span> {{ cluster.suggestions[0].source }}
                       </div>
                     </div>
                   </div>

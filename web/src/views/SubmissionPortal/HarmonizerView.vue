@@ -54,6 +54,7 @@ import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.
 import StatusAlert from './Components/StatusAlert.vue';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/views/SubmissionPortal/colors.ts';
+import { textSpanOverlap } from 'typescript';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -117,6 +118,22 @@ const highlightedValidationError = ref(0);
 const validationActiveCategory = ref('All Errors');
 const columnVisibility = ref('all');
 const sidebarOpen = ref(true);
+const showSuggesterBadge = ref(false);
+
+// show badge on load if submission already has sample data
+watch(sampleData, (newData: Record<string, any[]>) => {
+  const hasData = Object.values(newData).some((rows) => rows.length > 0);
+  if (hasData) {
+    showSuggesterBadge.value = true;
+  }
+}, { immediate: true});
+
+// show badge on each cell edit 
+// watch (hasChanged, (newVal: number, oldVal: number) => {
+//   if (newVal > oldVal) {
+//     showSuggesterBadge.value = true;
+//   }
+// });
 
 const activeTemplateKey = ref(templateList.value[0]);
 const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
@@ -1058,6 +1075,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
           <v-icon v-else>
             mdi-menu-open
           </v-icon>
+          <span
+            v-if="!sidebarOpen && showSuggesterBadge"
+            style="position: absolute; top: 9px; right: 16px; width: 10px; height: 10px; background-color: #ff5330; border-radius: 50%; pointer-events: none;"
+          />
         </v-btn>
 
         <v-navigation-drawer
@@ -1074,8 +1095,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
             :metadata-editing-allowed="canEditSampleMetadata()"
+            :show-suggester-badge="showSuggesterBadge"
             @import-xlsx="openFile"
             @export-xlsx="downloadSamples"
+            @clear-suggester-badge="showSuggesterBadge = false"
           />
         </v-navigation-drawer>
       </v-layout>
