@@ -544,6 +544,9 @@ const loading = computed(() => (
                         <span class="font-weight-medium">Rows:</span>
                         {{ formatRowRanges(cluster.suggestions).replace(/^Rows?: /, '') }}
                       </div>
+                      <div v-if="cluster.suggestions[0].source">
+                        <span class="font-weight-medium">Reasoning:</span> {{ cluster.suggestions[0].source }}
+                      </div>
                       <span class="text-body-2 font-weight-medium">
                         {{ getSlotTitle(cluster.suggestions[0].slot) }}
                       </span>
