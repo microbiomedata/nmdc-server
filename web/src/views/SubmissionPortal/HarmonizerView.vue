@@ -36,7 +36,6 @@ import {
   isTestSubmission,
   mergeSampleData,
   metadataSuggestions,
-  packageName,
   resetSampleMetadataValidation,
   sampleData,
   setTabInvalidCells,
@@ -45,7 +44,8 @@ import {
   submit,
   suggestionMode,
   templateList,
-  validationState,
+  sampleEnvironmentForm,
+  multiOmicsForm,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
@@ -124,11 +124,11 @@ const activeTemplateData = computed(() => {
   if (!activeTemplate.value?.sampleDataSlot) {
     return [];
   }
-  return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
+  return sampleData.data[activeTemplate.value.sampleDataSlot] || [];
 });
-const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
-const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
-const tabsValidated = computed(() => validationState.sampleMetadata?.tabsValidated || {});
+const hasValidSampleEnvironmentSelection = computed(() => isEqual(sampleEnvironmentForm.validation, []));
+const hasValidUserFacilitySelection = computed(() => isEqual(multiOmicsForm.validation, []));
+const tabsValidated = computed(() => sampleData.validation?.tabsValidated || {});
 
 const submitDialog = ref(false);
 
@@ -152,13 +152,13 @@ watch(activeTemplate, () => {
     harmonizerApi.setMaxRows(activeTemplateData.value.length);
   }
   harmonizerApi.loadData(activeTemplateData.value);
-  harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+  harmonizerApi.setInvalidCells(sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
   harmonizerApi.changeVisibility(columnVisibility.value);
 });
 
 const validationErrors = computed(() => {
   const remapped: ValidationErrors = {};
-  const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
+  const invalid: Record<number, Record<number, string>> = sampleData.validation?.invalidCells[activeTemplateKey.value!] || {};
   if (Object.keys(invalid).length) {
     remapped['All Errors'] = [];
   }
@@ -180,7 +180,7 @@ const validationErrors = computed(() => {
 const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
 const validationTotalCounts = computed(() => Object.fromEntries(
-  Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
+  Object.entries(sampleData.validation?.invalidCells || {}).map(([template, cells]) => ([
     template,
     sum(Object.values(cells).map((row) => Object.keys(row).length)),
   ])),
@@ -261,7 +261,7 @@ function synchronizeTabData(templateKey: string) {
   if (environmentKeys.includes(templateKey)) {
     return;
   }
-  const nextData = { ...sampleData.value };
+  const nextData = { ...sampleData.data };
   const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
 
   const environmentSlots = templateList.value
@@ -324,7 +324,7 @@ function synchronizeTabData(templateKey: string) {
       });
     });
   }
-  sampleData.value = nextData;
+  sampleData.data = nextData;
 }
 
 /**
@@ -339,7 +339,7 @@ const syncAndMergeTabsForRemovedRows = () => {
   );
   // If there are any sampleDataSlots populated that somehow are missing from
   // the template list, make sure those data are updated as well.
-  Object.keys(sampleData.value).forEach((key) => {
+  Object.keys(sampleData.data).forEach((key) => {
     // Loop through keys in the sampleData for the submission. Each
     // key maps to a template. We have to find that template.
     const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
@@ -412,13 +412,13 @@ function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number,
   const sampleNameMap = new Map<string, Array<{ templateKey: string; rowIndex: number }>>();
 
   // Collect all sample names from environmental tabs
-  packageName.value.forEach((templateKey) => {
+  sampleEnvironmentForm.packageName.forEach((templateKey) => {
     const template = HARMONIZER_TEMPLATES[templateKey];
     if (!template?.sampleDataSlot || !template?.schemaClass) {
       return;
     }
 
-    const tabData = sampleData.value[template.sampleDataSlot] || [];
+    const tabData = sampleData.data[template.sampleDataSlot] || [];
     tabData.forEach((row, rowIndex) => {
       const sampleName = row[SAMP_NAME];
       if (sampleName && sampleName.trim()) {
@@ -499,7 +499,7 @@ async function validate() {
   if (valid === false) {
     errorClick(0);
   }
-  validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
+  validationSuccessSnackbar.value = Object.values(sampleData.validation?.tabsValidated || {}).every((value) => value);
 }
 
 const submissionState = computed(() => {
@@ -590,7 +590,7 @@ async function downloadSamples() {
     }
     const worksheet = utils.json_to_sheet([
       harmonizerApi.getHeaderRow(template.schemaClass),
-      ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
+      ...HarmonizerApi.flattenArrayValues(sampleData.data[template.sampleDataSlot] || []),
     ], {
       skipHeader: true,
     });
@@ -645,7 +645,7 @@ function openFile(file: File) {
     importErrorSnackbar.value = notImported.length > 0;
 
     // Load imported data
-    sampleData.value = imported;
+    sampleData.data = imported;
 
     // Clear validation state
     harmonizerApi.setInvalidCells({});
@@ -702,7 +702,7 @@ async function fetchSuggestionsFromStudyDetails() {
   if (!activeTemplate.value?.schemaClass) {
     return [];
   }
-  const allSchemaClassNames = packageName.value
+  const allSchemaClassNames = sampleEnvironmentForm.packageName
     .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
     .filter((c) => c !== undefined);
   return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
@@ -728,9 +728,9 @@ onMounted(async () => {
     await nextTick();
     // Load data and invalid cells for the active tab
     harmonizerApi.loadData(activeTemplateData.value);
-    harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+    harmonizerApi.setInvalidCells(sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
     // If the tab has no validation state from the server, mark it as unvalidated
-    if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
+    if (!sampleData.validation || !has(sampleData.validation.tabsValidated, activeTemplateKey.value!)) {
       setTabValidated(activeTemplateKey.value!, false);
     }
     addHooks();

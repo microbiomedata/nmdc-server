@@ -10,7 +10,6 @@ import {
   piImageUrl,
   primaryStudyImageUrl,
   studyForm,
-  validationState,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -125,7 +124,6 @@ export default defineComponent({
     return {
       formRef,
       studyForm,
-      validationState,
       NmdcSchema,
       Definitions,
       addContributor,
@@ -161,7 +159,7 @@ export default defineComponent({
     </PageTitle>
     <SubmissionForm
       ref="formRef"
-      @valid-state-changed="(state) => validationState.studyForm = state"
+      @valid-state-changed="(state) => studyForm.validation = state"
     >
       <PageSection>
         <div class="stack-md">

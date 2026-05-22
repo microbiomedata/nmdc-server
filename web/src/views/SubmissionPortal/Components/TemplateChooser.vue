@@ -2,10 +2,9 @@
 import { computed, defineComponent, useTemplateRef } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
-  packageName,
+  sampleEnvironmentForm,
   templateHasData,
   templateList,
-  validationState,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
@@ -20,13 +19,12 @@ export default defineComponent({
       .join(' + '));
 
     return {
+      sampleEnvironmentForm,
       formRef,
-      packageName,
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
       templateListDisplayNames,
       templateHasData,
-      validationState,
     };
   },
 });
@@ -51,11 +49,10 @@ export default defineComponent({
       </template>
     </PageTitle>
     <SubmissionForm
-      ref="formRef"
-      @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
+      @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >
       <v-input
-        :model-value="packageName"
+        :model-value="sampleEnvironmentForm.packageName"
         validate-on="input eager"
         :rules="[(v) => (!!v && v.length > 0) || 'Please select at least one template.']"
       >
@@ -64,7 +61,7 @@ export default defineComponent({
             <v-checkbox
               v-for="option in templates.filter((v) => v[1].status === 'published')"
               :key="option[0]"
-              v-model="packageName"
+              v-model="sampleEnvironmentForm.packageName"
               hide-details
               :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || formRef?.isDisabled"
               :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
@@ -84,7 +81,7 @@ export default defineComponent({
           Sample Metadata Template Choice
         </p>
         <template
-          v-if="packageName.length!=0"
+          v-if="sampleEnvironmentForm.packageName.length!=0"
         >
           Your Sample Metadata template is "{{ templateListDisplayNames }}".
         </template>
@@ -108,7 +105,7 @@ export default defineComponent({
       </v-alert>
     </template>
     <v-alert
-      v-if="formRef?.isDisabled && packageName.length > 0"
+      v-if="formRef?.isDisabled && sampleEnvironmentForm.packageName.length > 0"
       color="grey lighten-2"
       class="my-3"
     >
