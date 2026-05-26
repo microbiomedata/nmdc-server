@@ -271,6 +271,13 @@ class WorkflowExecutionFilter(OmicsProcessingFilter):
         ).join(model, model.id == association_table.c[f"{self.table.value}_id"])
         return q
 
+    # Override join_self to avoid joining with the workflow execution table twice, since
+    # the workflow execution tables are joined with OmicsProcessing using a separate association table.
+    def join_self(self, query: Query, parent: Table) -> Query:
+        if self.table == parent:
+            return query
+        return self.join_omics_processing(query)
+
 
 workflow_filter_classes: List[Type[WorkflowExecutionFilter]] = []
 for table in workflow_execution_tables:
