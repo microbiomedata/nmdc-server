@@ -1411,6 +1411,22 @@ class SubmissionMetadata(Base):
                 count += len(samples)
         return count
 
+class SampleSet(Base):
+    __tablename__ = "sample_set"
+
+    submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), primary_key=True)
+    submission = relationship("SubmissionMetadata", back_populates="sample_sets")
+    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
+    templates = Column(JSONB, nullable=True)
+    sample_environment_form_data = Column(JSONB, nullable=True)
+    sender_shipping_info_form = Column(JSONB, nullable=True)
+    multi_omics_form = Column(JSONB, nullable=True)
+    sample_data = Column(JSONB, nullable=True)
+
+    @property
+    def validation(self) -> list[str]:
+        #get all the validation from each form
+        return None #placeholder
 
 class SubmissionRole(Base):
     __tablename__ = "submission_role"
