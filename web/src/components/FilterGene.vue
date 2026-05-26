@@ -21,6 +21,11 @@ import { computedAsync } from '@vueuse/core';
 
 export type GeneType = 'kegg' | 'cog' | 'pfam' | 'go';
 
+interface GeneResult {
+  text: string;
+  value: string;
+}
+
 export default defineComponent({
 
   props: {
@@ -63,9 +68,10 @@ export default defineComponent({
 
     async function getGeneResults() {
       const resp = await geneSearch();
-      const results = [];
-      if (resp) resp
-        .map((v: KeggTermSearchResponse) => ({ text: getTermDisplayText(v.term, v.text), value: v.term }));
+      let results: GeneResult[] = [];
+      if (resp) {
+        results = resp.map((v: KeggTermSearchResponse) => ({ text: getTermDisplayText(v.term, v.text), value: v.term }));
+      }
       if (results.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
         results.push({ value: search.value, text: search.value });
       }
