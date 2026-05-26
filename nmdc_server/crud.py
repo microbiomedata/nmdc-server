@@ -328,7 +328,9 @@ def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermT
     term = query.replace(pathway_prefix, "map") if pathway_prefix else query
     q = (
         db.query(models.KoTermText)
-        .filter(models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(term))
+        .filter(
+            models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(f"%{term}%")
+        )
         .order_by(models.KoTermText.term)
         .limit(limit)
     )
