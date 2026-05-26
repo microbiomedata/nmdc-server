@@ -79,7 +79,9 @@ class BaseFilter:
         target_table: Table,
     ) -> Query:
         """Get a query representing unique id's of the target table matching the conditions."""
-        query = db.query(func.distinct(target_table.model.id).label("id"))
+        query = db.query(func.distinct(target_table.model.id).label("id")).select_from(
+            target_table.model
+        )
         return self._apply_conditions(query, target_table)
 
     def _apply_conditions(
@@ -437,6 +439,11 @@ class MetaproteomicAnalysisFilter(OmicsProcessingFilter):
             models.MetaproteomicAnalysis,
             models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
         )
+
+    def join_self(self, query: Query, parent: Table) -> Query:
+        if self.table == parent:
+            return query
+        return self.join_omics_processing(query)
 
     def join_biosample(self, query: Query) -> Query:
         association_table = models.metaproteomic_analysis_data_generation_association
