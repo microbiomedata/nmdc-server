@@ -1034,15 +1034,19 @@ def get_query_for_all_submissions(db: Session):
     return all_submissions
 
 
-def get_query_for_submitted_pending_review_submissions(db: Session):
+def get_query_for_submitted_pending_review_sample_sets(db: Session):
     r"""
-    Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
+    Returns a SQLAlchemy query that can be used to retrieve submission sample sets pending
+    review.
 
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
+    submitted_pending_review = db.query(models.SubmissionSampleSet).join(
+        models.SubmissionMetadata,
+        models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
+    ).filter(
+        models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
     )
     return submitted_pending_review
 

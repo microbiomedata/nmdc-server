@@ -1496,6 +1496,7 @@ class SubmissionSampleSet(Base):
     sender_shipping_info_form = Column(JSONB, nullable=True)
     multi_omics_form = Column(JSONB, nullable=True)
     sample_data = Column(JSONB, nullable=True)
+    submission_metadata = relationship("SubmissionMetadata", viewonly=True)
 
 
 class SubmissionRole(Base):
