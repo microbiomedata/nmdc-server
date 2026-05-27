@@ -120,16 +120,12 @@ def downgrade():
         sa.Column(
             "metadata_submission",
             postgresql.JSONB(astext_type=sa.Text()),  # type: ignore[call-arg]
-            nullable=True
+            nullable=True,
         ),
     )
     op.add_column(
         "submission_metadata",
-        sa.Column(
-            "status",
-            sa.String(),
-            nullable=True
-        ),
+        sa.Column("status", sa.String(), nullable=True),
     )
 
     # Define tables as they exist after old columns have been added back, but before new
