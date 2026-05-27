@@ -1062,10 +1062,7 @@ def get_query_for_submitted_pending_review_sample_sets(db: Session):
     """
     submitted_pending_review = (
         db.query(models.SubmissionSampleSet)
-        .join(
-            models.SubmissionMetadata,
-            models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
-        )
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
         .filter(
             models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
         )
