@@ -749,7 +749,6 @@ class StudyQuerySchema(BaseQuerySchema):
         self, db: Session, conditions: Sequence[ConditionSchema]
     ) -> Query:
         """Aggregate omics types into a custom jsonb response."""
-        print("counting omics processing summary with conditions!!!!")
         op_summary_alias = aliased(models.OmicsProcessing)
         biosample_alias = aliased(models.Biosample)
 
@@ -808,7 +807,6 @@ class StudyQuerySchema(BaseQuerySchema):
                     "type", table_name, "count", getattr(omics_subquery.c, f"{table_name}_count")
                 )
             )
-        print("injecting omics processing summary conditions!!!!!!!!")
         # Here we only insert filter conditions that are actually relevant for
         # this aggregation.  This reduces the complexity of subquery greatly.
         op_filter_conditions = [
@@ -818,7 +816,6 @@ class StudyQuerySchema(BaseQuerySchema):
             and c.table.value
             in {"omics_processing", "biosample", "gene_function", "metaproteomic_analysis"}
         ]
-        print(f"omics processing summary conditions: {op_filter_conditions}")
         op_summary_subquery = self._count_omics_processing_summary(
             db, op_filter_conditions
         ).subquery()
@@ -846,7 +843,6 @@ class StudyQuerySchema(BaseQuerySchema):
                 fts_condition_value = c.value
                 fts_condition_exists = True
                 break
-        print("running study query with conditions!!!!!!!")
         biosample_condition_exists = any(
             [condition.table == Table.biosample for condition in self.conditions]
         )
@@ -854,7 +850,6 @@ class StudyQuerySchema(BaseQuerySchema):
             [condition.table == Table.omics_processing for condition in self.conditions]
         )
         if fts_condition_exists or biosample_condition_exists:
-            print("fts or biosample condition exists!!!!!!!!")
             biosample_ids_subquery = (
                 BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
             )
@@ -873,7 +868,6 @@ class StudyQuerySchema(BaseQuerySchema):
                 )
             study_query = study_query.filter(study_id_filter)
         elif omics_condition_exists:
-            print("omics condition exists!!!!!!!!!!!!!!!!")
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
             studies_from_omics_query = omics_query.with_entities(
                 models.OmicsProcessing.study_id
@@ -884,7 +878,6 @@ class StudyQuerySchema(BaseQuerySchema):
         return study_query
 
     def execute(self, db: Session) -> Query:
-        print("executing study query with conditions!!!!!!!")
         sample_subquery = BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
         sample_count = (
             db.query(
