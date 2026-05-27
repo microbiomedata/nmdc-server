@@ -859,6 +859,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
     Object.assign(sampleData, record.metadata_submission.sampleData);
   }
   createdDate.value = new Date(record.created + 'Z');
+  modifiedDate.value = new Date(record.date_last_modified + 'Z');
   status.value = record.status;
   if (record.permission_level !== null) {
     _permissionLevel = (record.permission_level as SubmissionEditorRole);
