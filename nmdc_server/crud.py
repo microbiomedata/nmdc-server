@@ -991,9 +991,10 @@ def get_submissions_for_user(
     if column_sort == "author.name":
         column = models.User.name
     elif column_sort == "status":
-        # TODO: update this when we allow creating multiple sample sets per submission.
-        # During the compatibility period we assume one sample set per submission,
-        # so sorting by submission status can be delegated to the single sample set.
+        # TODO: This sort path assumes the compatibility model where each submission has
+        # exactly one relevant sample set. Once the API/UI expose multiple sample sets,
+        # sorting submissions by "status" must define which sample set status is used,
+        # or move the sort to sample-set-aware endpoints.
         all_submissions = all_submissions.outerjoin(
             models.SubmissionSampleSet,
             models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,

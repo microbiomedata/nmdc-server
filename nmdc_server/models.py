@@ -1366,6 +1366,10 @@ class SubmissionMetadata(Base):
 
     @property
     def _first_sample_set(self) -> Optional["SubmissionSampleSet"]:
+        # TODO: This compatibility layer assumes the old 1-submission:1-sample-set model.
+        # Once the API/UI can address multiple sample sets explicitly, callers using
+        # metadata_submission/status/sample_count need to stop relying on an implicit
+        # "first" sample set and instead select the intended sample set directly.
         return self.sample_sets[0] if self.sample_sets else None
 
     @property
