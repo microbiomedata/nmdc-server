@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, selectinload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -981,8 +981,10 @@ def get_submissions_for_user(
     search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
-    all_submissions = db.query(models.SubmissionMetadata).join(
-        models.User, models.SubmissionMetadata.author_id == models.User.id
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
+        .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
     )
 
     if column_sort == "author.name":
@@ -1040,7 +1042,9 @@ def get_query_for_all_submissions(db: Session):
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    all_submissions = db.query(models.SubmissionMetadata).order_by(
+    all_submissions = db.query(models.SubmissionMetadata).options(
+        selectinload(models.SubmissionMetadata.sample_sets)
+    ).order_by(
         models.SubmissionMetadata.created.desc()
     )
     return all_submissions
