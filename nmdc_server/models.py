@@ -1365,6 +1365,10 @@ class SubmissionMetadata(Base):
     )
 
     @property
+    def _first_sample_set(self) -> Optional["SubmissionSampleSet"]:
+        return self.sample_sets[0] if self.sample_sets else None
+
+    @property
     def editors(self) -> list[str]:
         return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.editor]
 
@@ -1407,7 +1411,7 @@ class SubmissionMetadata(Base):
 
     @property
     def metadata_submission(self) -> dict[str, Any]:
-        first_sample_set = self.sample_sets[0] if self.sample_sets else None
+        first_sample_set = self._first_sample_set
         return {
             "studyForm": self.study_form or {},
             "templates": first_sample_set.templates if first_sample_set else [],
@@ -1437,7 +1441,7 @@ class SubmissionMetadata(Base):
         if not sample_set_fields.intersection(value):
             return
 
-        first_sample_set = self.sample_sets[0] if self.sample_sets else SubmissionSampleSet()
+        first_sample_set = self._first_sample_set or SubmissionSampleSet()
         if not self.sample_sets:
             self.sample_sets.append(first_sample_set)
 
@@ -1455,14 +1459,14 @@ class SubmissionMetadata(Base):
 
     @property
     def status(self) -> str:
-        first_sample_set = self.sample_sets[0] if self.sample_sets else None
+        first_sample_set = self._first_sample_set
         if first_sample_set is None:
             return SubmissionStatusEnum.InProgress.text
         return first_sample_set.status
 
     @status.setter
     def status(self, value) -> None:
-        first_sample_set = self.sample_sets[0] if self.sample_sets else None
+        first_sample_set = self._first_sample_set
         if first_sample_set is None:
             first_sample_set = SubmissionSampleSet()
             self.sample_sets.append(first_sample_set)
@@ -1470,7 +1474,7 @@ class SubmissionMetadata(Base):
 
     @property
     def sample_count(self) -> int:
-        first_sample_set = self.sample_sets[0] if self.sample_sets else None
+        first_sample_set = self._first_sample_set
         if first_sample_set is None or not isinstance(first_sample_set.sample_data, dict):
             return 0
 
