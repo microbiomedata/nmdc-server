@@ -1414,15 +1414,31 @@ class SubmissionMetadata(Base):
         first_sample_set = self._first_sample_set
         return {
             "studyForm": self.study_form or {},
-            "templates": first_sample_set.templates if first_sample_set else [],
+            "templates": (
+                first_sample_set.templates
+                if first_sample_set and isinstance(first_sample_set.templates, list)
+                else []
+            ),
             "sampleEnvironmentForm": (
-                first_sample_set.sample_environment_form if first_sample_set else {}
+                first_sample_set.sample_environment_form
+                if first_sample_set and isinstance(first_sample_set.sample_environment_form, dict)
+                else {}
             ),
             "senderShippingInfoForm": (
-                first_sample_set.sender_shipping_info_form if first_sample_set else {}
+                first_sample_set.sender_shipping_info_form
+                if first_sample_set and isinstance(first_sample_set.sender_shipping_info_form, dict)
+                else {}
             ),
-            "multiOmicsForm": first_sample_set.multi_omics_form if first_sample_set else {},
-            "sampleData": first_sample_set.sample_data if first_sample_set else {},
+            "multiOmicsForm": (
+                first_sample_set.multi_omics_form
+                if first_sample_set and isinstance(first_sample_set.multi_omics_form, dict)
+                else {}
+            ),
+            "sampleData": (
+                first_sample_set.sample_data
+                if first_sample_set and isinstance(first_sample_set.sample_data, dict)
+                else {}
+            ),
         }
 
     @metadata_submission.setter
