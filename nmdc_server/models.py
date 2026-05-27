@@ -1360,7 +1360,9 @@ class SubmissionMetadata(Base):
     study_images = relationship(
         SubmissionImagesObject, secondary=submission_study_image_association
     )
-    sample_sets = relationship("SubmissionSampleSet", cascade_backrefs=False)
+    sample_sets = relationship(
+        "SubmissionSampleSet", cascade="all, delete-orphan", cascade_backrefs=False
+    )
 
     @property
     def editors(self) -> list[str]:
