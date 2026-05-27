@@ -113,13 +113,14 @@ def upgrade():
 
 
 def downgrade():
+    # First add back the old columns to submission_metadata. They are nullable for now to allow for
+    # data migration, but will be set to non-nullable after the data has been migrated.
     op.add_column(
         "submission_metadata",
         sa.Column(
             "metadata_submission",
             postgresql.JSONB(astext_type=sa.Text()),  # type: ignore[call-arg]
-            nullable=False,
-            default={},
+            nullable=True
         ),
     )
     op.add_column(
@@ -127,10 +128,12 @@ def downgrade():
         sa.Column(
             "status",
             sa.String(),
-            nullable=False,
-            default="InProgress",
+            nullable=True
         ),
     )
+
+    # Define tables as they exist after old columns have been added back, but before new
+    # tables/columns have been removed, to allow for data migration.
     submission_metadata = table(
         "submission_metadata",
         column("id", postgresql.UUID),
@@ -180,5 +183,8 @@ def downgrade():
             .values(metadata_submission=metadata_submission, status=status)
         )
 
+    # After the data migration is complete, set the old columns to non-nullable and remove the new tables/columns.
+    op.alter_column("submission_metadata", "metadata_submission", nullable=False)
+    op.alter_column("submission_metadata", "status", nullable=False)
     op.drop_column("submission_metadata", "study_form")
     op.drop_table("submission_sample_set")
