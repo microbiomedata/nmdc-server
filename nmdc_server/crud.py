@@ -987,6 +987,7 @@ def get_submissions_for_user(
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
     )
 
+    column: Any
     if column_sort == "author.name":
         column = models.User.name
     elif column_sort == "status":
@@ -1042,10 +1043,10 @@ def get_query_for_all_submissions(db: Session):
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    all_submissions = db.query(models.SubmissionMetadata).options(
-        selectinload(models.SubmissionMetadata.sample_sets)
-    ).order_by(
-        models.SubmissionMetadata.created.desc()
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
+        .order_by(models.SubmissionMetadata.created.desc())
     )
     return all_submissions
 
