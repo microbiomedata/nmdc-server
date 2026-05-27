@@ -2,7 +2,6 @@ from csv import DictReader
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import factory
 import pytest
 from fastapi.encoders import jsonable_encoder
 from github.Issue import Issue

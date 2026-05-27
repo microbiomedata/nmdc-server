@@ -1042,11 +1042,15 @@ def get_query_for_submitted_pending_review_sample_sets(db: Session):
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    submitted_pending_review = db.query(models.SubmissionSampleSet).join(
-        models.SubmissionMetadata,
-        models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
-    ).filter(
-        models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
+    submitted_pending_review = (
+        db.query(models.SubmissionSampleSet)
+        .join(
+            models.SubmissionMetadata,
+            models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
+        )
+        .filter(
+            models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        )
     )
     return submitted_pending_review
 
