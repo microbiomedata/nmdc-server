@@ -981,21 +981,33 @@ def get_submissions_for_user(
     search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
-    column = (
-        models.User.name
-        if column_sort == "author.name"
-        else getattr(models.SubmissionMetadata, column_sort)
+    all_submissions = db.query(models.SubmissionMetadata).join(
+        models.User, models.SubmissionMetadata.author_id == models.User.id
     )
 
+    if column_sort == "author.name":
+        column = models.User.name
+    elif column_sort == "status":
+        # TODO: update this when we allow creating multiple sample sets per submission.
+        # During the compatibility period we assume one sample set per submission,
+        # so sorting by submission status can be delegated to the single sample set.
+        all_submissions = all_submissions.outerjoin(
+            models.SubmissionSampleSet,
+            models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
+        )
+        column = models.SubmissionSampleSet.status
+    else:
+        column = getattr(models.SubmissionMetadata, column_sort)
+
     all_submissions = (
-        db.query(models.SubmissionMetadata)
-        .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+        all_submissions
         # Primary sort by requested column
         .order_by(column.asc() if order == "asc" else column.desc())
         # Secondary sorts to ensure consistent order since primary sort may have ties
         # (e.g. multiple submissions from the same author)
-        .order_by(models.SubmissionMetadata.study_name.asc())
-        .order_by(models.SubmissionMetadata.id.asc())
+        .order_by(models.SubmissionMetadata.study_name.asc()).order_by(
+            models.SubmissionMetadata.id.asc()
+        )
     )
 
     if is_test_submission_filter != None:
