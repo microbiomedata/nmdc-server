@@ -807,7 +807,6 @@ class StudyQuerySchema(BaseQuerySchema):
                     "type", table_name, "count", getattr(omics_subquery.c, f"{table_name}_count")
                 )
             )
-
         # Here we only insert filter conditions that are actually relevant for
         # this aggregation.  This reduces the complexity of subquery greatly.
         op_filter_conditions = [
