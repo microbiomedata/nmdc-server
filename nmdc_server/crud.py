@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, selectinload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -983,21 +983,37 @@ def get_submissions_for_user(
     search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
-    column = (
-        models.User.name
-        if column_sort == "author.name"
-        else getattr(models.SubmissionMetadata, column_sort)
-    )
-
     all_submissions = (
         db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+    )
+
+    column: Any
+    if column_sort == "author.name":
+        column = models.User.name
+    elif column_sort == "status":
+        # TODO: This sort path assumes the compatibility model where each submission has
+        # exactly one relevant sample set. Once the API/UI expose multiple sample sets,
+        # sorting submissions by "status" must define which sample set status is used,
+        # or move the sort to sample-set-aware endpoints.
+        all_submissions = all_submissions.outerjoin(
+            models.SubmissionSampleSet,
+            models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
+        )
+        column = models.SubmissionSampleSet.status
+    else:
+        column = getattr(models.SubmissionMetadata, column_sort)
+
+    all_submissions = (
+        all_submissions
         # Primary sort by requested column
         .order_by(column.asc() if order == "asc" else column.desc())
         # Secondary sorts to ensure consistent order since primary sort may have ties
         # (e.g. multiple submissions from the same author)
-        .order_by(models.SubmissionMetadata.study_name.asc())
-        .order_by(models.SubmissionMetadata.id.asc())
+        .order_by(models.SubmissionMetadata.study_name.asc()).order_by(
+            models.SubmissionMetadata.id.asc()
+        )
     )
 
     if is_test_submission_filter != None:
@@ -1030,21 +1046,28 @@ def get_query_for_all_submissions(db: Session):
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    all_submissions = db.query(models.SubmissionMetadata).order_by(
-        models.SubmissionMetadata.created.desc()
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
+        .order_by(models.SubmissionMetadata.created.desc())
     )
     return all_submissions
 
 
-def get_query_for_submitted_pending_review_submissions(db: Session):
+def get_query_for_submitted_pending_review_sample_sets(db: Session):
     r"""
-    Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
+    Returns a SQLAlchemy query that can be used to retrieve submission sample sets pending
+    review.
 
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
+    submitted_pending_review = (
+        db.query(models.SubmissionSampleSet)
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
+        .filter(
+            models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        )
     )
     return submitted_pending_review
 

@@ -684,7 +684,7 @@ def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     fakes.SubmissionRoleFactory(
         submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
     )
-    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    payload = SubmissionMetadataSchemaPatch.model_validate(submission)
     db.commit()
 
     payload.permissions = {str(pi_orcid): SubmissionEditorRole.owner.value}

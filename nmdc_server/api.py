@@ -1137,9 +1137,9 @@ async def get_metadata_submissions_mixs(
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
-    # Get the submissions from the database.
-    q = crud.get_query_for_submitted_pending_review_submissions(db)
-    submissions = q.all()
+    # Get the sample sets from the database.
+    q = crud.get_query_for_submitted_pending_review_sample_sets(db)
+    sample_sets = q.all()
 
     # Iterate through the submissions, building the data rows for the report.
     header_row = [
@@ -1160,9 +1160,9 @@ async def get_metadata_submissions_mixs(
     schema = fetch_nmdc_submission_schema()
 
     data_rows = []
-    for s in submissions:
-
-        metadata = s.metadata_submission  # creates a concise alias
+    for sample_set in sample_sets:
+        submission = sample_set.submission_metadata
+        metadata = submission.metadata_submission  # creates a concise alias
         sample_data = (
             metadata["sampleData"]["data"]
             if "sampleData" in metadata and "data" in metadata["sampleData"]
@@ -1210,8 +1210,8 @@ async def get_metadata_submissions_mixs(
 
                 # Append each sample as new row (with env data)
                 data_row = [
-                    s.id,
-                    s.status,
+                    submission.id,
+                    sample_set.status,
                     sample_name,
                     env_pkg,
                     env_broad_scale,
