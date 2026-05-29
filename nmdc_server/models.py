@@ -24,6 +24,7 @@ from sqlalchemy import (
     column,
     event,
     func,
+    update,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -1461,7 +1462,9 @@ class SubmissionMetadata(Base):
         if not sample_set_fields.intersection(value):
             return
 
-        first_sample_set = self._first_sample_set or SubmissionSampleSet()
+        first_sample_set = self._first_sample_set or SubmissionSampleSet(
+            name="COMPATIBILITY_DEFAULT"
+        )
         if not self.sample_sets:
             self.sample_sets.append(first_sample_set)
 
@@ -1488,7 +1491,7 @@ class SubmissionMetadata(Base):
     def status(self, value) -> None:
         first_sample_set = self._first_sample_set
         if first_sample_set is None:
-            first_sample_set = SubmissionSampleSet()
+            first_sample_set = SubmissionSampleSet(name="COMPATIBILITY_DEFAULT")
             self.sample_sets.append(first_sample_set)
         first_sample_set.status = value
 
@@ -1515,6 +1518,13 @@ class SubmissionSampleSet(Base):
     id = Column(type_=UUID(as_uuid=True), primary_key=True, default=uuid4)
     submission_metadata_id = Column(
         UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), nullable=False
+    )
+    name = Column(String, nullable=False)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    date_last_modified = Column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(UTC),
     )
     status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
     templates = Column(JSONB, nullable=True)
@@ -1579,3 +1589,38 @@ def update_submission_metadata_date(mapper, _connection, target):
             if history.has_changes():
                 target.date_last_modified = datetime.now(UTC)
                 return
+
+
+SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS = {
+    "name",
+    "status",
+    "templates",
+    "sample_environment_form",
+    "sender_shipping_info_form",
+    "multi_omics_form",
+    "sample_data",
+}
+
+
+@event.listens_for(Session, "before_flush")
+def update_submission_sample_set_timestamps(session: Session, _flush_context, _instances) -> None:
+    """Keep sample set and parent submission timestamps in sync before flush."""
+    now = datetime.now(UTC)
+
+    for obj in session.new.union(session.dirty):
+        if not isinstance(obj, SubmissionSampleSet):
+            continue
+
+        is_new = obj in session.new
+        if not is_new and not any(
+            get_history(obj, column_name).has_changes()
+            for column_name in SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS
+        ):
+            continue
+
+        obj.date_last_modified = now
+        session.execute(
+            update(SubmissionMetadata.__table__)
+            .where(SubmissionMetadata.id == obj.submission_metadata_id)
+            .values(date_last_modified=now)
+        )
