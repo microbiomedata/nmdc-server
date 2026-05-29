@@ -1527,11 +1527,11 @@ class SubmissionSampleSet(Base):
         default=lambda: datetime.now(UTC),
     )
     status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
-    templates = Column(JSONB, nullable=True)
-    sample_environment_form = Column(JSONB, nullable=True)
-    sender_shipping_info_form = Column(JSONB, nullable=True)
-    multi_omics_form = Column(JSONB, nullable=True)
-    sample_data = Column(JSONB, nullable=True)
+    templates = Column(JSONB, nullable=False)
+    sample_environment_form = Column(JSONB, nullable=False)
+    sender_shipping_info_form = Column(JSONB, nullable=False)
+    multi_omics_form = Column(JSONB, nullable=False)
+    sample_data = Column(JSONB, nullable=False)
     submission_metadata = relationship("SubmissionMetadata", viewonly=True)
 
 
