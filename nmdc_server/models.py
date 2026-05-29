@@ -24,6 +24,7 @@ from sqlalchemy import (
     column,
     event,
     func,
+    update,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -1618,4 +1619,8 @@ def update_submission_sample_set_timestamps(session: Session, _flush_context, _i
             continue
 
         obj.date_last_modified = now
-        obj.submission_metadata.date_last_modified = now
+        session.execute(
+            update(SubmissionMetadata.__table__)
+            .where(SubmissionMetadata.id == obj.submission_metadata_id)
+            .values(date_last_modified=now)
+        )
