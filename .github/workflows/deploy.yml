@@ -159,13 +159,13 @@ jobs:
     needs: [ build ]
     permissions: { contents: read }
     # Note: The `jobs.<job_id>.if` key doesn't have access to the `env` context (and, so, cannot
-    #       check `env.IS_ORIGINAL_REPO`), but it does have access to the `github` context, so we
-    #       effectively re-derive the value of `env.IS_ORIGINAL_REPO` from that context here.
+    #       check `env.IS_ORIGINAL_REPO` or `env.IS_PROD_RELEASE`). However, it does have access to
+    #       the `github` context, so we effectively re-derive those same boolean values here.
     #
     # Docs: https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability
     #
-    #   ┏━━━━━━━━━━━━━━━ IS_ORIGINAL_REPO ━━━━━━━━━━━━━━┓ 
-    if: github.repository == 'microbiomedata/nmdc-server'
+    #   ┏━━━━━━━━━━━━━━━ IS_ORIGINAL_REPO ━━━━━━━━━━━━━━┓    ┏━━━━━━━ (not) IS_PROD_RELEASE ━━━━━━┓
+    if: github.repository == 'microbiomedata/nmdc-server' && !startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       # Create a short-lived token that gives its holder the ability to run GHA workflows in the
