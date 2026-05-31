@@ -164,8 +164,8 @@ jobs:
     #
     # Docs: https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability
     #
-    #   ┏━━━━━━━━━━━━━━━ IS_ORIGINAL_REPO ━━━━━━━━━━━━━━━┓ 
-    if: github.repository == 'microbiomedata/nmdc-runtime'
+    #   ┏━━━━━━━━━━━━━━━ IS_ORIGINAL_REPO ━━━━━━━━━━━━━━┓ 
+    if: github.repository == 'microbiomedata/nmdc-server'
     runs-on: ubuntu-latest
     steps:
       # Create a short-lived token that gives its holder the ability to run GHA workflows in the
