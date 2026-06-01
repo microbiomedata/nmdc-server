@@ -19,6 +19,7 @@ from nmdc_server.schemas_submission import (
     SubmissionMetadataSchema,
     SubmissionMetadataSchemaPatch,
     SubmissionSampleSet,
+    SubmissionSampleSetPatch,
 )
 from nmdc_server.storage import BucketName, storage
 from tests import fakes
@@ -754,28 +755,28 @@ def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     assert SubmissionEditorRole(role.role) == SubmissionEditorRole.owner
 
 
-@pytest.mark.skip("TODO: this needs to become a test of the sample set update endpoint")
 @pytest.mark.parametrize("samples_only,code", [(True, 200), (False, 403)])
 def test_piecewise_patch_metadata_contributor(
     db: Session, client: TestClient, logged_in_user, samples_only, code
 ):
     user = fakes.UserFactory()
-    submission = fakes.SubmissionMetadataFactory(author=user, author_orcid=user.orcid)
+    sample_set = fakes.SubmissionSampleSetFactory()
+    submission = fakes.SubmissionMetadataFactory(
+        author=user, author_orcid=user.orcid, sample_sets=[sample_set]
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.metadata_contributor,
     )
-    full_payload = SubmissionMetadataSchemaPatch.model_validate(submission)
+    full_payload = SubmissionSampleSetPatch.model_validate(sample_set)
     db.commit()
 
     if samples_only:
-        request_dict = {
-            "metadata_submission": {"sampleData": full_payload.metadata_submission.sampleData}
-        }
+        request_dict = {"sample_data": full_payload.sample_data}
         request_payload = jsonable_encoder(
-            SubmissionMetadataSchemaPatch.model_validate(request_dict), exclude_unset=True
+            SubmissionSampleSetPatch.model_validate(request_dict), exclude_unset=True
         )
     else:
         request_payload = jsonable_encoder(full_payload)
@@ -783,7 +784,7 @@ def test_piecewise_patch_metadata_contributor(
     # Logged in user should not be able to submit full payload because it contains non-sample data
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}",
         json=request_payload,
     )
     assert response.status_code == code
@@ -2080,7 +2081,7 @@ def test_update_sample_set(db: Session, client: TestClient, logged_in_user):
     )
     db.commit()
 
-    updated_sample_set_body = SubmissionSampleSet.model_validate(sample_set)
+    updated_sample_set_body = SubmissionSampleSetPatch.model_validate(sample_set)
     updated_sample_set_body.name = "Updated Sample Set"
     response = client.patch(
         f"/api/metadata_submission/sample_set/{sample_set.id}",

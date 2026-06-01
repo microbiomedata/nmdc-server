@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import factory
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import (
@@ -507,3 +508,5 @@ class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
     sender_shipping_info_form = sender_shipping_info_form_default
     multi_omics_form = multi_omics_form_default
     sample_data = sample_data_default
+    created = factory.LazyFunction(lambda: datetime.now(tz=UTC))
+    date_last_modified = factory.LazyFunction(lambda: datetime.now(tz=UTC))

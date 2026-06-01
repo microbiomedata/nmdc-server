@@ -308,6 +308,18 @@ class SubmissionSampleSetCreate(BaseModel):
     sample_data: SampleData
 
 
+class SubmissionSampleSetPatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: Optional[str] = None
+    templates: Optional[List[str]] = None
+    status: Optional[str] = None
+    multi_omics_form: Optional[MultiOmicsForm] = None
+    sample_environment_form: Optional[SampleEnvironmentForm] = None
+    sender_shipping_info_form: Optional[SenderShippingInfoForm] = None
+    sample_data: Optional[SampleData] = None
+
+
 class SubmissionSampleSet(SubmissionSampleSetListItem):
     model_config = ConfigDict(from_attributes=True)
 

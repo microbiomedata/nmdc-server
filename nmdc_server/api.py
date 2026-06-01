@@ -29,6 +29,7 @@ from nmdc_server.crud import (
     DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
+    metadata_edit_roles,
     read_roles,
     replace_nersc_data_url_prefix,
 )
@@ -2219,20 +2220,43 @@ def create_submission_sample_set(
 )
 def update_submission_sample_set(
     sample_set_id: str,
-    body: schemas_submission.SubmissionSampleSet,
+    body: schemas_submission.SubmissionSampleSetPatch,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas_submission.SubmissionSampleSet:
     sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
     if sample_set is None:
-        raise HTTPException(status_code=404, detail="Sample set not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sample set not found")
+
+    if sample_set.status not in [
+        SubmissionStatusEnum.InProgress.text,
+        SubmissionStatusEnum.UpdatesRequired.text,
+    ]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sample set is in read-only status",
+        )
 
     submission = sample_set.submission_metadata
-    crud.raise_for_insufficient_submission_role(
-        db, submission, user, allowed_roles=context_edit_roles
-    )
+    role = crud.get_submission_role(db, submission.id, user.orcid)
+    # User must have at least a metadata contributor role to edit a sample set. Some fields require
+    # an editor role, but that will be checked later.
+    user_can_edit = user.is_admin or (role and role.role in metadata_edit_roles)
+    if not user_can_edit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Must have edit access to the submission"
+        )
 
     for field, value in body.model_dump(exclude_unset=True).items():
+        # If anything other than the sample_data field is being updated, the user must have an editor role
+        user_can_edit = (
+            user.is_admin or field == "sample_data" or (role and role.role in context_edit_roles)
+        )
+        if not user_can_edit:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Must have editor access to perform this update",
+            )
         setattr(sample_set, field, value)
 
     # If the status is "Updates Required", automatically change it to "In Progress" upon edit
