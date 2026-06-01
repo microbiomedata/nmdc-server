@@ -1463,7 +1463,9 @@ class SubmissionMetadata(Base):
             return
 
         first_sample_set = self._first_sample_set or SubmissionSampleSet(
-            name="COMPATIBILITY_DEFAULT"
+            name="COMPATIBILITY_DEFAULT",
+            status=SubmissionStatusEnum.InProgress.text,
+            templates=[],
         )
         if not self.sample_sets:
             self.sample_sets.append(first_sample_set)
@@ -1491,7 +1493,11 @@ class SubmissionMetadata(Base):
     def status(self, value) -> None:
         first_sample_set = self._first_sample_set
         if first_sample_set is None:
-            first_sample_set = SubmissionSampleSet(name="COMPATIBILITY_DEFAULT")
+            first_sample_set = SubmissionSampleSet(
+                name="COMPATIBILITY_DEFAULT",
+                status=SubmissionStatusEnum.InProgress.text,
+                templates=[],
+            )
             self.sample_sets.append(first_sample_set)
         first_sample_set.status = value
 

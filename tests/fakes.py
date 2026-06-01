@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import UTC, datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from factory import Faker, SubFactory, lazy_attribute, post_generation
@@ -376,7 +376,90 @@ class UserFactory(SQLAlchemyModelFactory):
     is_admin: bool = False
 
 
-class MetadataSubmissionFactory(SQLAlchemyModelFactory):
+sender_shipping_info_form_default = {
+    "shipper": {
+        "name": "",
+        "email": "",
+        "phone": "",
+        "line1": "",
+        "line2": "",
+        "city": "",
+        "state": "",
+        "postalCode": "",
+        "country": "",
+    },
+    "expectedShippingDate": None,
+    "shippingConditions": "",
+    "sample": "",
+    "description": "",
+    "experimentalGoals": "",
+    "randomization": "",
+    "usdaRegulated": None,
+    "permitNumber": "",
+    "biosafetyLevel": "",
+    "irbOrHipaa": None,
+    "comments": "",
+    "validation": None,
+}
+
+study_form_default = {
+    "studyName": "",
+    "piName": "",
+    "piEmail": "",
+    "piOrcid": "",
+    "linkOutWebpage": [],
+    "studyDate": None,
+    "dataDois": [],
+    "publicationDois": [],
+    "fundingSources": [],
+    "description": "",
+    "notes": "",
+    "contributors": [],
+    "alternativeNames": [],
+    "GOLDStudyId": "",
+    "NCBIBioProjectId": "",
+    "validation": None,
+}
+
+multi_omics_form_default: dict[str, Any] = {
+    "award": None,
+    "awardDois": [],
+    "dataGenerated": None,
+    "doe": None,
+    "facilities": [],
+    "facilityGenerated": None,
+    "JGIStudyId": "",
+    "mgCompatible": None,
+    "mgInterleaved": None,
+    "mtCompatible": None,
+    "mtInterleaved": None,
+    "omicsProcessingTypes": [],
+    "otherAward": None,
+    "ship": None,
+    "studyNumber": "",
+    "unknownDoi": None,
+    "mpProtocols": None,
+    "mbProtocols": None,
+    "mbGcProtocols": None,
+    "lipProtocols": None,
+    "nomProtocols": None,
+    "nomLcProtocols": None,
+    "validation": None,
+}
+
+sample_environment_form_default: dict[str, Any] = {
+    "validation": None,
+    "packageName": [],
+}
+
+
+sample_data_default: dict[str, Any] = {
+    "data": {},
+    "validation": None,
+}
+
+
+class SubmissionMetadataFactory(SQLAlchemyModelFactory):
     class Meta:
         model = models.SubmissionMetadata
         sqlalchemy_session = db
@@ -389,72 +472,13 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     templates = Faker("pylist", nb_elements=2, value_types=[str])
     created = datetime.now(tz=UTC)
     date_last_modified = created
-    # TODO specify all fields!
     metadata_submission = {
-        "sampleData": {
-            "data": {},
-            "validation": {
-                "invalidCells": {},
-                "tabsValidated": {},
-            },
-        },
-        "multiOmicsForm": {
-            "studyNumber": "",
-            "JGIStudyId": "",
-            "omicsProcessingTypes": [],
-            "facilities": [],
-            "otherAward": "",
-            "doe": None,
-            "dataGenerated": None,
-            "facilityGenerated": None,
-            "award": None,
-            "awardDois": [],
-            "mgCompatible": None,
-            "validation": None,
-        },
-        "studyForm": {
-            "studyName": "",
-            "piName": "",
-            "piEmail": "",
-            "piOrcid": "",
-            "linkOutWebpage": [],
-            "fundingSources": [],
-            "dataDois": [],
-            "description": "",
-            "notes": "",
-            "contributors": [],
-            "alternativeNames": [],
-            "GOLDStudyId": "",
-            "NCBIBioProjectId": "",
-            "validation": None,
-        },
+        "sampleData": sample_data_default,
+        "multiOmicsForm": multi_omics_form_default,
+        "studyForm": study_form_default,
         "templates": [],
-        "senderShippingInfoForm": {
-            "shipper": {
-                "name": "",
-                "email": "",
-                "phone": "",
-                "line1": "",
-                "line2": "",
-                "city": "",
-                "state": "",
-                "postalCode": "",
-                "country": "",
-            },
-            "shippingConditions": "",
-            "sample": "",
-            "description": "",
-            "experimentalGoals": "",
-            "randomization": "",
-            "permitNumber": "",
-            "biosafetyLevel": "",
-            "comments": "",
-            "validation": None,
-        },
-        "sampleEnvironmentForm": {
-            "packageName": [],
-            "validation": None,
-        },
+        "senderShippingInfoForm": sender_shipping_info_form_default,
+        "sampleEnvironmentForm": sample_environment_form_default,
     }
     locked_by = None
     lock_updated = None
@@ -464,6 +488,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     study_images: list[models.SubmissionImagesObject] = []
     nmdc_study_id: Optional[str] = None
     submission_issue: Optional[str] = None
+    sample_sets: List[models.SubmissionSampleSet] = []
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):
@@ -474,4 +499,19 @@ class SubmissionRoleFactory(SQLAlchemyModelFactory):
     submission_id: UUID = Faker("uuid")
     user_orcid: str = Faker("pystr")
     role: models.SubmissionEditorRole = models.SubmissionEditorRole.owner
-    submission = SubFactory(MetadataSubmissionFactory)
+    submission = SubFactory(SubmissionMetadataFactory)
+
+
+class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SubmissionSampleSet
+        sqlalchemy_session = db
+
+    id: UUID = Faker("uuid")
+    submission_metadata_id: UUID = Faker("uuid")
+    status = SubmissionStatusEnum.InProgress.text
+    templates: list[str] = []
+    sample_environment_form = sample_environment_form_default
+    sender_shipping_info_form = sender_shipping_info_form_default
+    multi_omics_form = multi_omics_form_default
+    sample_data = sample_data_default

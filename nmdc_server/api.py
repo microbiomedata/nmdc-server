@@ -29,6 +29,7 @@ from nmdc_server.crud import (
     DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
+    read_roles,
     replace_nersc_data_url_prefix,
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
@@ -2196,6 +2197,116 @@ async def delete_submission_image(
             # Remove the image from the submission
             setattr(submission, image_type, None)
 
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/metadata_submission/{submission_id}/sample_set",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=List[schemas_submission.SubmissionSampleSetListItem],
+)
+def get_submission_sample_set_list(
+    submission_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.SubmissionSampleSetListItem]:
+    submission = get_submission_for_user(db, submission_id, user)
+    return submission.sample_sets
+
+
+@router.get(
+    "/metadata_submission/sample_set/{sample_set_id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def get_submission_sample_set(
+    sample_set_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas_submission.SubmissionSampleSet:
+    # Then query for the sample set directly
+    sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    # Verify that the user has access to the submission that this sample set belongs to
+    crud.raise_for_insufficient_submission_role(
+        db, sample_set.submission_metadata, user, allowed_roles=read_roles
+    )
+
+    return sample_set
+
+
+@router.post(
+    "/metadata_submission/{submission_id}/sample_set",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def create_submission_sample_set(
+    submission_id: str,
+    body: schemas_submission.SubmissionSampleSetCreate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas_submission.SubmissionSampleSet:
+    submission = get_submission_for_user(db, submission_id, user, allowed_roles=context_edit_roles)
+    sample_set = models.SubmissionSampleSet(**body.model_dump())
+    submission.sample_sets.append(sample_set)
+    db.commit()
+    return sample_set
+
+
+@router.patch(
+    "/metadata_submission/sample_set/{sample_set_id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def update_submission_sample_set(
+    sample_set_id: str,
+    body: schemas_submission.SubmissionSampleSet,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas_submission.SubmissionSampleSet:
+    sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    submission = sample_set.submission_metadata
+    crud.raise_for_insufficient_submission_role(
+        db, submission, user, allowed_roles=context_edit_roles
+    )
+
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(sample_set, field, value)
+
+    db.commit()
+    return sample_set
+
+
+@router.delete(
+    "/metadata_submission/sample_set/{sample_set_id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+def delete_submission_sample_set(
+    sample_set_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    submission = sample_set.submission_metadata
+    crud.raise_for_insufficient_submission_role(
+        db, submission, user, allowed_roles=context_edit_roles
+    )
+
+    db.delete(sample_set)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

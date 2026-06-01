@@ -312,3 +312,31 @@ class MetadataSuggestion(BaseModel):
     current_value: Optional[str] = None
     is_ai_generated: bool = False
     source: Optional[str] = None
+
+
+class SubmissionSampleSetListItem(BaseModel):
+    id: UUID
+    name: str
+    templates: List[str]
+    status: str
+    created: datetime
+    date_last_modified: datetime
+
+
+class SubmissionSampleSetCreate(BaseModel):
+    name: str
+    templates: List[str]
+    status: str = SubmissionStatusEnum.InProgress.text
+    multi_omics_form: MultiOmicsForm
+    sample_environment_form: SampleEnvironmentForm
+    sender_shipping_info_form: SenderShippingInfoForm
+    sample_data: SampleData
+
+
+class SubmissionSampleSet(SubmissionSampleSetListItem):
+    model_config = ConfigDict(from_attributes=True)
+
+    multi_omics_form: MultiOmicsForm
+    sample_environment_form: SampleEnvironmentForm
+    sender_shipping_info_form: SenderShippingInfoForm
+    sample_data: SampleData

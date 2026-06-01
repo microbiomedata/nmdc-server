@@ -884,6 +884,35 @@ contributors_edit_roles = [
 ]
 
 
+def raise_for_insufficient_submission_role(
+    db: Session,
+    submission: models.SubmissionMetadata,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> None:
+    """Check if the requesting user has one of the allowed roles on the submission, and raise an
+    HTTPException if not.
+
+    :raise HTTPException: If the user does not have one of the allowed roles on the submission.
+
+    :param db: The database session.
+    :param submission: The submission to check permissions for.
+    :param requester: The user requesting access to the submission.
+    :param allowed_roles: A list of allowed roles that the user must have on the submission. If
+        None, no role check is performed.
+    """
+    if allowed_roles and not requester.is_admin:
+        # If the user is not an admin, check if they have one of the allowed roles
+        # on the submission.
+        role = get_submission_role(db, submission.id, requester.orcid)
+        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permission to complete this action",
+            )
+
+
 def get_submission_for_user(
     db: Session,
     submission_id: str,
@@ -908,15 +937,7 @@ def get_submission_for_user(
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    if allowed_roles and not requester.is_admin:
-        # If the user is not an admin, check if they have one of the allowed roles
-        # on the submission.
-        role = get_submission_role(db, submission_id, requester.orcid)
-        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permission to complete this action",
-            )
+    raise_for_insufficient_submission_role(db, submission, requester, allowed_roles=allowed_roles)
     return submission
 
 
