@@ -1904,41 +1904,19 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Old versions of the Field Notes app will continue to use the pre-v1.6.0 submission format
-    # (before certain fields were moved from the multi-omics form to the study form) until its
-    # next release. This is a temporary shim layer that can be removed later.
-    multi_omics_form_extras = body.metadata_submission.multiOmicsForm.__pydantic_extra__ or {}
-    if body.metadata_submission.studyForm.GOLDStudyId is None:
-        body.metadata_submission.studyForm.GOLDStudyId = multi_omics_form_extras.get(
-            "GOLDStudyId", ""
-        )
-    if body.metadata_submission.studyForm.NCBIBioProjectId is None:
-        body.metadata_submission.studyForm.NCBIBioProjectId = multi_omics_form_extras.get(
-            "NCBIBioProjectId", ""
-        )
-    if body.metadata_submission.studyForm.alternativeNames is None:
-        body.metadata_submission.studyForm.alternativeNames = multi_omics_form_extras.get(
-            "alternativeNames", []
-        )
-    if body.metadata_submission.multiOmicsForm.facilities is None:
-        body.metadata_submission.multiOmicsForm.facilities = []
-
     submission = SubmissionMetadata(
-        **body.dict(),
+        **body.model_dump(),
+        author_id=user.id,
         author_orcid=user.orcid,
+        study_name=body.study_form.studyName,
     )
-    submission.author_id = user.id
-    submission.study_name = body.metadata_submission.studyForm.studyName
-    submission.templates = body.metadata_submission.templates
 
     db.add(submission)
     db.commit()
     owner_role = SubmissionRole(
-        **{
-            "submission_id": submission.id,
-            "user_orcid": user.orcid,
-            "role": SubmissionEditorRole.owner,
-        }
+        submission_id=submission.id,
+        user_orcid=user.orcid,
+        role=SubmissionEditorRole.owner,
     )
     db.add(owner_role)
     db.commit()
@@ -2218,6 +2196,7 @@ def get_submission_sample_set(
     tags=["metadata_submission"],
     responses=login_required_responses,
     response_model=schemas_submission.SubmissionSampleSet,
+    status_code=201,
 )
 def create_submission_sample_set(
     submission_id: str,

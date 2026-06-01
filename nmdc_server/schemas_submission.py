@@ -137,7 +137,6 @@ class SampleData(BaseModel):
 
 class SubmissionMetadataSchemaCreate(BaseModel):
     study_form: StudyFormCreate
-    status: Optional[str] = None
     source_client: Optional[str] = None
     is_test_submission: bool = False
 

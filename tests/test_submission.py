@@ -12,6 +12,7 @@ from starlette.testclient import TestClient
 from nmdc_server.models import (
     SubmissionEditorRole,
     SubmissionImagesObject,
+    SubmissionMetadata,
     SubmissionRole,
 )
 from nmdc_server.schemas_submission import (
@@ -54,6 +55,53 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     response = client.request(method="GET", url="/api/metadata_submission")
     assert response.status_code == 200
     assert response.json()["results"][0]["id"] == str(submission.id)
+
+
+def test_create_submission(db: Session, client: TestClient, logged_in_user):
+    study_name = "test test test"
+    pi_email = "test@example.org"
+    payload = {
+        "study_form": {
+            "studyName": study_name,
+            "piName": "",
+            "piEmail": pi_email,
+            "piOrcid": "",
+            "linkOutWebpage": [],
+            "studyDate": None,
+            "dataDois": [],
+            "publicationDois": [],
+            "fundingSources": [],
+            "description": "",
+            "notes": "",
+            "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
+            "validation": None,
+        },
+        "source_client": "submission_portal",
+        "is_test_submission": False,
+    }
+    response = client.request(
+        method="POST", url="/api/metadata_submission", json=jsonable_encoder(payload)
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["study_form"]["studyName"] == study_name
+    assert body["study_form"]["piEmail"] == pi_email
+    assert body["author_orcid"] == logged_in_user.orcid
+
+    # Verify there is a new SubmissionMetadata record in the database
+    submission_id = body["id"]
+    submission = db.get(SubmissionMetadata, submission_id)  # type: ignore[attr-defined]
+    assert submission is not None
+    assert submission.study_form["studyName"] == study_name
+    assert submission.study_name == study_name
+    assert submission.study_form["piEmail"] == pi_email
+    assert submission.author_id == logged_in_user.id
+    assert len(submission.roles) == 1
+    assert submission.roles[0].user_orcid == logged_in_user.orcid
+    assert submission.roles[0].role == SubmissionEditorRole.owner.value
 
 
 def test_get_metadata_submissions_mixs_as_non_admin(
@@ -944,36 +992,6 @@ def test_delete_submission_while_locked(db: Session, client: TestClient, logged_
     # Verify that it is still there
     response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == 200
-
-
-@pytest.mark.skip("TODO: drop the submission_metadata.template column and remove this test")
-def test_sync_submission_templates(db: Session, client: TestClient, logged_in_user):
-    template = "foo"
-    submission = fakes.SubmissionMetadataFactory(
-        author=logged_in_user,
-        author_orcid=logged_in_user.orcid,
-        locked_by=logged_in_user,
-        lock_updated=datetime.now(tz=UTC),
-    )
-    fakes.SubmissionRoleFactory(
-        submission=submission,
-        submission_id=submission.id,
-        user_orcid=logged_in_user.orcid,
-        role=SubmissionEditorRole.owner,
-    )
-    payload = jsonable_encoder(
-        SubmissionMetadataSchemaPatch.model_validate(submission), exclude_unset=True
-    )
-    payload["metadata_submission"]["templates"] = [template]
-    db.commit()
-
-    _ = client.request(
-        method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload
-    )
-    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
-    assert response.status_code == 200
-    assert len(response.json()["templates"]) == 1
-    assert response.json()["templates"][0] == template
 
 
 def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_user):
@@ -2006,7 +2024,7 @@ def test_create_sample_set(db: Session, client: TestClient, logged_in_user):
     response = client.post(
         f"/api/metadata_submission/{submission.id}/sample_set", json=new_sample_set_data
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
     created_sample_set = response.json()
     assert created_sample_set["name"] == "New Sample Set"
     assert created_sample_set["id"] is not None

@@ -1302,7 +1302,6 @@ class SubmissionMetadata(Base):
     study_form = Column(JSONB, nullable=True)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)
-    templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
     nmdc_study_id = Column(String, nullable=True)
