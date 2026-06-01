@@ -1296,12 +1296,6 @@ ENVIRONMENTAL_DATA_SLOTS = [
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
-    def __init__(self, **kwargs):
-        metadata_submission = kwargs.pop("metadata_submission", None)
-        super().__init__(**kwargs)
-        if metadata_submission is not None:
-            self.metadata_submission = metadata_submission
-
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
@@ -1366,14 +1360,6 @@ class SubmissionMetadata(Base):
     )
 
     @property
-    def _first_sample_set(self) -> Optional["SubmissionSampleSet"]:
-        # TODO: This compatibility layer assumes the old 1-submission:1-sample-set model.
-        # Once the API/UI can address multiple sample sets explicitly, callers using
-        # metadata_submission/status/sample_count need to stop relying on an implicit
-        # "first" sample set and instead select the intended sample set directly.
-        return self.sample_sets[0] if self.sample_sets else None
-
-    @property
     def editors(self) -> list[str]:
         return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.editor]
 
@@ -1415,107 +1401,11 @@ class SubmissionMetadata(Base):
         return sum(image.size for image in self.study_images) if self.study_images else 0
 
     @property
-    def metadata_submission(self) -> dict[str, Any]:
-        first_sample_set = self._first_sample_set
-        return {
-            "studyForm": self.study_form or {},
-            "templates": (
-                first_sample_set.templates
-                if first_sample_set and isinstance(first_sample_set.templates, list)
-                else []
-            ),
-            "sampleEnvironmentForm": (
-                first_sample_set.sample_environment_form
-                if first_sample_set and isinstance(first_sample_set.sample_environment_form, dict)
-                else {}
-            ),
-            "senderShippingInfoForm": (
-                first_sample_set.sender_shipping_info_form
-                if first_sample_set and isinstance(first_sample_set.sender_shipping_info_form, dict)
-                else {}
-            ),
-            "multiOmicsForm": (
-                first_sample_set.multi_omics_form
-                if first_sample_set and isinstance(first_sample_set.multi_omics_form, dict)
-                else {}
-            ),
-            "sampleData": (
-                first_sample_set.sample_data
-                if first_sample_set and isinstance(first_sample_set.sample_data, dict)
-                else {}
-            ),
-        }
-
-    @metadata_submission.setter
-    def metadata_submission(self, value: dict[str, Any]) -> None:
-        self.study_form = value.get("studyForm")
-        if isinstance(self.study_form, dict):
-            self.study_name = self.study_form.get("studyName")
-
-        sample_set_fields = {
-            "templates",
-            "sampleEnvironmentForm",
-            "senderShippingInfoForm",
-            "multiOmicsForm",
-            "sampleData",
-        }
-        if not sample_set_fields.intersection(value):
-            return
-
-        first_sample_set = self._first_sample_set or SubmissionSampleSet(
-            name="COMPATIBILITY_DEFAULT",
-            status=SubmissionStatusEnum.InProgress.text,
-            templates=[],
-        )
-        if not self.sample_sets:
-            self.sample_sets.append(first_sample_set)
-
-        if "templates" in value:
-            first_sample_set.templates = value["templates"]
-            self.templates = value["templates"]
-        if "sampleEnvironmentForm" in value:
-            first_sample_set.sample_environment_form = value["sampleEnvironmentForm"]
-        if "senderShippingInfoForm" in value:
-            first_sample_set.sender_shipping_info_form = value["senderShippingInfoForm"]
-        if "multiOmicsForm" in value:
-            first_sample_set.multi_omics_form = value["multiOmicsForm"]
-        if "sampleData" in value:
-            first_sample_set.sample_data = value["sampleData"]
-
-    @property
-    def status(self) -> str:
-        first_sample_set = self._first_sample_set
-        if first_sample_set is None:
-            return SubmissionStatusEnum.InProgress.text
-        return first_sample_set.status
-
-    @status.setter
-    def status(self, value) -> None:
-        first_sample_set = self._first_sample_set
-        if first_sample_set is None:
-            first_sample_set = SubmissionSampleSet(
-                name="COMPATIBILITY_DEFAULT",
-                status=SubmissionStatusEnum.InProgress.text,
-                templates=[],
-            )
-            self.sample_sets.append(first_sample_set)
-        first_sample_set.status = value
-
-    @property
     def sample_count(self) -> int:
-        first_sample_set = self._first_sample_set
-        if first_sample_set is None or not isinstance(first_sample_set.sample_data, dict):
+        if not self.sample_sets:
             return 0
 
-        sample_data = first_sample_set.sample_data.get("data", {})
-        if not sample_data:
-            return 0
-        count = 0
-        for slot in sample_data:
-            if slot in ENVIRONMENTAL_DATA_SLOTS:
-                samples = sample_data.get(slot, [])
-                count += len(samples)
-        return count
+        return sum(sample_set.sample_count for sample_set in self.sample_sets)
 
 
 class SubmissionSampleSet(Base):
@@ -1539,6 +1429,19 @@ class SubmissionSampleSet(Base):
     multi_omics_form = Column(JSONB, nullable=False)
     sample_data = Column(JSONB, nullable=False)
     submission_metadata = relationship("SubmissionMetadata", viewonly=True)
+
+    @property
+    def sample_count(self) -> int:
+        sample_data = self.sample_data.get("data", {})
+        if not sample_data:
+            return 0
+
+        count = 0
+        for slot in sample_data:
+            if slot in ENVIRONMENTAL_DATA_SLOTS:
+                samples = sample_data.get(slot, [])
+                count += len(samples)
+        return count
 
 
 class SubmissionRole(Base):

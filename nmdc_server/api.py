@@ -1145,6 +1145,7 @@ async def get_metadata_submissions_mixs(
     # Iterate through the submissions, building the data rows for the report.
     header_row = [
         "Submission ID",
+        "Sample Set Name",
         "Status",
         "Sample Name",
         "Environmental Package/Extension",
@@ -1163,13 +1164,13 @@ async def get_metadata_submissions_mixs(
     data_rows = []
     for sample_set in sample_sets:
         submission = sample_set.submission_metadata
-        metadata = submission.metadata_submission  # creates a concise alias
+
         sample_data = (
-            metadata["sampleData"]["data"]
-            if "sampleData" in metadata and "data" in metadata["sampleData"]
+            sample_set.sample_data["data"]
+            if sample_set.sample_data and "data" in sample_set.sample_data
             else {}
         )
-        env_pkg = metadata["sampleEnvironmentForm"].get("packageName", "")
+        env_pkg = sample_set.sample_environment_form.get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -1212,6 +1213,7 @@ async def get_metadata_submissions_mixs(
                 # Append each sample as new row (with env data)
                 data_row = [
                     submission.id,
+                    sample_set.name,
                     sample_set.status,
                     sample_name,
                     env_pkg,
@@ -1343,8 +1345,8 @@ async def get_metadata_submissions_report(
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
-    q = crud.get_query_for_all_submissions(db)
-    submissions = q.all()
+    q = crud.get_query_for_all_submission_sample_sets(db)
+    sample_sets = q.all()
 
     # Iterate through the submissions, building the data rows for the report.
     header_row = [
@@ -1357,22 +1359,15 @@ async def get_metadata_submissions_report(
         "Source Client",
         "Status",
         "Is Test Submission",
+        "Sample Set Name",
         "Date Last Modified",
         "Date Created",
         "Number of Samples",
         "Award",
     ]
     data_rows = []
-    for s in submissions:
-        sample_count = 0
-        metadata = s.metadata_submission  # creates a concise alias
-        # find the number of samples in the submission
-        # Note: `metadata["sampleData"]["data"]` is a dictionary where keys are sample types
-        #       and values are lists of samples of that type.
-        # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
-        sample_data = metadata["sampleData"]["data"]
-        for sample_type in sample_data:
-            sample_count += len(sample_data[sample_type])
+    for sample_set in sample_sets:
+        submission = sample_set.submission_metadata
 
         # Get the award information from the submission.
         #
@@ -1382,7 +1377,7 @@ async def get_metadata_submissions_report(
         #       the user can enter a custom string, which gets stored in the `otherAward` field.
         #
         sentinel_value_for_other = "OTHER"
-        multi_omics_form = metadata.get("multiOmicsForm", {})
+        multi_omics_form = sample_set.multi_omics_form
         predefined_award = multi_omics_form.get("award", "")
         custom_award = multi_omics_form.get("otherAward", "")
         award = ""
@@ -1391,24 +1386,25 @@ async def get_metadata_submissions_report(
         elif isinstance(custom_award, str):
             award = custom_award
 
-        author_user = s.author  # note: `s.author` is a `models.User` instance
-        study_form = metadata["studyForm"] if "studyForm" in metadata else {}
+        author_user = submission.author  # note: `s.author` is a `models.User` instance
+        study_form = submission.study_form
         study_name = study_form["studyName"] if "studyName" in study_form else ""
         pi_name = study_form["piName"] if "piName" in study_form else ""
         pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
         data_row = [
-            s.id,
-            s.author_orcid,
+            submission.id,
+            submission.author_orcid,
             author_user.name,
             study_name,
             pi_name,
             pi_email,
-            s.source_client,
-            s.status,
-            s.is_test_submission,
-            s.date_last_modified,
-            s.created,
-            sample_count,
+            submission.source_client,
+            sample_set.status,
+            submission.is_test_submission,
+            sample_set.name,
+            sample_set.date_last_modified,
+            sample_set.created,
+            sample_set.sample_count,
             award,
         ]
         data_rows.append(data_row)
@@ -1568,20 +1564,7 @@ async def update_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.get(SubmissionMetadata, id)  # type: ignore
-    body_dict = body.dict(exclude_unset=True)
-    if submission is None:
-        raise HTTPException(status_code=404, detail="Submission not found")
-
-    current_user_role = crud.get_submission_role(db, id, user.orcid)
-    if not (
-        user.is_admin
-        or (
-            current_user_role
-            and can_save_submission(current_user_role, body_dict, submission.status)
-        )
-    ):
-        raise HTTPException(403, detail="Must have access.")
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
@@ -1590,32 +1573,21 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
-    if submission.status == SubmissionStatusEnum.UpdatesRequired.text:
-        submission.status = SubmissionStatusEnum.InProgress.text
-
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
 
-    # Merge the submission metadata dicts
-    submission.metadata_submission = (
-        submission.metadata_submission | body_dict["metadata_submission"]
-    )
-    # TODO: remove the child properties "studyName" and "templates" in favor of the top-
-    # level property. Requires some coordination between this API and its clients.
-    if "studyForm" in body_dict["metadata_submission"]:
-        submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
-    if "templates" in body_dict["metadata_submission"]:
-        submission.templates = body_dict["metadata_submission"]["templates"]
+    if body.study_form is not None:
+        submission.study_form = body.study_form
+        submission.study_name = body.study_form.studyName
 
     # Update permissions if the user is an "owner" or "admin"
     # TODO: consider whether this can be refactored into a separate endpoint
-    new_permissions = body_dict.get("permissions", None)
+    current_user_role = crud.get_submission_role(db, id, user.orcid)
     can_update_permissions = user.is_admin or (
         current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
     )
-    if new_permissions is not None and can_update_permissions:
-        crud.update_submission_contributor_roles(db, submission, new_permissions)
+    if body.permissions is not None and can_update_permissions:
+        crud.update_submission_contributor_roles(db, submission, body.permissions)
 
     crud.update_submission_lock(db, submission.id)
     return submission
@@ -2080,9 +2052,10 @@ async def finalize_submission(
 
     submission = get_submission_for_user(db, id, user)
 
-    # Update the NMDC study ID and status
+    # Update the NMDC study ID and sample set statuses
     submission.nmdc_study_id = body.study_id
-    submission.status = SubmissionStatusEnum.Released.text
+    for sample_set in submission.sample_sets:
+        sample_set.status = SubmissionStatusEnum.Released.text
     db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
@@ -2282,6 +2255,10 @@ def update_submission_sample_set(
 
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(sample_set, field, value)
+
+    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
+    if sample_set.status == SubmissionStatusEnum.UpdatesRequired.text:
+        sample_set.status = SubmissionStatusEnum.InProgress.text
 
     db.commit()
     return sample_set

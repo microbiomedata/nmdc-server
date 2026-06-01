@@ -135,30 +135,8 @@ class SampleData(BaseModel):
     validation: Optional[SampleMetadataValidationState] = None
 
 
-class MetadataSubmissionRecordCreate(BaseModel):
-    sampleEnvironmentForm: SampleEnvironmentForm
-    senderShippingInfoForm: SenderShippingInfoForm
-    templates: List[str]
-    studyForm: StudyFormCreate
-    multiOmicsForm: MultiOmicsForm
-    sampleData: SampleData
-
-
-class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
-    studyForm: StudyForm
-
-
-class PartialMetadataSubmissionRecord(BaseModel):
-    sampleEnvironmentForm: Optional[SampleEnvironmentForm] = None
-    senderShippingInfoForm: Optional[SenderShippingInfoForm] = None
-    templates: Optional[List[str]] = None
-    studyForm: Optional[StudyForm] = None
-    multiOmicsForm: Optional[MultiOmicsForm] = None
-    sampleData: Optional[SampleData] = None
-
-
 class SubmissionMetadataSchemaCreate(BaseModel):
-    metadata_submission: MetadataSubmissionRecordCreate
+    study_form: StudyFormCreate
     status: Optional[str] = None
     source_client: Optional[str] = None
     is_test_submission: bool = False
@@ -167,7 +145,7 @@ class SubmissionMetadataSchemaCreate(BaseModel):
 class SubmissionMetadataSchemaPatch(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    metadata_submission: PartialMetadataSubmissionRecord
+    study_form: Optional[StudyForm] = None
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
@@ -192,8 +170,6 @@ class SubmissionMetadataSchemaSlim(BaseModel):
     id: UUID
     author: schemas.User
     study_name: Optional[str] = None
-    templates: List[str]
-    status: str
     date_last_modified: datetime
     created: datetime
     is_test_submission: bool = False
@@ -215,7 +191,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
 
     author_orcid: str
     field_notes_metadata: Optional[Dict[str, Any]] = None
-    metadata_submission: MetadataSubmissionRecord
+    study_form: StudyForm
     nmdc_study_id: Optional[str] = None
 
     lock_updated: Optional[datetime] = None
@@ -230,15 +206,15 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
     primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
     study_images: list[SubmissionImagesObject] = Field(exclude=True, default_factory=list)
 
-    @field_validator("metadata_submission", mode="before")
-    def populate_roles(cls, metadata_submission, info: ValidationInfo):
+    @field_validator("study_form", mode="before")
+    def populate_roles(cls, study_form, info: ValidationInfo):
         owners = set(info.data.get("owners", []))
         editors = set(info.data.get("editors", []))
         viewers = set(info.data.get("viewers", []))
         reviewers = set(info.data.get("reviewers", []))
         metadata_contributors = set(info.data.get("metadata_contributors", []))
 
-        for contributor in metadata_submission.get("studyForm", {}).get("contributors", []):
+        for contributor in study_form.get("contributors", []):
             orcid = contributor.get("orcid", None)
             if orcid:
                 if orcid in owners:
@@ -251,7 +227,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
                     contributor["role"] = SubmissionEditorRole.viewer.value
                 elif orcid in reviewers:
                     contributor["role"] = SubmissionEditorRole.reviewer.value
-        return metadata_submission
+        return study_form
 
     # Mypy doesn't understand the combined use of `@computed_field` and `@property`
     # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.computed_field

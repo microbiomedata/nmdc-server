@@ -3,6 +3,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict
 
+from pydantic import BaseModel
+from pydantic_core import to_jsonable_python
 from starlette.requests import Request
 
 from nmdc_server.logger import get_logger
@@ -16,6 +18,11 @@ def json_serializer(data: Any) -> str:
             return val.isoformat()
         elif isinstance(val, Enum):
             return val.value
+        elif isinstance(val, BaseModel):
+            # See:
+            # - https://pydantic.dev/docs/validation/latest/api/pydantic-core/pydantic_core/#pydantic_core.to_jsonable_python
+            # - https://github.com/pydantic/pydantic/discussions/6652
+            return to_jsonable_python(val)
         raise TypeError(f"Cannot serialize {val}")
 
     return json.dumps(data, default=default_)

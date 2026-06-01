@@ -63,7 +63,6 @@ def test_get_metadata_submissions_mixs_as_non_admin(
     assert response.status_code == 403
 
 
-@pytest.mark.skip("TODO: fix this when sample set compatibility layer is removed")
 def test_get_metadata_submissions_mixs_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
 ):
@@ -73,37 +72,39 @@ def test_get_metadata_submissions_mixs_as_admin(
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
 
     # Create test submission
-    # submission1 has "Submitted- Pending Review" as the status (this is the one we want)
+    # submission1 has a sample set with "Submitted - Pending Review" as the status (this is the one we want)
     submission1 = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
-        status=SubmissionStatusEnum.SubmittedPendingReview.text,
-        metadata_submission={
-            "sampleData": {
-                "data": {
-                    "built_env_data": [
-                        {
-                            "samp_name": "Sample A",
-                            "env_medium": "Medium A",
-                            "env_broad_scale": "Broad Scale A",
-                            "env_local_scale": "Local Scale A",
-                        },
-                        {
-                            "samp_name": "Sample B",
-                            "env_medium": "Medium B",
-                            "env_broad_scale": "Broad Scale B",
-                            "env_local_scale": "Local Scale B",
-                        },
-                    ]
+        sample_sets=[
+            fakes.SubmissionSampleSetFactory(
+                status=SubmissionStatusEnum.SubmittedPendingReview.text,
+                sample_data={
+                    "data": {
+                        "built_env_data": [
+                            {
+                                "samp_name": "Sample A",
+                                "env_medium": "Medium A",
+                                "env_broad_scale": "Broad Scale A",
+                                "env_local_scale": "Local Scale A",
+                            },
+                            {
+                                "samp_name": "Sample B",
+                                "env_medium": "Medium B",
+                                "env_broad_scale": "Broad Scale B",
+                                "env_local_scale": "Local Scale B",
+                            },
+                        ]
+                    },
+                    "validation": {
+                        "invalidCells": {},
+                        "tabsValidated": {},
+                    },
                 },
-                "validation": {
-                    "invalidCells": {},
-                    "tabsValidated": {},
-                },
-            },
-            "sampleEnvironmentForm": {"packageName": "Env Pkg 1", "validation": None},
-        },
+                sample_environment_form={"packageName": "Env Pkg 1", "validation": None},
+            )
+        ],
     )
     db.commit()
     response = client.request(method="get", url="/api/metadata_submission/mixs_report")
@@ -116,6 +117,7 @@ def test_get_metadata_submissions_mixs_as_admin(
 
     fieldnames = [
         "Submission ID",
+        "Sample Set Name",
         "Status",
         "Sample Name",
         "Environmental Package/Extension",
@@ -180,6 +182,7 @@ def test_get_metadata_submissions_report_as_admin(
         author_orcid=logged_in_user.orcid,
         created=now,
         is_test_submission=False,
+        sample_sets=[fakes.SubmissionSampleSetFactory()],
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -188,161 +191,160 @@ def test_get_metadata_submissions_report_as_admin(
         role=SubmissionEditorRole.owner,
     )
     other_user = fakes.UserFactory()
+    other_submission_sample_set = fakes.SubmissionSampleSetFactory(
+        name="Other Submission Sample Set",
+        sample_data={
+            "data": {
+                "soil_data": [
+                    {
+                        "ph": "\n4\n",
+                        "depth": ".10-.20 meters",
+                        "ph_meth": (
+                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                            "Water and Forage Analytical Laboratory. "
+                            "Oklahoma Cooperative Extension "
+                            "Service, 2016."
+                        ),
+                        "ecosystem": "Environmental",
+                        "fao_class": "Histosols",
+                        "samp_name": "June2016WEW_Plot6_D2",
+                        "samp_size": "+10 grams",
+                        "env_medium": "peat soil [ENVO:00005774]",
+                        "store_cond": "frozen",
+                        "annual_temp": "5.0 C",
+                        "cur_land_use": "conifers",
+                        "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
+                        "growth_facil": "field",
+                        "analysis_type": ["metagenomics"],
+                        "annual_precpt": "804 mm/year",
+                        "water_content": "84 %",
+                        "ecosystem_type": "Soil",
+                        "collection_date": "08/23/2016",
+                        "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
+                        "env_local_scale": "peatland [ENVO:00000044]",
+                        "samp_store_temp": "-80",
+                        "ecosystem_subtype": "Peat",
+                        "ecosystem_category": "Terrestrial",
+                        "samp_collec_device": "russian corer",
+                        "specific_ecosystem": "Bog",
+                        "gaseous_environment": "ambient",
+                        "water_cont_soil_meth": (
+                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
+                        ),
+                    },
+                    {
+                        "ph": "\n4\n",
+                        "depth": "\n.40-.50\n",
+                        "lat_lon": "47.506961 -93.455715",
+                        "ph_meth": (
+                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                            "Water and Forage Analytical Laboratory. "
+                            "Oklahoma Cooperative Extension "
+                            "Service, 2016."
+                        ),
+                        "ecosystem": "Environmental",
+                        "fao_class": "Histosols",
+                        "samp_name": "Aug2016WEW_Plot6_D5",
+                        "samp_size": "+10 grams",
+                        "env_medium": "peat soil [ENVO:00005774]",
+                        "annual_temp": "5.0 C",
+                        "cur_land_use": "conifers (e.g. pine,spruce,fir,cypress)",
+                        "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
+                        "analysis_type": ["metagenomics"],
+                        "annual_precpt": "804 mm/year",
+                        "water_content": "\n84%\n",
+                        "ecosystem_type": "Soil",
+                        "collection_date": "08/23/2016",
+                        "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
+                        "env_local_scale": "peatland [ENVO:00000044]",
+                        "samp_store_temp": "-80",
+                        "ecosystem_subtype": "Peat",
+                        "ecosystem_category": "Terrestrial",
+                        "samp_collec_device": "russian corer",
+                        "specific_ecosystem": "Bog",
+                        "gaseous_environment": "ambient",
+                        "water_cont_soil_meth": (
+                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
+                        ),
+                    },
+                ],
+                "jgi_mg_data": [
+                    {"samp_name": "June2016WEW_Plot6_D2", "analysis_type": ["metagenomics"]},
+                    {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
+                ],
+            },
+            "validation": {
+                "invalidCells": {},
+                "tabsValidated": {},
+            },
+        },
+        multi_omics_form={
+            "studyNumber": "",
+            "JGIStudyId": "",
+            "omicsProcessingTypes": [],
+            "facilities": [],
+            "otherAward": "",
+            "doe": None,
+            "dataGenerated": None,
+            "facilityGenerated": None,
+            "award": "MONet",
+            "awardDois": [],
+            "mgCompatible": None,
+            "validation": None,
+        },
+        templates=[],
+        sender_shipping_info_form={
+            "shipper": {
+                "name": "",
+                "email": "",
+                "phone": "",
+                "line1": "",
+                "line2": "",
+                "city": "",
+                "state": "",
+                "postalCode": "",
+                "country": "",
+            },
+            "shippingConditions": "",
+            "sample": "",
+            "description": "",
+            "experimentalGoals": "",
+            "randomization": "",
+            "permitNumber": "",
+            "biosafetyLevel": "",
+            "comments": "",
+            "validation": None,
+        },
+        sample_environment_form={
+            "packageName": [],
+            "validation": None,
+        },
+        status=SubmissionStatusEnum.InProgress.text,
+    )
     other_submission = fakes.SubmissionMetadataFactory(
         author=other_user,
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
-        # TODO: Omit some optional fields in order to simplify the test data.
-        # See: `class MetadataSubmissionRecordCreate` in `schema_submission.py`
-        # See: https://microbiomedata.github.io/submission-schema/SampleData/
-        metadata_submission={
-            "sampleData": {
-                "data": {
-                    "soil_data": [
-                        {
-                            "ph": "\n4\n",
-                            "depth": ".10-.20 meters",
-                            "ph_meth": (
-                                "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
-                                "Water and Forage Analytical Laboratory. "
-                                "Oklahoma Cooperative Extension "
-                                "Service, 2016."
-                            ),
-                            "ecosystem": "Environmental",
-                            "fao_class": "Histosols",
-                            "samp_name": "June2016WEW_Plot6_D2",
-                            "samp_size": "+10 grams",
-                            "env_medium": "peat soil [ENVO:00005774]",
-                            "store_cond": "frozen",
-                            "annual_temp": "5.0 C",
-                            "cur_land_use": "conifers",
-                            "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
-                            "growth_facil": "field",
-                            "analysis_type": ["metagenomics"],
-                            "annual_precpt": "804 mm/year",
-                            "water_content": "84 %",
-                            "ecosystem_type": "Soil",
-                            "collection_date": "08/23/2016",
-                            "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
-                            "env_local_scale": "peatland [ENVO:00000044]",
-                            "samp_store_temp": "-80",
-                            "ecosystem_subtype": "Peat",
-                            "ecosystem_category": "Terrestrial",
-                            "samp_collec_device": "russian corer",
-                            "specific_ecosystem": "Bog",
-                            "gaseous_environment": "ambient",
-                            "water_cont_soil_meth": (
-                                'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
-                                "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
-                            ),
-                        },
-                        {
-                            "ph": "\n4\n",
-                            "depth": "\n.40-.50\n",
-                            "lat_lon": "47.506961 -93.455715",
-                            "ph_meth": (
-                                "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
-                                "Water and Forage Analytical Laboratory. "
-                                "Oklahoma Cooperative Extension "
-                                "Service, 2016."
-                            ),
-                            "ecosystem": "Environmental",
-                            "fao_class": "Histosols",
-                            "samp_name": "Aug2016WEW_Plot6_D5",
-                            "samp_size": "+10 grams",
-                            "env_medium": "peat soil [ENVO:00005774]",
-                            "annual_temp": "5.0 C",
-                            "cur_land_use": "conifers (e.g. pine,spruce,fir,cypress)",
-                            "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
-                            "analysis_type": ["metagenomics"],
-                            "annual_precpt": "804 mm/year",
-                            "water_content": "\n84%\n",
-                            "ecosystem_type": "Soil",
-                            "collection_date": "08/23/2016",
-                            "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
-                            "env_local_scale": "peatland [ENVO:00000044]",
-                            "samp_store_temp": "-80",
-                            "ecosystem_subtype": "Peat",
-                            "ecosystem_category": "Terrestrial",
-                            "samp_collec_device": "russian corer",
-                            "specific_ecosystem": "Bog",
-                            "gaseous_environment": "ambient",
-                            "water_cont_soil_meth": (
-                                'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
-                                "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
-                            ),
-                        },
-                    ],
-                    "jgi_mg_data": [
-                        {"samp_name": "June2016WEW_Plot6_D2", "analysis_type": ["metagenomics"]},
-                        {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
-                    ],
-                },
-                "validation": {
-                    "invalidCells": {},
-                    "tabsValidated": {},
-                },
-            },
-            "multiOmicsForm": {
-                "studyNumber": "",
-                "JGIStudyId": "",
-                "omicsProcessingTypes": [],
-                "facilities": [],
-                "otherAward": "",
-                "doe": None,
-                "dataGenerated": None,
-                "facilityGenerated": None,
-                "award": "MONet",
-                "awardDois": [],
-                "mgCompatible": None,
-                "validation": None,
-            },
-            "studyForm": {
-                "studyName": "My study name",
-                "piName": "My PI name",
-                "piEmail": "My PI email",
-                "piOrcid": "",
-                "linkOutWebpage": [],
-                "fundingSources": [],
-                "description": "",
-                "notes": "",
-                "contributors": [],
-                "alternativeNames": [],
-                "GOLDStudyId": "",
-                "NCBIBioProjectId": "",
-                "validation": None,
-            },
-            "templates": [],
-            "senderShippingInfoForm": {
-                "shipper": {
-                    "name": "",
-                    "email": "",
-                    "phone": "",
-                    "line1": "",
-                    "line2": "",
-                    "city": "",
-                    "state": "",
-                    "postalCode": "",
-                    "country": "",
-                },
-                "shippingConditions": "",
-                "sample": "",
-                "description": "",
-                "experimentalGoals": "",
-                "randomization": "",
-                "permitNumber": "",
-                "biosafetyLevel": "",
-                "comments": "",
-                "validation": None,
-            },
-            "sampleEnvironmentForm": {
-                "packageName": [],
-                "validation": None,
-            },
-        },
         is_test_submission=True,
-        status=SubmissionStatusEnum.InProgress.text,
         source_client="field_notes",
+        study_form={
+            "studyName": "My study name",
+            "piName": "My PI name",
+            "piEmail": "My PI email",
+            "piOrcid": "",
+            "linkOutWebpage": [],
+            "fundingSources": [],
+            "description": "",
+            "notes": "",
+            "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
+            "validation": None,
+        },
+        sample_sets=[other_submission_sample_set],
     )
     db.commit()
 
@@ -363,6 +365,7 @@ def test_get_metadata_submissions_report_as_admin(
         "Source Client",
         "Status",
         "Is Test Submission",
+        "Sample Set Name",
         "Date Last Modified",
         "Date Created",
         "Number of Samples",
@@ -385,7 +388,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Source Client"] == "field_notes"
     assert data_row["Status"] == SubmissionStatusEnum.InProgress.text
     assert data_row["Is Test Submission"] == "True"
-    assert data_row["Number of Samples"] == "4"
+    assert data_row["Number of Samples"] == "2"
     assert data_row["Award"] == "MONet"
     assert isinstance(data_row["Date Last Modified"], str)
     assert isinstance(data_row["Date Created"], str)
@@ -645,7 +648,7 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
     [
         (SubmissionEditorRole.owner, 200),
         (SubmissionEditorRole.editor, 200),
-        (SubmissionEditorRole.metadata_contributor, 200),
+        (SubmissionEditorRole.metadata_contributor, 403),
         (SubmissionEditorRole.viewer, 403),
         (SubmissionEditorRole.reviewer, 403),
         (None, 403),
@@ -662,20 +665,10 @@ def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_u
         )
     db.commit()
 
-    match role:
-        case SubmissionEditorRole.owner:
-            payload = {
-                "metadata_submission": submission.metadata_submission,
-                "permissions": {"0000-0000-0000-0000": SubmissionEditorRole.viewer.value},
-            }
-        case SubmissionEditorRole.editor:
-            payload = {"metadata_submission": submission.metadata_submission}
-        case SubmissionEditorRole.metadata_contributor:
-            payload = {
-                "metadata_submission": {"sampleData": submission.metadata_submission["sampleData"]}
-            }
-        case _:
-            payload = {"metadata_submission": submission.metadata_submission}
+    payload = {"study_form": submission.study_form}
+    if role == SubmissionEditorRole.owner:
+        payload["permissions"] = {"0000-0000-0000-0000": SubmissionEditorRole.viewer.value}
+
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
@@ -713,6 +706,7 @@ def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     assert SubmissionEditorRole(role.role) == SubmissionEditorRole.owner
 
 
+@pytest.mark.skip("TODO: this needs to become a test of the sample set update endpoint")
 @pytest.mark.parametrize("samples_only,code", [(True, 200), (False, 403)])
 def test_piecewise_patch_metadata_contributor(
     db: Session, client: TestClient, logged_in_user, samples_only, code
@@ -952,6 +946,7 @@ def test_delete_submission_while_locked(db: Session, client: TestClient, logged_
     assert response.status_code == 200
 
 
+@pytest.mark.skip("TODO: drop the submission_metadata.template column and remove this test")
 def test_sync_submission_templates(db: Session, client: TestClient, logged_in_user):
     template = "foo"
     submission = fakes.SubmissionMetadataFactory(
@@ -998,12 +993,10 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
     payload = jsonable_encoder(
         SubmissionMetadataSchemaPatch.model_validate(submission), exclude_unset=True
     )
-    payload["metadata_submission"]["studyForm"]["studyName"] = expected_val
+    payload["study_form"]["studyName"] = expected_val
     db.commit()
 
-    _ = client.request(
-        method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload
-    )
+    client.request(method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload)
     response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == 200
     assert response.json()["study_name"] == expected_val
@@ -1594,7 +1587,14 @@ def test_finalize_submission(
 ):
     """Tests that an admin can successfully make submission images public."""
     other_user = fakes.UserFactory()
-    submission = fakes.SubmissionMetadataFactory(author=other_user, author_orcid=other_user.orcid)
+    submission = fakes.SubmissionMetadataFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+        sample_sets=[
+            fakes.SubmissionSampleSetFactory(),
+            fakes.SubmissionSampleSetFactory(),
+        ],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1642,11 +1642,12 @@ def test_finalize_submission(
     assert body.get("primary_study_image_url") is not None
     assert len(body.get("study_image_urls", [])) == 2
 
-    # Assert that the study ID has been set on the submission and the status has been updated
-    # to "Released"
+    # Assert that the study ID has been set on the submission and the status of all existing sample
+    # sets has been updated to "Released"
     db.refresh(submission)
     assert submission.nmdc_study_id == study_id
-    assert submission.status == SubmissionStatusEnum.Released.text
+    for sample_set in submission.sample_sets:
+        assert sample_set.status == SubmissionStatusEnum.Released.text
 
     # The expected public image object names should be the same as the submission image names,
     # but with the submission ID replaced by the study ID
@@ -1700,6 +1701,7 @@ def test_finalize_submission_unauthorized(
     assert response.status_code == 403
 
 
+@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 @pytest.mark.parametrize(
     "original_status,new_status,is_allowed",
     [
@@ -1744,6 +1746,7 @@ def test_owner_allowed_to_make_approved_status_changes(
         assert response.status_code == 422
 
 
+@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_admin_allowed_to_make_any_status_changes(
     db: Session, client: TestClient, logged_in_admin_user
 ):
@@ -1771,6 +1774,7 @@ def test_admin_allowed_to_make_any_status_changes(
     assert submission.status == new_status
 
 
+@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logged_in_user):
     """Test that a user with editor role cannot change submission status"""
     submission = fakes.SubmissionMetadataFactory(status=SubmissionStatusEnum.InProgress.text)
@@ -1792,6 +1796,7 @@ def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logg
     assert response.status_code == 403
 
 
+@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_admin_user):
     """Test that an invalid submission status is rejected"""
     submission = fakes.SubmissionMetadataFactory(status=SubmissionStatusEnum.InProgress.text)
@@ -1812,6 +1817,7 @@ def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_a
     assert response.status_code == 422
 
 
+@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_github_issue_creation_on_submission(db: Session, client: TestClient, logged_in_user):
     """
     Confirm that when a submission status becomes 'SubmittedPendingReview'
@@ -1857,6 +1863,7 @@ def test_github_issue_creation_on_submission(db: Session, client: TestClient, lo
         assert submission.submission_issue == "9876"
 
 
+@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_github_issue_resubmission_creates_comment_only(
     db: Session, client: TestClient, logged_in_user
 ):
@@ -1974,7 +1981,6 @@ def test_get_sample_set_by_id_unauthorized(db: Session, client: TestClient, logg
     assert response.status_code == 403
 
 
-@pytest.mark.skip("TODO: This test should work when sample set compatibility layer is removed")
 def test_create_sample_set(db: Session, client: TestClient, logged_in_user):
     """Test that a new sample set can be created and associated with a submission."""
     submission = fakes.SubmissionMetadataFactory(

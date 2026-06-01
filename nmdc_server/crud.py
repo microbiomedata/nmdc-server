@@ -1075,6 +1075,16 @@ def get_query_for_all_submissions(db: Session):
     return all_submissions
 
 
+def get_query_for_all_submission_sample_sets(db: Session):
+    r"""Returns a SQLAlchemy query that can be used to retrieve all submission sample sets."""
+    all_submission_sample_sets = (
+        db.query(models.SubmissionSampleSet)
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
+        .order_by(models.SubmissionSampleSet.created.desc())
+    )
+    return all_submission_sample_sets
+
+
 def get_query_for_submitted_pending_review_sample_sets(db: Session):
     r"""
     Returns a SQLAlchemy query that can be used to retrieve submission sample sets pending

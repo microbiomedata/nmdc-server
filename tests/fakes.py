@@ -467,19 +467,10 @@ class SubmissionMetadataFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
-    templates = Faker("pylist", nb_elements=2, value_types=[str])
+    study_form = study_form_default
     created = datetime.now(tz=UTC)
     date_last_modified = created
-    metadata_submission = {
-        "sampleData": sample_data_default,
-        "multiOmicsForm": multi_omics_form_default,
-        "studyForm": study_form_default,
-        "templates": [],
-        "senderShippingInfoForm": sender_shipping_info_form_default,
-        "sampleEnvironmentForm": sample_environment_form_default,
-    }
     locked_by = None
     lock_updated = None
     is_test_submission: bool = False
@@ -508,6 +499,7 @@ class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
     id: UUID = Faker("uuid")
+    name: str = Faker("pystr")
     submission_metadata_id: UUID = Faker("uuid")
     status = SubmissionStatusEnum.InProgress.text
     templates: list[str] = []
