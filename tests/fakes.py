@@ -469,7 +469,7 @@ class SubmissionMetadataFactory(SQLAlchemyModelFactory):
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
     study_name = Faker("word")
-    study_form = study_form_default
+    study_form = factory.LazyFunction(lambda: study_form_default.copy())
     created = datetime.now(tz=UTC)
     date_last_modified = created
     locked_by = None
@@ -504,10 +504,10 @@ class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
     submission_metadata_id: UUID = Faker("uuid")
     status = SubmissionStatusEnum.InProgress.text
     templates: list[str] = []
-    sample_environment_form = sample_environment_form_default
-    sender_shipping_info_form = sender_shipping_info_form_default
-    multi_omics_form = multi_omics_form_default
-    sample_data = sample_data_default
+    sample_environment_form = factory.LazyFunction(lambda: sample_environment_form_default.copy())
+    sender_shipping_info_form = factory.LazyFunction(lambda: sender_shipping_info_form_default.copy())
+    multi_omics_form = factory.LazyFunction(lambda: multi_omics_form_default.copy())
+    sample_data = factory.LazyFunction(lambda: sample_data_default.copy())
     created = factory.LazyFunction(lambda: datetime.now(tz=UTC))
     date_last_modified = factory.LazyFunction(lambda: datetime.now(tz=UTC))
     github_issue: Optional[str] = None
