@@ -941,6 +941,38 @@ def get_submission_for_user(
     return submission
 
 
+def get_submission_sample_set_for_user(
+    db: Session,
+    sample_set_id: str,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> models.SubmissionSampleSet:
+    """Get a submission sample set by ID and additionally check if the requesting user has one of the
+    allowed roles on the parent submission.
+
+    :raise HTTPException: If the submission sample set does not exist or if the user does not have
+        one of the allowed roles on the parent submission.
+
+    :param db: The database session.
+    :param sample_set_id: The ID of the submission sample set to retrieve.
+    :param requester: The user requesting the submission sample set.
+    :param allowed_roles: A list of allowed roles that the user must have on the parent submission. If
+        None, no role check is performed.
+    """
+    sample_set: Optional[models.SubmissionSampleSet] = db.get(  # type: ignore
+        models.SubmissionSampleSet, sample_set_id
+    )
+    if sample_set is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission sample set not found"
+        )
+    raise_for_insufficient_submission_role(
+        db, sample_set.submission_metadata, requester, allowed_roles=allowed_roles
+    )
+    return sample_set
+
+
 def get_submission_role(
     db: Session, submission_id: str, user_orcid: str
 ) -> Optional[models.SubmissionRole]:

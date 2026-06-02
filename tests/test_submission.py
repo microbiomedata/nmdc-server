@@ -1,10 +1,9 @@
 from csv import DictReader
 from datetime import UTC, datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.encoders import jsonable_encoder
-from github.Issue import Issue
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
@@ -1720,7 +1719,6 @@ def test_finalize_submission_unauthorized(
     assert response.status_code == 403
 
 
-@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 @pytest.mark.parametrize(
     "original_status,new_status,is_allowed",
     [
@@ -1739,8 +1737,12 @@ def test_finalize_submission_unauthorized(
 def test_owner_allowed_to_make_approved_status_changes(
     db: Session, client: TestClient, logged_in_user, original_status, new_status, is_allowed
 ):
-    """Test that a submission owner can change submission status to allowed values"""
-    submission = fakes.SubmissionMetadataFactory(status=original_status)
+    """Test that a submission owner can change sample set status to allowed values"""
+    sample_set = fakes.SubmissionSampleSetFactory(status=original_status)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1751,26 +1753,29 @@ def test_owner_allowed_to_make_approved_status_changes(
 
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": new_status}),
     )
-    db.refresh(submission)
+    db.refresh(sample_set)
 
     if is_allowed:
         assert response.status_code == 200
         response_body = response.json()
         assert response_body["status"] == new_status
-        assert submission.status == new_status
+        assert sample_set.status == new_status
     else:
         assert response.status_code == 422
 
 
-@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_admin_allowed_to_make_any_status_changes(
     db: Session, client: TestClient, logged_in_admin_user
 ):
     """Test that an admin user can change submission status to any value"""
-    submission = fakes.SubmissionMetadataFactory(status=SubmissionStatusEnum.InProgress.text)
+    sample_set = fakes.SubmissionSampleSetFactory(status=SubmissionStatusEnum.InProgress.text)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1779,24 +1784,27 @@ def test_admin_allowed_to_make_any_status_changes(
     )
     db.commit()
 
-    new_status = SubmissionStatusEnum.ApprovedPendingUserFacility.text
+    new_status = SubmissionStatusEnum.UpdatesRequired.text
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": new_status}),
     )
-    db.refresh(submission)
+    db.refresh(sample_set)
 
     assert response.status_code == 200
     response_body = response.json()
     assert response_body["status"] == new_status
-    assert submission.status == new_status
+    assert sample_set.status == new_status
 
 
-@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logged_in_user):
     """Test that a user with editor role cannot change submission status"""
-    submission = fakes.SubmissionMetadataFactory(status=SubmissionStatusEnum.InProgress.text)
+    sample_set = fakes.SubmissionSampleSetFactory(status=SubmissionStatusEnum.InProgress.text)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1808,17 +1816,20 @@ def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logg
     new_status = SubmissionStatusEnum.SubmittedPendingReview.text
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": new_status}),
     )
 
     assert response.status_code == 403
 
 
-@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_admin_user):
     """Test that an invalid submission status is rejected"""
-    submission = fakes.SubmissionMetadataFactory(status=SubmissionStatusEnum.InProgress.text)
+    sample_set = fakes.SubmissionSampleSetFactory(status=SubmissionStatusEnum.InProgress.text)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1829,25 +1840,30 @@ def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_a
 
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": "InvalidStatus"}),
     )
 
     assert response.status_code == 422
 
 
-@pytest.mark.skip("TODO: status transitions need to move to sample set level")
-def test_github_issue_creation_on_submission(db: Session, client: TestClient, logged_in_user):
+def test_github_issue_creation_on_first_sample_set_submission(
+    db: Session, client: TestClient, logged_in_user
+):
     """
-    Confirm that when a submission status becomes 'SubmittedPendingReview'
-    and no GitHub issue number exists, a new GitHub issue is created.
+    Confirm that when a sample set status becomes 'SubmittedPendingReview' and neither the
+    submission nor the sample set has an associated GitHub issue, a new GitHub issue is created
+    for both the submission and the sample set.
     """
+    sample_set = fakes.SubmissionSampleSetFactory(
+        status=SubmissionStatusEnum.InProgress.text,
+    )
     submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
-        status=SubmissionStatusEnum.InProgress.text,
         is_test_submission=False,
-        submission_issue=None,
+        github_issue=None,
+        sample_sets=[sample_set],
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -1858,44 +1874,60 @@ def test_github_issue_creation_on_submission(db: Session, client: TestClient, lo
     db.commit()
 
     with (
-        patch("nmdc_server.api.github.get_issue", return_value=None),
-        patch("nmdc_server.api.github.create_issue", return_value="9876") as mock_create_issue,
+        patch(
+            "nmdc_server.api.github.create_submission_issue", return_value="1234"
+        ) as mock_create_submission_issue,
+        patch(
+            "nmdc_server.api.github.create_sample_set_issue", return_value="5678"
+        ) as mock_create_sample_set_issue,
+        patch(
+            "nmdc_server.api.github.add_sample_set_resubmit_comment"
+        ) as mock_add_sample_set_resubmit_comment,
     ):
         response = client.request(
             method="PATCH",
-            url=f"/api/metadata_submission/{submission.id}/status",
+            url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
             json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
         )
 
         # Verify the request was handled successfully
         assert response.status_code == 200
-
-        # Verify that create_issue was called
-        assert mock_create_issue.call_count == 1
-
-        # Verify the create_issue function was called with the correct arguments
-        assert str(submission.id) in mock_create_issue.call_args.kwargs["title"]
-        assert logged_in_user.name in mock_create_issue.call_args.kwargs["body"]
-
-        # Verify that the submission_issue field was updated with the new issue number
         db.refresh(submission)
-        assert submission.submission_issue == "9876"
+        db.refresh(sample_set)
+
+        # Verify that the create_submission_issue was called
+        assert mock_create_submission_issue.call_count == 1
+
+        # Verify that the github_issue field was updated with the new issue number
+        assert submission.github_issue == "1234"
+
+        # Verify that create_sample_set_issue was called for the sample set
+        assert mock_create_sample_set_issue.call_count == 1
+
+        # Verify that the sample set's github_issue field was updated with the new issue number
+        assert sample_set.github_issue == "5678"
+
+        # Verify that add_sample_set_resubmit_comment was not called since this is the first submission
+        assert mock_add_sample_set_resubmit_comment.call_count == 0
 
 
-@pytest.mark.skip("TODO: status transitions need to move to sample set level")
 def test_github_issue_resubmission_creates_comment_only(
     db: Session, client: TestClient, logged_in_user
 ):
     """
-    Confirm that when a submission status becomes 'SubmittedPendingReview'
+    Confirm that when a sample set status becomes 'SubmittedPendingReview'
     and a GitHub issue number already exists, a comment is added (not a new issue).
     """
+    sample_set = fakes.SubmissionSampleSetFactory(
+        status=SubmissionStatusEnum.InProgress.text,
+        github_issue="1234",
+    )
     submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
-        status=SubmissionStatusEnum.InProgress.text,
         is_test_submission=False,
-        submission_issue=123,
+        github_issue="5678",
+        sample_sets=[sample_set],
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -1905,31 +1937,26 @@ def test_github_issue_resubmission_creates_comment_only(
     )
     db.commit()
 
-    mock_issue = MagicMock(spec=Issue)
-    mock_issue.id = 123
-    mock_issue.state = "open"
-
     with (
-        patch("nmdc_server.api.github.get_issue", return_value=mock_issue),
-        patch("nmdc_server.api.github.create_issue") as mock_create_issue,
-        patch("nmdc_server.api.github.add_issue_comment") as mock_add_issue_comment,
+        patch("nmdc_server.api.github.create_submission_issue") as mock_create_submission_issue,
+        patch("nmdc_server.api.github.create_sample_set_issue") as mock_create_sample_set_issue,
+        patch(
+            "nmdc_server.api.github.add_sample_set_resubmit_comment"
+        ) as mock_add_sample_set_resubmit_comment,
     ):
         response = client.request(
             method="PATCH",
-            url=f"/api/metadata_submission/{submission.id}/status",
+            url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
             json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
         )
 
         # Verify the request was handled successfully
         assert response.status_code == 200
 
-        # Verify that add_issue_comment was called and create_issue was not called
-        assert mock_add_issue_comment.call_count == 1
-        assert mock_create_issue.call_count == 0
-
-        # Verify the add_issue_comment function was called with the correct arguments
-        assert mock_add_issue_comment.call_args.args[0].id == 123
-        assert "Submission Resubmitted" in mock_add_issue_comment.call_args.args[1]
+        # Verify that the existing issues were reused and only the resubmit comment path ran.
+        assert mock_add_sample_set_resubmit_comment.call_count == 1
+        assert mock_create_submission_issue.call_count == 0
+        assert mock_create_sample_set_issue.call_count == 0
 
 
 def test_list_sample_sets_of_submission(db: Session, client: TestClient, logged_in_user):

@@ -479,7 +479,7 @@ class SubmissionMetadataFactory(SQLAlchemyModelFactory):
     primary_study_image: models.SubmissionImagesObject | None = None
     study_images: list[models.SubmissionImagesObject] = []
     nmdc_study_id: Optional[str] = None
-    submission_issue: Optional[str] = None
+    github_issue: Optional[str] = None
     sample_sets: List[models.SubmissionSampleSet] = []
 
 
@@ -510,3 +510,4 @@ class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
     sample_data = sample_data_default
     created = factory.LazyFunction(lambda: datetime.now(tz=UTC))
     date_last_modified = factory.LazyFunction(lambda: datetime.now(tz=UTC))
+    github_issue: Optional[str] = None

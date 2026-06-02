@@ -150,16 +150,6 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
-class SubmissionMetadataStatusPatch(BaseModel):
-    status: str
-
-    @field_validator("status", mode="after")
-    @classmethod
-    def validate_status(cls, status):
-        SubmissionStatusEnum(status)  # will raise ValueError if invalid
-        return status
-
-
 class SubmissionMetadataRoleAdd(BaseModel):
     orcid: str
     role: SubmissionEditorRole
@@ -192,6 +182,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
     field_notes_metadata: Optional[Dict[str, Any]] = None
     study_form: StudyForm
     nmdc_study_id: Optional[str] = None
+    github_issue: Optional[str] = None
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None
@@ -313,11 +304,20 @@ class SubmissionSampleSetPatch(BaseModel):
 
     name: Optional[str] = None
     templates: Optional[List[str]] = None
-    status: Optional[str] = None
     multi_omics_form: Optional[MultiOmicsForm] = None
     sample_environment_form: Optional[SampleEnvironmentForm] = None
     sender_shipping_info_form: Optional[SenderShippingInfoForm] = None
     sample_data: Optional[SampleData] = None
+
+
+class SubmissionSampleSetStatusPatch(BaseModel):
+    status: str
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def validate_status(cls, status):
+        SubmissionStatusEnum(status)  # will raise ValueError if invalid
+        return status
 
 
 class SubmissionSampleSet(SubmissionSampleSetListItem):

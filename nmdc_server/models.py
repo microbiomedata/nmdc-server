@@ -1310,7 +1310,7 @@ class SubmissionMetadata(Base):
         nullable=False,
         default=lambda: datetime.now(UTC),
     )
-    submission_issue = Column(String, nullable=True)
+    github_issue = Column(String, nullable=True)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.
@@ -1422,6 +1422,7 @@ class SubmissionSampleSet(Base):
         default=lambda: datetime.now(UTC),
     )
     status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
+    github_issue = Column(String, nullable=True)
     templates = Column(JSONB, nullable=False)
     sample_environment_form = Column(JSONB, nullable=False)
     sender_shipping_info_form = Column(JSONB, nullable=False)

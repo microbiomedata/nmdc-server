@@ -1599,82 +1599,6 @@ async def get_transitions():
     return ALLOWED_TRANSITIONS
 
 
-@router.patch(
-    "/metadata_submission/{id}/status",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-    response_model=schemas_submission.SubmissionMetadataSchema,
-)
-def update_submission_status(
-    id: str,
-    body: schemas_submission.SubmissionMetadataStatusPatch,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-) -> models.SubmissionMetadata:
-    """Update submission status and create/update GitHub issue as needed."""
-    submission = get_submission_for_user(
-        db, id, user, allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer]
-    )
-    current_status = submission.status
-
-    # Admins can change to any status
-    if user.is_admin:
-        submission.status = body.status
-
-    # Non-admin users need to follow allowed transitions based on role
-    else:
-
-        # Owner transitions
-        if user.orcid in submission.owners:
-            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.owner]
-
-        # Reviewer transitions
-        elif user.orcid in submission.reviewers:
-            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.reviewer]
-
-        # Apply restricted transitions
-        if (
-            transitions
-            and current_status in transitions
-            and body.status in transitions[current_status]
-        ):
-            submission.status = body.status
-
-        # Any other transitions not allowed
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Invalid status transition.",
-            )
-
-    # If the new status is "Submitted - Pending Review", create or update the GitHub issue
-    if (
-        body.status == SubmissionStatusEnum.SubmittedPendingReview.text
-        and submission.is_test_submission is False
-    ):
-        if submission.submission_issue is None:
-            try:
-                submission.submission_issue = create_github_issue(submission, user)
-            except github.MissingCredentialsError:
-                # Log this as a warning because local development instances may not have GitHub
-                # credentials configured (expected).
-                logger.warning(
-                    f"GitHub credentials not found. Skipping GitHub issue creation for submission {submission.id}."
-                )
-        else:
-            try:
-                update_github_issue_for_resubmission(submission.submission_issue, user)
-            except github.MissingCredentialsError:
-                # Log this as a warning because local development instances may not have GitHub
-                # credentials configured (expected).
-                logger.warning(
-                    f"GitHub credentials not found. Skipping update of GitHub Issue #{submission.submission_issue} for submission {submission.id}."
-                )
-
-    db.commit()
-    return submission
-
-
 @router.post(
     "/metadata_submission/{id}/role",
     tags=["metadata_submission"],
@@ -1729,78 +1653,6 @@ async def remove_submission_role(
     crud.remove_submission_role(db, submission, orcid)
 
     return submission
-
-
-def create_github_issue(submission_model: SubmissionMetadata, user: User) -> str:
-    """
-    Create a GitHub issue for the submission.
-    Return the issue number.
-    """
-    # Load the submission data into a Pydantic model for easier access to nested properties
-    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-
-    # Build the body of the GitHub issue with relevant information from the submission
-    study_form = submission.metadata_submission.studyForm
-    multiomics_form = submission.metadata_submission.multiOmicsForm
-
-    fields = [
-        ("Issue created from host", settings.host),
-        ("Submitter", f"{user.name}, {user.orcid}"),
-        ("Submission ID", submission.id),
-        ("Has data been generated", "Yes" if multiomics_form.dataGenerated else "No"),
-        ("PI name", study_form.piName),
-        ("PI orcid", study_form.piOrcid),
-        ("Status", SubmissionStatusEnum.SubmittedPendingReview.text),
-        ("Data types", ", ".join(multiomics_form.omicsProcessingTypes)),
-        ("Sample type", ", ".join(submission.metadata_submission.templates)),
-        ("Number of samples", submission.sample_count),
-    ]
-
-    optional_fields = (
-        ("NCBI ID", study_form.NCBIBioProjectId),
-        ("GOLD ID", study_form.GOLDStudyId),
-        ("JGI ID", multiomics_form.JGIStudyId),
-        ("EMSL ID", multiomics_form.studyNumber),
-        ("Alternative IDs", ", ".join(study_form.alternativeNames)),
-    )
-    for field_name, field_value in optional_fields:
-        if field_value:
-            fields.append((field_name, field_value))
-    body = "\n".join([f"**{name}:** {value}" for name, value in fields])
-
-    # Create the GitHub issue and return the issue number.
-    return github.create_issue(
-        title=f"NMDC Submission: {submission.id}",
-        body=body,
-        assignee=settings.github_issue_assignee,
-    )
-
-
-def update_github_issue_for_resubmission(issue_number: str, user: User) -> None:
-    """
-    Update an existing GitHub issue to note that the submission was resubmitted.
-    Adds a comment and reopens the issue if it was closed.
-    Return nothing.
-    """
-
-    # Make comment body
-    comment_body = f"""
-## 🔄 Submission Resubmitted
-
-**Resubmitted by:** {user.name} ({user.orcid})
-**Status:** {SubmissionStatusEnum.SubmittedPendingReview.text}
-
-The submission has been updated and resubmitted for review.
-    """.strip()
-
-    # Look up the issue by its number
-    issue = github.get_issue(issue_number)
-
-    # Add comment to the issue
-    github.add_issue_comment(issue, comment_body)
-
-    # If the issue is closed, reopen it
-    github.reopen_issue(issue)
 
 
 @router.delete(
@@ -2262,6 +2114,91 @@ def update_submission_sample_set(
     # If the status is "Updates Required", automatically change it to "In Progress" upon edit
     if sample_set.status == SubmissionStatusEnum.UpdatesRequired.text:
         sample_set.status = SubmissionStatusEnum.InProgress.text
+
+    db.commit()
+    return sample_set
+
+
+@router.patch(
+    "/metadata_submission/sample_set/{sample_set_id}/status",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def update_submission_sample_set_status(
+    sample_set_id: str,
+    body: schemas_submission.SubmissionSampleSetStatusPatch,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionSampleSet:
+    """Update sample set status and create/update GitHub issue as needed."""
+    sample_set = crud.get_submission_sample_set_for_user(
+        db,
+        sample_set_id,
+        user,
+        allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer],
+    )
+    current_status = sample_set.status
+    submission = sample_set.submission_metadata
+
+    # Admins can change to any status
+    if user.is_admin:
+        sample_set.status = body.status
+
+    # Non-admin users need to follow allowed transitions based on role
+    else:
+        # Owner transitions
+        if user.orcid in submission.owners:
+            transitions = ALLOWED_TRANSITIONS.get(SubmissionEditorRole.owner)
+
+        # Reviewer transitions
+        elif user.orcid in submission.reviewers:
+            transitions = ALLOWED_TRANSITIONS.get(SubmissionEditorRole.reviewer)
+
+        # Shouldn't be able to reach here based on the allowed_roles passed to
+        # get_submission_sample_set_for_user, but just in case this will disallow
+        # any transition changes
+        else:
+            transitions = None
+
+        # Apply restricted transitions
+        if (
+            transitions is not None
+            and current_status in transitions
+            and body.status in transitions[current_status]
+        ):
+            sample_set.status = body.status
+
+        # Any other transitions not allowed
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid status transition.",
+            )
+
+    # If the new status is "Submitted - Pending Review", create or update the GitHub issue(s)
+    if (
+        body.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and submission.is_test_submission is False
+    ):
+        try:
+            if submission.github_issue is None:
+                # No existing submission issue, create one
+                submission.github_issue = github.create_submission_issue(submission, user)
+
+            # Create or update the sample set issue
+            if sample_set.github_issue is None:
+                sample_set.github_issue = github.create_sample_set_issue(sample_set, user)
+            else:
+                github.add_sample_set_resubmit_comment(sample_set, user)
+
+        except github.MissingCredentialsError:
+            # Log this as a warning because local development instances may not have GitHub
+            # credentials configured (expected).
+            logger.warning(
+                "GitHub credentials not found. Skipping submission and sample set issue processing "
+                f"for submission {submission.id} and sample set {sample_set.id}."
+            )
 
     db.commit()
     return sample_set
