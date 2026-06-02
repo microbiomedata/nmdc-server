@@ -292,7 +292,7 @@ class SubmissionSampleSetListItem(BaseModel):
 class SubmissionSampleSetCreate(BaseModel):
     name: str
     templates: List[str]
-    status: str = SubmissionStatusEnum.InProgress.text
+    status: str = str(SubmissionStatusEnum.InProgress.text)
     multi_omics_form: MultiOmicsForm
     sample_environment_form: SampleEnvironmentForm
     sender_shipping_info_form: SenderShippingInfoForm
