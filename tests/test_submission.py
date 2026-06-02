@@ -2010,9 +2010,10 @@ def test_get_sample_set_by_id_unauthorized(db: Session, client: TestClient, logg
     """Test that a user without access cannot retrieve a sample set by ID."""
     sample_set = fakes.SubmissionSampleSetFactory(name="Private Sample Set")
     # The submission author is **not** the logged-in user
+    other_user = fakes.UserFactory()
     submission = fakes.SubmissionMetadataFactory(
-        author=fakes.UserFactory(),
-        author_orcid=fakes.UserFactory().orcid,
+        author=other_user,
+        author_orcid=other_user.orcid,
         sample_sets=[sample_set],
     )
     fakes.SubmissionRoleFactory(
@@ -2066,9 +2067,10 @@ def test_create_sample_set(db: Session, client: TestClient, logged_in_user):
 def test_create_sample_set_unauthorized(db: Session, client: TestClient, logged_in_user):
     """Test that a user without access cannot create a sample set for a submission."""
     # The submission author is **not** the logged-in user
+    other_user = fakes.UserFactory()
     submission = fakes.SubmissionMetadataFactory(
-        author=fakes.UserFactory(),
-        author_orcid=fakes.UserFactory().orcid,
+        author=other_user,
+        author_orcid=other_user.orcid,
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -2128,9 +2130,10 @@ def test_update_sample_set_unauthorized(db: Session, client: TestClient, logged_
     """Test that a user without access cannot update a sample set."""
     sample_set = fakes.SubmissionSampleSetFactory(name="Private Sample Set")
     # The submission author is **not** the logged-in user
+    other_user = fakes.UserFactory()
     submission = fakes.SubmissionMetadataFactory(
-        author=fakes.UserFactory(),
-        author_orcid=fakes.UserFactory().orcid,
+        author=other_user,
+        author_orcid=other_user.orcid,
         sample_sets=[sample_set],
     )
     fakes.SubmissionRoleFactory(
