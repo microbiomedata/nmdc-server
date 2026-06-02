@@ -1431,6 +1431,9 @@ class SubmissionSampleSet(Base):
 
     @property
     def sample_count(self) -> int:
+        if not isinstance(self.sample_data, dict):
+            return 0
+
         sample_data = self.sample_data.get("data", {})
         if not sample_data:
             return 0

@@ -1578,7 +1578,7 @@ async def update_submission(
         submission.field_notes_metadata = body.field_notes_metadata
 
     if body.study_form is not None:
-        submission.study_form = body.study_form
+        submission.study_form = body.study_form.model_dump()
         submission.study_name = body.study_form.studyName
 
     # Update permissions if the user is an "owner" or "admin"
