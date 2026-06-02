@@ -505,7 +505,9 @@ class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
     status = SubmissionStatusEnum.InProgress.text
     templates: list[str] = []
     sample_environment_form = factory.LazyFunction(lambda: sample_environment_form_default.copy())
-    sender_shipping_info_form = factory.LazyFunction(lambda: sender_shipping_info_form_default.copy())
+    sender_shipping_info_form = factory.LazyFunction(
+        lambda: sender_shipping_info_form_default.copy()
+    )
     multi_omics_form = factory.LazyFunction(lambda: multi_omics_form_default.copy())
     sample_data = factory.LazyFunction(lambda: sample_data_default.copy())
     created = factory.LazyFunction(lambda: datetime.now(tz=UTC))
