@@ -2016,7 +2016,7 @@ def get_submission_sample_set_list(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.SubmissionSampleSetListItem]:
-    submission = get_submission_for_user(db, submission_id, user)
+    submission = get_submission_for_user(db, submission_id, user, allowed_roles=read_roles)
     return submission.sample_sets
 
 
