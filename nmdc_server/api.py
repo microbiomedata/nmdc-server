@@ -1832,7 +1832,7 @@ async def generate_signed_upload_url(
     # Don't accept files larger than the configured limit (default is 25 MB)
     if body.file_size > settings.max_submission_image_file_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="File size exceeds limit"
         )
 
     # Ensure the requested submission exists and the user has permission to edit it
@@ -1842,7 +1842,7 @@ async def generate_signed_upload_url(
     potential_max_size = submission.study_images_total_size + body.file_size
     if potential_max_size > settings.max_submission_image_total_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Submission quota exceeded",
         )
 
@@ -2172,7 +2172,7 @@ def update_submission_sample_set_status(
         # Any other transitions not allowed
         else:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Invalid status transition.",
             )
 
