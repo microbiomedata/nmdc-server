@@ -1,3 +1,15 @@
+/**
+ * This file contains custom validation logic to be used in conjunction with
+ * DataHarmonizer.
+ *
+ * In general, DataHarmonizer's built-in LinkML-based validation should be
+ * relied on as much as possible. This means adding constraints (e.g. `pattern`,
+ * `required`, `minimum_value`, etc) to `nmdc-submission-schema`. However, in
+ * cases where validation logic is too complex to be expressed in LinkML,
+ * custom validation functions can be added here and called in
+ * `HarmonizerApi.doCustomValidation`.
+ */
+
 export type DataHarmonizerRow = Record<string, string | number | string[]>
 
 export type DataHarmonizerData = DataHarmonizerRow[]
@@ -18,6 +30,19 @@ function getTrimmedString(value: string | number | string[] | undefined) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+/**
+ * Validates that for rows with `cont_type` of "plate", the `cont_well` values
+ * are valid and follow JGI's plate filling rules:
+ * - Valid well IDs are A1-H12, but corner wells (A1, A12, H1, H12) are not
+ *   allowed.
+ * - Well IDs must be unique on a given plate (i.e. same `container_name`).
+ * - For each plate, the first populated well must be B1, and wells must be
+ *   filled in column order without gaps (e.g. if C1 is filled, B1 must also be
+ *   filled).
+ *
+ * @param data - The data of the current DataHarmonizer tab to validate
+ * @returns An array of validation issues
+ */
 export function validatePlateWellsForJgi(data: DataHarmonizerData): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const validWellSet = new Set(VALID_WELL_ORDER);
