@@ -4,7 +4,7 @@
  *
  * In general, DataHarmonizer's built-in LinkML-based validation should be
  * relied on as much as possible. This means adding constraints (e.g. `pattern`,
- * `required`, `minimum_value`, etc) to `nmdc-submission-schema`. However, in
+ * `required`, `minimum_value`, etc.) to `nmdc-submission-schema`. However, in
  * cases where validation logic is too complex to be expressed in LinkML,
  * custom validation functions can be added here and called in
  * `HarmonizerApi.doCustomValidation`.
@@ -20,6 +20,10 @@ export type ValidationIssue = {
   message: string,
 }
 
+// Constants related to 96-well plates used by validatePlateWellsForJgi
+// See:
+// - https://en.wikipedia.org/wiki/Microplate
+// - https://commons.wikimedia.org/wiki/File:96-Well_plate.svg
 const PLATE_ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const PLATE_COLS = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 const VALID_WELL_ORDER = PLATE_COLS.map((col) => PLATE_ROWS.map((row) => `${row}${col}`)).flat();
