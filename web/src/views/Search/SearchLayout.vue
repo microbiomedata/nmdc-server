@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  computed, ref, Ref,
+  computed, ref,
 
 } from 'vue';
 
@@ -126,10 +126,10 @@ const gatedEnvironmentVisConditions = useClockGate(
   computed(() => (visTab.value === 1)),
   stateRefs.conditions,
 );
-const showChildren:Ref<any[]> = ref([]);
-function toggleChildren(value:StudySearchResults) {
-  showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
-}
+// const showChildren:Ref<any[]> = ref([]);
+// function toggleChildren(value:StudySearchResults) {
+//   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
+// }
 </script>
 
 <template>
@@ -228,35 +228,10 @@ function toggleChildren(value:StudySearchResults) {
                         :model-value="studyCheckboxState"
                         :value="result.id"
                         @click.stop
-                        @change="setChecked($event.target.checked, result.id, result.children)"
+                        @change="setChecked($event.target.checked, result.id, result.children as StudySearchResults[])"
                       />
                     </v-list-item-action>
                   </template>
-
-                  <template #child-list="{ result }">
-                    <v-list-item-action
-                      v-if="result.children && result.children.length > 0"
-                      class="ma-0"
-                    >
-                      <v-btn
-                        icon
-                        variant="plain"
-                        @click="toggleChildren(result)"
-                      >
-                        <v-icon
-                          v-if="showChildren.includes(result.id)"
-                        >
-                          mdi-chevron-up-box
-                        </v-icon>
-                        <v-icon
-                          v-else
-                        >
-                          mdi-chevron-down-box
-                        </v-icon>
-                      </v-btn>
-                    </v-list-item-action>
-                  </template>
-
                   <template #action-right="{ result }">
                     <v-list-item-action>
                       <v-btn
@@ -277,78 +252,16 @@ function toggleChildren(value:StudySearchResults) {
                         v-for="item in props.result.omics_processing_counts"
                       >
                         <v-chip
-                          v-if="item.count"
-                          :key="item.type"
+                          v-if="(item as any).count"
+                          :key="(item as any).type"
                           size="small"
                           class="mr-2 my-1"
-                          @click.stop="selectStudyAndOmics(props.result.id, item.type)"
+                          @click.stop="selectStudyAndOmics(props.result.id, (item as any).type)"
                         >
-                          {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                          {{ fieldDisplayName((item as any).type) }}: {{ (item as any).count }}
                         </v-chip>
                       </template>
                     </div>
-                    <v-card
-                      v-if="showChildren.includes(props.result.id)"
-                      flat
-                      class="pa-4 mt-2"
-                    >
-                      <v-divider />
-                      <SearchResults
-                        disable-navigate-on-click
-                        disable-pagination
-                        :count="props.result.children.length"
-                        :icon="studyType.icon"
-                        :items-per-page="props.result.children.length"
-                        :results="props.result.children"
-                        :page="1"
-                        :loading="false"
-                        @selected="$router.push({ name: 'Study', params: { id: $event} })"
-                      >
-                        <template #action="{ result }">
-                          <v-list-item-action>
-                            <v-checkbox-btn
-                              :disabled="studyCheckboxState.includes(props.result.id)"
-                              :model-value="studyCheckboxState"
-                              :value="result.id"
-                              @click.stop
-                              @change="setChecked($event.target.checked, result.id)"
-                            />
-                          </v-list-item-action>
-                        </template>
-
-                        <template #action-right="{ result }">
-                          <v-list-item-action>
-                            <v-btn
-                              icon
-                              variant="plain"
-                              size="large"
-                              :to="{ name: 'Study', params: { id: result.id } }"
-                            >
-                              <v-icon>
-                                mdi-chevron-right
-                              </v-icon>
-                            </v-btn>
-                          </v-list-item-action>
-                        </template>
-                        <template #item-content="childProps">
-                          <div v-if="childProps.result.omics_processing_counts">
-                            <template
-                              v-for="item in childProps.result.omics_processing_counts"
-                            >
-                              <v-chip
-                                v-if="item.count"
-                                :key="item.type"
-                                size="small"
-                                class="mr-2 my-1"
-                                @click.stop="selectStudyAndOmics(childProps.result.id, item.type)"
-                              >
-                                {{ fieldDisplayName(item.type) }}: {{ item.count }}
-                              </v-chip>
-                            </template>
-                          </div>
-                        </template>
-                      </SearchResults>
-                    </v-card>
                   </template>
                 </SearchResults>
               </v-tabs-window-item>

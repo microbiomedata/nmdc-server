@@ -1,57 +1,36 @@
-<script lang="ts">
-import { defineComponent, PropType, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 
 import { BaseSearchResult } from '@/data/api';
 
-export default defineComponent({
-  props: {
-    page: {
-      type: Number,
-      required: true,
-    },
-    itemsPerPage: {
-      type: Number,
-      required: true,
-    },
-    count: {
-      type: Number,
-      required: true,
-    },
-    titleKey: {
-      type: String,
-      default: 'name',
-    },
-    subtitleKey: {
-      type: String,
-      default: 'description',
-    },
-    results: {
-      type: Array as PropType<BaseSearchResult[]>,
-      default: () => [],
-    },
-    icon: {
-      type: String,
-      default: 'mdi-book',
-    },
-    disableNavigateOnClick: {
-      type: Boolean,
-      default: false,
-    },
-    disablePagination: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['set-page', 'set-items-per-page', 'selected'],
-  setup(props) {
-    const rows = ref(props.itemsPerPage);
-    return {
-      rows,
-    };
-  },
+interface Props {
+  page: number;
+  itemsPerPage: number;
+  count: number;
+  titleKey?: string;
+  subtitleKey?: string;
+  results?: BaseSearchResult[];
+  icon?: string;
+  disableNavigateOnClick?: boolean;
+  disablePagination?: boolean;
+}
 
+const props = withDefaults(defineProps<Props>(), {
+  titleKey: 'name',
+  subtitleKey: 'description',
+  results: () => [] as BaseSearchResult[],
+  icon: 'mdi-book',
+  disableNavigateOnClick: false,
+  disablePagination: false,
 });
 
+const emit = defineEmits<{
+  'set-page': [page: number];
+  'set-items-per-page': [itemsPerPage: number];
+  'selected': [id: string];
+}>();
+
+const rows = ref(props.itemsPerPage);
 </script>
 
 <template>
@@ -75,7 +54,7 @@ export default defineComponent({
           v-on="{
             click: disableNavigateOnClick
               ? () => {}
-              : () => $emit('selected', result.id),
+              : () => emit('selected', result.id),
           }"
         >
           <template #prepend>
@@ -134,7 +113,7 @@ export default defineComponent({
         :length="Math.ceil(count / rows)"
         :total-visible="7"
         active-color="primary"
-        @update:model-value="$emit('set-page', $event)"
+        @update:model-value="emit('set-page', $event)"
       />
       <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
            positioned it doesn't count towards the `auto` width -->
@@ -146,7 +125,7 @@ export default defineComponent({
         :style="{ 'flex-basis': '6rem' }"
         hide-details
         variant="plain"
-        @update:model-value="$emit('set-items-per-page', $event)"
+        @update:model-value="emit('set-items-per-page', $event)"
       />
     </div>
   </div>
