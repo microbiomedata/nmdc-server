@@ -1,6 +1,6 @@
-<script lang="ts">
+<script setup lang="ts">
 import {
-  defineComponent, reactive, computed, ref, Ref,
+  reactive, computed, ref, Ref,
 
 } from 'vue';
 
@@ -26,206 +26,159 @@ import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
 
-export default defineComponent({
-  name: 'SearchLayout',
+const showConsortia = ref(true);
+const showStudies = ref(true);
+/**
+ * Study checkbox state logic
+ */
+const studyCheckboxState = computed(() => (
+  stateRefs.conditions.value
+    .filter((c) => c.table === 'study' && c.field === 'study_id')
+    .map((c) => c.value)
+));
 
-  components: {
-    BiosampleSearchResults,
-    AppBanner,
-    BiosampleVisGroup,
-    BulkDownload,
-    EnvironmentVisGroup,
-    SearchResults,
-    SearchSidebar,
-    SearchHelpMenu,
-  },
-
-  setup() {
-    const showConsortia = ref(true);
-    const showStudies = ref(true);
-    /**
-     * Study checkbox state logic
-     */
-    const studyCheckboxState = computed(() => (
-      stateRefs.conditions.value
-        .filter((c) => c.table === 'study' && c.field === 'study_id')
-        .map((c) => c.value)
-    ));
-
-    /**
-     * Set a study (or consortium) as checked in the search results.
-     * @param checked - Whether the item is currently being checked (true) or unchecked (false)
-     * @param studyId - ID of the study to select
-     * @param children - Optional children studies to also select
-     */
-    function setChecked(checked: boolean, studyId: string, children: StudySearchResults[] = []) {
-      const conditions: Condition[] = [{
-        value: studyId,
+/**
+ * Set a study (or consortium) as checked in the search results.
+ * @param checked - Whether the item is currently being checked (true) or unchecked (false)
+ * @param studyId - ID of the study to select
+ * @param children - Optional children studies to also select
+ */
+function setChecked(checked: boolean, studyId: string, children: StudySearchResults[] = []) {
+  const conditions: Condition[] = [{
+    value: studyId,
+    table: 'study',
+    op: '==',
+    field: 'study_id',
+  }];
+  if (children.length > 0) {
+    children.forEach((child) => {
+      conditions.push({
+        value: child.id,
         table: 'study',
-        op: '==',
         field: 'study_id',
-      }];
-      if (children.length > 0) {
-        children.forEach((child) => {
-          conditions.push({
-            value: child.id,
-            table: 'study',
-            field: 'study_id',
-            op: '==',
-          });
-        });
-      }
-      if (checked) {
-        setConditions([...stateRefs.conditions.value, ...conditions]);
-      } else {
-        removeConditions(conditions);
-      }
-    }
-
-    /**
-     * Set study and omics type conditions.
-     * Used when clicking on omics processing count chips.
-     * @param studyId - ID of the study to select
-     * @param omicsType - Type of omics processing to select 
-     */
-    function selectStudyAndOmics(studyId: string, omicsType: string) {
-      const conditions: Condition[] = [{
-        value: studyId,
-        table: 'study',
         op: '==',
-        field: 'study_id',
-      },
-      {
-        value: omicsType,
-        table: 'omics_processing',
-        field: 'omics_type',
-        op: '==',
-      }];
-      setConditions([...stateRefs.conditions.value, ...conditions]);
-    }
-
-    const studyConditions: Ref<Record<string, Condition[]>> = ref<Record<string, Condition[]>>({
-      study: [{
-        field: 'study_category',
-        table: 'study',
-        op: '==',
-        value: 'research_study',
-      }],
-      consortia: [{
-        field: 'study_category',
-        table: 'study',
-        op: '==',
-        value: 'consortium',
-      }],
+      });
     });
+  }
+  if (checked) {
+    setConditions([...stateRefs.conditions.value, ...conditions]);
+  } else {
+    removeConditions(conditions);
+  }
+}
 
-    /**
-     * SearchLayout-level settings
-     */
-    const disableBulkDownload = ref(true);
-    api.getAppSettings().then((appSettings) => {
-      disableBulkDownload.value = appSettings.disable_bulk_download;
-    });
-
-    /**
-     * Expanded Omics details
-     */
-    const expandedOmicsDetails = reactive({
-      resultId: '',
-      omicsProcessingId: '',
-    });
-    function setExpanded(resultId: string, omicsProcessingId: string) {
-      if (expandedOmicsDetails.resultId !== resultId
-        || expandedOmicsDetails.omicsProcessingId !== omicsProcessingId) {
-        expandedOmicsDetails.resultId = resultId;
-        expandedOmicsDetails.omicsProcessingId = omicsProcessingId;
-      } else {
-        expandedOmicsDetails.resultId = '';
-        expandedOmicsDetails.omicsProcessingId = '';
-      }
-    }
-
-    const biosampleType = types.biosample;
-    const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter);
-
-    const studyType = types.study;
-    const studySummaryData = useFacetSummaryData({
-      field: ref('study_id'),
-      table: ref('study'),
-      conditions: stateRefs.conditions,
-    });
-    const studyCondition = computed(() => studyConditions.value.study?.concat(studySummaryData.otherConditions.value) || []);
-    const consortiumCondition = computed(() => studyConditions.value.consortia?.concat(studySummaryData.otherConditions.value) || []);
-
-    const study = usePaginatedResults(ref(studyCondition), api.searchStudy, undefined, 5);
-    const consortium = usePaginatedResults(ref(consortiumCondition), api.searchStudy, undefined, 5);
-
-    const studyResults = computed(() => Object.values(study.data.results.results)
-      .map((r) => ({
-        ...r,
-        name: r.annotations.title || r.name,
-        children: r.children?.map((c) => ({
-          ...c,
-          name: c.annotations.title || c.name,
-        })),
-      })));
-    const consortiumStudyResults = computed(() => Object.values(consortium.data.results.results)
-      .map((r) => ({
-        ...r,
-        name: r.annotations.title || r.name,
-        children: r.children?.map((c) => ({
-          ...c,
-          name: c.annotations.title || c.name,
-        })),
-      })));
-
-    const loggedInUser = computed(() => stateRefs.user.value !== null);
-
-    const vistab = ref(0);
-    const gatedOmicsVisConditions = useClockGate(
-      computed(() => (vistab.value === 0)),
-      stateRefs.conditions,
-    );
-    const gatedEnvironmentVisConditions = useClockGate(
-      computed(() => (vistab.value === 1)),
-      stateRefs.conditions,
-    );
-    const showChildren:Ref<any[]> = ref([]);
-    function toggleChildren(value:StudySearchResults) {
-
-      showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
-    }
-
-    return {
-      /* data */
-      biosampleType,
-      biosample,
-      dataObjectFilter,
-      expandedOmicsDetails,
-      gatedEnvironmentVisConditions,
-      gatedOmicsVisConditions,
-      loggedInUser,
-      disableBulkDownload,
-      studyType,
-      study,
-      consortium,
-      studyResults,
-      consortiumStudyResults,
-      showConsortia,
-      showStudies,
-      showChildren,
-      studyCheckboxState,
-      types,
-      vistab,
-      toggleChildren,
-      /* methods */
-      setChecked,
-      selectStudyAndOmics,
-      setExpanded,
-      fieldDisplayName,
-    };
+/**
+ * Set study and omics type conditions.
+ * Used when clicking on omics processing count chips.
+ * @param studyId - ID of the study to select
+ * @param omicsType - Type of omics processing to select 
+ */
+function selectStudyAndOmics(studyId: string, omicsType: string) {
+  const conditions: Condition[] = [{
+    value: studyId,
+    table: 'study',
+    op: '==',
+    field: 'study_id',
   },
+  {
+    value: omicsType,
+    table: 'omics_processing',
+    field: 'omics_type',
+    op: '==',
+  }];
+  setConditions([...stateRefs.conditions.value, ...conditions]);
+}
+
+const studyConditions: Ref<Record<string, Condition[]>> = ref<Record<string, Condition[]>>({
+  study: [{
+    field: 'study_category',
+    table: 'study',
+    op: '==',
+    value: 'research_study',
+  }],
+  consortia: [{
+    field: 'study_category',
+    table: 'study',
+    op: '==',
+    value: 'consortium',
+  }],
 });
+
+/**
+ * SearchLayout-level settings
+ */
+const disableBulkDownload = ref(true);
+api.getAppSettings().then((appSettings) => {
+  disableBulkDownload.value = appSettings.disable_bulk_download;
+});
+
+/**
+ * Expanded Omics details
+ */
+const expandedOmicsDetails = reactive({
+  resultId: '',
+  omicsProcessingId: '',
+});
+function setExpanded(resultId: string, omicsProcessingId: string) {
+  if (expandedOmicsDetails.resultId !== resultId
+    || expandedOmicsDetails.omicsProcessingId !== omicsProcessingId) {
+    expandedOmicsDetails.resultId = resultId;
+    expandedOmicsDetails.omicsProcessingId = omicsProcessingId;
+  } else {
+    expandedOmicsDetails.resultId = '';
+    expandedOmicsDetails.omicsProcessingId = '';
+  }
+}
+
+const biosampleType = types.biosample;
+const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter);
+
+const studyType = types.study;
+const studySummaryData = useFacetSummaryData({
+  field: ref('study_id'),
+  table: ref('study'),
+  conditions: stateRefs.conditions,
+});
+const studyCondition = computed(() => studyConditions.value.study?.concat(studySummaryData.otherConditions.value) || []);
+const consortiumCondition = computed(() => studyConditions.value.consortia?.concat(studySummaryData.otherConditions.value) || []);
+
+const study = usePaginatedResults(ref(studyCondition), api.searchStudy, undefined, 5);
+const consortium = usePaginatedResults(ref(consortiumCondition), api.searchStudy, undefined, 5);
+
+const studyResults = computed(() => Object.values(study.data.results.results)
+  .map((r) => ({
+    ...r,
+    name: r.annotations.title || r.name,
+    children: r.children?.map((c) => ({
+      ...c,
+      name: c.annotations.title || c.name,
+    })),
+  })));
+const consortiumStudyResults = computed(() => Object.values(consortium.data.results.results)
+  .map((r) => ({
+    ...r,
+    name: r.annotations.title || r.name,
+    children: r.children?.map((c) => ({
+      ...c,
+      name: c.annotations.title || c.name,
+    })),
+  })));
+
+const loggedInUser = computed(() => stateRefs.user.value !== null);
+
+const vistab = ref(0);
+const gatedOmicsVisConditions = useClockGate(
+  computed(() => (vistab.value === 0)),
+  stateRefs.conditions,
+);
+const gatedEnvironmentVisConditions = useClockGate(
+  computed(() => (vistab.value === 1)),
+  stateRefs.conditions,
+);
+const showChildren:Ref<any[]> = ref([]);
+function toggleChildren(value:StudySearchResults) {
+  showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
+}
 </script>
 
 <template>
@@ -279,6 +232,19 @@ export default defineComponent({
               <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
             </v-window-item>
           </v-window>
+          <v-card variant="outlined">
+            <v-tabs
+              v-model="vistab"
+              color="primary"
+            >
+              <v-tab key="omics">
+                Studies
+              </v-tab>
+              <v-tab key="environments">
+                Samples
+              </v-tab>
+            </v-tabs>
+          </v-card>
           <v-card variant="outlined">
             <v-card
               flat
