@@ -9,6 +9,10 @@ import {
   MetadataSuggestionRequest,
   ColumnHelpInfo,
 } from '@/views/SubmissionPortal/types';
+import {
+  type DataHarmonizerData,
+  validatePlateWellsForJgi,
+} from '@/views/SubmissionPortal/validation';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -338,8 +342,31 @@ export default class HarmonizerApi {
     this.dh.setupTemplate(folder);
   }
 
+  setInvalidCell(row: number, slot: string, message: string) {
+    if (!this.dh.invalid_cells[row]) {
+      this.dh.invalid_cells[row] = {};
+    }
+    const slotInfo = this.slotInfo.get(slot);
+    if (!slotInfo) {
+      console.warn(`Attempted to add invalid cell for unknown slot ${slot}`);
+      return;
+    }
+    const col = slotInfo.columnIndex;
+    this.dh.invalid_cells[row][col] = message;
+  }
+
+  doCustomValidation() {
+    // Our own custom validation that is beyond the schema-level validation that DataHarmonizer performs.
+    const data: DataHarmonizerData = this.dh.getDataObjects();
+    validatePlateWellsForJgi(data).forEach((issue) => {
+      this.setInvalidCell(issue.row, issue.slot, issue.message);
+    });
+  }
+
+
   async validate() {
     await this.dh.validate();
+    this.doCustomValidation();
     this.refreshState();
     return this.dh.invalid_cells;
   }
