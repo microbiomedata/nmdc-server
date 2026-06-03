@@ -44,9 +44,9 @@ const staticUpsetTooltips = {
 
 const props = withDefaults(defineProps<{
   conditions: Condition[];
-  vistab?: number | null;
+  visTab?: number | null;
 }>(), {
-  vistab: null,
+  visTab: null,
 });
 
 const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
@@ -146,7 +146,7 @@ function setBoundsFromMap(val: Condition[]) {
           <ClusterMap
             :conditions="conditions"
             :height="360"
-            :vistab="vistab"
+            :vis-tab="visTab"
             @selected="setBoundsFromMap($event)"
           />
         </TooltipCard>
