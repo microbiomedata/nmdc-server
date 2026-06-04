@@ -19,7 +19,6 @@ import StudyForm from '@/views/SubmissionPortal/Components/StudyForm.vue';
 import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
 import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
 import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
-import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
@@ -94,12 +93,6 @@ const router = createRouter({
               name: 'Sample Environment',
               component: TemplateChooser,
               path: ':id/templates',
-              meta: { requiresSubmissionLock: true },
-            },
-            {
-              name: 'Validate And Submit',
-              component: ValidateSubmit,
-              path: ':id/submit',
               meta: { requiresSubmissionLock: true },
             },
           ],
