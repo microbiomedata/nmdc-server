@@ -39,17 +39,6 @@ const headers: DataTableHeader[] = [
     sortable: true,
   },
   {
-    title: 'Template',
-    value: 'templates',
-    sortable: true,
-  },
-  {
-    title: 'Status',
-    value: 'status',
-    width: '200px',
-    sortable: true,
-  },
-  {
     title: 'Last Modified',
     value: 'date_last_modified',
     sortable: true,
@@ -117,6 +106,12 @@ export default defineComponent({
     applySortOptions();
     const assignReviewerRequest = useRequest();
 
+    const submissionEditableState = ref<Record<string, boolean>>({});
+
+    async function checkSubmissionEditable(submissionId: string): Promise<void> {
+      submissionEditableState.value[submissionId] = await editableByStatus(submissionId);
+    }
+
     const statusUpdatingSubmissionId = ref<string | null>(null);
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
       statusUpdatingSubmissionId.value = item.id;
@@ -145,6 +140,14 @@ export default defineComponent({
       submission.setPage(options.value.page);
       applySortOptions();
     });
+
+    watch(() => submission.data.results.results, (newResults) => {
+      if (newResults) {
+        newResults.forEach((item) => {
+          checkSubmissionEditable(item.id);
+        });
+      }
+    }, { deep: false });
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
@@ -228,7 +231,7 @@ export default defineComponent({
       IconBar,
       IntroBlurb,
       TitleBanner,
-      editableByStatus,
+      submissionEditableState,
       getStatus,
       resume,
       addReviewer,
@@ -372,38 +375,8 @@ export default defineComponent({
                 :authenticated="true"
               />
             </template>
-            <template #[`item.templates`]="{ item }">
-              {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
-            </template>
             <template #[`item.date_last_modified`]="{ item }">
               {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
-            </template>
-            <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
-              <div class="d-flex align-center ga-1">
-                <v-tooltip
-                  v-if="currentUser?.is_admin || (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser!.orcid)))"
-                  location="bottom"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      class="ml-1"
-                      color="grey"
-                      v-bind="props"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                  <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
-                </v-tooltip>
-                <span>
-                  {{ column.title }}
-                </span>
-                <v-icon
-                  class="v-data-table-header__sort-icon"
-                  :icon="getSortIcon(column)"
-                  @click="toggleSort(column)"
-                />
-              </div>
             </template>
             <template #[`item.status`]="{ item }">
               <div class="d-flex align-center">
@@ -434,7 +407,7 @@ export default defineComponent({
                   color="primary"
                   @click="() => resume(item as MetadataSubmissionRecord)"
                 >
-                  <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
+                  <span v-if="submissionEditableState[item.id] && isAnyContributorForSubmission(item)">
                     Resume
                     <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                   </span>

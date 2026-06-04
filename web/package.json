@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
@@ -42,7 +43,7 @@
     "linkify-it": "^4.0.1",
     "lodash": "^4.18.1",
     "moment": "^2.29.4",
-    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.19.1",
+    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.20.0-rc.1",
     "popper.js": "1.16.1",
     "protobufjs": "^7.5.6",
     "vue": "^3.5.21",
@@ -68,9 +69,13 @@
     "unplugin-fonts": "^1.4.0",
     "unplugin-vue-components": "^29.0.0",
     "unplugin-vue-router": "^0.15.0",
-    "vite": "^7.3.2",
+    "vite": "7.3.2",
+    "vitest": "^4.1.7",
     "vite-plugin-vuetify": "^2.1.2",
     "vue-tsc": "^3.0.7"
+  },
+  "resolutions": {
+    "vite": "7.3.2"
   },
   "packageManager": "yarn@1.22.22+sha256.c17d3797fb9a9115bf375e31bfd30058cac6bc9c3b8807a3d8cb2094794b51ca"
 }

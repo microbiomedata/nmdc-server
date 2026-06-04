@@ -1,8 +1,9 @@
 from collections import OrderedDict
 from datetime import UTC, datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import factory
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import (
@@ -376,7 +377,90 @@ class UserFactory(SQLAlchemyModelFactory):
     is_admin: bool = False
 
 
-class MetadataSubmissionFactory(SQLAlchemyModelFactory):
+sender_shipping_info_form_default = {
+    "shipper": {
+        "name": "",
+        "email": "",
+        "phone": "",
+        "line1": "",
+        "line2": "",
+        "city": "",
+        "state": "",
+        "postalCode": "",
+        "country": "",
+    },
+    "expectedShippingDate": None,
+    "shippingConditions": "",
+    "sample": "",
+    "description": "",
+    "experimentalGoals": "",
+    "randomization": "",
+    "usdaRegulated": None,
+    "permitNumber": "",
+    "biosafetyLevel": "",
+    "irbOrHipaa": None,
+    "comments": "",
+    "validation": None,
+}
+
+study_form_default = {
+    "studyName": "",
+    "piName": "",
+    "piEmail": "",
+    "piOrcid": "",
+    "linkOutWebpage": [],
+    "studyDate": None,
+    "dataDois": [],
+    "publicationDois": [],
+    "fundingSources": [],
+    "description": "",
+    "notes": "",
+    "contributors": [],
+    "alternativeNames": [],
+    "GOLDStudyId": "",
+    "NCBIBioProjectId": "",
+    "validation": None,
+}
+
+multi_omics_form_default: dict[str, Any] = {
+    "award": None,
+    "awardDois": [],
+    "dataGenerated": None,
+    "doe": None,
+    "facilities": [],
+    "facilityGenerated": None,
+    "JGIStudyId": "",
+    "mgCompatible": None,
+    "mgInterleaved": None,
+    "mtCompatible": None,
+    "mtInterleaved": None,
+    "omicsProcessingTypes": [],
+    "otherAward": None,
+    "ship": None,
+    "studyNumber": "",
+    "unknownDoi": None,
+    "mpProtocols": None,
+    "mbProtocols": None,
+    "mbGcProtocols": None,
+    "lipProtocols": None,
+    "nomProtocols": None,
+    "nomLcProtocols": None,
+    "validation": None,
+}
+
+sample_environment_form_default: dict[str, Any] = {
+    "validation": None,
+    "packageName": [],
+}
+
+
+sample_data_default: dict[str, Any] = {
+    "data": {},
+    "validation": None,
+}
+
+
+class SubmissionMetadataFactory(SQLAlchemyModelFactory):
     class Meta:
         model = models.SubmissionMetadata
         sqlalchemy_session = db
@@ -384,78 +468,10 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
-    templates = Faker("pylist", nb_elements=2, value_types=[str])
+    study_form = factory.LazyFunction(lambda: study_form_default.copy())
     created = datetime.now(tz=UTC)
     date_last_modified = created
-    # TODO specify all fields!
-    metadata_submission = {
-        "sampleData": {
-            "data": {},
-            "validation": {
-                "invalidCells": {},
-                "tabsValidated": {},
-            },
-        },
-        "multiOmicsForm": {
-            "studyNumber": "",
-            "JGIStudyId": "",
-            "omicsProcessingTypes": [],
-            "facilities": [],
-            "otherAward": "",
-            "doe": None,
-            "dataGenerated": None,
-            "facilityGenerated": None,
-            "award": None,
-            "awardDois": [],
-            "mgCompatible": None,
-            "validation": None,
-        },
-        "studyForm": {
-            "studyName": "",
-            "piName": "",
-            "piEmail": "",
-            "piOrcid": "",
-            "linkOutWebpage": [],
-            "fundingSources": [],
-            "dataDois": [],
-            "description": "",
-            "notes": "",
-            "contributors": [],
-            "alternativeNames": [],
-            "GOLDStudyId": "",
-            "NCBIBioProjectId": "",
-            "validation": None,
-        },
-        "templates": [],
-        "senderShippingInfoForm": {
-            "shipper": {
-                "name": "",
-                "email": "",
-                "phone": "",
-                "line1": "",
-                "line2": "",
-                "city": "",
-                "state": "",
-                "postalCode": "",
-                "country": "",
-            },
-            "shippingConditions": "",
-            "sample": "",
-            "description": "",
-            "experimentalGoals": "",
-            "randomization": "",
-            "permitNumber": "",
-            "biosafetyLevel": "",
-            "comments": "",
-            "validation": None,
-        },
-        "sampleEnvironmentForm": {
-            "packageName": [],
-            "validation": None,
-        },
-    }
     locked_by = None
     lock_updated = None
     is_test_submission: bool = False
@@ -463,7 +479,8 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     primary_study_image: models.SubmissionImagesObject | None = None
     study_images: list[models.SubmissionImagesObject] = []
     nmdc_study_id: Optional[str] = None
-    submission_issue: Optional[str] = None
+    github_issue: Optional[str] = None
+    sample_sets: List[models.SubmissionSampleSet] = []
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):
@@ -474,4 +491,25 @@ class SubmissionRoleFactory(SQLAlchemyModelFactory):
     submission_id: UUID = Faker("uuid")
     user_orcid: str = Faker("pystr")
     role: models.SubmissionEditorRole = models.SubmissionEditorRole.owner
-    submission = SubFactory(MetadataSubmissionFactory)
+    submission = SubFactory(SubmissionMetadataFactory)
+
+
+class SubmissionSampleSetFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SubmissionSampleSet
+        sqlalchemy_session = db
+
+    id: UUID = Faker("uuid")
+    name: str = Faker("pystr")
+    submission_metadata_id: UUID = Faker("uuid")
+    status = SubmissionStatusEnum.InProgress.text
+    templates: list[str] = []
+    sample_environment_form = factory.LazyFunction(lambda: sample_environment_form_default.copy())
+    sender_shipping_info_form = factory.LazyFunction(
+        lambda: sender_shipping_info_form_default.copy()
+    )
+    multi_omics_form = factory.LazyFunction(lambda: multi_omics_form_default.copy())
+    sample_data = factory.LazyFunction(lambda: sample_data_default.copy())
+    created = factory.LazyFunction(lambda: datetime.now(tz=UTC))
+    date_last_modified = factory.LazyFunction(lambda: datetime.now(tz=UTC))
+    github_issue: Optional[str] = None
