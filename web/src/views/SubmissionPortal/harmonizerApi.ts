@@ -9,6 +9,10 @@ import {
   MetadataSuggestionRequest,
   ColumnHelpInfo,
 } from '@/views/SubmissionPortal/types';
+import {
+  type DataHarmonizerData,
+  validatePlateWellsForJgi,
+} from '@/views/SubmissionPortal/validation';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -33,6 +37,8 @@ const GOLD_FIELDS = {
     downstream: [],
   },
 };
+
+export type InvalidCells = Record<number, Record<number, string>>;
 
 export default class HarmonizerApi {
   schemaSectionNames: Ref<Record<string, string>>;
@@ -196,6 +202,9 @@ export default class HarmonizerApi {
     }, 200, { leading: true }));
     this.dh.hot.updateSettings({
       search: true,
+      comments: {
+        readOnly: true,
+      },
       customBorders: true,
       height: '100%',
       width: '100%',
@@ -338,8 +347,89 @@ export default class HarmonizerApi {
     this.dh.setupTemplate(folder);
   }
 
+  /**
+   * Mark a cell as invalid by adding an entry to the `invalid_cells` object in the DataHarmonizer instance.
+   *
+   * @param row
+   * @param slot
+   * @param message
+   * @private
+   */
+  private setInvalidCell(row: number, slot: string, message: string) {
+    if (!this.dh.invalid_cells[row]) {
+      this.dh.invalid_cells[row] = {};
+    }
+    const slotInfo = this.slotInfo.get(slot);
+    if (!slotInfo) {
+      console.warn(`Attempted to add invalid cell for unknown slot ${slot}`);
+      return;
+    }
+    const col = slotInfo.columnIndex;
+    this.dh.invalid_cells[row][col] = message;
+  }
+
+  /**
+   * Private method to clear comments from all cells that are currently marked as invalid in the DataHarmonizer
+   * instance. This method should be called before any operation that may change the validity of cells.
+   *
+   * @private
+   */
+  private clearCommentsForInvalidCells() {
+    const commentsPlugin = this.dh.hot.getPlugin('comments');
+    Object.entries(this.dh.invalid_cells as InvalidCells).forEach(([rowStr, cols]) => {
+      const row = parseInt(rowStr, 10);
+      Object.entries(cols).forEach(([colStr, _]) => {
+        const col = parseInt(colStr, 10);
+        // `false` here means "don't re-render after removing the comment." We'll do a single render at the end.
+        commentsPlugin.removeCommentAtCell(row, col, false);
+      });
+    });
+    this.dh.hot.render();
+  }
+
+  /**
+   * Private method to set comments on all cells that are currently marked as invalid in the DataHarmonizer instance,
+   * with the comment text set to the corresponding error message. This method should be called after any operation
+   * that may have changed the validity of cells, and after `_clearCommentsForInvalidCells` has been called to clear
+   * out old comments.
+   *
+   * @private
+   */
+  private setCommentsForInvalidCells() {
+    const commentsPlugin = this.dh.hot.getPlugin('comments');
+    Object.entries(this.dh.invalid_cells as InvalidCells).forEach(([rowStr, cols]) => {
+      const row = parseInt(rowStr, 10);
+      Object.entries(cols).forEach(([colStr, message]) => {
+        const col = parseInt(colStr, 10);
+        commentsPlugin.updateCommentMeta(row, col, { value: message, readOnly: true });
+      });
+    });
+    this.dh.hot.render();
+  }
+
+  /**
+   * Private method to perform custom validation logic on the data in the DataHarmonizer instance. This method should be
+   * called as part of the overall validation process after the DataHarmonizer's built-in validation has been performed.
+   *
+   * @private
+   */
+  private doCustomValidation() {
+    const data: DataHarmonizerData = this.dh.getDataObjects();
+    validatePlateWellsForJgi(data).forEach((issue) => {
+      this.setInvalidCell(issue.row, issue.slot, issue.message);
+    });
+  }
+
+
+  /**
+   * Validate the data in the DataHarmonizer instance by applying both the DataHarmonizer's built-in validation logic
+   * and any custom validation logic.
+   */
   async validate() {
+    this.clearCommentsForInvalidCells();
     await this.dh.validate();
+    this.doCustomValidation();
+    this.setCommentsForInvalidCells();
     this.refreshState();
     return this.dh.invalid_cells;
   }
@@ -409,7 +499,9 @@ export default class HarmonizerApi {
   }
 
   setInvalidCells(invalidCells: Record<number, Record<number, string>>) {
+    this.clearCommentsForInvalidCells();
     this.dh.invalid_cells = invalidCells;
+    this.setCommentsForInvalidCells();
     this.dh.hot.render();
   }
 
