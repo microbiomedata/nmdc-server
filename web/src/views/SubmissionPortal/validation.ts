@@ -44,6 +44,9 @@ function getTrimmedString(value: string | number | string[] | undefined) {
  *   filled in column order without gaps (e.g. if C1 is filled, B1 must also be
  *   filled).
  *
+ * See:
+ * - https://jgi.doe.gov/sites/default/files/2025-01/OC_Sequencing_SampleOverview_PlateGuidelines_0.pdf
+ *
  * @param data - The data of the current DataHarmonizer tab to validate
  * @returns An array of validation issues
  */
