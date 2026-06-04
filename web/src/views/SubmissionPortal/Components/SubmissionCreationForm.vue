@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref, } from 'vue';
 import Definitions from '@/definitions';
-import { generateRecord, } from '../store';
+import { createSubmission, } from '../store';
 import { useRouter } from 'vue-router';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
@@ -19,7 +19,7 @@ export default defineComponent({
 
     async function createNewSubmission() {
       if (isTestSubmission.value != null) {
-        const item = await generateRecord(isTestSubmission.value, studyName.value, piEmail.value);
+        const item = await createSubmission(isTestSubmission.value, studyName.value, piEmail.value);
         router?.push({name: 'Submission Summary', params: {id: item.id}});
       }
     }

@@ -17,7 +17,7 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
-import { loadRecord } from './store';
+import { loadSubmission } from './store';
 import { useRoute } from 'vue-router';
 
 export const AppBannerHeightKey = Symbol() as InjectionKey<Ref<number>>;
@@ -42,7 +42,7 @@ export default defineComponent({
 
     function load() {
       const { id } = props;
-      if (id) req.request(() => loadRecord(id));
+      if (id) req.request(() => loadSubmission(id));
       else req.reset();
     }
 

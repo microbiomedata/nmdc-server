@@ -29,8 +29,8 @@ import {
   fetchSuggestionsFromStudyInfo,
   getSubmissionUneditableReason,
   hasChanged,
-  incrementalSaveRecord,
-  incrementalSaveRecordRequest,
+  incrementalSaveSubmission,
+  incrementalSaveSubmissionRequest,
   isOwner,
   isSubmissionValid,
   isTestSubmission,
@@ -186,7 +186,7 @@ const validationTotalCounts = computed(() => Object.fromEntries(
   ])),
 ));
 
-const saveRecord = () => incrementalSaveRecord(props.id);
+const saveRecord = () => incrementalSaveSubmission(props.id);
     // Count is incremented on successful saves. We use a separate ref for showing the success message because we want
     // to not show it when this view first mounts (based on saves that may have happened in other views). And we want
     // to be able to hide it after a delay.
@@ -194,7 +194,7 @@ const saveRecord = () => incrementalSaveRecord(props.id);
     const { start: startHideSuccessMessageTimer } = useTimeoutFn(() => {
       isSaveSuccessMessageVisible.value = false;
     }, 5000);
-    watch(() => incrementalSaveRecordRequest.count.value, () => {
+    watch(() => incrementalSaveSubmissionRequest.count.value, () => {
       isSaveSuccessMessageVisible.value = true;
       startHideSuccessMessageTimer();
     });
@@ -870,7 +870,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
 
           <!-- Show loading indicator -->
           <span
-            v-if="incrementalSaveRecordRequest.loading.value"
+            v-if="incrementalSaveSubmissionRequest.loading.value"
             class="text-center"
           >
             <v-progress-circular

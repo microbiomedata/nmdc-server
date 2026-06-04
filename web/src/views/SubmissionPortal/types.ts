@@ -227,6 +227,32 @@ export interface NmdcAddress {
   country: string;
 }
 
+export interface ValidatedForm {
+  validation: string[] | null;
+}
+
+export interface SenderShippingInfoForm extends ValidatedForm {
+  shipper: NmdcAddress;
+  expectedShippingDate: string | null;
+  shippingConditions: string;
+  sample: string;
+  description: string;
+  experimentalGoals: string;
+  randomization: string;
+  usdaRegulated: boolean | null;
+  permitNumber: string;
+  biosafetyLevel: string;
+  irbOrHipaa: boolean | null;
+  comments: string;
+}
+
+export interface ExternalProtocol {
+  url: string | null;
+  doi: string | null;
+  name: string | null;
+  description: string | null;
+}
+
 export interface Protocols {
   sampleProtocol: SampleProtocol,
   acquisitionProtocol: AcquisitionProtocol,
@@ -238,6 +264,31 @@ export type OmicsProcessingType =
   'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
   // doe facility associated types
   'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
+
+export interface MultiOmicsForm extends ValidatedForm {
+  award: string | null;
+  awardDois: Doi[] | null;
+  dataGenerated: boolean | null;
+  doe: boolean | null;
+  facilities: string[] | null;
+  facilityGenerated: boolean | null;
+  JGIStudyId: string;
+  mgCompatible: boolean | null;
+  mgInterleaved: boolean | null;
+  mtCompatible: boolean | null;
+  mtInterleaved: boolean | null;
+  omicsProcessingTypes: OmicsProcessingType[];
+  otherAward: string | null;
+  ship: boolean | null;
+  studyNumber: string
+  unknownDoi: boolean | null;
+  mpProtocols: Protocols | null;
+  mbProtocols: Protocols | null;
+  mbGcProtocols: Protocols | null;
+  lipProtocols: Protocols | null;
+  nomProtocols: Protocols | null;
+  nomLcProtocols: Protocols | null;
+}
 
 export interface SubmissionPage {
   title: string;
@@ -255,29 +306,42 @@ export interface SampleData {
   validation: SampleMetadataValidationState | null;
 }
 
-export interface SampleEnvironmentForm {
+export interface SampleEnvironmentForm extends ValidatedForm {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  validation: Record<string, any> | null;
 }
 
-//Validation states are null if they have not been checked, 
-//and an object with details if they have been checked and issues were found. 
-//If no issues are found, the object will be empty.
-export interface MetadataSubmission {
-  sampleEnvironmentForm: SampleEnvironmentForm;
-  senderShippingInfoForm: any;
-  templates: string[];
-  studyForm: any;
-  multiOmicsForm: any;
-  sampleData: SampleData;
+export interface Contributor {
+  name: string;
+  orcid: string;
+  roles: string[];
+  permissionLevel: string | null;
 }
 
-export interface MetadataSubmissionRecordSlim {
+export interface StudyFormCreate extends ValidatedForm {
+  studyName: string;
+  piName: string;
+  piEmail: string;
+  piOrcid: string;
+  fundingSources: string[] | null;
+  dataDois: Doi[] | null;
+  publicationDois: Doi[] | null;
+  linkOutWebpage: string[];
+  studyDate: string | null;
+  description: string;
+  notes: string;
+  contributors: Contributor[];
+}
+
+export interface StudyForm extends StudyFormCreate {
+  alternativeNames: string[];
+  GOLDStudyId: string;
+  NCBIBioProjectId: string;
+}
+
+export interface SubmissionMetadataSlim {
   id: string;
   author: User;
   study_name: string;
-  templates: string[];
-  status: SubmissionStatusKey;
   date_last_modified: string;
   created: string;
   is_test_submission: boolean;
@@ -286,17 +350,68 @@ export interface MetadataSubmissionRecordSlim {
   contributors: string[];
 }
 
-export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
+export type SourceClient = 'submission_portal' | 'field_notes' | 'nmdc_edge';
+
+export interface SubmissionMetadataCreate {
+  study_form: StudyFormCreate;
+  source_client: SourceClient | null;
+  is_test_submission: boolean;
+}
+
+export interface SubmissionMetadataPatch {
+  study_form?: StudyForm;
+  permissions?: Record<string, string>;
+}
+
+export interface SubmissionMetadata extends SubmissionMetadataSlim {
   author_orcid: string;
-  metadata_submission: MetadataSubmission;
+  study_form: StudyForm;
   nmdc_study_id: string | null;
   locked_by: User | null;
   lock_updated: string;
   permission_level: string | null;
-  source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
+  source_client: SourceClient | null;
   primary_study_image_url: string | null;
   pi_image_url: string | null;
-  study_form: any;
+}
+
+export interface SubmissionSampleSetListItem {
+  id: string;
+  name: string;
+  templates: string[];
+  status: string;
+  created: string;
+  date_last_modified: string;
+}
+
+export interface SubmissionSampleSetCreate {
+  name: string;
+  templates: string[];
+  status?: string;
+  multi_omics_form: MultiOmicsForm
+  sample_environment_form: SampleEnvironmentForm;
+  sender_shipping_info_form: SenderShippingInfoForm;
+  sample_data: SampleData;
+}
+
+export interface SubmissionSampleSetPatch {
+  name?: string;
+  templates?: string[];
+  multi_omics_form?: MultiOmicsForm;
+  sample_environment_form?: SampleEnvironmentForm;
+  sender_shipping_info_form?: SenderShippingInfoForm;
+  sample_data?: SampleData;
+}
+
+export interface SubmissionSampleSetStatusPatch {
+  status: string;
+}
+
+export interface SubmissionSampleSet extends SubmissionSampleSetListItem {
+  multi_omics_form: MultiOmicsForm;
+  sample_environment_form: SampleEnvironmentForm;
+  sender_shipping_info_form: SenderShippingInfoForm;
+  sample_data: SampleData;
 }
 
 export interface PaginatedResponse<T> {

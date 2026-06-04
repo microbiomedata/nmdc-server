@@ -66,7 +66,7 @@ export default defineComponent({
   },
   emits: [
     /**
-     * Emitted when the upload request completes successfully. Will be called with the updated MetadataSubmissionRecord.
+     * Emitted when the upload request completes successfully. Will be called with the updated submission.
      */
     'on-upload-success',
     /**

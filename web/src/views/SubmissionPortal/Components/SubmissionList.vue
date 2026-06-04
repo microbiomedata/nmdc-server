@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, ref, watch, onMounted,
+  defineComponent, ref, watch,
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
@@ -13,16 +13,11 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
+import { addSubmissionRole, deleteSubmission } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
-  AllowedStatusTransitions,
-  MetadataSubmissionRecord,
-  MetadataSubmissionRecordSlim,
   PaginatedResponse,
-  StatusOption,
-  SubmissionStatusKey,
-  SubmissionEditorRole,
+  SubmissionMetadataSlim,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
@@ -68,9 +63,9 @@ export default defineComponent({
       search: null,
     });
     const isDeleteDialogOpen = ref(false);
-    const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const deleteDialogSubmission = ref<SubmissionMetadataSlim | null>(null);
     const isReviewerAssignmentDialogOpen = ref(false);
-    const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
     const currentUser = stateRefs.user;
     const isTestFilter = ref(null);
     const testFilterValues = [
@@ -79,19 +74,20 @@ export default defineComponent({
       { text: 'Hide test submissions', val: false }];
     const searchText = ref('');
 
-    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
-      return api.listRecords(params, isTestFilter.value,searchText.value);
+    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<SubmissionMetadataSlim>> {
+      return api.listSubmissions(params, isTestFilter.value, searchText.value);
     }
 
-    function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === 'Released' ? 'success' : 'default';
-      return {
-        text: SubmissionStatusEnum[item.status]?.title || item.status,
-        color,
-      };
-    }
+    // TODO: this will need to move to the sample set display component when available
+    // function getStatus(item: { status: SubmissionStatusKey }) {
+    //   const color = item.status === 'Released' ? 'success' : 'default';
+    //   return {
+    //     text: SubmissionStatusEnum[item.status]?.title || item.status,
+    //     color,
+    //   };
+    // }
 
-    async function resume(item: MetadataSubmissionRecord) {
+    async function resume(item: SubmissionMetadataSlim) {
       router?.push({ name: 'Submission Summary', params: { id: item.id } });
     }
 
@@ -110,17 +106,6 @@ export default defineComponent({
 
     async function checkSubmissionEditable(submissionId: string): Promise<void> {
       submissionEditableState.value[submissionId] = await editableByStatus(submissionId);
-    }
-
-    const statusUpdatingSubmissionId = ref<string | null>(null);
-    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      statusUpdatingSubmissionId.value = item.id;
-      try {
-        await updateSubmissionStatus(item.id, newStatus);
-        await submission.refetch();
-      } finally {
-        statusUpdatingSubmissionId.value = null;
-      }
     }
 
     function updateTableOptions(newOptions: any) {
@@ -149,14 +134,14 @@ export default defineComponent({
       }
     }, { deep: false });
 
-    function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
+    function handleOpenDeleteDialog(item: SubmissionMetadataSlim | null) {
       deleteDialogSubmission.value = item;
       if (deleteDialogSubmission.value) {
         isDeleteDialogOpen.value = true;
       }
     }
 
-    async function handleDelete(item: MetadataSubmissionRecordSlim | null) {
+    async function handleDelete(item: SubmissionMetadataSlim | null) {
       if (!item) {
         return;
       }
@@ -167,7 +152,7 @@ export default defineComponent({
     }
 
     const reviewerOrcid = ref('');
-    function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
+    function openReviewerDialog(item: SubmissionMetadataSlim | null) {
       isReviewerAssignmentDialogOpen.value = true;
       selectedSubmission.value = item;
     }
@@ -182,76 +167,78 @@ export default defineComponent({
       isReviewerAssignmentDialogOpen.value = false;
     }
 
+    // TODO: this will need to move to the sample set display component when available
     // get all status transitions from the api
-    const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
-    onMounted(async () => {
-      allowedStatusTransitions.value = await api.getAllStatusTransitions();
-    });
+    // const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
+    // onMounted(async () => {
+    //   allowedStatusTransitions.value = await api.getAllStatusTransitions();
+    // });
 
-    function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
-      if (!currentUser.value?.orcid) {
-        return false;
-      }
-      return item.reviewers.includes(currentUser.value.orcid);
-    }
+    // function isReviewerForSubmission(item: SubmissionMetadataSlim): boolean {
+    //   if (!currentUser.value?.orcid) {
+    //     return false;
+    //   }
+    //   return item.reviewers.includes(currentUser.value.orcid);
+    // }
 
-    function isAnyContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+    function isAnyContributorForSubmission(item: SubmissionMetadataSlim): boolean {
       if (!currentUser.value?.orcid) {
         return false;
       }
       return item.contributors.includes(currentUser.value.orcid);
     }
 
-    function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
-      const excludeFromAll: SubmissionStatusKey[] = [
-        'InProgress',
-        'SubmittedPendingReview',
-      ];
-
-      // Admins can see all statuses and select any that aren't user invoked
-      if (dropdownType === 'admin') {
-        return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
-          .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
-          .map((key) => ({
-            value: key,
-            title: SubmissionStatusEnum[key].title,
-          }));
-      }
-
-      // Non-admins can only see and select allowed transitions
-      const user_transitions = transitions[dropdownType] || {};
-      const allowedStatusTransitions = user_transitions[currentStatus] || [];
-
-      // Include the current status so it can be displayed
-      const statusesToShow = [...allowedStatusTransitions];
-      if (!statusesToShow.includes(currentStatus)) {
-        statusesToShow.push(currentStatus);
-      }
-
-      // Return allowed transitions
-      return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
-        .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
-        .map((key) => ({
-          value: key,
-          title: SubmissionStatusEnum[key].title,
-        }));
-    }
+    // TODO: this will need to move to the sample set display component when available
+    // function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
+    //   const excludeFromAll: SubmissionStatusKey[] = [
+    //     'InProgress',
+    //     'SubmittedPendingReview',
+    //   ];
+    //
+    //   // Admins can see all statuses and select any that aren't user invoked
+    //   if (dropdownType === 'admin') {
+    //     return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
+    //       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
+    //       .map((key) => ({
+    //         value: key,
+    //         title: SubmissionStatusEnum[key].title,
+    //       }));
+    //   }
+    //
+    //   // Non-admins can only see and select allowed transitions
+    //   const user_transitions = transitions[dropdownType] || {};
+    //   const allowedStatusTransitions = user_transitions[currentStatus] || [];
+    //
+    //   // Include the current status so it can be displayed
+    //   const statusesToShow = [...allowedStatusTransitions];
+    //   if (!statusesToShow.includes(currentStatus)) {
+    //     statusesToShow.push(currentStatus);
+    //   }
+    //
+    //   // Return allowed transitions
+    //   return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
+    //     .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
+    //     .map((key) => ({
+    //       value: key,
+    //       title: SubmissionStatusEnum[key].title,
+    //     }));
+    // }
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
-    function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
-      if (!allowedStatusTransitions.value) {
-        return [];
-      }
-      let dropdown_type: 'reviewer' | 'admin';
-      if (currentUser.value?.is_admin) {
-        dropdown_type = 'admin';
-      } else if (isReviewerForSubmission(item)) {
-        dropdown_type = 'reviewer';
-      } else {
-        return [];
-      }
-      return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
-    }
+    // function getFormattedStatusTransitions(item: SubmissionMetadataSlim): StatusOption[] {
+    //   if (!allowedStatusTransitions.value) {
+    //     return [];
+    //   }
+    //   let dropdown_type: 'reviewer' | 'admin';
+    //   if (currentUser.value?.is_admin) {
+    //     dropdown_type = 'admin';
+    //   } else if (isReviewerForSubmission(item)) {
+    //     dropdown_type = 'reviewer';
+    //   } else {
+    //     return [];
+    //   }
+    //   return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
+    // }
 
     return {
       HARMONIZER_TEMPLATES,
@@ -261,13 +248,11 @@ export default defineComponent({
       currentUser,
       assignReviewerRequest,
       isReviewerAssignmentDialogOpen,
-      isReviewerForSubmission,
       reviewerOrcid,
       IconBar,
       IntroBlurb,
       TitleBanner,
       submissionEditableState,
-      getStatus,
       resume,
       addReviewer,
       handleDelete,
@@ -277,9 +262,6 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
-      statusUpdatingSubmissionId,
-      getFormattedStatusTransitions,
-      handleStatusChange,
       SubmissionStatusEnum,
       isAnyContributorForSubmission,
       updateTableOptions,
@@ -413,34 +395,13 @@ export default defineComponent({
             <template #[`item.date_last_modified`]="{ item }">
               {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
             </template>
-            <template #[`item.status`]="{ item }">
-              <div class="d-flex align-center">
-                <v-select
-                  v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
-                  :model-value="item.status"
-                  :items="getFormattedStatusTransitions(item)"
-                  :loading="statusUpdatingSubmissionId === item.id"
-                  density="compact"
-                  variant="underlined"
-                  hide-details
-                  :disabled="item.status === 'InProgress'"
-                  @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
-                />
-                <v-chip
-                  v-else
-                  :color="getStatus(item as MetadataSubmissionRecord).color"
-                >
-                  {{ getStatus(item as MetadataSubmissionRecord).text }}
-                </v-chip>
-              </div>
-            </template>
             <template #[`item.action`]="{ item }">
               <div class="d-flex align-center">
                 <v-spacer />
                 <v-btn
                   size="small"
                   color="primary"
-                  @click="() => resume(item as MetadataSubmissionRecord)"
+                  @click="() => resume(item)"
                 >
                   <span v-if="submissionEditableState[item.id] && isAnyContributorForSubmission(item)">
                     Resume

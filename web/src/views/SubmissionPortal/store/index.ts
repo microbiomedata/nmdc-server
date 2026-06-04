@@ -1,4 +1,4 @@
-import { computed, reactive, Ref, ref, watch, } from 'vue';
+import { computed, reactive, ref, watch, } from 'vue';
 import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
@@ -13,8 +13,6 @@ import {
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
-  MetadataSubmission,
-  MetadataSubmissionRecord,
   MetadataSuggestion,
   MetadataSuggestionRequest,
   NmdcAddress,
@@ -23,6 +21,8 @@ import {
   SampleMetadataValidationState,
   SubmissionEditorRole,
   SubmissionPage,
+  SubmissionMetadata,
+  SubmissionMetadataPatch,
   SubmissionStatusEnum,
   SubmissionStatusKey,
   SuggestionType,
@@ -85,7 +85,7 @@ function isStatusEditable(status: SubmissionStatusKey): boolean {
 
 async function editableByStatus(submissionId: string): Promise<boolean> {
   const editableStatuses: SubmissionStatusKey[] = ['InProgress', 'UpdatesRequired'];
-  const sampleSets = await api.getSampleSetsForSubmission(submissionId);
+  const sampleSets = await api.listSubmissionSampleSets(submissionId);
   return sampleSets.some((sampleSet: any) => editableStatuses.includes(sampleSet.status));
 }
 
@@ -638,17 +638,6 @@ watch(templateList, (newList, oldList) => {
   hasChanged.value += 1;
 });
 
-// *** IMPORTANT ***
-// If you add a new field here, check whether the list of fields in the `can_save_submission` function
-// in `nmdc_server/api.py` also needs to be updated.
-const payloadObject: Ref<MetadataSubmission> = computed(() => ({
-  sampleEnvironmentForm,
-  senderShippingInfoForm,
-  templates: templateList.value,
-  studyForm,
-  multiOmicsForm,
-  sampleData,
-}));
 
 function templateHasData(templateName: string = ''): boolean {
   //if DH hasn't been touched at all then there's no data nd it's ok edit
@@ -708,16 +697,13 @@ function getPermissions(): Record<string, SubmissionEditorRole> {
   return permissions;
 }
 
-async function submit(id: string, status?: SubmissionStatusKey) {
+// TODO: This needs to be updated to work on a single sample set
+async function submit(_id: string, _status?: SubmissionStatusKey) {
   const uneditableReason = getSubmissionUneditableReason('owner');
   if (uneditableReason) {
     throw new Error(`Unable to submit: ${ uneditableReason }`);
   }
-  let record = await api.updateRecord(id, payloadObject.value);
-  if (status) {
-    record = await api.updateSubmissionStatus(id, status);
-  }
-  updateStateFromRecord(record);
+  throw new Error("Not implemented yet");
 }
 
 function reset() {
@@ -734,87 +720,74 @@ function reset() {
   piImageUrl.value = null;
 }
 
-const incrementalSaveRecordRequest = useRequest();
-async function incrementalSaveRecord(id: string): Promise<void> {
-  const uneditableReason = getSubmissionUneditableReason('metadata_contributor');
+const incrementalSaveSubmissionRequest = useRequest();
+async function incrementalSaveSubmission(id: string): Promise<void> {
+  const uneditableReason = getSubmissionUneditableReason('editor');
   if (uneditableReason) {
     return;
   }
 
-  let payload: Partial<MetadataSubmission> = {};
-  let permissions: Record<string, SubmissionEditorRole> | undefined;
+  let submissionPayload: SubmissionMetadataPatch | null = null;
   if (isOwner()) {
-    payload = payloadObject.value;
-    permissions = getPermissions();
-  } else if (hasMinimumPermissionLevel(_permissionLevel, "editor")) {
-    payload = payloadObject.value;
-  } else if (hasMinimumPermissionLevel(_permissionLevel, "metadata_contributor")) {
-    payload = {
-      sampleData: payloadObject.value.sampleData,
+    submissionPayload = {
+      study_form: studyForm,
+      permissions: getPermissions(),
     };
+  } else if (hasMinimumPermissionLevel(_permissionLevel, 'editor')) {
+    submissionPayload = {
+      study_form: studyForm,
+    };
+  } else {
+    return;
   }
 
   if (hasChanged.value) {
-    const response = await incrementalSaveRecordRequest.request(
-      () => api.updateRecord(id, payload, permissions)
+    const response = await incrementalSaveSubmissionRequest.request(
+      () => api.updateSubmission(id, submissionPayload)
     );
     if (response) {
-      updateStateFromRecord(response);
+      await updateStateFromSubmission(response);
     }
+    hasChanged.value = 0;
     return;
   }
   hasChanged.value = 0;
 }
 
-async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '', piEmailStr: string = ''): Promise<MetadataSubmissionRecord> {
+async function createSubmission(isTestSubmission: boolean, studyName: string, piEmail: string): Promise<SubmissionMetadata> {
   reset();
-  studyForm.studyName = studyNameStr;
-  studyForm.piEmail = piEmailStr;
-  const record = await api.createRecord(payloadObject.value, isTestSubBool);
-  updateStateFromRecord(record);
-  return record;
+  const submission = await api.createSubmission({
+    study_form: {
+      ...studyFormDefault,
+      studyName,
+      piEmail,
+    },
+    source_client: 'submission_portal',
+    is_test_submission: isTestSubmission,
+  });
+  await updateStateFromSubmission(submission);
+  return submission;
 }
 
-async function updateStateFromRecord(record: MetadataSubmissionRecord) {
-  const sampleSets = await api.getSampleSetsForSubmission(record.id);
-  if (sampleSets && sampleSets.length > 0) {
-    //default to first sample set for now
-    const firstSampleSetId = sampleSets[0].id;
-    const fullSampleSet = await api.getSampleSet(firstSampleSetId);
-    if (fullSampleSet) {
-      if (!isEqual(sampleEnvironmentForm, fullSampleSet.sample_environment_form)) {
-        Object.assign(sampleEnvironmentForm, fullSampleSet.sample_environment_form);
-      }
-      if (!isEqual(multiOmicsForm, fullSampleSet.multi_omics_form)) {
-        Object.assign(multiOmicsForm, fullSampleSet.multi_omics_form);
-      }
-      if (!isEqual(senderShippingInfoForm, fullSampleSet.sender_shipping_info_form)) {
-        Object.assign(senderShippingInfoForm, fullSampleSet.sender_shipping_info_form);
-      }
-      if (!isEqual(sampleData, fullSampleSet.sample_data)) {
-        Object.assign(sampleData, fullSampleSet.sample_data);
-      }
-      status.value = fullSampleSet.status;
-    }
+async function updateStateFromSubmission(submission: SubmissionMetadata) {
+  if (!isEqual(studyForm, submission.study_form)) {
+    Object.assign(studyForm, submission.study_form);
   }
-  if (!isEqual(studyForm, record.study_form)) {
-    Object.assign(studyForm, record.study_form);
+  createdDate.value = new Date(submission.created + 'Z');
+  modifiedDate.value = new Date(submission.date_last_modified + 'Z');
+  if (submission.permission_level !== null) {
+    _permissionLevel = (submission.permission_level as SubmissionEditorRole);
   }
-  createdDate.value = new Date(record.created + 'Z');
-  modifiedDate.value = new Date(record.date_last_modified + 'Z');
-  if (record.permission_level !== null) {
-    _permissionLevel = (record.permission_level as SubmissionEditorRole);
-  }
-  studyName.value = record.study_name;
-  isTestSubmission.value = record.is_test_submission;
-  primaryStudyImageUrl.value = record.primary_study_image_url;
-  piImageUrl.value = record.pi_image_url;
+  studyName.value = submission.study_name;
+  isTestSubmission.value = submission.is_test_submission;
+  primaryStudyImageUrl.value = submission.primary_study_image_url;
+  piImageUrl.value = submission.pi_image_url;
   hasChanged.value = 0;
-  author.value = record.author;
-  submissionLockedBy.value = record.locked_by;
+  author.value = submission.author;
+  submissionLockedBy.value = submission.locked_by;
 }
 
-async function lockRecord(id: string) {
+async function lockSubmission(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
     submissionLockedBy.value = lockResponse.locked_by || null;
@@ -831,7 +804,7 @@ async function lockRecord(id: string) {
   }
 }
 
-async function unlockRecord(id: string) {
+async function unlockSubmission(id: string) {
   try {
     await api.unlockSubmission(id);
     submissionLockedBy.value = null;
@@ -840,13 +813,19 @@ async function unlockRecord(id: string) {
   }
 }
 
-async function loadRecord(id: string) {
+async function loadSubmission(id: string) {
   reset();
-  const val = await api.getRecord(id);
-  updateStateFromRecord(val);
+  const submission = await api.getSubmission(id);
+  await updateStateFromSubmission(submission);
 }
 
-watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
+watch([
+  senderShippingInfoForm,
+  studyForm,
+  multiOmicsForm,
+  sampleEnvironmentForm,
+  sampleData,
+], () => { hasChanged.value += 1; }, { deep: true });
 
 function mergeSampleData(key: string | undefined, data: any[]) {
   if (!key) {
@@ -967,7 +946,7 @@ export {
   submissionLockedBy,
   loggedInUserHasLock,
   isTestSubmission,
-  incrementalSaveRecordRequest,
+  incrementalSaveSubmissionRequest,
   primaryStudyImageUrl,
   piImageUrl,
   metadataSuggestions,
@@ -979,11 +958,11 @@ export {
   fetchSuggestionsFromStudyInfoRequest,
   /* functions */
   getSubmissionUneditableReason,
-  incrementalSaveRecord,
-  generateRecord,
-  loadRecord,
-  lockRecord,
-  unlockRecord,
+  incrementalSaveSubmission,
+  createSubmission,
+  loadSubmission,
+  lockSubmission,
+  unlockSubmission,
   submit,
   mergeSampleData,
   isOwner,
