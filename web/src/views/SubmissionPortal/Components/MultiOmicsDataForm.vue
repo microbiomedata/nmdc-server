@@ -6,9 +6,7 @@ import doiProviderValues from '@/schema';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   addAwardDoi,
-  checkDoiFormat,
   checkJGITemplates,
-  multiOmicsAssociations,
   multiOmicsForm,
   removeAwardDoi,
   templateHasData,
@@ -19,6 +17,7 @@ import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import { checkDoiFormat } from '@/views/SubmissionPortal/utils.ts';
 
 const OTHER = 'OTHER';
 
@@ -124,7 +123,6 @@ export default defineComponent({
       revalidate,
       formRef,
       multiOmicsForm,
-      multiOmicsAssociations,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,

@@ -5,9 +5,7 @@ import {
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
-import {
-  SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
-} from '../store';
+import { SubmissionStatusEnum, editableByStatus } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
@@ -23,6 +21,8 @@ import {
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
   StatusOption,
+  SubmissionStatusKey,
+  SubmissionEditorRole,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
@@ -200,6 +200,41 @@ export default defineComponent({
         return false;
       }
       return item.contributors.includes(currentUser.value.orcid);
+    }
+
+    function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
+      const excludeFromAll: SubmissionStatusKey[] = [
+        'InProgress',
+        'SubmittedPendingReview',
+      ];
+
+      // Admins can see all statuses and select any that aren't user invoked
+      if (dropdownType === 'admin') {
+        return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
+          .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
+          .map((key) => ({
+            value: key,
+            title: SubmissionStatusEnum[key].title,
+          }));
+      }
+
+      // Non-admins can only see and select allowed transitions
+      const user_transitions = transitions[dropdownType] || {};
+      const allowedStatusTransitions = user_transitions[currentStatus] || [];
+
+      // Include the current status so it can be displayed
+      const statusesToShow = [...allowedStatusTransitions];
+      if (!statusesToShow.includes(currentStatus)) {
+        statusesToShow.push(currentStatus);
+      }
+
+      // Return allowed transitions
+      return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
+        .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
+        .map((key) => ({
+          value: key,
+          title: SubmissionStatusEnum[key].title,
+        }));
     }
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status

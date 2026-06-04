@@ -227,6 +227,18 @@ export interface NmdcAddress {
   country: string;
 }
 
+export interface Protocols {
+  sampleProtocol: SampleProtocol,
+  acquisitionProtocol: AcquisitionProtocol,
+  dataProtocol: DataProtocol,
+}
+
+export type OmicsProcessingType =
+  // non-doe types
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  // doe facility associated types
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
+
 export interface SubmissionPage {
   title: string;
   link: RouteLocationRaw;
@@ -324,7 +336,8 @@ export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor
 
 export type UneditableReason = 'locked_by_other' | 'insufficient_permissions' | 'uneditable_status';
 
-export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
+export const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
+export type SubmissionStatusKey = keyof typeof SubmissionStatusEnum;
 
 export type AllowedStatusTransitions = Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
 

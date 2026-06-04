@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineProps, computed, ref } from 'vue';
-import { multiOmicsForm, checkDoiFormat } from '../store';
+import { multiOmicsForm } from '../store';
+import { checkDoiFormat } from '@/views/SubmissionPortal/utils.ts';
 
 type DataType =
   'mpProtocols' |

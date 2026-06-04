@@ -1,16 +1,12 @@
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { computed, reactive, Ref, ref, watch, } from 'vue';
 import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
 import {
-  AcquisitionProtocol,
-  AllowedStatusTransitions,
   DATA_MG,
   DATA_MG_INTERLEAVED,
   DATA_MT,
   DATA_MT_INTERLEAVED,
-  DataProtocol,
   Doi,
   EMSL,
   HARMONIZER_TEMPLATES,
@@ -22,14 +18,15 @@ import {
   MetadataSuggestion,
   MetadataSuggestionRequest,
   NmdcAddress,
-  PermissionTitle,
+  OmicsProcessingType,
+  Protocols,
   SampleMetadataValidationState,
-  SampleProtocol,
   SubmissionEditorRole,
   SubmissionPage,
+  SubmissionStatusEnum,
   SubmissionStatusKey,
-  SuggestionsMode,
   SuggestionType,
+  SuggestionsMode,
   UneditableReason,
 } from '@/views/SubmissionPortal/types';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
@@ -37,12 +34,6 @@ import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
 import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
 import { stateRefs } from '@/store';
-
-const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
-  Viewer: 'viewer',
-  'Metadata Contributor': 'metadata_contributor',
-  Editor: 'editor',
-};
 
 const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
   owner: 4,
@@ -52,45 +43,8 @@ const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
   viewer: 1,
 };
 
-//use schema enum to define submission status
-const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
 const status = ref<SubmissionStatusKey>('InProgress');
 const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title);
-
-function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
-  const excludeFromAll: SubmissionStatusKey[] = [
-    'InProgress',
-    'SubmittedPendingReview',
-  ];
-
-  // Admins can see all statuses and select any that aren't user invoked
-  if (dropdownType === 'admin') {
-    return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
-      .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
-      .map((key) => ({
-        value: key,
-        title: SubmissionStatusEnum[key].title,
-      }));
-  }
-
-  // Non-admins can only see and select allowed transitions
-  const user_transitions = transitions[dropdownType] || {};
-  const allowedStatusTransitions = user_transitions[currentStatus] || [];
-
-  // Include the current status so it can be displayed
-  const statusesToShow = [...allowedStatusTransitions];
-  if (!statusesToShow.includes(currentStatus)) {
-    statusesToShow.push(currentStatus);
-  }
-
-  // Return allowed transitions
-  return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
-    .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
-    .map((key) => ({
-      value: key,
-      title: SubmissionStatusEnum[key].title,
-    }));
-}
 
 const studyName = ref('');
 const createdDate = ref<Date | null>(null);
@@ -369,20 +323,9 @@ const studyFormDefault = {
 };
 const studyForm = reactive(clone(studyFormDefault));
 
-interface Protocols {
-  sampleProtocol: SampleProtocol,
-  acquisitionProtocol: AcquisitionProtocol,
-  dataProtocol: DataProtocol,
-}
-
 /**
  * Multi-Omics Form Step
  */
-export type OmicsProcessingType =
-  // non-doe types
-  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
-  // doe facility associated types
-  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
 const multiOmicsFormDefault = {
   award: null as null | string,
   awardDois: [] as Doi[] | null,
@@ -409,12 +352,6 @@ const multiOmicsFormDefault = {
   validation: null as null | string[],
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
-const multiOmicsAssociationsDefault = {
-  emsl: false,
-  jgi: false,
-  doi: false,
-};
-const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 
 function addAwardDoi() {
   if (!Array.isArray(multiOmicsForm.awardDois)) {
@@ -433,10 +370,6 @@ function removeAwardDoi(i: number) {
   if ((multiOmicsForm.facilities?.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
     multiOmicsForm.awardDois.splice(i, 1);
   }
-}
-
-function checkDoiFormat(v: string): string | boolean {
-  return /^(?:doi:)?10.\d{2,9}\/.*$/.test(v) || 'DOI must be in the format "10.xxxx/xxxxx"';
 }
 
 // When "Have data already been generated for your study?" changes, reset the answers to dependent questions
@@ -775,11 +708,6 @@ function getPermissions(): Record<string, SubmissionEditorRole> {
   return permissions;
 }
 
-const submitPayload = computed(() => {
-  const value = JSON.stringify(payloadObject.value, null, 2);
-  return value;
-});
-
 async function submit(id: string, status?: SubmissionStatusKey) {
   const uneditableReason = getSubmissionUneditableReason('owner');
   if (uneditableReason) {
@@ -797,7 +725,6 @@ function reset() {
   Object.assign(senderShippingInfoForm, senderShippingInfoFormDefault);
   Object.assign(studyForm, studyFormDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
-  Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   Object.assign(sampleEnvironmentForm, sampleEnvironmentFormDefault);
   Object.assign(sampleData, sampleDataDefault);
   status.value = 'InProgress';
@@ -1019,18 +946,15 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
   multiOmicsForm,
-  multiOmicsAssociations,
   addAwardDoi,
   removeAwardDoi,
   sampleData,
   senderShippingInfoForm,
   senderShippingInfoFormDefault,
   studyForm,
-  submitPayload,
   sampleEnvironmentForm,
   templateList,
   hasChanged,
@@ -1069,8 +993,6 @@ export {
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,
-  checkDoiFormat,
-  formatStatusTransitions,
   setTabValidated,
   setTabInvalidCells,
   resetSampleMetadataValidation,

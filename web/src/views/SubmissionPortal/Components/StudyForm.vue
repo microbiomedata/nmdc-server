@@ -4,14 +4,12 @@ import { computed, defineComponent, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  checkDoiFormat,
   isOwner,
-  permissionTitleToDbValueMap,
   piImageUrl,
   primaryStudyImageUrl,
   studyForm,
 } from '../store';
-import { PermissionTitle } from '@/views/SubmissionPortal/types';
+import { PermissionTitle, SubmissionEditorRole } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import ImageUpload from './ImageUpload.vue';
@@ -19,6 +17,13 @@ import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageSection from '@/components/Presentation/PageSection.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import { checkDoiFormat } from '@/views/SubmissionPortal/utils.ts';
+
+const PERMISSION_TITLE_TO_DB_VALUE_MAP: Record<PermissionTitle, SubmissionEditorRole> = {
+  Viewer: 'viewer',
+  'Metadata Contributor': 'metadata_contributor',
+  Editor: 'editor',
+};
 
 export default defineComponent({
   components: {
@@ -114,10 +119,10 @@ export default defineComponent({
     };
 
     const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
-    Object.keys(permissionTitleToDbValueMap).forEach((title) => {
+    Object.keys(PERMISSION_TITLE_TO_DB_VALUE_MAP).forEach((title) => {
       permissionLevelChoices.value.push({
         title,
-        value: permissionTitleToDbValueMap[title as PermissionTitle],
+        value: PERMISSION_TITLE_TO_DB_VALUE_MAP[title as PermissionTitle],
       });
     });
 
