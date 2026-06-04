@@ -13,6 +13,18 @@ describe('validatePlateWellsForJgi', () => {
     expect(issues).toEqual([]);
   });
 
+  it('flags rows with no well ID', () => {
+    const issues = validatePlateWellsForJgi([
+      { cont_type: 'plate', container_name: 'plate-1', cont_well: '' },
+      { cont_type: 'plate', container_name: 'plate-1' },
+    ]);
+
+    expect(issues).toEqual([
+      { row: 0, slot: 'cont_well', message: 'Plate position is required if container type is "plate"' },
+      { row: 1, slot: 'cont_well', message: 'Plate position is required if container type is "plate"' },
+    ]);
+  });
+
   it('flags invalid well IDs', () => {
     const issues = validatePlateWellsForJgi([
       { cont_type: 'plate', container_name: 'plate-1', cont_well: 'Z99' },
@@ -72,11 +84,11 @@ describe('validatePlateWellsForJgi', () => {
     ]);
   });
 
-  it('ignores non-plate rows and blank wells', () => {
+  it('ignores non-plate rows', () => {
     const issues = validatePlateWellsForJgi([
       { cont_type: 'tube', container_name: 'tube-1', cont_well: 'Z99' },
-      { cont_type: 'plate', container_name: 'plate-1', cont_well: '' },
-      { cont_type: 'plate', container_name: 'plate-1' },
+      { cont_type: 'tube', container_name: 'tube-2', cont_well: '' },
+      { cont_type: 'tube', container_name: 'tube-3' },
     ]);
 
     expect(issues).toEqual([]);

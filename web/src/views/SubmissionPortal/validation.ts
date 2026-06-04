@@ -62,7 +62,8 @@ export function validatePlateWellsForJgi(data: DataHarmonizerData): ValidationIs
     }
 
     const contWell = getTrimmedString(row.cont_well);
-    if (!contWell) {
+    if (contWell === '') {
+      issues.push({ row: rowIndex, slot: CONT_WELL_SLOT, message: 'Plate position is required if container type is "plate"' });
       return;
     }
 
