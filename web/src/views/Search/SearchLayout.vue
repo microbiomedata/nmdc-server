@@ -262,6 +262,67 @@ const gatedEnvironmentVisConditions = useClockGate(
                         </v-chip>
                       </template>
                     </div>
+                    <v-card
+                      flat
+                      class="pa-4 mt-2"
+                    >
+                      <v-divider />
+                      <SearchResults
+                        disable-navigate-on-click
+                        disable-pagination
+                        :count="props.result.children.length"
+                        :icon="studyType.icon"
+                        :items-per-page="props.result.children.length"
+                        :results="props.result.children"
+                        :page="1"
+                        :loading="false"
+                        @selected="$router.push({ name: 'Study', params: { id: $event} })"
+                      >
+                        <template #action="{ result }">
+                          <v-list-item-action>
+                            <v-checkbox-btn
+                              :disabled="studyCheckboxState.includes(props.result.id)"
+                              :model-value="studyCheckboxState"
+                              :value="result.id"
+                              @click.stop
+                              @change="setChecked($event.target.checked, result.id)"
+                            />
+                          </v-list-item-action>
+                        </template>
+
+                        <template #action-right="{ result }">
+                          <v-list-item-action>
+                            <v-btn
+                              icon
+                              variant="plain"
+                              size="large"
+                              :to="{ name: 'Study', params: { id: result.id } }"
+                            >
+                              <v-icon>
+                                mdi-chevron-right
+                              </v-icon>
+                            </v-btn>
+                          </v-list-item-action>
+                        </template>
+                        <template #item-content="childProps">
+                          <div v-if="childProps.result.omics_processing_counts">
+                            <template
+                              v-for="item in childProps.result.omics_processing_counts"
+                            >
+                              <v-chip
+                                v-if="item.count"
+                                :key="item.type"
+                                size="small"
+                                class="mr-2 my-1"
+                                @click.stop="selectStudyAndOmics(childProps.result.id, item.type)"
+                              >
+                                {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                              </v-chip>
+                            </template>
+                          </div>
+                        </template>
+                      </SearchResults>
+                    </v-card>
                   </template>
                 </SearchResults>
               </v-tabs-window-item>
