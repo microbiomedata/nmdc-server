@@ -124,13 +124,19 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
-function editableByStatus(status: SubmissionStatusKey): boolean {
+function isStatusEditable(status: SubmissionStatusKey): boolean {
   const editableStatuses: SubmissionStatusKey[] = ['InProgress', 'UpdatesRequired'];
   return editableStatuses.includes(status);
 }
 
+async function editableByStatus(submissionId: string): Promise<boolean> {
+  const editableStatuses: SubmissionStatusKey[] = ['InProgress', 'UpdatesRequired'];
+  const sampleSets = await api.getSampleSetsForSubmission(submissionId);
+  return sampleSets.some((sampleSet: any) => editableStatuses.includes(sampleSet.status));
+}
+
 function canEditSubmissionByStatus(): boolean {
-  return editableByStatus(status.value);
+  return isStatusEditable(status.value);
 }
 
 /**
@@ -842,25 +848,33 @@ async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '',
   return record;
 }
 
-function updateStateFromRecord(record: MetadataSubmissionRecord) {
-  if (!isEqual(sampleEnvironmentForm, record.metadata_submission.sampleEnvironmentForm)) {
-    Object.assign(sampleEnvironmentForm, record.metadata_submission.sampleEnvironmentForm);
+async function updateStateFromRecord(record: MetadataSubmissionRecord) {
+  const sampleSets = await api.getSampleSetsForSubmission(record.id);
+  if (sampleSets && sampleSets.length > 0) {
+    //default to first sample set for now
+    const firstSampleSetId = sampleSets[0].id;
+    const fullSampleSet = await api.getSampleSet(firstSampleSetId);
+    if (fullSampleSet) {
+      if (!isEqual(sampleEnvironmentForm, fullSampleSet.sample_environment_form)) {
+        Object.assign(sampleEnvironmentForm, fullSampleSet.sample_environment_form);
+      }
+      if (!isEqual(multiOmicsForm, fullSampleSet.multi_omics_form)) {
+        Object.assign(multiOmicsForm, fullSampleSet.multi_omics_form);
+      }
+      if (!isEqual(senderShippingInfoForm, fullSampleSet.sender_shipping_info_form)) {
+        Object.assign(senderShippingInfoForm, fullSampleSet.sender_shipping_info_form);
+      }
+      if (!isEqual(sampleData, fullSampleSet.sample_data)) {
+        Object.assign(sampleData, fullSampleSet.sample_data);
+      }
+      status.value = fullSampleSet.status;
+    }
   }
-  if (!isEqual(studyForm, record.metadata_submission.studyForm)) {
-    Object.assign(studyForm, record.metadata_submission.studyForm);
-  }
-  if (!isEqual(multiOmicsForm, record.metadata_submission.multiOmicsForm)) {
-    Object.assign(multiOmicsForm, record.metadata_submission.multiOmicsForm);
-  }
-  if (!isEqual(senderShippingInfoForm, record.metadata_submission.senderShippingInfoForm)) {
-    Object.assign(senderShippingInfoForm, record.metadata_submission.senderShippingInfoForm);
-  }
-   if (!isEqual(sampleData, record.metadata_submission.sampleData)) {
-    Object.assign(sampleData, record.metadata_submission.sampleData);
+  if (!isEqual(studyForm, record.study_form)) {
+    Object.assign(studyForm, record.study_form);
   }
   createdDate.value = new Date(record.created + 'Z');
   modifiedDate.value = new Date(record.date_last_modified + 'Z');
-  status.value = record.status;
   if (record.permission_level !== null) {
     _permissionLevel = (record.permission_level as SubmissionEditorRole);
   }

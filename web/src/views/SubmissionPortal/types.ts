@@ -284,6 +284,7 @@ export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
   primary_study_image_url: string | null;
   pi_image_url: string | null;
+  study_form: any;
 }
 
 export interface PaginatedResponse<T> {

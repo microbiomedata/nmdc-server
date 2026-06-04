@@ -106,6 +106,12 @@ export default defineComponent({
     applySortOptions();
     const assignReviewerRequest = useRequest();
 
+    const submissionEditableState = ref<Record<string, boolean>>({});
+
+    async function checkSubmissionEditable(submissionId: string): Promise<void> {
+      submissionEditableState.value[submissionId] = await editableByStatus(submissionId);
+    }
+
     const statusUpdatingSubmissionId = ref<string | null>(null);
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
       statusUpdatingSubmissionId.value = item.id;
@@ -134,6 +140,14 @@ export default defineComponent({
       submission.setPage(options.value.page);
       applySortOptions();
     });
+
+    watch(() => submission.data.results.results, (newResults) => {
+      if (newResults) {
+        newResults.forEach((item) => {
+          checkSubmissionEditable(item.id);
+        });
+      }
+    }, { deep: false });
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
@@ -217,7 +231,7 @@ export default defineComponent({
       IconBar,
       IntroBlurb,
       TitleBanner,
-      editableByStatus,
+      submissionEditableState,
       getStatus,
       resume,
       addReviewer,
@@ -393,7 +407,7 @@ export default defineComponent({
                   color="primary"
                   @click="() => resume(item as MetadataSubmissionRecord)"
                 >
-                  <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
+                  <span v-if="submissionEditableState[item.id] && isAnyContributorForSubmission(item)">
                     Resume
                     <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                   </span>

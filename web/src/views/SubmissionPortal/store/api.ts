@@ -35,7 +35,7 @@ async function createRecord(record: MetadataSubmission, isTestSubmission: boolea
     MetadataSubmissionRecord,
     Partial<MetadataSubmissionRecord>
   >('metadata_submission', {
-    metadata_submission: record,
+    study_form: record.studyForm,
     source_client: 'submission_portal',
     is_test_submission: isTestSubmission,
   });
@@ -175,6 +175,16 @@ async function deleteSubmissionImage(submissionId: string, imageType: Submission
   await client.delete<MetadataSubmissionRecord>(endpoint);
 }
 
+async function getSampleSetsForSubmission(submissionId: string) {
+  const resp = await client.get<any[]>(`metadata_submission/${submissionId}/sample_set`);
+  return resp.data;
+}
+
+async function getSampleSet(sampleSetId: string) {
+  const resp = await client.get<any>(`metadata_submission/sample_set/${sampleSetId}`);
+  return resp.data;
+}
+
 export {
   addressToString,
   createRecord,
@@ -193,4 +203,6 @@ export {
   updateSubmissionStatus,
   addSubmissionRole,
   getSubmissionStatus,
+  getSampleSetsForSubmission,
+  getSampleSet,
 };
