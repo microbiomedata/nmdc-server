@@ -539,23 +539,12 @@ const loading = computed(() => (
                     </v-tooltip>
                   </div>
                   <div class="d-flex align-center justify-space-between">
-                    <div class="d-flex align-center flex-wrap ga-1">
-                      <div class="text-body-2">
-                        <span class="font-weight-medium">Rows:</span>
-                        {{ formatRowRanges(cluster.suggestions).replace(/^Rows?: /, '') }}
-                      </div>
-                      <div v-if="cluster.suggestions[0].source">
-                        <span class="font-weight-medium">Reasoning:</span> {{ cluster.suggestions[0].source }}
-                      </div>
-                      <span class="text-body-2 font-weight-medium">
-                        {{ getSlotTitle(cluster.suggestions[0].slot) }}
-                      </span>
-                      <span
-                        v-if="cluster.suggestions[0].value"
-                        class="value suggested"
-                        v-text="cluster.suggestions[0].value"
-                      />
+                    <!-- <div class="d-flex align-center flex-wrap ga-1"> -->
+                    <div class="text-body-2">
+                      <span class="font-weight-medium">Rows:</span>
+                      {{ formatRowRanges(cluster.suggestions).replace(/^Rows?: /, '') }}
                     </div>
+                    <!-- </div> -->
                     <div class="d-flex align-center flex-shrink-0">
                       <v-btn
                         variant="text"
@@ -592,13 +581,27 @@ const loading = computed(() => (
                             v-bind="activatorProps"
                             @click="acceptSuggestions(cluster.suggestions.filter(canAcceptSuggestion))"
                           >
-                            <v-icon>mdi-check</v-icon>
+                            <v-icon>mdi-check-all</v-icon>
                           </v-btn>
                         </template>
                         <span>Accept all {{ cluster.suggestions.length }} suggestions</span>
                       </v-tooltip>
                     </div>
                   </div>
+                  <div class="d-flex align-center flex-wrap ga-1 mt-1">
+                    <span class="text-body-2">
+                      <span class="font-weight-medium">Column:</span> 
+                      {{ getSlotTitle(cluster.suggestions[0].slot) }}
+                    </span>
+                  </div>
+                  <div v-if="cluster.suggestions[0].source">
+                    <span class="font-weight-medium">Reasoning:</span> {{ cluster.suggestions[0].source }}
+                  </div>
+                  <span
+                    v-if="cluster.suggestions[0].value"
+                    class="value suggested"
+                    v-text="cluster.suggestions[0].value"
+                  />
                   <div
                     v-if="expandedGroups.includes(cluster.key)"
                     class="mt-2"
@@ -611,7 +614,6 @@ const loading = computed(() => (
                       @mouseenter="handleSuggestionHover(s)"
                       @mouseleave="handleSuggestionLeave()"
                     >
-                      <!-- <span class="text-body-2">Row {{ s.row! + 1 }}</span> -->
                       <div class="flex-grow-1 mr-2">
                         <div class="text-body-2 font-weight-medium">Row {{ s.row! + 1 }}</div>
                       </div>
