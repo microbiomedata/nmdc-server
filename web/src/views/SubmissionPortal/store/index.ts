@@ -343,130 +343,7 @@ function removeAwardDoi(i: number) {
   }
 }
 
-// When "Have data already been generated for your study?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.dataGenerated, (newValue, prevValue) => {
-  // The answer was reset or changed from "No" to "Yes"
-  // Reset "Are you submitting samples to a DOE user facility (JGI, EMSL)?"
-  if (newValue === null || (prevValue === false && newValue === true)) {
-    multiOmicsForm.doe = null;
-  }
-  // The answer was reset or changed from "Yes" to "No"
-  // Reset "Was data generated at a DOE user facility (JGI, EMSL)?"
-  if (newValue === null || (prevValue === true && newValue === false)) {
-    multiOmicsForm.facilityGenerated = null;
-  }
-});
-
-// When "Was data generated at a DOE user facility?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.facilityGenerated, (newValue, prevValue) => {
-  // The answer was reset or changed from "No" to "Yes"
-  // Uncheck all "Which facility?" checkboxes
-  if (newValue === null || (prevValue === false && newValue === true)) {
-    multiOmicsForm.omicsProcessingTypes = [];
-  }
-  // The answer was reset or changed from "Yes" to "No"
-  // Uncheck all "Which data types were generated?" checkboxes
-  if (newValue === null || (prevValue === true && newValue === false)) {
-    multiOmicsForm.facilities = [];
-    multiOmicsForm.awardDois = []
-  }
-});
-
-// When "Are you submitting samples to a DOE user facility?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.doe, ( newValue, prevValue) => {
-  // The answer was reset or changed from "No" to "Yes"
-  if (newValue === null || (prevValue === false && newValue === true)) {
-    multiOmicsForm.omicsProcessingTypes = [];
-  }
-  // The answer was reset or changed from "Yes" to "No"
-  if (newValue === null || (prevValue === true && newValue === false)) {
-    multiOmicsForm.award = null;
-    multiOmicsForm.otherAward = null;
-    multiOmicsForm.facilities = [];
-    multiOmicsForm.awardDois = [];
-  }
-});
-
-// When "Which facility?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
-  const nextFacilities = newValue ?? [];
-  const previousFacilities = prevValue ?? [];
-  // EMSL was removed
-  if (!nextFacilities.includes('EMSL') && previousFacilities.includes('EMSL')) {
-    multiOmicsForm.studyNumber = '';
-    multiOmicsForm.ship = null;
-    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
-      t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
-    ));
-  }
-  // JGI was removed
-  if (!nextFacilities.includes('JGI') && previousFacilities.includes('JGI')) {
-    multiOmicsForm.JGIStudyId = '';
-    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
-      t !== 'mg-jgi' && t !== 'mg-lr-jgi' && t !== 'mt-jgi' && t !== 'mb-jgi'
-    ));
-  }
-});
-
-// When "Which data types were generated?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
-  // mg was removed
-  if (!newValue.includes('mg') && oldValue.includes('mg')) {
-    multiOmicsForm.mgCompatible = null;
-  }
-  // mt was removed
-  if (!newValue.includes('mt') && oldValue.includes('mt')) {
-    multiOmicsForm.mtCompatible = null;
-  }
-  // mp was removed
-  if (!newValue.includes('mp') && oldValue.includes('mp')) {
-    multiOmicsForm.mpProtocols = null;
-  }
-  // mb was removed
-  if (!newValue.includes('mb') && oldValue.includes('mb')) {
-    multiOmicsForm.mbProtocols = null;
-  }
-  // mb-gc was removed
-  if (!newValue.includes('mb-gc') && oldValue.includes('mb-gc')) {
-    multiOmicsForm.mbGcProtocols = null;
-  }
-  // nom was removed
-  if (!newValue.includes('nom') && oldValue.includes('nom')) {
-    multiOmicsForm.nomProtocols = null;
-  }
-  // nom-lc was removed
-  if (!newValue.includes('nom-lc') && oldValue.includes('nom-lc')) {
-    multiOmicsForm.nomLcProtocols = null;
-  }
-  // lipidome was removed
-  if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
-    multiOmicsForm.lipProtocols = null;
-  }
-});
-
-// When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
-watch(() => multiOmicsForm.mgCompatible, (newValue, oldValue) => {
-  // mg compatible was cleared or changed from true to false
-  if (newValue === null || (newValue === false && oldValue === true)) {
-    multiOmicsForm.mgInterleaved = null;
-  }
-});
-watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
-  // mt compatible was cleared or changed from true to false
-  if (newValue === null || (newValue === false && oldValue === true)) {
-    multiOmicsForm.mtInterleaved = null;
-  }
-});
-
-// Watch for changes to the "Will samples be shipped?" field. If the field is reset or the answer becomes "No",
-// reset the sender shipping info form validation state to null (untouched).
-watch(() => multiOmicsForm.ship, (newVal) => {
-  if (newVal !== true) {
-    senderShippingInfoForm.validation = null;
-  }
-});
-
-const templateList = computed<string[]>((prevTemplates) => {
+const activeTemplateList = computed<string[]>((prevTemplates) => {
   const templates = new Set(sampleEnvironmentForm.packageName);
   if (multiOmicsForm.dataGenerated) {
     // Have data already been generated? Yes
@@ -772,52 +649,153 @@ async function createSampleSet(submissionId: string, name: string): Promise<Subm
   return sampleSet;
 }
 
-watch(templateList, (newList, oldList) => {
-  if (!activeSampleSetDirty.value) {
-    // Initial load, do nothing
-    return;
-  }
-  if (isEqual(newList, oldList)) {
-    return;
-  }
-  if (sampleEnvironmentForm.packageName.length === 0) {
-    // If no package is selected, set the sample metadata validation to an untouched state
-    sampleData.validation = null;
-    return;
-  }
-  const newTabsValidated = {} as Record<string, boolean>;
-  forEach(templateList.value, (templateKey) => {
-    newTabsValidated[templateKey] = false;
+function registerActiveSampleSetRules() {
+  // When "Have data already been generated for your study?" changes, reset the answers to dependent questions
+  watch(() => multiOmicsForm.dataGenerated, (newValue, prevValue) => {
+    if (newValue === null || (prevValue === false && newValue === true)) {
+      multiOmicsForm.doe = null;
+    }
+    if (newValue === null || (prevValue === true && newValue === false)) {
+      multiOmicsForm.facilityGenerated = null;
+    }
   });
-  if (sampleData.validation === null) {
-    sampleData.validation = {
-      invalidCells: {},
-      tabsValidated: {},
-    };
-  }
-  sampleData.validation.tabsValidated = newTabsValidated;
 
-  // Remove sampleData and validation state for any templates that are no longer included in the package
-  const removedTemplates = oldList.filter((template) => !newList.includes(template));
-  if (removedTemplates.length > 0) {
-    const newSampleData = { ...sampleData.data };
-    removedTemplates.forEach((template) => {
-      const sampleDataSlot = HARMONIZER_TEMPLATES[template as keyof typeof HARMONIZER_TEMPLATES]?.sampleDataSlot;
-      if (sampleDataSlot === undefined) {
-        return;
-      }
-      delete newSampleData[sampleDataSlot];
-      if (sampleData.validation) {
-        delete sampleData.validation.tabsValidated[template];
-        delete sampleData.validation.invalidCells[template];
-      }
+  // When "Was data generated at a DOE user facility?" changes, reset the answers to dependent questions
+  watch(() => multiOmicsForm.facilityGenerated, (newValue, prevValue) => {
+    if (newValue === null || (prevValue === false && newValue === true)) {
+      multiOmicsForm.omicsProcessingTypes = [];
+    }
+    if (newValue === null || (prevValue === true && newValue === false)) {
+      multiOmicsForm.facilities = [];
+      multiOmicsForm.awardDois = [];
+    }
+  });
+
+  // When "Are you submitting samples to a DOE user facility?" changes, reset the answers to dependent questions
+  watch(() => multiOmicsForm.doe, (newValue, prevValue) => {
+    if (newValue === null || (prevValue === false && newValue === true)) {
+      multiOmicsForm.omicsProcessingTypes = [];
+    }
+    if (newValue === null || (prevValue === true && newValue === false)) {
+      multiOmicsForm.award = null;
+      multiOmicsForm.otherAward = null;
+      multiOmicsForm.facilities = [];
+      multiOmicsForm.awardDois = [];
+    }
+  });
+
+  // When "Which facility?" changes, reset the answers to dependent questions
+  watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
+    const nextFacilities = newValue ?? [];
+    const previousFacilities = prevValue ?? [];
+    if (!nextFacilities.includes('EMSL') && previousFacilities.includes('EMSL')) {
+      multiOmicsForm.studyNumber = '';
+      multiOmicsForm.ship = null;
+      multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+        t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
+      ));
+    }
+    if (!nextFacilities.includes('JGI') && previousFacilities.includes('JGI')) {
+      multiOmicsForm.JGIStudyId = '';
+      multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+        t !== 'mg-jgi' && t !== 'mg-lr-jgi' && t !== 'mt-jgi' && t !== 'mb-jgi'
+      ));
+    }
+  });
+
+  // When "Which data types were generated?" changes, reset the answers to dependent questions
+  watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
+    if (!newValue.includes('mg') && oldValue.includes('mg')) {
+      multiOmicsForm.mgCompatible = null;
+    }
+    if (!newValue.includes('mt') && oldValue.includes('mt')) {
+      multiOmicsForm.mtCompatible = null;
+    }
+    if (!newValue.includes('mp') && oldValue.includes('mp')) {
+      multiOmicsForm.mpProtocols = null;
+    }
+    if (!newValue.includes('mb') && oldValue.includes('mb')) {
+      multiOmicsForm.mbProtocols = null;
+    }
+    if (!newValue.includes('mb-gc') && oldValue.includes('mb-gc')) {
+      multiOmicsForm.mbGcProtocols = null;
+    }
+    if (!newValue.includes('nom') && oldValue.includes('nom')) {
+      multiOmicsForm.nomProtocols = null;
+    }
+    if (!newValue.includes('nom-lc') && oldValue.includes('nom-lc')) {
+      multiOmicsForm.nomLcProtocols = null;
+    }
+    if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
+      multiOmicsForm.lipProtocols = null;
+    }
+  });
+
+  // When "Is the generated data compatible?" changes for either mg or mt, reset dependent answers
+  watch(() => multiOmicsForm.mgCompatible, (newValue, oldValue) => {
+    if (newValue === null || (newValue === false && oldValue === true)) {
+      multiOmicsForm.mgInterleaved = null;
+    }
+  });
+  watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
+    if (newValue === null || (newValue === false && oldValue === true)) {
+      multiOmicsForm.mtInterleaved = null;
+    }
+  });
+
+  // When shipping is cleared or false, reset shipping form validation state to untouched.
+  watch(() => multiOmicsForm.ship, (newVal) => {
+    if (newVal !== true) {
+      senderShippingInfoForm.validation = null;
+    }
+  });
+
+  watch(activeTemplateList, (newList, oldList) => {
+    if (!activeSampleSetDirty.value) {
+      return;
+    }
+    if (isEqual(newList, oldList)) {
+      return;
+    }
+    if (sampleEnvironmentForm.packageName.length === 0) {
+      sampleData.validation = null;
+      return;
+    }
+    const newTabsValidated = {} as Record<string, boolean>;
+    forEach(activeTemplateList.value, (templateKey) => {
+      newTabsValidated[templateKey] = false;
     });
-    sampleData.data = newSampleData;
-  }
-});
+    if (sampleData.validation === null) {
+      sampleData.validation = {
+        invalidCells: {},
+        tabsValidated: {},
+      };
+    }
+    sampleData.validation.tabsValidated = newTabsValidated;
+
+    const removedTemplates = oldList.filter((template) => !newList.includes(template));
+    if (removedTemplates.length > 0) {
+      const newSampleData = { ...sampleData.data };
+      removedTemplates.forEach((template) => {
+        const sampleDataSlot = HARMONIZER_TEMPLATES[template as keyof typeof HARMONIZER_TEMPLATES]?.sampleDataSlot;
+        if (sampleDataSlot === undefined) {
+          return;
+        }
+        delete newSampleData[sampleDataSlot];
+        if (sampleData.validation) {
+          delete sampleData.validation.tabsValidated[template];
+          delete sampleData.validation.invalidCells[template];
+        }
+      });
+      sampleData.data = newSampleData;
+    }
+  });
+}
+
+registerActiveSampleSetRules();
 
 
-function templateHasData(templateName: string = ''): boolean {
+function activeSampleSetTemplateHasData(templateName: string = ''): boolean {
   //if DH hasn't been touched at all then there's no data nd it's ok edit
   if (Object.keys(sampleData.data).length === 0) {
     return false;
@@ -847,13 +825,13 @@ function templateHasData(templateName: string = ''): boolean {
   return false;
 }
 
-function checkJGITemplates() {
+function activeSampleSetHasJGITemplateData() {
   //checks to see if there is data present in any of the templates that are associated with JGI
   const fields = ['jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
   let data_present: boolean = false;
   fields.forEach((val) => {
     const sampleSlot = HARMONIZER_TEMPLATES[val]?.sampleDataSlot;
-    if (isString(sampleSlot) && templateHasData(sampleSlot)) {
+    if (isString(sampleSlot) && activeSampleSetTemplateHasData(sampleSlot)) {
       data_present = true;
     }
   });
@@ -882,11 +860,7 @@ async function submit(_submissionId: string, _nextStatus?: SubmissionStatusKey) 
     throw new Error(`Unable to submit: ${ uneditableReason }`);
   }
 
-  if (sampleSetsState.activeSampleSetId === null) {
-    throw new Error('Unable to submit: no active sample set');
-  }
-
-  throw new Error("Not implemented yet.")
+  throw new Error('Not implemented yet.');
 }
 
 async function selectActiveSampleSet(sampleSetId: string | null) {
@@ -1054,7 +1028,7 @@ watch([
   // Preserve a deep dependency registration so draft mutations keep computed dirty flags hot.
 }, { deep: true });
 
-function mergeSampleData(key: string | undefined, data: any[]) {
+function mergeActiveSampleSetData(key: string | undefined, data: any[]) {
   if (!key) {
     return;
   }
@@ -1219,3 +1193,8 @@ export {
   resetSampleMetadataValidation,
   isSubmissionValid,
 };
+// Compatibility aliases for existing component imports. Prefer the active-sample-set names above.
+const templateList = activeTemplateList;
+const templateHasData = activeSampleSetTemplateHasData;
+const checkJGITemplates = activeSampleSetHasJGITemplateData;
+const mergeSampleData = mergeActiveSampleSetData;
