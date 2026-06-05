@@ -104,7 +104,7 @@ const studySummaryData = useFacetSummaryData({
 });
 const studyCondition = studySummaryData.otherConditions.value || [];
 const study = usePaginatedResults(ref(studyCondition), api.searchStudy, undefined, 10);
-const studyResults = computed(() => Object.values(study.data.results.results)
+const studyResults = computed<StudySearchResults[]>(() => Object.values(study.data.results.results)
   .map((r) => ({
     ...r,
     name: r.annotations.title || r.name,
@@ -270,9 +270,9 @@ const gatedEnvironmentVisConditions = useClockGate(
                       <SearchResults
                         disable-navigate-on-click
                         disable-pagination
-                        :count="props.result.children.length"
+                        :count="props.result.children?.length ?? 0"
                         :icon="studyType.icon"
-                        :items-per-page="props.result.children.length"
+                        :items-per-page="props.result.children?.length ?? 0"
                         :results="props.result.children"
                         :page="1"
                         :loading="false"

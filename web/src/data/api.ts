@@ -63,6 +63,11 @@ export interface BaseSearchResult {
   description: string;
   alternate_identifiers: string[];
   annotations: Record<string, string | string[]>;
+  children?: BaseSearchResult[];
+  omics_processing_counts?: {
+    type: string;
+    count: number;
+  }[] | null;
   [key: string]: unknown; // possibly other things.
 }
 
