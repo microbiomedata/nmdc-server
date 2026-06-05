@@ -871,7 +871,9 @@ function reset() {
   resetStore();
 }
 
-const incrementalSaveSubmissionRequest = useRequest();
+const saveSubmissionDraftRequest = useRequest();
+const saveActiveSampleSetDraftRequest = useRequest();
+const saveCurrentEditsRequest = useRequest();
 async function saveSubmissionDraft(id: string): Promise<SubmissionMetadata | null> {
   // This function **only** saves submission information. It does **not** deal with sample sets.
   const needsSubmissionSave = submissionDirty.value;
@@ -901,7 +903,12 @@ async function saveSubmissionDraft(id: string): Promise<SubmissionMetadata | nul
     return null;
   }
 
-  const response = await api.updateSubmission(id, submissionPayload);
+  const response = await saveSubmissionDraftRequest.request(
+    () => api.updateSubmission(id, submissionPayload)
+  );
+  if (!response) {
+    return null;
+  }
   await updateStateFromSubmission(response);
   return response;
 }
@@ -921,15 +928,15 @@ async function saveActiveSampleSetDraft(): Promise<SubmissionSampleSet | null> {
     return null;
   }
 
-  return saveActiveSampleSet();
+  return saveActiveSampleSetDraftRequest.request(() => saveActiveSampleSet());
 }
 
-async function incrementalSaveSubmission(submission_id: string): Promise<void> {
+async function saveCurrentEdits(submission_id: string): Promise<void> {
   if (!submissionDirty.value && !activeSampleSetDirty.value) {
     return;
   }
 
-  await incrementalSaveSubmissionRequest.request(async () => {
+  await saveCurrentEditsRequest.request(async () => {
     let submissionResponse: SubmissionMetadata | null = null;
 
     if (submissionDirty.value) {
@@ -947,6 +954,10 @@ async function incrementalSaveSubmission(submission_id: string): Promise<void> {
     return submissionResponse;
   });
 }
+
+// Compatibility alias while callers are still named around the old flow.
+const incrementalSaveSubmissionRequest = saveCurrentEditsRequest;
+const incrementalSaveSubmission = saveCurrentEdits;
 
 async function createSubmission(isTestSubmission: boolean, studyName: string, piEmail: string): Promise<SubmissionMetadata> {
   reset();
@@ -1155,6 +1166,9 @@ export {
   submissionLockedBy,
   loggedInUserHasLock,
   isTestSubmission,
+  saveSubmissionDraftRequest,
+  saveActiveSampleSetDraftRequest,
+  saveCurrentEditsRequest,
   incrementalSaveSubmissionRequest,
   primaryStudyImageUrl,
   piImageUrl,
@@ -1169,6 +1183,7 @@ export {
   getSubmissionUneditableReason,
   saveSubmissionDraft,
   saveActiveSampleSetDraft,
+  saveCurrentEdits,
   incrementalSaveSubmission,
   createSubmission,
   createSampleSet,

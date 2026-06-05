@@ -2,7 +2,7 @@
 import { defineComponent, PropType } from 'vue';
 
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
-import { incrementalSaveSubmissionRequest } from './store';
+import { saveCurrentEditsRequest } from './store';
 import { unlockSubmission } from './store/api';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
@@ -29,7 +29,7 @@ export default defineComponent({
     });
 
     return {
-      incrementalSaveRecordRequest: incrementalSaveSubmissionRequest,
+      saveCurrentEditsRequest,
     };
   },
 
@@ -39,7 +39,7 @@ export default defineComponent({
 <template>
   <div class="position-relative">
     <v-progress-linear
-      :active="incrementalSaveRecordRequest.loading.value"
+      :active="saveCurrentEditsRequest.loading.value"
       absolute
       indeterminate
       color="primary"

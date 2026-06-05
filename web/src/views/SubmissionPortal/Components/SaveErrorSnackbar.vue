@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { incrementalSaveSubmissionRequest } from '@/views/SubmissionPortal/store';
+import { saveCurrentEditsRequest } from '@/views/SubmissionPortal/store';
 import { ref, watch } from 'vue';
 
-const snackbarVisible = ref(incrementalSaveSubmissionRequest.error.value !== null);
+const snackbarVisible = ref(saveCurrentEditsRequest.error.value !== null);
 
-watch(() => incrementalSaveSubmissionRequest.error.value, (newError) => {
+watch(() => saveCurrentEditsRequest.error.value, (newError) => {
   snackbarVisible.value = newError !== null;
 });
 </script>
