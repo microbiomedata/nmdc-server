@@ -32,7 +32,7 @@ import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchRes
 const studyCheckboxState = computed(() => (
   stateRefs.conditions.value
     .filter((c) => c.table === 'study' && c.field === 'study_id')
-    .map((c) => c.value)
+    .map((c) => c.value as string)
 ));
 
 /**
@@ -211,27 +211,18 @@ const gatedEnvironmentVisConditions = useClockGate(
             >
               <v-tabs-window-item key="studies">
                 <SearchResults
-                  disable-navigate-on-click
+                  show-checkbox
                   :count="study.data.results.count"
                   :icon="studyType.icon"
                   :items-per-page="study.data.limit"
                   :results="studyResults"
                   :page="study.data.pageSync"
-                  :loading="study.loading.value"
+                  :checkbox-values="studyCheckboxState"
                   @set-page="study.setPage($event)"
                   @selected="$router.push({ name: 'Study', params: { id: $event} })"
                   @set-items-per-page="study.setItemsPerPage($event)"
+                  @checkbox-change="setChecked($event.checked, $event.id, $event.children as StudySearchResults[])"
                 >
-                  <template #action="{ result }">
-                    <v-list-item-action>
-                      <v-checkbox-btn
-                        :model-value="studyCheckboxState"
-                        :value="result.id"
-                        @click.stop
-                        @change="setChecked($event.target.checked, result.id, result.children as StudySearchResults[])"
-                      />
-                    </v-list-item-action>
-                  </template>
                   <template #action-right="{ result }">
                     <v-list-item-action>
                       <v-btn
@@ -246,57 +237,50 @@ const gatedEnvironmentVisConditions = useClockGate(
                       </v-btn>
                     </v-list-item-action>
                   </template>
-                  <template #item-content="props">
-                    <div v-if="props.result.omics_processing_counts">
+                  <template #item-content="{ result }">
+                    <div v-if="result.omics_processing_counts">
                       <template
-                        v-for="item in props.result.omics_processing_counts"
+                        v-for="item in result.omics_processing_counts"
                       >
                         <v-chip
                           v-if="(item as any).count"
                           :key="(item as any).type"
                           size="small"
                           class="mr-2 my-1"
-                          @click.stop="selectStudyAndOmics(props.result.id, (item as any).type)"
+                          @click.stop="selectStudyAndOmics(result.id, (item as any).type)"
                         >
                           {{ fieldDisplayName((item as any).type) }}: {{ (item as any).count }}
                         </v-chip>
                       </template>
                     </div>
+                  </template>
+                  <template #item-children="{ result }">
                     <v-card
+                      v-if="result.children?.length"
                       flat
                       class="pa-4 mt-2"
                     >
                       <v-divider />
                       <SearchResults
-                        disable-navigate-on-click
+                        show-checkbox
                         disable-pagination
-                        :count="props.result.children?.length ?? 0"
+                        :count="result.children.length"
                         :icon="studyType.icon"
-                        :items-per-page="props.result.children?.length ?? 0"
-                        :results="props.result.children"
+                        :items-per-page="result.children.length"
+                        :results="result.children"
                         :page="1"
-                        :loading="false"
+                        :checkbox-values="studyCheckboxState"
+                        :checkbox-disabled="studyCheckboxState.includes(result.id)"
                         @selected="$router.push({ name: 'Study', params: { id: $event} })"
+                        @checkbox-change="setChecked($event.checked, $event.id)"
                       >
-                        <template #action="{ result }">
-                          <v-list-item-action>
-                            <v-checkbox-btn
-                              :disabled="studyCheckboxState.includes(props.result.id)"
-                              :model-value="studyCheckboxState"
-                              :value="result.id"
-                              @click.stop
-                              @change="setChecked($event.target.checked, result.id)"
-                            />
-                          </v-list-item-action>
-                        </template>
-
-                        <template #action-right="{ result }">
+                        <template #action-right="{ result: child }">
                           <v-list-item-action>
                             <v-btn
                               icon
                               variant="plain"
                               size="large"
-                              :to="{ name: 'Study', params: { id: result.id } }"
+                              :to="{ name: 'Study', params: { id: child.id } }"
                             >
                               <v-icon>
                                 mdi-chevron-right
@@ -304,17 +288,17 @@ const gatedEnvironmentVisConditions = useClockGate(
                             </v-btn>
                           </v-list-item-action>
                         </template>
-                        <template #item-content="childProps">
-                          <div v-if="childProps.result.omics_processing_counts">
+                        <template #item-content="{ result: child }">
+                          <div v-if="child.omics_processing_counts">
                             <template
-                              v-for="item in childProps.result.omics_processing_counts"
+                              v-for="item in child.omics_processing_counts"
                             >
                               <v-chip
                                 v-if="item.count"
                                 :key="item.type"
                                 size="small"
                                 class="mr-2 my-1"
-                                @click.stop="selectStudyAndOmics(childProps.result.id, item.type)"
+                                @click.stop="selectStudyAndOmics(child.id, item.type)"
                               >
                                 {{ fieldDisplayName(item.type) }}: {{ item.count }}
                               </v-chip>

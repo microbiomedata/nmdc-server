@@ -48,6 +48,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SampleListExpansion: typeof import('./components/SampleListExpansion.vue')['default']
+    SearchResultItem: typeof import('./components/Presentation/SearchResultItem.vue')['default']
     SearchResults: typeof import('./components/Presentation/SearchResults.vue')['default']
     TeamInfo: typeof import('./components/TeamInfo.vue')['default']
     TimeHistogram: typeof import('./components/Presentation/TimeHistogram.vue')['default']

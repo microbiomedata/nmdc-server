@@ -59,7 +59,6 @@ export default defineComponent({
 
 <template>
   <SearchResults
-    disable-navigate-on-click
     :count="biosampleSearch.data.results.count"
     :icon="biosampleType.icon"
     :items-per-page="biosampleSearch.data.limit"

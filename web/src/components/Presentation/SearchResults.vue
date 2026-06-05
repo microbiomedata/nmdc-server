@@ -11,7 +11,9 @@ interface Props {
   subtitleKey?: string;
   results?: BaseSearchResult[];
   icon?: string;
-  disableNavigateOnClick?: boolean;
+  showCheckbox?: boolean;
+  checkboxValues?: string[];
+  checkboxDisabled?: boolean;
   disablePagination?: boolean;
 }
 
@@ -20,7 +22,9 @@ const props = withDefaults(defineProps<Props>(), {
   subtitleKey: 'description',
   results: () => [] as BaseSearchResult[],
   icon: 'mdi-book',
-  disableNavigateOnClick: false,
+  showCheckbox: false,
+  checkboxValues: () => [] as string[],
+  checkboxDisabled: false,
   disablePagination: false,
 });
 
@@ -28,6 +32,7 @@ const emit = defineEmits<{
   'set-page': [page: number];
   'set-items-per-page': [itemsPerPage: number];
   'selected': [id: string];
+  'checkbox-change': [payload: { checked: boolean; id: string; children: BaseSearchResult[] }];
 }>();
 
 const rows = ref(props.itemsPerPage);
@@ -46,62 +51,51 @@ const rows = ref(props.itemsPerPage);
         <v-divider
           v-if="resultIndex > 0"
         />
-
-        <v-list-item
-          :ripple="!disableNavigateOnClick"
-          :active="false"
-          :link="!disableNavigateOnClick"
-          v-on="{
-            click: disableNavigateOnClick
-              ? () => {}
-              : () => emit('selected', result.id),
+        <SearchResultItem
+          v-bind="{
+            result,
+            titleKey,
+            subtitleKey,
+            icon,
+            showCheckbox,
+            checkboxValues,
+            checkboxDisabled,
           }"
+          @selected="emit('selected', $event)"
+          @checkbox-change="emit('checkbox-change', $event)"
         >
-          <template #prepend>
-            <slot
-              name="action"
-              v-bind="{ result }"
-            />
-            <v-icon>
-              {{
-                result.children && Array.isArray(result.children) && result.children.length > 0 && result.study_category === 'research_study'
-                  ? 'mdi-book-multiple-outline'
-                  : icon
-              }}
-            </v-icon>
-          </template>
-
-          <v-list-item-title>
-            <div class="d-flex align-center">
-              <div class="text-subtitle-2">
-                {{ result[titleKey] }}
-              </div>
-              <slot
-                name="child-list"
-                v-bind="{ result}"
-              />
-            </div>
-          </v-list-item-title>
-          <v-list-item-subtitle>
+          <template
+            v-if="$slots.subtitle"
+            #subtitle="slotProps"
+          >
             <slot
               name="subtitle"
-              v-bind="{ result }"
-            >
-              {{ result[subtitleKey] || 'No description' }}
-            </slot>
-          </v-list-item-subtitle>
-          <slot
-            name="item-content"
-            v-bind="{ result }"
-          />
-
-          <template #append>
-            <slot
-              name="action-right"
-              v-bind="{ result }"
+              v-bind="slotProps"
             />
           </template>
-        </v-list-item>
+          <template
+            v-if="$slots['item-content']"
+            #item-content="slotProps"
+          >
+            <slot
+              name="item-content"
+              v-bind="slotProps"
+            />
+          </template>
+          <template
+            v-if="$slots['action-right']"
+            #action-right="slotProps"
+          >
+            <slot
+              name="action-right"
+              v-bind="slotProps"
+            />
+          </template>
+        </SearchResultItem>
+        <slot
+          name="item-children"
+          v-bind="{ result }"
+        />
       </template>
     </v-list>
     <div
