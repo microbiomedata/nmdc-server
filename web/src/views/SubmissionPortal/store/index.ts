@@ -955,10 +955,6 @@ async function saveCurrentEdits(submission_id: string): Promise<void> {
   });
 }
 
-// Compatibility alias while callers are still named around the old flow.
-const incrementalSaveSubmissionRequest = saveCurrentEditsRequest;
-const incrementalSaveSubmission = saveCurrentEdits;
-
 async function createSubmission(isTestSubmission: boolean, studyName: string, piEmail: string): Promise<SubmissionMetadata> {
   reset();
   const submission = await api.createSubmission({
@@ -1169,7 +1165,6 @@ export {
   saveSubmissionDraftRequest,
   saveActiveSampleSetDraftRequest,
   saveCurrentEditsRequest,
-  incrementalSaveSubmissionRequest,
   primaryStudyImageUrl,
   piImageUrl,
   metadataSuggestions,
@@ -1184,7 +1179,6 @@ export {
   saveSubmissionDraft,
   saveActiveSampleSetDraft,
   saveCurrentEdits,
-  incrementalSaveSubmission,
   createSubmission,
   createSampleSet,
   loadSubmission,

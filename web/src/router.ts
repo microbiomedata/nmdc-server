@@ -23,7 +23,7 @@ import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.v
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
 
-import { incrementalSaveSubmission, lockSubmission, unlockSubmission } from '@/views/SubmissionPortal/store';
+import { saveCurrentEdits, lockSubmission, unlockSubmission } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -137,7 +137,7 @@ router.beforeEach(async (to, from) => {
     if (from.meta.requiresSubmissionLock && 'id' in from.params) {
       const id = from.params.id as string;
       // We are navigating away from a submission edit screen, so save the progress
-      await incrementalSaveSubmission(id);
+      await saveCurrentEdits(id);
       if (!to.meta.requiresSubmissionLock) {
         // We are navigating to a screen that does not require a lock, so unlock
         await unlockSubmission(id);
