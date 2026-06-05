@@ -1,4 +1,4 @@
-import { computed, reactive, ref, watch, } from 'vue';
+import { computed, reactive, toRef, watch, } from 'vue';
 import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
@@ -7,7 +7,6 @@ import {
   DATA_MG_INTERLEAVED,
   DATA_MT,
   DATA_MT_INTERLEAVED,
-  Doi,
   EMSL,
   HARMONIZER_TEMPLATES,
   JGI_MG,
@@ -15,19 +14,23 @@ import {
   JGI_MT,
   MetadataSuggestion,
   MetadataSuggestionRequest,
-  NmdcAddress,
-  OmicsProcessingType,
-  Protocols,
+  MultiOmicsForm,
+  SampleData,
+  SampleEnvironmentForm,
   SampleMetadataValidationState,
   SubmissionEditorRole,
   SubmissionPage,
   SubmissionMetadata,
   SubmissionMetadataPatch,
+  SubmissionSampleSet,
+  SubmissionSampleSetListItem,
+  SenderShippingInfoForm,
+  StudyForm,
   SubmissionStatusEnum,
   SubmissionStatusKey,
   SuggestionType,
   SuggestionsMode,
-  UneditableReason,
+  UneditableReason, SubmissionSampleSetPatch,
 } from '@/views/SubmissionPortal/types';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
@@ -43,39 +46,12 @@ const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
   viewer: 1,
 };
 
-const status = ref<SubmissionStatusKey>('InProgress');
-const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title);
-
-const studyName = ref('');
-const createdDate = ref<Date | null>(null);
-const modifiedDate = ref<Date | null>(null);
-const isTestSubmission = ref(false);
-const primaryStudyImageUrl = ref<string | null>(null);
-const piImageUrl = ref<string | null>(null);
-const author = ref<User | null>(null);
-
-/**
- * Submission record locking information
- */
-const submissionLockedBy = ref<User | null>(null);
-const loggedInUserHasLock = computed(() => {
-  const lockedByUser = submissionLockedBy.value;
-  if (!lockedByUser) {
-    return true;
-  }
-  if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
-    return true;
-  }
-  return false;
-});
-
-let _permissionLevel: SubmissionEditorRole | null = null;
-
 function isOwner(): boolean {
-  if (!_permissionLevel) {
+  const permissionLevel = getCurrentPermissionLevel();
+  if (!permissionLevel) {
     return false;
   }
-  return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
+  return permissionLevelHierarchy[permissionLevel] === permissionLevelHierarchy.owner;
 }
 
 function isStatusEditable(status: SubmissionStatusKey): boolean {
@@ -102,19 +78,16 @@ function hasMinimumPermissionLevel(permissionLevel: SubmissionEditorRole | null,
   return permissionLevel !== null && permissionLevelHierarchy[permissionLevel] >= permissionLevelHierarchy[minimumPermissionLevel];
 }
 
-/**
- * Get the reason why the submission is not editable, if applicable. This checks
- * for lock status, permission level, and submission status.
- *
- * @param minimumPermissionLevel The minimum permission level required to edit the submission
- * @returns A string describing the reason why the submission is not editable, or undefined if it is editable
- */
+function getCurrentPermissionLevel(): SubmissionEditorRole | null {
+  return submissionState.submission?.permission_level as SubmissionEditorRole | null;
+}
+
 function getSubmissionUneditableReason(minimumPermissionLevel: SubmissionEditorRole): UneditableReason | undefined {
   if (!loggedInUserHasLock.value) {
     return 'locked_by_other';
   }
 
-  if (!hasMinimumPermissionLevel(_permissionLevel, minimumPermissionLevel)) {
+  if (!hasMinimumPermissionLevel(getCurrentPermissionLevel(), minimumPermissionLevel)) {
     return 'insufficient_permissions'
   }
 
@@ -124,8 +97,6 @@ function getSubmissionUneditableReason(minimumPermissionLevel: SubmissionEditorR
 
   return undefined;
 }
-
-const hasChanged = ref(0);
 
 /**
  * Validating forms
@@ -265,7 +236,7 @@ const submissionPages = computed<SubmissionPage[]>(() => ([
   },
 ]));
 
-const senderShippingInfoFormDefault = {
+const senderShippingInfoFormDefault: SenderShippingInfoForm = {
   // Shipper info
   shipper: {
     name: '',
@@ -277,81 +248,80 @@ const senderShippingInfoFormDefault = {
     state: '',
     postalCode: '',
     country: '',
-  } as NmdcAddress,
-  expectedShippingDate: undefined as undefined | string,
+  },
+  expectedShippingDate: null,
   shippingConditions: '',
   // Sample info
   sample: '',
   description: '',
   experimentalGoals: '',
   randomization: '',
-  usdaRegulated: undefined as undefined | boolean,
+  usdaRegulated: null,
   permitNumber: '',
   biosafetyLevel: '',
-  irbOrHipaa: undefined as undefined | boolean,
+  irbOrHipaa: null,
   comments: '',
-  validation: null as null | string[],
+  validation: null,
 };
-
-const senderShippingInfoForm = reactive(clone(senderShippingInfoFormDefault));
 
 /**
  * Study Form Step
  */
-const studyFormDefault = {
+const studyFormDefault: StudyForm = {
   studyName: '',
   piName: '',
   piEmail: '',
   piOrcid: '',
   linkOutWebpage: [],
   studyDate: null,
-  dataDois: [] as Doi[] | null,
-  publicationDois: [] as Doi[] | null,
-  fundingSources: [] as string[] | null,
+  dataDois: [],
+  publicationDois: [],
+  fundingSources: [],
   description: '',
   notes: '',
-  contributors: [] as {
-    name: string;
-    orcid: string;
-    roles: string[];
-    permissionLevel: SubmissionEditorRole | null;
-  }[],
-  alternativeNames: [] as string[],
+  contributors: [],
+  alternativeNames: [],
   GOLDStudyId: '',
   NCBIBioProjectId: '',
-  validation: null as null | string[],
+  validation: null,
 };
-const studyForm = reactive(clone(studyFormDefault));
 
 /**
  * Multi-Omics Form Step
  */
-const multiOmicsFormDefault = {
-  award: null as null | string,
-  awardDois: [] as Doi[] | null,
-  dataGenerated: null as null | boolean,
-  doe: null as null | boolean,
-  facilities: [] as string[],
-  facilityGenerated: null as null | boolean,
+const multiOmicsFormDefault: MultiOmicsForm = {
+  award: null,
+  awardDois: [],
+  dataGenerated: null,
+  doe: null,
+  facilities: [],
+  facilityGenerated: null,
   JGIStudyId: '',
-  mgCompatible: null as null | boolean,
-  mgInterleaved: null as null | boolean,
-  mtCompatible: null as null | boolean,
-  mtInterleaved: null as null | boolean,
-  omicsProcessingTypes: [] as OmicsProcessingType[],
-  otherAward: null as null | string,
-  ship: null as null | boolean,
+  mgCompatible: null,
+  mgInterleaved: null,
+  mtCompatible: null,
+  mtInterleaved: null,
+  omicsProcessingTypes: [],
+  otherAward: null,
+  ship: null,
   studyNumber: '',
-  unknownDoi: null as null | boolean,
-  mpProtocols: null as null | Protocols,
-  mbProtocols: null as null | Protocols,
-  mbGcProtocols: null as null | Protocols,
-  lipProtocols: null as null | Protocols,
-  nomProtocols: null as null | Protocols,
-  nomLcProtocols: null as null | Protocols,
-  validation: null as null | string[],
+  unknownDoi: null,
+  mpProtocols: null,
+  mbProtocols: null,
+  mbGcProtocols: null,
+  lipProtocols: null,
+  nomProtocols: null,
+  nomLcProtocols: null,
+  validation: null,
 };
-const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
+
+/**
+ * Environmental Package Step
+ */
+const sampleEnvironmentFormDefault: SampleEnvironmentForm = {
+  validation: null,
+  packageName: [],
+};
 
 function addAwardDoi() {
   if (!Array.isArray(multiOmicsForm.awardDois)) {
@@ -367,7 +337,8 @@ function removeAwardDoi(i: number) {
   if (multiOmicsForm.awardDois === null) {
     multiOmicsForm.awardDois = [];
   }
-  if ((multiOmicsForm.facilities?.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+  const facilityCount = multiOmicsForm.facilities?.length ?? 0;
+  if ((facilityCount < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
     multiOmicsForm.awardDois.splice(i, 1);
   }
 }
@@ -418,8 +389,10 @@ watch(() => multiOmicsForm.doe, ( newValue, prevValue) => {
 
 // When "Which facility?" changes, reset the answers to dependent questions
 watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
+  const nextFacilities = newValue ?? [];
+  const previousFacilities = prevValue ?? [];
   // EMSL was removed
-  if (!newValue.includes('EMSL') && prevValue.includes('EMSL')) {
+  if (!nextFacilities.includes('EMSL') && previousFacilities.includes('EMSL')) {
     multiOmicsForm.studyNumber = '';
     multiOmicsForm.ship = null;
     multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
@@ -427,7 +400,7 @@ watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
     ));
   }
   // JGI was removed
-  if (!newValue.includes('JGI') && prevValue.includes('JGI')) {
+  if (!nextFacilities.includes('JGI') && previousFacilities.includes('JGI')) {
     multiOmicsForm.JGIStudyId = '';
     multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
       t !== 'mg-jgi' && t !== 'mg-lr-jgi' && t !== 'mt-jgi' && t !== 'mb-jgi'
@@ -493,14 +466,6 @@ watch(() => multiOmicsForm.ship, (newVal) => {
   }
 });
 
-/**
- * Environmental Package Step
- */
-const sampleEnvironmentFormDefault = {
-  validation: null as null | string[],
-  packageName: [] as (keyof typeof HARMONIZER_TEMPLATES)[],
-};
-const sampleEnvironmentForm = reactive(clone(sampleEnvironmentFormDefault));
 const templateList = computed<string[]>((prevTemplates) => {
   const templates = new Set(sampleEnvironmentForm.packageName);
   if (multiOmicsForm.dataGenerated) {
@@ -588,10 +553,204 @@ const sampleDataDefault = {
   data: {} as Record<string, any[]>,
   validation: null as SampleMetadataValidationState | null,
 };
-const sampleData = reactive(clone(sampleDataDefault));
-const metadataSuggestions = ref([] as MetadataSuggestion[]);
-const suggestionMode = ref(SuggestionsMode.LIVE);
-const suggestionType = ref(SuggestionType.ALL);
+
+type SubmissionDraft = {
+  studyForm: StudyForm;
+};
+
+type SampleSetDraft = {
+  name: string;
+  multiOmicsForm: MultiOmicsForm;
+  sampleEnvironmentForm: SampleEnvironmentForm;
+  senderShippingInfoForm: SenderShippingInfoForm;
+  sampleData: SampleData;
+};
+
+function createEmptySubmissionDraft(): SubmissionDraft {
+  return {
+    studyForm: clone(studyFormDefault),
+  };
+}
+
+function createEmptySampleSetDraft(): SampleSetDraft {
+  return {
+    name: '',
+    multiOmicsForm: clone(multiOmicsFormDefault),
+    sampleEnvironmentForm: clone(sampleEnvironmentFormDefault),
+    senderShippingInfoForm: clone(senderShippingInfoFormDefault),
+    sampleData: clone(sampleDataDefault),
+  };
+}
+
+const submissionState = reactive({
+  submission: null as SubmissionMetadata | null,
+  draft: createEmptySubmissionDraft(),
+});
+
+const sampleSetsState = reactive({
+  items: [] as SubmissionSampleSetListItem[],
+  activeSampleSetId: null as string | null,
+  activeSampleSet: null as SubmissionSampleSet | null,
+  draft: createEmptySampleSetDraft(),
+});
+
+const uiState = reactive({
+  hasChanged: 0,
+  metadataSuggestions: [] as MetadataSuggestion[],
+  suggestionMode: SuggestionsMode.LIVE,
+  suggestionType: SuggestionType.ALL,
+});
+
+const studyForm = submissionState.draft.studyForm;
+const multiOmicsForm = sampleSetsState.draft.multiOmicsForm;
+const sampleEnvironmentForm = sampleSetsState.draft.sampleEnvironmentForm;
+const senderShippingInfoForm = sampleSetsState.draft.senderShippingInfoForm;
+const sampleData = sampleSetsState.draft.sampleData;
+
+const hasChanged = toRef(uiState, 'hasChanged');
+const metadataSuggestions = toRef(uiState, 'metadataSuggestions');
+const suggestionMode = toRef(uiState, 'suggestionMode');
+const suggestionType = toRef(uiState, 'suggestionType');
+
+const status = computed<SubmissionStatusKey>(() => {
+  const sampleSetStatus = sampleSetsState.activeSampleSet?.status;
+  if (sampleSetStatus && isStatusEditable(sampleSetStatus as SubmissionStatusKey)) {
+    return sampleSetStatus as SubmissionStatusKey;
+  }
+  return 'InProgress';
+});
+const studyName = computed(() => submissionState.submission?.study_name ?? '');
+const createdDate = computed(() => (
+  submissionState.submission ? new Date(submissionState.submission.created + 'Z') : null
+));
+const modifiedDate = computed(() => (
+  submissionState.submission ? new Date(submissionState.submission.date_last_modified + 'Z') : null
+));
+const isTestSubmission = computed(() => submissionState.submission?.is_test_submission ?? false);
+const primaryStudyImageUrl = computed(() => submissionState.submission?.primary_study_image_url ?? null);
+const piImageUrl = computed(() => submissionState.submission?.pi_image_url ?? null);
+const author = computed<User | null>(() => submissionState.submission?.author ?? null);
+const submissionLockedBy = computed<User | null>(() => submissionState.submission?.locked_by ?? null);
+
+const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title);
+
+const loggedInUserHasLock = computed(() => {
+  const lockedByUser = submissionLockedBy.value;
+  if (!lockedByUser) {
+    return true;
+  }
+  if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
+    return true;
+  }
+  return false;
+});
+
+const activeSampleSet = computed(() => sampleSetsState.activeSampleSet);
+const sampleSetList = computed(() => sampleSetsState.items);
+const activeSampleSetId = toRef(sampleSetsState, 'activeSampleSetId');
+
+function resetSubmissionState() {
+  Object.assign(submissionState.draft.studyForm, clone(studyFormDefault));
+  submissionState.submission = null;
+}
+
+function resetActiveSampleSetDraft() {
+  const emptyDraft = createEmptySampleSetDraft();
+  Object.assign(sampleSetsState.draft, emptyDraft);
+  Object.assign(sampleSetsState.draft.multiOmicsForm, emptyDraft.multiOmicsForm);
+  Object.assign(sampleSetsState.draft.sampleEnvironmentForm, emptyDraft.sampleEnvironmentForm);
+  Object.assign(sampleSetsState.draft.senderShippingInfoForm, emptyDraft.senderShippingInfoForm);
+  Object.assign(sampleSetsState.draft.sampleData, emptyDraft.sampleData);
+}
+
+function resetSampleSetsState() {
+  sampleSetsState.items = [];
+  sampleSetsState.activeSampleSetId = null;
+  sampleSetsState.activeSampleSet = null;
+  resetActiveSampleSetDraft();
+}
+
+function resetStore() {
+  resetSubmissionState();
+  resetSampleSetsState();
+  uiState.hasChanged = 0;
+}
+
+function hydrateSubmission(submission: SubmissionMetadata) {
+  submissionState.submission = submission;
+  Object.assign(submissionState.draft.studyForm, clone(submission.study_form));
+}
+
+async function saveActiveSampleSet(): Promise<SubmissionSampleSet | null> {
+  const activeSampleSetId = sampleSetsState.activeSampleSetId;
+  if (!activeSampleSetId) {
+    return null;
+  }
+
+  const sampleSetPayload: SubmissionSampleSetPatch = {
+    name: sampleSetsState.draft.name,
+    templates: templateList.value,
+    multi_omics_form: sampleSetsState.draft.multiOmicsForm,
+    sample_environment_form: sampleSetsState.draft.sampleEnvironmentForm,
+    sender_shipping_info_form: sampleSetsState.draft.senderShippingInfoForm,
+    sample_data: sampleSetsState.draft.sampleData,
+  };
+  const sampleSet = await api.updateSubmissionSampleSet(activeSampleSetId, sampleSetPayload);
+  hydrateActiveSampleSet(sampleSet);
+  return sampleSet;
+}
+
+function hydrateSampleSetList(sampleSets: SubmissionSampleSetListItem[]) {
+  sampleSetsState.items = sampleSets;
+}
+
+function hydrateActiveSampleSet(sampleSet: SubmissionSampleSet | null) {
+  sampleSetsState.activeSampleSet = sampleSet;
+  sampleSetsState.activeSampleSetId = sampleSet?.id ?? null;
+
+  if (!sampleSet) {
+    resetActiveSampleSetDraft();
+    return;
+  }
+
+  sampleSetsState.draft.name = sampleSet.name;
+  Object.assign(sampleSetsState.draft.multiOmicsForm, clone(sampleSet.multi_omics_form));
+  Object.assign(sampleSetsState.draft.sampleEnvironmentForm, clone(sampleSet.sample_environment_form));
+  Object.assign(sampleSetsState.draft.senderShippingInfoForm, clone(sampleSet.sender_shipping_info_form));
+  Object.assign(sampleSetsState.draft.sampleData, clone(sampleSet.sample_data));
+}
+
+async function loadSubmissionSampleSets(submissionId: string) {
+  const sampleSets = await api.listSubmissionSampleSets(submissionId);
+  hydrateSampleSetList(sampleSets);
+  return sampleSets;
+}
+
+async function loadActiveSampleSet(sampleSetId: string | null) {
+  if (!sampleSetId) {
+    hydrateActiveSampleSet(null);
+    return null;
+  }
+
+  const sampleSet = await api.getSampleSet(sampleSetId);
+  hydrateActiveSampleSet(sampleSet);
+  return sampleSet;
+}
+
+async function createSampleSet(submissionId: string, name: string): Promise<SubmissionSampleSet> {
+  const sampleSet = await api.createSubmissionSampleSet(submissionId, {
+    name,
+    templates: [],
+    multi_omics_form: clone(multiOmicsFormDefault),
+    sample_environment_form: clone(sampleEnvironmentFormDefault),
+    sender_shipping_info_form: clone(senderShippingInfoFormDefault),
+    sample_data: clone(sampleDataDefault),
+  });
+  await loadSubmissionSampleSets(submissionId);
+  hydrateActiveSampleSet(sampleSet);
+  hasChanged.value = 0;
+  return sampleSet;
+}
 
 watch(templateList, (newList, oldList) => {
   if (hasChanged.value === 0) {
@@ -687,7 +846,7 @@ function getPermissions(): Record<string, SubmissionEditorRole> {
   studyForm.contributors.forEach((contributor) => {
     const { orcid, permissionLevel } = contributor;
     if (orcid && permissionLevel) {
-      permissions[orcid] = permissionLevel;
+      permissions[orcid] = permissionLevel as SubmissionEditorRole;
     }
   });
   // This should happen last to ensure the PI is an owner
@@ -697,43 +856,58 @@ function getPermissions(): Record<string, SubmissionEditorRole> {
   return permissions;
 }
 
-// TODO: This needs to be updated to work on a single sample set
-async function submit(_id: string, _status?: SubmissionStatusKey) {
-  const uneditableReason = getSubmissionUneditableReason('owner');
-  if (uneditableReason) {
-    throw new Error(`Unable to submit: ${ uneditableReason }`);
-  }
-  throw new Error("Not implemented yet");
+// TODO: this will be refactored later to be a sample submit function.
+// async function submit(submissionId: string, nextStatus?: SubmissionStatusKey) {
+//   const uneditableReason = getSubmissionUneditableReason('owner');
+//   if (uneditableReason) {
+//     throw new Error(`Unable to submit: ${ uneditableReason }`);
+//   }
+//
+//   if (sampleSetsState.activeSampleSetId === null) {
+//     throw new Error('Unable to submit: no active sample set');
+//   }
+//
+//   await incrementalSaveSubmission(submissionId);
+//
+//   if (nextStatus) {
+//     const sampleSet = await api.updateSubmissionSampleSetStatus(sampleSetsState.activeSampleSetId, {
+//       status: nextStatus,
+//     });
+//     hydrateActiveSampleSet(sampleSet);
+//     await loadSubmissionSampleSets(submissionId);
+//   }
+//
+//   await refreshSubmission(submissionId);
+// }
+
+async function selectActiveSampleSet(sampleSetId: string | null) {
+  await loadActiveSampleSet(sampleSetId);
+  hasChanged.value = 0;
 }
 
 function reset() {
-  Object.assign(senderShippingInfoForm, senderShippingInfoFormDefault);
-  Object.assign(senderShippingInfoForm, senderShippingInfoFormDefault);
-  Object.assign(studyForm, studyFormDefault);
-  Object.assign(multiOmicsForm, multiOmicsFormDefault);
-  Object.assign(sampleEnvironmentForm, sampleEnvironmentFormDefault);
-  Object.assign(sampleData, sampleDataDefault);
-  status.value = 'InProgress';
-  studyName.value = '';
-  isTestSubmission.value = false;
-  primaryStudyImageUrl.value = null;
-  piImageUrl.value = null;
+  resetStore();
 }
 
 const incrementalSaveSubmissionRequest = useRequest();
 async function incrementalSaveSubmission(id: string): Promise<void> {
-  const uneditableReason = getSubmissionUneditableReason('editor');
+  // This function **only** saves submission information. It does **not** deal with sample sets.
+  const needsSubmissionSave = !isEqual(submissionState.draft.studyForm, studyFormDefault);
+  const minimumPermissionLevel: SubmissionEditorRole = needsSubmissionSave ? 'editor' : 'metadata_contributor';
+  const uneditableReason = getSubmissionUneditableReason(minimumPermissionLevel);
   if (uneditableReason) {
     return;
   }
 
   let submissionPayload: SubmissionMetadataPatch | null = null;
+  const canEditSubmissionContext = hasMinimumPermissionLevel(getCurrentPermissionLevel(), 'editor');
+
   if (isOwner()) {
     submissionPayload = {
       study_form: studyForm,
       permissions: getPermissions(),
     };
-  } else if (hasMinimumPermissionLevel(_permissionLevel, 'editor')) {
+  } else if (canEditSubmissionContext) {
     submissionPayload = {
       study_form: studyForm,
     };
@@ -743,7 +917,7 @@ async function incrementalSaveSubmission(id: string): Promise<void> {
 
   if (hasChanged.value) {
     const response = await incrementalSaveSubmissionRequest.request(
-      () => api.updateSubmission(id, submissionPayload)
+      async () => api.updateSubmission(id, submissionPayload)
     );
     if (response) {
       await updateStateFromSubmission(response);
@@ -769,37 +943,42 @@ async function createSubmission(isTestSubmission: boolean, studyName: string, pi
   return submission;
 }
 
+async function refreshSubmission(submissionId: string): Promise<SubmissionMetadata> {
+  const submission = await api.getSubmission(submissionId);
+  await updateStateFromSubmission(submission);
+  return submission;
+}
+
 async function updateStateFromSubmission(submission: SubmissionMetadata) {
-  if (!isEqual(studyForm, submission.study_form)) {
-    Object.assign(studyForm, submission.study_form);
-  }
-  createdDate.value = new Date(submission.created + 'Z');
-  modifiedDate.value = new Date(submission.date_last_modified + 'Z');
-  if (submission.permission_level !== null) {
-    _permissionLevel = (submission.permission_level as SubmissionEditorRole);
-  }
-  studyName.value = submission.study_name;
-  isTestSubmission.value = submission.is_test_submission;
-  primaryStudyImageUrl.value = submission.primary_study_image_url;
-  piImageUrl.value = submission.pi_image_url;
+  hydrateSubmission(submission);
+
+  const sampleSets = await loadSubmissionSampleSets(submission.id);
+  const nextActiveSampleSetId = sampleSetsState.activeSampleSetId && sampleSets.some((sampleSet) => sampleSet.id === sampleSetsState.activeSampleSetId)
+    ? sampleSetsState.activeSampleSetId
+    : sampleSets[0]?.id ?? null;
+  await loadActiveSampleSet(nextActiveSampleSetId);
   hasChanged.value = 0;
-  author.value = submission.author;
-  submissionLockedBy.value = submission.locked_by;
 }
 
 async function lockSubmission(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
-    submissionLockedBy.value = lockResponse.locked_by || null;
+    if (submissionState.submission) {
+      submissionState.submission.locked_by = lockResponse.locked_by || null;
+    }
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 409) {
         // Another user has the lock
-        submissionLockedBy.value = error.response.data.locked_by || null;
+        if (submissionState.submission) {
+          submissionState.submission.locked_by = error.response.data.locked_by || null;
+        }
       }
     } else {
       // Something went wrong, and we don't know who has the lock
-      submissionLockedBy.value = null;
+      if (submissionState.submission) {
+        submissionState.submission.locked_by = null;
+      }
     }
   }
 }
@@ -807,7 +986,9 @@ async function lockSubmission(id: string) {
 async function unlockSubmission(id: string) {
   try {
     await api.unlockSubmission(id);
-    submissionLockedBy.value = null;
+    if (submissionState.submission) {
+      submissionState.submission.locked_by = null;
+    }
   } catch {
     // Ignore errors when unlocking
   }
@@ -815,8 +996,7 @@ async function unlockSubmission(id: string) {
 
 async function loadSubmission(id: string) {
   reset();
-  const submission = await api.getSubmission(id);
-  await updateStateFromSubmission(submission);
+  await refreshSubmission(id);
 }
 
 watch([
@@ -927,6 +1107,12 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 export {
   permissionLevelHierarchy,
   /* state */
+  submissionState,
+  sampleSetsState,
+  uiState,
+  activeSampleSet,
+  sampleSetList,
+  activeSampleSetId,
   multiOmicsForm,
   addAwardDoi,
   removeAwardDoi,
@@ -960,10 +1146,15 @@ export {
   getSubmissionUneditableReason,
   incrementalSaveSubmission,
   createSubmission,
+  createSampleSet,
   loadSubmission,
+  refreshSubmission,
+  loadSubmissionSampleSets,
+  loadActiveSampleSet,
+  selectActiveSampleSet,
   lockSubmission,
   unlockSubmission,
-  submit,
+  // submit,
   mergeSampleData,
   isOwner,
   editableByStatus,

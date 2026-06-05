@@ -21,8 +21,10 @@ export default defineComponent({
   emits: ['revalidate'],
 
   setup(_, { emit }) {
+    const selectedFacilities = () => multiOmicsForm.facilities ?? [];
+
     function facilityChange() {
-      if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length < multiOmicsForm.facilities.length) {
+      if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length < selectedFacilities().length) {
         addAwardDoi();
       }
       emit('revalidate');
@@ -30,6 +32,7 @@ export default defineComponent({
 
     return {
       facilityChange,
+      selectedFacilities,
       Definitions,
       multiOmicsForm,
       templateHasData,
@@ -58,11 +61,11 @@ export default defineComponent({
       @change="facilityChange"
     />
     <div
-      v-if="multiOmicsForm.facilities.includes('EMSL')"
+      v-if="selectedFacilities().includes('EMSL')"
       class="mb-4 ml-4"
     >
       <v-text-field
-        v-if="multiOmicsForm.facilities.includes('EMSL')"
+        v-if="selectedFacilities().includes('EMSL')"
         v-model="multiOmicsForm.studyNumber"
         :rules="[
           v => !!v || 'EMSL Proposal Number is required when processing was done at EMSL',
@@ -76,7 +79,7 @@ export default defineComponent({
         validate-on-blur
       />
       <v-radio-group
-        v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.facilities.includes('EMSL')"
+        v-if="multiOmicsForm.dataGenerated === false && selectedFacilities().includes('EMSL')"
         v-model="multiOmicsForm.ship"
         label="Will samples be shipped? *"
         class="mb-4"
@@ -93,7 +96,7 @@ export default defineComponent({
         />
       </v-radio-group>
       <submission-context-shipping-form
-        v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.ship && multiOmicsForm.facilities.includes('EMSL')"
+        v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.ship && selectedFacilities().includes('EMSL')"
       />
       <div
         class="v-label theme--light mb-2"
@@ -140,12 +143,12 @@ export default defineComponent({
       @change="facilityChange"
     />
     <div
-      v-if="multiOmicsForm.facilities.includes('JGI')"
+      v-if="selectedFacilities().includes('JGI')"
       class="mb-4 ml-4"
     >
       <div class="d-flex flex-column grow">
         <v-text-field
-          v-if="multiOmicsForm.facilities.includes('JGI')"
+          v-if="selectedFacilities().includes('JGI')"
           v-model="multiOmicsForm.JGIStudyId"
           :rules="[
             v => !!v || 'JGI Proposal Number is required when processing was done at JGI',

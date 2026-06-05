@@ -31,9 +31,10 @@ export default defineComponent({
   },
   setup() {
     const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
+    const selectedFacilities = computed(() => multiOmicsForm.facilities ?? []);
 
     const projectAwardValidationRules = () => [(v: string | undefined) => {
-      const facilityChosen = multiOmicsForm.facilities.length > 0;
+      const facilityChosen = selectedFacilities.value.length > 0;
       if (!facilityChosen) {
         return true;
       }
@@ -44,7 +45,7 @@ export default defineComponent({
       return true;
     }];
     const otherAwardValidationRules = () => [(v: string | undefined) => {
-      const facilityChosen = multiOmicsForm.facilities.length > 0;
+      const facilityChosen = selectedFacilities.value.length > 0;
       const awardChosen = multiOmicsForm.award !== undefined;
       if (!facilityChosen && !awardChosen) {
         return true;
@@ -123,6 +124,7 @@ export default defineComponent({
       revalidate,
       formRef,
       multiOmicsForm,
+      selectedFacilities,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,
@@ -346,7 +348,7 @@ export default defineComponent({
       </v-alert>
 
       <div
-        v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
+        v-if="selectedFacilities.includes('EMSL') || selectedFacilities.includes('JGI')"
         class="my-4"
       >
         <div
@@ -402,18 +404,18 @@ export default defineComponent({
             </v-row>
           </v-card>
           <v-btn
-            v-if="(multiOmicsForm.dataGenerated || multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')) && multiOmicsForm.awardDois !== null"
+            v-if="(multiOmicsForm.dataGenerated || selectedFacilities.includes('EMSL') || selectedFacilities.includes('JGI')) && multiOmicsForm.awardDois !== null"
             icon
             variant="plain"
             class="pb-2"
-            :disabled="!(multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length) || formRef?.isDisabled"
+            :disabled="!(selectedFacilities.length < multiOmicsForm.awardDois.length) || formRef?.isDisabled"
             @click="removeAwardDoi(i)"
           >
             <v-icon>mdi-minus-circle</v-icon>
           </v-btn>
         </div>
         <v-checkbox
-          v-if="!multiOmicsForm.dataGenerated && (multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI'))"
+          v-if="!multiOmicsForm.dataGenerated && (selectedFacilities.includes('EMSL') || selectedFacilities.includes('JGI'))"
           v-model="multiOmicsForm.unknownDoi"
           class="mt-0"
           :label="`I don't know my award DOI`"
@@ -423,7 +425,7 @@ export default defineComponent({
         />
       </div>
       <v-btn-grey
-        v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
+        v-if="selectedFacilities.includes('EMSL') || selectedFacilities.includes('JGI')"
         class="mb-4"
         :disabled="formRef?.isDisabled"
         @click="addAwardDoi"

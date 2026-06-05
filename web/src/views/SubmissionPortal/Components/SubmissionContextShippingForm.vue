@@ -45,10 +45,10 @@ export default defineComponent({
       get: () => {
         return senderShippingInfoForm.expectedShippingDate
           ? new Date(senderShippingInfoForm.expectedShippingDate)
-          : undefined;
+          : null;
       },
-      set: (newValue: Date | undefined) => {
-        senderShippingInfoForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
+      set: (newValue: Date | null) => {
+        senderShippingInfoForm.expectedShippingDate = newValue ? newValue.toISOString() : null;
       },
     });
 
@@ -64,7 +64,7 @@ export default defineComponent({
     });
 
     function handleExpectedShippingDateClear() {
-      expectedShippingDate.value = undefined;
+      expectedShippingDate.value = null;
     }
 
     return {
