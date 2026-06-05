@@ -595,7 +595,6 @@ const sampleSetsState = reactive({
 });
 
 const uiState = reactive({
-  hasChanged: 0,
   metadataSuggestions: [] as MetadataSuggestion[],
   suggestionMode: SuggestionsMode.LIVE,
   suggestionType: SuggestionType.ALL,
@@ -607,7 +606,6 @@ const sampleEnvironmentForm = sampleSetsState.draft.sampleEnvironmentForm;
 const senderShippingInfoForm = sampleSetsState.draft.senderShippingInfoForm;
 const sampleData = sampleSetsState.draft.sampleData;
 
-const hasChanged = toRef(uiState, 'hasChanged');
 const metadataSuggestions = toRef(uiState, 'metadataSuggestions');
 const suggestionMode = toRef(uiState, 'suggestionMode');
 const suggestionType = toRef(uiState, 'suggestionType');
@@ -649,8 +647,21 @@ const activeSampleSet = computed(() => sampleSetsState.activeSampleSet);
 const sampleSetList = computed(() => sampleSetsState.items);
 const activeSampleSetId = toRef(sampleSetsState, 'activeSampleSetId');
 
+const submissionLastSavedDraft = reactive(createEmptySubmissionDraft());
+const activeSampleSetLastSavedDraft = reactive(createEmptySampleSetDraft());
+
+const submissionDirty = computed(() => !isEqual(submissionState.draft, submissionLastSavedDraft));
+const activeSampleSetDirty = computed(() => {
+  if (!sampleSetsState.activeSampleSetId) {
+    return false;
+  }
+  return !isEqual(sampleSetsState.draft, activeSampleSetLastSavedDraft);
+});
+const hasChanged = computed(() => submissionDirty.value || activeSampleSetDirty.value);
+
 function resetSubmissionState() {
   Object.assign(submissionState.draft.studyForm, clone(studyFormDefault));
+  Object.assign(submissionLastSavedDraft, createEmptySubmissionDraft());
   submissionState.submission = null;
 }
 
@@ -661,6 +672,7 @@ function resetActiveSampleSetDraft() {
   Object.assign(sampleSetsState.draft.sampleEnvironmentForm, emptyDraft.sampleEnvironmentForm);
   Object.assign(sampleSetsState.draft.senderShippingInfoForm, emptyDraft.senderShippingInfoForm);
   Object.assign(sampleSetsState.draft.sampleData, emptyDraft.sampleData);
+  Object.assign(activeSampleSetLastSavedDraft, createEmptySampleSetDraft());
 }
 
 function resetSampleSetsState() {
@@ -673,12 +685,14 @@ function resetSampleSetsState() {
 function resetStore() {
   resetSubmissionState();
   resetSampleSetsState();
-  uiState.hasChanged = 0;
 }
 
 function hydrateSubmission(submission: SubmissionMetadata) {
   submissionState.submission = submission;
   Object.assign(submissionState.draft.studyForm, clone(submission.study_form));
+  Object.assign(submissionLastSavedDraft, {
+    studyForm: clone(submission.study_form),
+  });
 }
 
 async function saveActiveSampleSet(): Promise<SubmissionSampleSet | null> {
@@ -718,6 +732,13 @@ function hydrateActiveSampleSet(sampleSet: SubmissionSampleSet | null) {
   Object.assign(sampleSetsState.draft.sampleEnvironmentForm, clone(sampleSet.sample_environment_form));
   Object.assign(sampleSetsState.draft.senderShippingInfoForm, clone(sampleSet.sender_shipping_info_form));
   Object.assign(sampleSetsState.draft.sampleData, clone(sampleSet.sample_data));
+  Object.assign(activeSampleSetLastSavedDraft, {
+    name: sampleSet.name,
+    multiOmicsForm: clone(sampleSet.multi_omics_form),
+    sampleEnvironmentForm: clone(sampleSet.sample_environment_form),
+    senderShippingInfoForm: clone(sampleSet.sender_shipping_info_form),
+    sampleData: clone(sampleSet.sample_data),
+  });
 }
 
 async function loadSubmissionSampleSets(submissionId: string) {
@@ -748,12 +769,11 @@ async function createSampleSet(submissionId: string, name: string): Promise<Subm
   });
   await loadSubmissionSampleSets(submissionId);
   hydrateActiveSampleSet(sampleSet);
-  hasChanged.value = 0;
   return sampleSet;
 }
 
 watch(templateList, (newList, oldList) => {
-  if (hasChanged.value === 0) {
+  if (!activeSampleSetDirty.value) {
     // Initial load, do nothing
     return;
   }
@@ -794,7 +814,6 @@ watch(templateList, (newList, oldList) => {
     });
     sampleData.data = newSampleData;
   }
-  hasChanged.value += 1;
 });
 
 
@@ -857,32 +876,21 @@ function getPermissions(): Record<string, SubmissionEditorRole> {
 }
 
 // TODO: this will be refactored later to be a sample submit function.
-// async function submit(submissionId: string, nextStatus?: SubmissionStatusKey) {
-//   const uneditableReason = getSubmissionUneditableReason('owner');
-//   if (uneditableReason) {
-//     throw new Error(`Unable to submit: ${ uneditableReason }`);
-//   }
-//
-//   if (sampleSetsState.activeSampleSetId === null) {
-//     throw new Error('Unable to submit: no active sample set');
-//   }
-//
-//   await incrementalSaveSubmission(submissionId);
-//
-//   if (nextStatus) {
-//     const sampleSet = await api.updateSubmissionSampleSetStatus(sampleSetsState.activeSampleSetId, {
-//       status: nextStatus,
-//     });
-//     hydrateActiveSampleSet(sampleSet);
-//     await loadSubmissionSampleSets(submissionId);
-//   }
-//
-//   await refreshSubmission(submissionId);
-// }
+async function submit(_submissionId: string, _nextStatus?: SubmissionStatusKey) {
+  const uneditableReason = getSubmissionUneditableReason('owner');
+  if (uneditableReason) {
+    throw new Error(`Unable to submit: ${ uneditableReason }`);
+  }
+
+  if (sampleSetsState.activeSampleSetId === null) {
+    throw new Error('Unable to submit: no active sample set');
+  }
+
+  throw new Error("Not implemented yet.")
+}
 
 async function selectActiveSampleSet(sampleSetId: string | null) {
   await loadActiveSampleSet(sampleSetId);
-  hasChanged.value = 0;
 }
 
 function reset() {
@@ -890,13 +898,13 @@ function reset() {
 }
 
 const incrementalSaveSubmissionRequest = useRequest();
-async function incrementalSaveSubmission(id: string): Promise<void> {
+async function saveSubmissionDraft(id: string): Promise<SubmissionMetadata | null> {
   // This function **only** saves submission information. It does **not** deal with sample sets.
-  const needsSubmissionSave = !isEqual(submissionState.draft.studyForm, studyFormDefault);
+  const needsSubmissionSave = submissionDirty.value;
   const minimumPermissionLevel: SubmissionEditorRole = needsSubmissionSave ? 'editor' : 'metadata_contributor';
   const uneditableReason = getSubmissionUneditableReason(minimumPermissionLevel);
   if (uneditableReason) {
-    return;
+    return null;
   }
 
   let submissionPayload: SubmissionMetadataPatch | null = null;
@@ -912,20 +920,58 @@ async function incrementalSaveSubmission(id: string): Promise<void> {
       study_form: studyForm,
     };
   } else {
+    return null;
+  }
+
+  if (!submissionDirty.value) {
+    return null;
+  }
+
+  const response = await api.updateSubmission(id, submissionPayload);
+  await updateStateFromSubmission(response);
+  return response;
+}
+
+async function saveActiveSampleSetDraft(): Promise<SubmissionSampleSet | null> {
+  const uneditableReason = getSubmissionUneditableReason('metadata_contributor');
+  if (uneditableReason) {
+    return null;
+  }
+
+  if (!activeSampleSetDirty.value) {
+    return null;
+  }
+
+  const activeSampleSetId = sampleSetsState.activeSampleSetId;
+  if (!activeSampleSetId) {
+    return null;
+  }
+
+  return saveActiveSampleSet();
+}
+
+async function incrementalSaveSubmission(submission_id: string): Promise<void> {
+  if (!submissionDirty.value && !activeSampleSetDirty.value) {
     return;
   }
 
-  if (hasChanged.value) {
-    const response = await incrementalSaveSubmissionRequest.request(
-      async () => api.updateSubmission(id, submissionPayload)
-    );
-    if (response) {
-      await updateStateFromSubmission(response);
+  await incrementalSaveSubmissionRequest.request(async () => {
+    let submissionResponse: SubmissionMetadata | null = null;
+
+    if (submissionDirty.value) {
+      submissionResponse = await saveSubmissionDraft(submission_id);
     }
-    hasChanged.value = 0;
-    return;
-  }
-  hasChanged.value = 0;
+
+    if (activeSampleSetDirty.value) {
+      await saveActiveSampleSetDraft();
+    }
+
+    if (!submissionResponse && submissionDirty.value) {
+      submissionResponse = await refreshSubmission(submission_id);
+    }
+
+    return submissionResponse;
+  });
 }
 
 async function createSubmission(isTestSubmission: boolean, studyName: string, piEmail: string): Promise<SubmissionMetadata> {
@@ -957,7 +1003,6 @@ async function updateStateFromSubmission(submission: SubmissionMetadata) {
     ? sampleSetsState.activeSampleSetId
     : sampleSets[0]?.id ?? null;
   await loadActiveSampleSet(nextActiveSampleSetId);
-  hasChanged.value = 0;
 }
 
 async function lockSubmission(id: string) {
@@ -1005,7 +1050,9 @@ watch([
   multiOmicsForm,
   sampleEnvironmentForm,
   sampleData,
-], () => { hasChanged.value += 1; }, { deep: true });
+], () => {
+  // Preserve a deep dependency registration so draft mutations keep computed dirty flags hot.
+}, { deep: true });
 
 function mergeSampleData(key: string | undefined, data: any[]) {
   if (!key) {
@@ -1113,6 +1160,8 @@ export {
   activeSampleSet,
   sampleSetList,
   activeSampleSetId,
+  submissionDirty,
+  activeSampleSetDirty,
   multiOmicsForm,
   addAwardDoi,
   removeAwardDoi,
@@ -1144,6 +1193,8 @@ export {
   fetchSuggestionsFromStudyInfoRequest,
   /* functions */
   getSubmissionUneditableReason,
+  saveSubmissionDraft,
+  saveActiveSampleSetDraft,
   incrementalSaveSubmission,
   createSubmission,
   createSampleSet,
@@ -1154,7 +1205,7 @@ export {
   selectActiveSampleSet,
   lockSubmission,
   unlockSubmission,
-  // submit,
+  submit,
   mergeSampleData,
   isOwner,
   editableByStatus,

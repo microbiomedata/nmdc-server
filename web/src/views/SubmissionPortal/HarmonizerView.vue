@@ -28,7 +28,6 @@ import {
   fetchSuggestionsFromSampleRows,
   fetchSuggestionsFromStudyInfo,
   getSubmissionUneditableReason,
-  hasChanged,
   incrementalSaveSubmission,
   incrementalSaveSubmissionRequest,
   isOwner,
@@ -373,7 +372,6 @@ const onDataChange = async (changes: any[]) => {
     return isNonemptyChange && isRelevantColumn;
   });
 
-  hasChanged.value += 1;
   if (shouldSynchronizeTabs) {
     syncAndMergeTabsForRemovedRows();
   } else {
@@ -652,7 +650,6 @@ function openFile(file: File) {
     resetSampleMetadataValidation();
 
     // Sync with backend
-    hasChanged.value += 1;
     saveRecord(); // This is a background save that we intentionally don't wait for
 
     // Load data for active tab into DataHarmonizer
@@ -669,7 +666,6 @@ function addHooks() {
   harmonizerApi.addChangeHook(onDataChange);
   harmonizerApi.addRowRemovedHook(async () => {
     syncAndMergeTabsForRemovedRows();
-    hasChanged.value += 1;
     saveRecord();
   });
 }
