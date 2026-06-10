@@ -89,6 +89,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 
 defineProps<{
   id: string,
+  sampleSetId: string,
 }>();
 
 const store = useSubmissionStore();
