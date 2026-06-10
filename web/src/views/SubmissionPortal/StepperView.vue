@@ -18,27 +18,23 @@ useEventListener('beforeunload', () => {
 })
 
 const store = useSubmissionStore();
-
-const loading = computed(() => (
-  store.submission.requests.loading.loading ||
-  store.submission.requests.saving.loading ||
-  store.sampleSet.requests.loading.loading ||
-  store.sampleSet.requests.saving.loading
-));
+const sampleSetLoading = computed(() => store.sampleSet.requests.loading.loading);
+const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
 </script>
 
 <template>
-  <div class="position-relative">
-    <v-progress-linear
-      :active="loading"
-      absolute
-      indeterminate
-      color="primary"
-    />
-    <SaveErrorSnackbar/>
-    <SubmissionNavigationSidebar class="mx-0"/>
-    <v-container>
-      <router-view/>
-    </v-container>
-  </div>
+  <SaveErrorSnackbar />
+  <SubmissionNavigationSidebar class="mx-0" />
+  <v-container>
+    <v-alert
+      v-if="sampleSetError"
+      type="error"
+    >
+      <div class="text-h6">
+        Error loading sample set
+      </div>
+      {{ sampleSetError }}
+    </v-alert>
+    <router-view v-else-if="!sampleSetLoading" />
+  </v-container>
 </template>

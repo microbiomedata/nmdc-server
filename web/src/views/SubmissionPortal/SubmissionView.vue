@@ -37,25 +37,14 @@ watch(() => sampleSetId, (nextSampleSetId) => {
   }
 }, { immediate: true });
 
-const loading = computed(() =>
-  store.submission.requests.loading.loading ||
-  store.sampleSet.requests.loading.loading
-);
+const submissionLoading = computed(() => store.submission.requests.loading.loading);
+const sampleSetLoading = computed(() => store.sampleSet.requests.loading.loading);
 
 const submissionReady = computed(() => (
   id === undefined || store.submission.record?.id === id
 ));
 
-const sampleSetReady = computed(() => (
-  sampleSetId === undefined || store.sampleSet.record?.id === sampleSetId
-));
-
-const routeDataReady = computed(() => submissionReady.value && sampleSetReady.value);
-
-const error = computed(() =>
-  store.submission.requests.loading.error ||
-  store.sampleSet.requests.loading.error
-);
+const submissionError = computed(() => store.submission.requests.loading.error);
 
 const color = 'primary';
 const density = 'comfortable';
@@ -110,50 +99,50 @@ provide(AppBannerHeightKey, appBannerHeight);
   <v-defaults-provider :defaults="styleDefaults">
     <v-main class="d-flex flex-column">
       <AppBanner ref="appBanner" />
-      <v-container
-        v-if="!stateRefs.user.value && !loading"
-      >
-        <v-container class="mt-4 ">
-          <v-row>
-            <v-col class="pb-0">
-              <TitleBanner />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <LoginPrompt />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <IconBar />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <IntroBlurb />
-            </v-col>
-          </v-row>
+      <div class="position-relative">
+        <v-progress-linear
+          :active="submissionLoading || sampleSetLoading"
+          absolute
+          indeterminate
+          color="primary"
+        />
+        <v-container
+          v-if="!stateRefs.user.value && !submissionLoading"
+        >
+          <v-container class="mt-4 ">
+            <v-row>
+              <v-col class="pb-0">
+                <TitleBanner />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <LoginPrompt />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <IconBar />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <IntroBlurb />
+              </v-col>
+            </v-row>
+          </v-container>
         </v-container>
-      </v-container>
-      <router-view v-else-if="!loading && !error && routeDataReady" />
-      <div
-        v-else-if="loading || !routeDataReady"
-        class="text-h3"
-      >
-        Submission portal is loading...
-      </div>
-      <div
-        v-else-if="error"
-      >
-        <v-container>
-          <v-alert type="error">
-            <div class="text-h6">
-              Error loading record {{ id }}
-            </div>
-            {{ error }}
-          </v-alert>
-        </v-container>
+        <div v-else-if="submissionError">
+          <v-container>
+            <v-alert type="error">
+              <div class="text-h6">
+                Error loading submission {{ id }}
+              </div>
+              {{ submissionError }}
+            </v-alert>
+          </v-container>
+        </div>
+        <router-view v-else-if="submissionReady" />
       </div>
     </v-main>
   </v-defaults-provider>

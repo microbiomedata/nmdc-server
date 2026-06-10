@@ -827,6 +827,7 @@ onMounted(async () => {
 // Get app banner height provided by SubmissionView. This will be used to correctly size
 // the DataHarmonizer container, which needs a fixed height.
 const appBannerHeight = inject(AppBannerHeightKey);
+const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
 </script>
 
 <template>
@@ -841,7 +842,17 @@ const appBannerHeight = inject(AppBannerHeightKey);
       in-sample-set-context
     />
     <v-alert
-      v-if="!hasValidSampleEnvironmentSelection"
+      v-if="sampleSetError"
+      class="ma-8 flex-grow-0 overflow-visible"
+      type="error"
+    >
+      <div class="text-h6">
+        Error loading sample set
+      </div>
+      {{ sampleSetError }}
+    </v-alert>
+    <v-alert
+      v-else-if="!hasValidSampleEnvironmentSelection"
       class="ma-8 flex-grow-0 overflow-visible"
       title="Incomplete Sample Environment Selection"
       text="You must complete the Sample Environment form before entering sample metadata."
