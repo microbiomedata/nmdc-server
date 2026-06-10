@@ -11,9 +11,6 @@ interface Props {
   subtitleKey?: string;
   results?: BaseSearchResult[];
   icon?: string;
-  showCheckbox?: boolean;
-  checkboxValues?: string[];
-  checkboxDisabled?: boolean;
   disablePagination?: boolean;
 }
 
@@ -22,17 +19,12 @@ const props = withDefaults(defineProps<Props>(), {
   subtitleKey: 'description',
   results: () => [] as BaseSearchResult[],
   icon: 'mdi-book',
-  showCheckbox: false,
-  checkboxValues: () => [] as string[],
-  checkboxDisabled: false,
   disablePagination: false,
 });
 
 const emit = defineEmits<{
   'set-page': [page: number];
   'set-items-per-page': [itemsPerPage: number];
-  'selected': [id: string];
-  'checkbox-change': [payload: { checked: boolean; id: string; children: BaseSearchResult[] }];
 }>();
 
 const rows = ref(props.itemsPerPage);
@@ -57,13 +49,17 @@ const rows = ref(props.itemsPerPage);
             titleKey,
             subtitleKey,
             icon,
-            showCheckbox,
-            checkboxValues,
-            checkboxDisabled,
           }"
-          @selected="emit('selected', $event)"
-          @checkbox-change="emit('checkbox-change', $event)"
         >
+          <template
+            v-if="$slots['prepend-action']"
+            #prepend-action="slotProps"
+          >
+            <slot
+              name="prepend-action"
+              v-bind="slotProps"
+            />
+          </template>
           <template
             v-if="$slots.subtitle"
             #subtitle="slotProps"

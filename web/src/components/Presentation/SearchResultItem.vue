@@ -6,24 +6,13 @@ interface Props {
   subtitleKey?: string;
   result: BaseSearchResult;
   icon?: string;
-  showCheckbox?: boolean;
-  checkboxValues?: string[];
-  checkboxDisabled?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
   titleKey: 'name',
   subtitleKey: 'description',
   icon: 'mdi-book',
-  showCheckbox: false,
-  checkboxValues: () => [] as string[],
-  checkboxDisabled: false,
 });
-
-const emit = defineEmits<{
-  'checkbox-change': [payload: { checked: boolean; id: string; children: BaseSearchResult[] }];
-  'selected': [id: string];
-}>();
 </script>
 
 <template>
@@ -33,15 +22,10 @@ const emit = defineEmits<{
     :link="false"
   >
     <template #prepend>
-      <v-list-item-action v-if="showCheckbox">
-        <v-checkbox-btn
-          :model-value="checkboxValues"
-          :value="result.id"
-          :disabled="checkboxDisabled"
-          @click.stop
-          @change="emit('checkbox-change', { checked: $event.target.checked, id: result.id, children: result.children ?? [] })"
-        />
-      </v-list-item-action>
+      <slot
+        name="prepend-action"
+        v-bind="{ result }"
+      />
       <v-icon>
         {{
           result.children && Array.isArray(result.children) && result.children.length > 0 && result.study_category === 'research_study'

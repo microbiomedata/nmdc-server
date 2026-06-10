@@ -211,18 +211,24 @@ const gatedEnvironmentVisConditions = useClockGate(
             >
               <v-tabs-window-item key="studies">
                 <SearchResults
-                  show-checkbox
                   :count="study.data.results.count"
                   :icon="studyType.icon"
                   :items-per-page="study.data.limit"
                   :results="studyResults"
                   :page="study.data.pageSync"
-                  :checkbox-values="studyCheckboxState"
                   @set-page="study.setPage($event)"
-                  @selected="$router.push({ name: 'Study', params: { id: $event} })"
                   @set-items-per-page="study.setItemsPerPage($event)"
-                  @checkbox-change="setChecked($event.checked, $event.id, $event.children as StudySearchResults[])"
                 >
+                  <template #prepend-action="{ result }">
+                    <v-list-item-action>
+                      <v-checkbox-btn
+                        :model-value="studyCheckboxState"
+                        :value="result.id"
+                        @click.stop
+                        @change="setChecked($event.target.checked, result.id, result.children as StudySearchResults[])"
+                      />
+                    </v-list-item-action>
+                  </template>
                   <template #action-right="{ result }">
                     <v-list-item-action>
                       <v-btn
@@ -262,18 +268,24 @@ const gatedEnvironmentVisConditions = useClockGate(
                     >
                       <v-divider />
                       <SearchResults
-                        show-checkbox
                         disable-pagination
                         :count="result.children.length"
                         :icon="studyType.icon"
                         :items-per-page="result.children.length"
                         :results="result.children"
                         :page="1"
-                        :checkbox-values="studyCheckboxState"
-                        :checkbox-disabled="studyCheckboxState.includes(result.id)"
-                        @selected="$router.push({ name: 'Study', params: { id: $event} })"
-                        @checkbox-change="setChecked($event.checked, $event.id)"
                       >
+                        <template #prepend-action="{ result: child }">
+                          <v-list-item-action>
+                            <v-checkbox-btn
+                              :model-value="studyCheckboxState"
+                              :value="child.id"
+                              :disabled="studyCheckboxState.includes(result.id)"
+                              @click.stop
+                              @change="setChecked($event.target.checked, child.id)"
+                            />
+                          </v-list-item-action>
+                        </template>
                         <template #action-right="{ result: child }">
                           <v-list-item-action>
                             <v-btn

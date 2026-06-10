@@ -67,7 +67,6 @@ export default defineComponent({
     :subtitle-key="'study_id'"
     :loading="biosampleSearch.loading.value"
     @set-page="biosampleSearch.setPage($event)"
-    @selected="$router.push({ name: 'Sample', params: { id: $event }})"
     @set-items-per-page="biosampleSearch.setItemsPerPage($event)"
   >
     <template #subtitle="props">
