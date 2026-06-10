@@ -292,7 +292,11 @@ def _combine_validation_errors(*error_lists: Optional[List[str]]) -> Optional[Li
     for errors in error_lists:
         if errors:
             combined_errors.extend(errors)
-    return combined_errors if combined_errors else [] if any(errors is not None for errors in error_lists) else None
+    return (
+        combined_errors
+        if combined_errors
+        else [] if any(errors is not None for errors in error_lists) else None
+    )
 
 
 def _summarize_sample_metadata_validation(

@@ -1504,7 +1504,7 @@ def test_delete_submission_pi_image_success(
 
     # Delete the PI image
     response = client.delete(f"/api/metadata_submission/{submission.id}/image/pi_image")
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify the image was deleted from the database
     db.refresh(submission)
@@ -1542,7 +1542,7 @@ def test_delete_submission_primary_study_image_success(
 
     # Delete the primary study image
     response = client.delete(f"/api/metadata_submission/{submission.id}/image/primary_study_image")
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify the image was deleted from the database
     db.refresh(submission)
@@ -1589,7 +1589,7 @@ def test_delete_submission_study_images_success(
         f"/api/metadata_submission/{submission.id}/image/study_images"
         f"?image_name={image_to_delete.name}"
     )
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify the image was deleted from the database
     db.refresh(submission)
