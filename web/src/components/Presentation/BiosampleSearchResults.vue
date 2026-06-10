@@ -1,8 +1,6 @@
-<script lang="ts">
+<script setup lang="ts">
 import {
   computed,
-  defineComponent,
-  PropType,
   reactive,
 } from 'vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
@@ -12,49 +10,33 @@ import { PaginatedResult } from '@/use/usePaginatedResults';
 import { BiosampleSearchResult, DataObjectFilter } from '@/data/api';
 import { stateRefs } from '@/store';
 
-export default defineComponent({
-  components: { SampleListExpansion, SearchResults },
-  props: {
-    biosampleSearch: {
-      type: Object as PropType<PaginatedResult<BiosampleSearchResult>>,
-      required: true,
-    },
-    dataObjectFilter: {
-      type: Array as PropType<DataObjectFilter[]>,
-      required: true,
-    },
-  },
-  setup() {
-    const biosampleType = types.biosample;
+defineProps<{
+  biosampleSearch: PaginatedResult<BiosampleSearchResult>;
+  dataObjectFilter: DataObjectFilter[];
+}>();
 
-    const loggedInUser = computed(() => stateRefs.user.value !== null);
+const biosampleType = types.biosample;
 
-    /**
-     * Expanded Omics details
-     */
-    const expandedOmicsDetails = reactive({
-      resultId: '',
-      omicsProcessingId: '',
-    });
-    function setExpanded(resultId: string, omicsProcessingId: string) {
-      if (expandedOmicsDetails.resultId !== resultId
-        || expandedOmicsDetails.omicsProcessingId !== omicsProcessingId) {
-        expandedOmicsDetails.resultId = resultId;
-        expandedOmicsDetails.omicsProcessingId = omicsProcessingId;
-      } else {
-        expandedOmicsDetails.resultId = '';
-        expandedOmicsDetails.omicsProcessingId = '';
-      }
-    }
+const loggedInUser = computed(() => stateRefs.user.value !== null);
 
-    return {
-      biosampleType,
-      expandedOmicsDetails,
-      setExpanded,
-      loggedInUser,
-    };
-  },
+/**
+ * Expanded Omics details
+ */
+const expandedOmicsDetails = reactive({
+  resultId: '',
+  omicsProcessingId: '',
 });
+
+function setExpanded(resultId: string, omicsProcessingId: string) {
+  if (expandedOmicsDetails.resultId !== resultId
+    || expandedOmicsDetails.omicsProcessingId !== omicsProcessingId) {
+    expandedOmicsDetails.resultId = resultId;
+    expandedOmicsDetails.omicsProcessingId = omicsProcessingId;
+  } else {
+    expandedOmicsDetails.resultId = '';
+    expandedOmicsDetails.omicsProcessingId = '';
+  }
+}
 </script>
 
 <template>
