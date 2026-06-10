@@ -8,7 +8,7 @@ import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
-import { api, Condition, StudySearchResults } from '@/data/api';
+import { api, Condition, StudySearchResult } from '@/data/api';
 
 import {
   stateRefs, dataObjectFilter,
@@ -41,7 +41,7 @@ const studyCheckboxState = computed(() => (
  * @param studyId - ID of the study to select
  * @param children - Optional children studies to also select
  */
-function setChecked(checked: boolean, studyId: string, children: StudySearchResults[] = []) {
+function setChecked(checked: boolean, studyId: string, children: StudySearchResult[] = []) {
   const conditions: Condition[] = [{
     value: studyId,
     table: 'study',
@@ -104,7 +104,7 @@ const studySummaryData = useFacetSummaryData({
 });
 const studyCondition = studySummaryData.otherConditions.value || [];
 const study = usePaginatedResults(ref(studyCondition), api.searchStudy, undefined, 10);
-const studyResults = computed<StudySearchResults[]>(() => Object.values(study.data.results.results)
+const studyResults = computed<StudySearchResult[]>(() => Object.values(study.data.results.results)
   .map((r) => ({
     ...r,
     name: r.annotations.title || r.name,
@@ -127,7 +127,7 @@ const gatedEnvironmentVisConditions = useClockGate(
   stateRefs.conditions,
 );
 // const showChildren:Ref<any[]> = ref([]);
-// function toggleChildren(value:StudySearchResults) {
+// function toggleChildren(value:StudySearchResult) {
 //   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
 // }
 </script>
@@ -225,7 +225,7 @@ const gatedEnvironmentVisConditions = useClockGate(
                         :model-value="studyCheckboxState"
                         :value="result.id"
                         @click.stop
-                        @change="setChecked($event.target.checked, result.id, result.children as StudySearchResults[])"
+                        @change="setChecked($event.target.checked, result.id, result.children as StudySearchResult[])"
                       />
                     </v-list-item-action>
                   </template>

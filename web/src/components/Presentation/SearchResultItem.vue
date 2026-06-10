@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { BaseSearchResult } from '@/data/api';
+import { BiosampleSearchResult, StudySearchResult } from '@/data/api';
 
 interface Props {
   titleKey?: string;
   subtitleKey?: string;
-  result: BaseSearchResult;
+  result: BiosampleSearchResult | StudySearchResult;
   icon?: string;
 }
 

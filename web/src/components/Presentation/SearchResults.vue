@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { BaseSearchResult } from '@/data/api';
+import { BiosampleSearchResult, StudySearchResult } from '@/data/api';
 
 interface Props {
   page: number;
@@ -9,7 +9,7 @@ interface Props {
   count: number;
   titleKey?: string;
   subtitleKey?: string;
-  results?: BaseSearchResult[];
+  results?: StudySearchResult[] | BiosampleSearchResult[];
   icon?: string;
   disablePagination?: boolean;
 }
@@ -17,7 +17,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   titleKey: 'name',
   subtitleKey: 'description',
-  results: () => [] as BaseSearchResult[],
+  results: () => [] as StudySearchResult[] | BiosampleSearchResult[],
   icon: 'mdi-book',
   disablePagination: false,
 });

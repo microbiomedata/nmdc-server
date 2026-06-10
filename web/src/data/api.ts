@@ -63,7 +63,7 @@ export interface BaseSearchResult {
   description: string;
   alternate_identifiers: string[];
   annotations: Record<string, string | string[]>;
-  children?: BaseSearchResult[];
+  children?: StudySearchResult[]; // only used for StudySearchResult, but included here for convenience in rendering nested studies
   omics_processing_counts?: {
     type: string;
     count: number;
@@ -108,6 +108,7 @@ export interface OmicsProcessingResult extends OmicsProcessingBaseResult {
 }
 
 export interface BiosampleSearchResult extends BaseSearchResult {
+  study_id: string;
   omics_processing_id: string;
   depth: number;
   env_broad_scale_id: string;
@@ -208,7 +209,7 @@ export interface LabelLink {
   url: string,
 }
 
-export interface StudySearchResults extends BaseSearchResult {
+export interface StudySearchResult extends BaseSearchResult {
   principal_investigator_websites: string[];
   principal_investigator_name: string;
   principal_investigator_image_url: string;
@@ -244,7 +245,7 @@ export interface StudySearchResults extends BaseSearchResult {
   study_category: string;
   homepage_website: string[] | null;
   part_of: string[] | null;
-  children: StudySearchResults[];
+  children: StudySearchResult[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
@@ -491,7 +492,7 @@ async function searchBiosample(params: SearchParams) {
 }
 
 async function searchStudy(params: SearchParams) {
-  return _search<StudySearchResults>("study", params);
+  return _search<StudySearchResult>("study", params);
 }
 
 async function searchOmicsProcessing(params: SearchParams) {
@@ -521,7 +522,7 @@ async function searchDataObject(params: SearchParams) {
 export type ResultUnion =
   | SearchResponse<BiosampleSearchResult>
   | SearchResponse<OmicsProcessingResult>
-  | SearchResponse<StudySearchResults>
+  | SearchResponse<StudySearchResult>
   | SearchResponse<ReadsQCResult>
   | SearchResponse<MetagenomeAssembyResult>
   | SearchResponse<MetagenomeAnnotationResult>
@@ -570,8 +571,8 @@ async function getBiosample(id: string): Promise<BiosampleSearchResult> {
   return _getById<BiosampleSearchResult>("biosample", id);
 }
 
-async function getStudy(id: string): Promise<StudySearchResults> {
-  return _getById<StudySearchResults>("study", id);
+async function getStudy(id: string): Promise<StudySearchResult> {
+  return _getById<StudySearchResult>("study", id);
 }
 
 async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource> {

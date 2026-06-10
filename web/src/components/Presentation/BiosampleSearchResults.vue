@@ -54,12 +54,12 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     <template #subtitle="props">
       <span class="pr-2">Study ID:</span>
       <router-link
-        :to="{name: 'Study', params: { id: props.result.study_id }}"
+        :to="{name: 'Study', params: { id: (props.result as BiosampleSearchResult).study_id }}"
         class="pr-2 text-grey-darken-2"
         v-text="props.result.study_id"
       />
       <template
-        v-if="props.result.alternate_identifiers.length || props.result.emsl_biosample_identifiers.length"
+        v-if="props.result.alternate_identifiers.length || (props.result as BiosampleSearchResult).emsl_biosample_identifiers.length"
       >
         <span class="pr-2">Sample Identifiers:</span>
         <a
@@ -81,7 +81,7 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     <template #item-content="props">
       <SampleListExpansion
         v-bind="{
-          result: props.result,
+          result: props.result as BiosampleSearchResult,
           expanded: expandedOmicsDetails,
           loggedInUser,
           showBulk: dataObjectFilter.length > 0,
