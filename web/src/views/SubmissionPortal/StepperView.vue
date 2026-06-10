@@ -4,7 +4,6 @@ import { computed } from 'vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import { unlockSubmission } from './store/api';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
-import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
 import { useEventListener } from '@vueuse/core';
 import { useSubmissionStore } from './store';
 
@@ -38,7 +37,6 @@ const loading = computed(() => (
     />
     <SaveErrorSnackbar/>
     <SubmissionNavigationSidebar class="mx-0"/>
-    <SubmissionUneditableBanner :allowed-roles="['owner', 'editor']"/>
     <v-container>
       <router-view/>
     </v-container>

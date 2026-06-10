@@ -4,6 +4,7 @@ import { HARMONIZER_TEMPLATES, TemplateName } from '@/views/SubmissionPortal/typ
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import SubmissionUneditableBanner from '@/views/SubmissionPortal/Components/SubmissionUneditableBanner.vue';
 import { useSubmissionStore } from '../store';
 
 const store = useSubmissionStore();
@@ -20,6 +21,11 @@ const templateListDisplayNames = computed(() => store.templateList
 
 <template>
   <div>
+    <SubmissionUneditableBanner
+      :allowed-roles="['owner', 'editor']"
+      in-sample-set-context
+      edge-to-edge
+    />
     <PageTitle
       title="Sample Environment"
     >
@@ -37,6 +43,7 @@ const templateListDisplayNames = computed(() => store.templateList
       </template>
     </PageTitle>
     <SubmissionForm
+      in-sample-set-context
       @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >
       <v-input

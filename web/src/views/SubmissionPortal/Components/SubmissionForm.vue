@@ -5,9 +5,11 @@ import { SubmissionEditorRole } from '@/views/SubmissionPortal/types.ts';
 import { useSubmissionStore } from '../store';
 
 const {
-  allowedRoles = ['owner', 'editor']
+  allowedRoles = ['owner', 'editor'],
+  inSampleSetContext = false,
 } = defineProps<{
-  allowedRoles?: SubmissionEditorRole[]
+  allowedRoles?: SubmissionEditorRole[];
+  inSampleSetContext?: boolean;
 }>()
 
 const emit = defineEmits<{
@@ -17,7 +19,7 @@ const emit = defineEmits<{
 const store = useSubmissionStore();
 
 const formRef = useTemplateRef('formRef');
-const isDisabled = computed(() => store.getSubmissionUneditableReason(allowedRoles) !== undefined);
+const isDisabled = computed(() => store.getUneditableReason(allowedRoles, inSampleSetContext) !== undefined);
 const currentErrors = computed<string[]>(() => (
   formRef.value?.errors.flatMap((err) => err.errorMessages) ?? []
 ));

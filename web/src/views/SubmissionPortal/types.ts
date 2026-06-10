@@ -440,7 +440,11 @@ export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type UneditableReason = 'locked_by_other' | 'insufficient_permissions' | 'uneditable_status';
+export type UneditableReason =
+  'locked_by_other' |
+  'insufficient_permissions' |
+  'uneditable_status' |
+  'already_submitted';
 
 export const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
 export type SubmissionStatusKey = keyof typeof SubmissionStatusEnum;

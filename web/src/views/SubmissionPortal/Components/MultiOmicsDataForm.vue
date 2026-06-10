@@ -10,6 +10,7 @@ import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import SubmissionUneditableBanner from '@/views/SubmissionPortal/Components/SubmissionUneditableBanner.vue';
 import { checkDoiFormat } from '@/views/SubmissionPortal/utils.ts';
 import { useSubmissionStore } from '../store';
 
@@ -125,6 +126,11 @@ watch(
 
 <template>
   <div>
+    <SubmissionUneditableBanner
+      :allowed-roles="['owner', 'editor']"
+      in-sample-set-context
+      edge-to-edge
+    />
     <PageTitle
       title="Multi-omics Data"
       subtitle="Information about the type of samples being submitted."
@@ -135,6 +141,7 @@ watch(
     </PageTitle>
     <SubmissionForm
       ref="formRef"
+      in-sample-set-context
       @valid-state-changed="(state) => multiOmicsForm.validation = state"
     >
       <v-radio-group

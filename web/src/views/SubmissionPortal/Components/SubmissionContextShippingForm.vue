@@ -108,6 +108,7 @@ function handleExpectedShippingDateClear() {
           <v-card-text>
             <SubmissionForm
               ref="senderShippingInfoFormRef"
+              in-sample-set-context
               @valid-state-changed="(state) => senderShippingInfoForm.validation = state"
             >
               <v-list-subheader>

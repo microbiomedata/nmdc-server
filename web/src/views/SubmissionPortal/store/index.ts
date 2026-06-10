@@ -36,6 +36,11 @@ import { stateRefs } from '@/store';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage.ts';
 import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
 
+const EDITABLE_SAMPLE_SET_STATUSES = [
+  SubmissionStatusEnum.InProgress.text,
+  SubmissionStatusEnum.UpdatesRequired.text,
+];
+
 /* FORM DEFAULTS */
 const studyFormDefault: StudyForm = {
   studyName: '',
@@ -577,7 +582,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       throw new Error('No submission loaded');
     }
 
-    if (getSubmissionUneditableReason(['owner', 'editor']) !== undefined) {
+    if (getUneditableReason(['owner', 'editor']) !== undefined) {
       return;
     }
 
@@ -725,10 +730,14 @@ export const useSubmissionStore = defineStore('submission', () => {
    * A submission is not editable if:
    * - It is locked by another user
    * - The current user does not have one of the specified roles
+   * - In a sample set context, if the active sample set status is not in an editable status
+   * - In the submission context, if the submission has already been released to the
+   *   Data Portal (i.e. it has a nmdc_study_id)
    *
    * @param allowedRoles
+   * @param inSampleSetContext
    */
-  function getSubmissionUneditableReason(allowedRoles: SubmissionEditorRole[]): UneditableReason | undefined {
+  function getUneditableReason(allowedRoles: SubmissionEditorRole[], inSampleSetContext = false): UneditableReason | undefined {
     if (submission.record === null) {
       return;
     }
@@ -739,6 +748,20 @@ export const useSubmissionStore = defineStore('submission', () => {
 
     if (submission.permissionLevel === null || !allowedRoles.includes(submission.permissionLevel)) {
       return 'insufficient_permissions';
+    }
+
+    if (inSampleSetContext) {
+      if (
+        sampleSet.record !== null
+        && !EDITABLE_SAMPLE_SET_STATUSES.includes(sampleSet.record.status)
+      ) {
+        return 'uneditable_status';
+      }
+      return;
+    }
+
+    if (submission.record.nmdc_study_id) {
+      return 'already_submitted';
     }
   }
 
@@ -766,7 +789,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       throw new Error('No sample set loaded');
     }
 
-    if (getSubmissionUneditableReason(['owner', 'editor', 'metadata_contributor']) !== undefined) {
+    if (getUneditableReason(['owner', 'editor', 'metadata_contributor'], true) !== undefined) {
       return;
     }
 
@@ -801,7 +824,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       throw new Error('No sample set loaded');
     }
 
-    const uneditableReason = getSubmissionUneditableReason(['owner']);
+    const uneditableReason = getUneditableReason(['owner'], true);
     if (uneditableReason) {
       throw new Error(`Unable to submit: ${ uneditableReason }`);
     }
@@ -969,7 +992,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     deleteSubmissionImage,
     lockSubmission,
     unlockSubmission,
-    getSubmissionUneditableReason,
+    getUneditableReason,
     loadSampleSet,
     saveSampleSetFormEdits,
     submitSampleSet,

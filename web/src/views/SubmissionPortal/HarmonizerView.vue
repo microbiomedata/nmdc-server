@@ -136,7 +136,7 @@ const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
 
 const allowedRoles: SubmissionEditorRole[] = ['owner', 'editor', 'metadata_contributor']
-const isEditable = computed(() => store.getSubmissionUneditableReason(allowedRoles) === undefined);
+const isEditable = computed(() => store.getUneditableReason(allowedRoles, true) === undefined);
 
 function setTabValidated(tabName: TemplateName, validated: boolean) {
   if (store.sampleSet.forms.sampleData.validation === null) {
@@ -836,7 +836,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionUneditableBanner :allowed-roles="allowedRoles" />
+    <SubmissionUneditableBanner
+      :allowed-roles="allowedRoles"
+      in-sample-set-context
+    />
     <v-alert
       v-if="!hasValidSampleEnvironmentSelection"
       class="ma-8 flex-grow-0 overflow-visible"
