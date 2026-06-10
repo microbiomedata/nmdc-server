@@ -42,6 +42,16 @@ const loading = computed(() =>
   store.sampleSet.requests.loading.loading
 );
 
+const submissionReady = computed(() => (
+  id === undefined || store.submission.record?.id === id
+));
+
+const sampleSetReady = computed(() => (
+  sampleSetId === undefined || store.sampleSet.record?.id === sampleSetId
+));
+
+const routeDataReady = computed(() => submissionReady.value && sampleSetReady.value);
+
 const error = computed(() =>
   store.submission.requests.loading.error ||
   store.sampleSet.requests.loading.error
@@ -126,9 +136,9 @@ provide(AppBannerHeightKey, appBannerHeight);
           </v-row>
         </v-container>
       </v-container>
-      <router-view v-else-if="!loading && !error" />
+      <router-view v-else-if="!loading && !error && routeDataReady" />
       <div
-        v-else-if="loading"
+        v-else-if="loading || !routeDataReady"
         class="text-h3"
       >
         Submission portal is loading...

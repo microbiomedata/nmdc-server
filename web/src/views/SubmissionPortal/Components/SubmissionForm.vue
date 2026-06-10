@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, useTemplateRef, watch } from 'vue';
 import { isEqual } from 'lodash';
 import { SubmissionEditorRole } from '@/views/SubmissionPortal/types.ts';
 import { useSubmissionStore } from '../store';
@@ -18,26 +18,36 @@ const store = useSubmissionStore();
 
 const formRef = useTemplateRef('formRef');
 const isDisabled = computed(() => store.getSubmissionUneditableReason(allowedRoles) !== undefined);
+const currentErrors = computed<string[]>(() => (
+  formRef.value?.errors.flatMap((err) => err.errorMessages) ?? []
+));
 
 let prevErrors: null | string[] = null;
-const handleValidStateChanged = () => {
-  if (formRef.value === null) {
-    return;
-  }
-  const currErrors = formRef.value.errors.flatMap(err => err.errorMessages);
+const emitValidationState = (currErrors: string[]) => {
   if (!isEqual(currErrors, prevErrors)) {
     prevErrors = currErrors;
     emit('validStateChanged', currErrors);
   }
 };
 
-watch(() => formRef.value?.errors, () => {
-  handleValidStateChanged();
-});
+watch(currentErrors, (errors) => {
+  emitValidationState(errors);
+}, { flush: 'post' });
 
-const validate = () => {
-  formRef.value?.validate();
+const syncValidationState = async () => {
+  await nextTick();
+  emitValidationState(currentErrors.value);
 };
+
+const validate = async () => {
+  const result = await formRef.value?.validate();
+  await syncValidationState();
+  return result;
+};
+
+onMounted(() => {
+  void validate();
+});
 
 defineExpose({
   validate,

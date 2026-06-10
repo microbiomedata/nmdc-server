@@ -43,7 +43,7 @@ function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResul
 }
 
 watch(showSenderShippingInfoForm, () => {
-  senderShippingInfoFormRef.value?.validate();
+  void senderShippingInfoFormRef.value?.validate();
 });
 
 function handleExpectedShippingDateClear() {

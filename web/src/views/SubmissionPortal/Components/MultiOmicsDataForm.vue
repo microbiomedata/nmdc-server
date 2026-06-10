@@ -108,7 +108,7 @@ function removeAwardDoi(i: number) {
 }
 
 const revalidate = () => {
-  nextTick(() => formRef.value!.validate());
+  nextTick(() => void formRef.value?.validate());
 };
 
 watch(
