@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  computed, ref,
+  computed, Ref, ref,
 
 } from 'vue';
 
@@ -126,10 +126,10 @@ const gatedEnvironmentVisConditions = useClockGate(
   computed(() => (visTab.value === 1)),
   stateRefs.conditions,
 );
-// const showChildren:Ref<any[]> = ref([]);
-// function toggleChildren(value:StudySearchResult) {
-//   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
-// }
+const showChildren: Ref<any[]> = ref([]);
+function toggleChildren(value:StudySearchResult) {
+  showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
+}
 </script>
 
 <template>
@@ -219,7 +219,7 @@ const gatedEnvironmentVisConditions = useClockGate(
                   @set-page="study.setPage($event)"
                   @set-items-per-page="study.setItemsPerPage($event)"
                 >
-                  <template #prepend-action="{ result }">
+                  <template #action-left="{ result }">
                     <v-list-item-action>
                       <v-checkbox-btn
                         :model-value="studyCheckboxState"
@@ -227,6 +227,26 @@ const gatedEnvironmentVisConditions = useClockGate(
                         @click.stop
                         @change="setChecked($event.target.checked, result.id, result.children as StudySearchResult[])"
                       />
+                    </v-list-item-action>
+                  </template>
+                  <template #action-title-right="{ result }">
+                    <v-list-item-action
+                      v-if="result.children && result.children.length > 0"
+                      class="ml-2"
+                    >
+                      <v-btn
+                        variant="flat"
+                        color="grey"
+                        size="x-small"
+                        @click="toggleChildren(result as StudySearchResult)"
+                      >
+                        {{ result.children.length }} child {{ result.children.length > 1 ? 'studies' : 'study' }}
+                        <template #append>
+                          <v-icon>
+                            {{ showChildren.includes(result.id) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                          </v-icon>
+                        </template>
+                      </v-btn>
                     </v-list-item-action>
                   </template>
                   <template #action-right="{ result }">
@@ -262,11 +282,10 @@ const gatedEnvironmentVisConditions = useClockGate(
                   </template>
                   <template #item-children="{ result }">
                     <v-card
-                      v-if="result.children?.length"
+                      v-if="showChildren.includes(result.id) && result.children?.length"
                       flat
-                      class="pa-4 mt-2"
+                      class="ml-6 mr-6"
                     >
-                      <v-divider />
                       <SearchResults
                         disable-pagination
                         :count="result.children.length"
@@ -275,8 +294,11 @@ const gatedEnvironmentVisConditions = useClockGate(
                         :results="result.children"
                         :page="1"
                       >
-                        <template #prepend-action="{ result: child }">
+                        <template #action-left="{ result: child }">
                           <v-list-item-action>
+                            <v-icon color="grey-darken-1">
+                              mdi-arrow-right-bottom
+                            </v-icon>
                             <v-checkbox-btn
                               :model-value="studyCheckboxState"
                               :value="child.id"

@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
   titleKey: 'name',
   subtitleKey: 'description',
   results: () => [] as StudySearchResult[] | BiosampleSearchResult[],
-  icon: 'mdi-book',
+  icon: 'mdi-book-outline',
   disablePagination: false,
 });
 
@@ -52,11 +52,20 @@ const rows = ref(props.itemsPerPage);
           }"
         >
           <template
-            v-if="$slots['prepend-action']"
-            #prepend-action="slotProps"
+            v-if="$slots['action-left']"
+            #action-left="slotProps"
           >
             <slot
-              name="prepend-action"
+              name="action-left"
+              v-bind="slotProps"
+            />
+          </template>
+          <template
+            v-if="$slots['action-title-right']"
+            #action-title-right="slotProps"
+          >
+            <slot
+              name="action-title-right"
               v-bind="slotProps"
             />
           </template>

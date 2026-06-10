@@ -11,7 +11,7 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   titleKey: 'name',
   subtitleKey: 'description',
-  icon: 'mdi-book',
+  icon: 'mdi-book-outline',
 });
 </script>
 
@@ -23,7 +23,7 @@ withDefaults(defineProps<Props>(), {
   >
     <template #prepend>
       <slot
-        name="prepend-action"
+        name="action-left"
         v-bind="{ result }"
       />
       <v-icon>
@@ -40,6 +40,10 @@ withDefaults(defineProps<Props>(), {
         <div class="text-subtitle-2">
           {{ result[titleKey] }}
         </div>
+        <slot
+          name="action-title-right"
+          v-bind="{ result }"
+        />
       </div>
     </v-list-item-title>
     <v-list-item-subtitle>
