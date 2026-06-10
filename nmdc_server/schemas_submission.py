@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -189,6 +191,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
 
     permission_level: Optional[str] = None
 
+    sample_sets: list[SubmissionSampleSetListItem]
+
     # These fields are excluded from the model's JSON representation because they need to be
     # translated into signed URLs before being returned to the client. This is done via the
     # @computed_field-decorated properties below.
@@ -251,9 +255,6 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
             storage.get_signed_download_url(BucketName.SUBMISSION_IMAGES, img.name).url
             for img in self.study_images
         ]
-
-
-SubmissionMetadataSchema.model_rebuild()
 
 
 class MetadataSuggestionRequest(BaseModel):
@@ -329,3 +330,6 @@ class SubmissionSampleSet(SubmissionSampleSetListItem):
     sample_environment_form: SampleEnvironmentForm
     sender_shipping_info_form: SenderShippingInfoForm
     sample_data: SampleData
+
+
+SubmissionMetadataSchema.model_rebuild()

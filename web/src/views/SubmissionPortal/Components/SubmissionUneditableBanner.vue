@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { SubmissionEditorRole } from '@/views/SubmissionPortal/types.ts';
-import { getSubmissionUneditableReason, submissionLockedBy, statusDisplay } from '@/views/SubmissionPortal/store';
 import { computed } from 'vue';
+import { useSubmissionStore } from '../store';
 
 const props = defineProps<{
-  minimumPermissionLevel: SubmissionEditorRole;
+  allowedRoles: SubmissionEditorRole[];
 }>();
 
-const reason = computed(() => getSubmissionUneditableReason(props.minimumPermissionLevel));
+const store = useSubmissionStore();
+const submissionLockedBy = computed(() => store.submission.record?.locked_by);
+const { getSubmissionUneditableReason } = store;
+
+const reason = computed(() => getSubmissionUneditableReason(props.allowedRoles));
 </script>
 
 <template>
@@ -37,14 +41,14 @@ const reason = computed(() => getSubmissionUneditableReason(props.minimumPermiss
     >
       Your current permission level for this submission does not allow editing of this page. Contact the submission author to request a change in permission level.
     </div>
-    <div
-      v-if="reason === 'uneditable_status'"
-    >
-      This submission cannot be edited because it has status '{{ statusDisplay }}'. If you need to edit this submission, please contact
-      <a
-        style="color: inherit"
-        href="mailto:support@microbiomedata.org"
-      >support@microbiomedata.org</a>.
-    </div>
+    <!--    <div-->
+    <!--      v-if="reason === 'uneditable_status'"-->
+    <!--    >-->
+    <!--      This submission cannot be edited because it has status '{{ statusDisplay }}'. If you need to edit this submission, please contact-->
+    <!--      <a-->
+    <!--        style="color: inherit"-->
+    <!--        href="mailto:support@microbiomedata.org"-->
+    <!--      >support@microbiomedata.org</a>.-->
+    <!--    </div>-->
   </v-alert>
 </template>

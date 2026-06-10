@@ -1,16 +1,13 @@
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
+import { computed, defineComponent } from 'vue';
+import { HARMONIZER_TEMPLATES, JGI_TEMPLATE_NAMES } from '@/views/SubmissionPortal/types';
 import Definitions from '@/definitions';
-import {
-  multiOmicsForm, addAwardDoi, templateHasData, checkJGITemplates,
-} from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
+import { useSubmissionStore } from '../store';
 
 export default defineComponent({
   components: {
     SubmissionContextShippingForm,
-
   },
   props: {
     label: {
@@ -18,14 +15,17 @@ export default defineComponent({
       default: 'Data generated ',
     },
   },
-  emits: ['revalidate'],
+  emits: ['revalidate', 'add-award-doi'],
 
   setup(_, { emit }) {
-    const selectedFacilities = () => multiOmicsForm.facilities ?? [];
+    const store = useSubmissionStore();
+    const { templateHasData } = store;
+    const multiOmicsForm = computed(() => store.sampleSet.forms.multiOmicsForm);
+    const selectedFacilities = () => multiOmicsForm.value.facilities ?? [];
 
     function facilityChange() {
-      if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length < selectedFacilities().length) {
-        addAwardDoi();
+      if (multiOmicsForm.value.awardDois === null || multiOmicsForm.value.awardDois.length < selectedFacilities().length) {
+        emit('add-award-doi');
       }
       emit('revalidate');
     }
@@ -36,8 +36,8 @@ export default defineComponent({
       Definitions,
       multiOmicsForm,
       templateHasData,
-      checkJGITemplates,
       HARMONIZER_TEMPLATES,
+      JGI_TEMPLATE_NAMES,
     };
   },
 
@@ -57,7 +57,7 @@ export default defineComponent({
       label="EMSL"
       value="EMSL"
       hide-details
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
+      :disabled="templateHasData('emsl') || undefined"
       @change="facilityChange"
     />
     <div
@@ -109,28 +109,28 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Lipidome"
         value="lipidome-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('emsl') || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metaproteome"
         value="mp-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('emsl') || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('emsl') || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
         value="nom-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('emsl') || undefined"
         hide-details
       />
     </div>
@@ -139,7 +139,7 @@ export default defineComponent({
       label="JGI"
       value="JGI"
       hide-details
-      :disabled="checkJGITemplates() || undefined"
+      :disabled="templateHasData(JGI_TEMPLATE_NAMES) || undefined"
       @change="facilityChange"
     />
     <div
@@ -172,21 +172,21 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome"
         value="mg-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('jgi_mg') || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome (Long Read)"
         value="mg-lr-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg_lr?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('jgi_mg_lr') || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mt?.sampleDataSlot) || undefined"
+        :disabled="templateHasData('jgi_mt') || undefined"
         hide-details
       />
       <v-checkbox

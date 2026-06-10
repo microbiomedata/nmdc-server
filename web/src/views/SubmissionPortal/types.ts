@@ -2,6 +2,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'
 
 import { User } from '@/types';
 import { RouteLocationRaw } from 'vue-router';
+import { InjectionKey, Ref } from 'vue';
 
 /**
  * A manifest of the options available in DataHarmonizer
@@ -17,13 +18,11 @@ export const DATA_MT_INTERLEAVED = 'data_mt_interleaved';
 
 export interface HarmonizerTemplateInfo {
   displayName: string,
-  schemaClass?: string,
-  sampleDataSlot?: string,
+  schemaClass: string,
+  sampleDataSlot: string,
   status: 'published' | 'mixin' | 'disabled',
-  // This value comes from annotations in the schema. It will be populated once the schema is loaded.
-  excelWorksheetName?: string,
 }
-export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
+export const HARMONIZER_TEMPLATES = {
   air: {
     displayName: 'air',
     schemaClass: 'AirInterface',
@@ -41,26 +40,6 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     schemaClass: 'HostAssociatedInterface',
     sampleDataSlot: 'host_associated_data',
     status: 'published',
-  },
-  'human-associated': {
-    displayName: 'human-associated',
-    status: 'disabled',
-  },
-  'human-gut': {
-    displayName: 'human - gut',
-    status: 'disabled',
-  },
-  'human-oral': {
-    displayName: 'human - oral',
-    status: 'disabled',
-  },
-  'human-skin': {
-    displayName: 'human - skin',
-    status: 'disabled',
-  },
-  'human-vaginal': {
-    displayName: 'human - vaginal',
-    status: 'disabled',
   },
   'hydrocarbon resources-cores': {
     displayName: 'hydrocarbon resources - cores',
@@ -158,7 +137,11 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'metatranscriptome_sequencing_interleaved_data',
     status: 'mixin',
   },
-};
+} satisfies Record<string, HarmonizerTemplateInfo>;
+
+export type TemplateName = keyof typeof HARMONIZER_TEMPLATES;
+
+export const JGI_TEMPLATE_NAMES: TemplateName[] = [JGI_MG, JGI_MG_LR, JGI_MT]
 
 export enum BiosafetyLevels {
   BSL1 = 'BSL1',
@@ -314,7 +297,7 @@ export interface Contributor {
   name: string;
   orcid: string;
   roles: string[];
-  permissionLevel: string | null;
+  permissionLevel: SubmissionEditorRole | null;
 }
 
 export interface StudyFormCreate extends ValidatedForm {
@@ -368,11 +351,12 @@ export interface SubmissionMetadata extends SubmissionMetadataSlim {
   study_form: StudyForm;
   nmdc_study_id: string | null;
   locked_by: User | null;
-  lock_updated: string;
-  permission_level: string | null;
+  lock_updated: string | null;
+  permission_level: SubmissionEditorRole | null;
   source_client: SourceClient | null;
   primary_study_image_url: string | null;
   pi_image_url: string | null;
+  sample_sets: SubmissionSampleSetListItem[];
 }
 
 export interface SubmissionSampleSetListItem {
@@ -422,8 +406,8 @@ export interface PaginatedResponse<T> {
 export interface LockOperationResult {
   success: boolean;
   message: string
-  locked_by?: User | null;
-  lock_updated?: string | null;
+  locked_by: User | null;
+  lock_updated: string | null;
 }
 
 export interface Doi {
@@ -479,3 +463,5 @@ export interface StatusOption {
   value: string;
   title: string;
 }
+
+export const AppBannerHeightKey = Symbol() as InjectionKey<Ref<number>>;

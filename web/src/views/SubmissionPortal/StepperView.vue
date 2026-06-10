@@ -1,54 +1,46 @@
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
 
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
-import { saveCurrentEditsRequest } from './store';
 import { unlockSubmission } from './store/api';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
+import { useEventListener } from '@vueuse/core';
+import { useSubmissionStore } from './store';
 
-export default defineComponent({
-  components: {
-    SaveErrorSnackbar,
-    SubmissionNavigationSidebar,
-    SubmissionUneditableBanner,
-  },
+const props = defineProps<{
+  id: string | null;
+}>();
 
-  props: {
-    id: {
-      type: String as PropType<string | null>,
-      default: null,
-    },
-  },
+useEventListener('beforeunload', () => {
+  if (props.id) {
+    unlockSubmission(props.id);
+  }
+})
 
-  setup(props) {
-    window.addEventListener('beforeunload', () => {
-      if (props.id) {
-        unlockSubmission(props.id);
-      }
-    });
+const store = useSubmissionStore();
 
-    return {
-      saveCurrentEditsRequest,
-    };
-  },
-
-});
+const loading = computed(() => (
+  store.submission.requests.loading.loading ||
+  store.submission.requests.saving.loading ||
+  store.sampleSet.requests.loading.loading ||
+  store.sampleSet.requests.saving.loading
+));
 </script>
 
 <template>
   <div class="position-relative">
     <v-progress-linear
-      :active="saveCurrentEditsRequest.loading.value"
+      :active="loading"
       absolute
       indeterminate
       color="primary"
     />
-    <SaveErrorSnackbar />
-    <SubmissionNavigationSidebar class="mx-0" />
-    <SubmissionUneditableBanner minimum-permission-level="editor" />
+    <SaveErrorSnackbar/>
+    <SubmissionNavigationSidebar class="mx-0"/>
+    <SubmissionUneditableBanner :allowed-roles="['owner', 'editor']"/>
     <v-container>
-      <router-view />
+      <router-view/>
     </v-container>
   </div>
 </template>

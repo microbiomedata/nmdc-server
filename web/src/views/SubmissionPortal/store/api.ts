@@ -166,12 +166,13 @@ async function setSubmissionImage(
   return resp.data;
 }
 
-async function deleteSubmissionImage(submissionId: string, imageType: SubmissionImageType, imageName?: string): Promise<void> {
+async function deleteSubmissionImage(submissionId: string, imageType: SubmissionImageType, imageName?: string) {
   let endpoint = `metadata_submission/${submissionId}/image/${imageType}`;
   if (imageName) {
     endpoint += `?image_name=${imageName}`;
   }
-  await client.delete<SubmissionMetadata>(endpoint);
+  const resp = await client.delete<SubmissionMetadata>(endpoint);
+  return resp.data;
 }
 
 async function listSubmissionSampleSets(submissionId: string) {

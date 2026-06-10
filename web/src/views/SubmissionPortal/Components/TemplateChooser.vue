@@ -1,33 +1,21 @@
-<script lang="ts">
-import { computed, defineComponent, useTemplateRef } from 'vue';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
-import {
-  sampleEnvironmentForm,
-  templateHasData,
-  templateList,
-} from '../store';
+<script setup lang="ts">
+import { computed, useTemplateRef } from 'vue';
+import { HARMONIZER_TEMPLATES, TemplateName } from '@/views/SubmissionPortal/types';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import { useSubmissionStore } from '../store';
 
-export default defineComponent({
-  components: { SubmissionForm, SubmissionDocsLink, PageTitle },
-  setup() {
-    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
-    const templateListDisplayNames = computed(() => templateList.value
-      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
-      .join(' + '));
+const store = useSubmissionStore();
+const { templateHasData } = store;
+const sampleEnvironmentForm = computed(() => store.sampleSet.forms.sampleEnvironmentForm);
 
-    return {
-      sampleEnvironmentForm,
-      formRef,
-      HARMONIZER_TEMPLATES,
-      templates: Object.entries(HARMONIZER_TEMPLATES),
-      templateListDisplayNames,
-      templateHasData,
-    };
-  },
-});
+const templates = Object.entries(HARMONIZER_TEMPLATES);
+
+const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
+const templateListDisplayNames = computed(() => store.templateList
+  .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
+  .join(' + '));
 </script>
 
 <template>
@@ -63,8 +51,8 @@ export default defineComponent({
               :key="option[0]"
               v-model="sampleEnvironmentForm.packageName"
               hide-details
-              :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || formRef?.isDisabled"
-              :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
+              :disabled="templateHasData(option[0] as TemplateName) || formRef?.isDisabled"
+              :label="HARMONIZER_TEMPLATES[option[0] as TemplateName]?.displayName"
               :value="option[0]"
             />
           </fieldset>
@@ -73,7 +61,7 @@ export default defineComponent({
     </SubmissionForm>
     <template v-if="formRef && !formRef.isDisabled">
       <v-alert
-        v-if="!templateHasData('all')"
+        v-if="!templateHasData('ANY')"
         color="grey lighten-2"
         class="my-3"
       >

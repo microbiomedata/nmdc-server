@@ -23,7 +23,7 @@ import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.v
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
 
-import { saveCurrentEdits, lockSubmission, unlockSubmission } from '@/views/SubmissionPortal/store';
+import { useSubmissionStore } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -85,14 +85,14 @@ const router = createRouter({
             },
             {
               name: 'Multiomics Form',
-              path: ':id/multiomics',
+              path: ':id/sample_set/:sampleSetId/multiomics',
               component: MultiOmicsDataForm,
               meta: { requiresSubmissionLock: true },
             },
             {
               name: 'Sample Environment',
               component: TemplateChooser,
-              path: ':id/templates',
+              path: ':id/sample_set/:sampleSetId/templates',
               meta: { requiresSubmissionLock: true },
             },
           ],
@@ -100,7 +100,7 @@ const router = createRouter({
         {
           name: 'Submission Sample Editor',
           component: HarmonizerView,
-          path: ':id/samples',
+          path: ':id/sample_set/:sampleSetId/samples',
           props: true,
           meta: { requiresSubmissionLock: true },
         },
@@ -133,11 +133,12 @@ const router = createRouter({
   stringifyQuery,
 });
 router.beforeEach(async (to, from) => {
+  const { lockSubmission, unlockSubmission, saveFormEdits } = useSubmissionStore();
   try {
     if (from.meta.requiresSubmissionLock && 'id' in from.params) {
       const id = from.params.id as string;
       // We are navigating away from a submission edit screen, so save the progress
-      await saveCurrentEdits(id);
+      await saveFormEdits();
       if (!to.meta.requiresSubmissionLock) {
         // We are navigating to a screen that does not require a lock, so unlock
         await unlockSubmission(id);
