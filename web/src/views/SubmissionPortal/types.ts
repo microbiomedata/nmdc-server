@@ -359,6 +359,12 @@ export interface SubmissionMetadata extends SubmissionMetadataSlim {
   sample_sets: SubmissionSampleSetListItem[];
 }
 
+export interface SubmissionSampleSetNavigationValidation {
+  multi_omics_data: string[] | null;
+  sample_environment: string[] | null;
+  sample_metadata: string[] | null;
+}
+
 export interface SubmissionSampleSetListItem {
   id: string;
   name: string;
@@ -366,6 +372,7 @@ export interface SubmissionSampleSetListItem {
   status: string;
   created: string;
   date_last_modified: string;
+  navigation_validation: SubmissionSampleSetNavigationValidation;
 }
 
 export interface SubmissionSampleSetCreate {

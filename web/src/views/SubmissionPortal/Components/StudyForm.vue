@@ -127,6 +127,11 @@ export default defineComponent({
       });
     });
 
+    function handleSave() {
+      revalidate();
+      return store.saveSubmissionFormEdits();
+    }
+
     return {
       formRef,
       studyForm,
@@ -148,6 +153,7 @@ export default defineComponent({
       primaryStudyImageUrl,
       piImageUrl,
       revalidate,
+      handleSave,
     };
   },
 });
@@ -588,6 +594,13 @@ export default defineComponent({
         </v-icon>
         Go to Submission Summary
       </v-btn-grey>
+      <v-spacer />
+      <v-btn
+        color="primary"
+        @click="handleSave"
+      >
+        Save
+      </v-btn>
     </div>
   </div>
 </template>

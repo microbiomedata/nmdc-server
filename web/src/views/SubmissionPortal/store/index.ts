@@ -412,6 +412,57 @@ export const useSubmissionStore = defineStore('submission', () => {
     }
   });
 
+  // When the computed template list changes, reset the sample data validation state for any templates that were
+  // removed and add validation state for any new templates. If there are no templates, reset the sample data
+  // validation to null (untouched).
+  watch(templateList, (newList, oldList) => {
+    // Initial load, do nothing
+    if (!sampleSetIsDirty.value) {
+      return;
+    }
+
+    // No actual changes, do nothing
+    if (isEqual(newList, oldList)) {
+      return;
+    }
+
+    // All environmental templates were removed, reset sample data and validation
+    if (sampleSet.forms.sampleEnvironmentForm.packageName.length === 0) {
+      sampleSet.forms.sampleData.validation = null;
+      return;
+    }
+
+    // For all current templates, ensure they are reflected in the sample data validation state
+    const newTabsValidated = {} as Record<string, boolean>;
+    newList.forEach((templateKey) => {
+      newTabsValidated[templateKey] = false;
+    });
+    if (sampleSet.forms.sampleData.validation === null) {
+      sampleSet.forms.sampleData.validation = {
+        invalidCells: {},
+        tabsValidated: {}
+      }
+    }
+    sampleSet.forms.sampleData.validation.tabsValidated = newTabsValidated;
+
+    // Remove sampleData and validation state for any templates that are no longer included in the package
+    const removedTemplates = oldList.filter((template) => !newList.includes(template));
+    if (removedTemplates.length > 0) {
+      const newSampleData = { ...sampleSet.forms.sampleData.data };
+      removedTemplates.forEach((template) => {
+        const sampleDataSlot = HARMONIZER_TEMPLATES[template].sampleDataSlot;
+        if (sampleDataSlot === undefined) {
+          return;
+        }
+        delete newSampleData[sampleDataSlot];
+        if (sampleSet.forms.sampleData.validation) {
+          delete sampleSet.forms.sampleData.validation.tabsValidated[template];
+          delete sampleSet.forms.sampleData.validation.invalidCells[template];
+        }
+      });
+      sampleSet.forms.sampleData.data = newSampleData;
+    }
+  });
 
   /* HELPERS */
   /**
@@ -453,6 +504,18 @@ export const useSubmissionStore = defineStore('submission', () => {
       return;
     }
     sampleSet.record = data;
+
+    // When a full sample set record is loaded, keep the submission's sample set list in sync. This is important
+    // for the display of validation state in the navigation sidebar.
+    if (submission.record !== null) {
+      const sampleSetListIndex = submission.record.sample_sets.findIndex((sampleSetListItem) => sampleSetListItem.id === data.id);
+      if (sampleSetListIndex !== -1) {
+        submission.record.sample_sets[sampleSetListIndex] = {
+          ...submission.record.sample_sets[sampleSetListIndex],
+          ...data,
+        };
+      }
+    }
 
     const forms: SampleSetForms = {
       multiOmicsForm: cloneDeep(data.multi_omics_form),

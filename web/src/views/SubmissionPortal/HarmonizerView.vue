@@ -140,7 +140,7 @@ const isEditable = computed(() => store.getSubmissionUneditableReason(allowedRol
 
 function setTabValidated(tabName: TemplateName, validated: boolean) {
   if (store.sampleSet.forms.sampleData.validation === null) {
-      store.sampleSet.forms.sampleData.validation = {
+    store.sampleSet.forms.sampleData.validation = {
       invalidCells: {},
       tabsValidated: {},
     };
