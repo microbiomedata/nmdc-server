@@ -48,16 +48,16 @@ function setChecked(checked: boolean, studyId: string, children: StudySearchResu
     op: '==',
     field: 'study_id',
   }];
-  if (children.length > 0) {
-    children.forEach((child) => {
-      conditions.push({
-        value: child.id,
-        table: 'study',
-        field: 'study_id',
-        op: '==',
-      });
-    });
-  }
+  // if (children.length > 0) {
+  //   children.forEach((child) => {
+  //     conditions.push({
+  //       value: child.id,
+  //       table: 'study',
+  //       field: 'study_id',
+  //       op: '==',
+  //     });
+  //   });
+  // }
   if (checked) {
     setConditions([...stateRefs.conditions.value, ...conditions]);
   } else {
@@ -299,13 +299,23 @@ function toggleChildren(value:StudySearchResult) {
                             <v-icon color="grey-darken-1">
                               mdi-arrow-right-bottom
                             </v-icon>
-                            <v-checkbox-btn
-                              :model-value="studyCheckboxState"
-                              :value="child.id"
-                              :disabled="studyCheckboxState.includes(result.id)"
-                              @click.stop
-                              @change="setChecked($event.target.checked, child.id)"
-                            />
+                            <span
+                              v-tooltip="{
+                                text: 'This study is already selected because its parent is selected.',
+                                disabled: !studyCheckboxState.includes(result.id),
+                                location: 'bottom',
+                              }"
+                              location="bottom"
+                              class="d-inline-block"
+                            >
+                              <v-checkbox-btn
+                                :model-value="studyCheckboxState"
+                                :value="child.id"
+                                :disabled="studyCheckboxState.includes(result.id)"
+                                @click.stop
+                                @change="setChecked($event.target.checked, child.id)"
+                              />
+                            </span>
                           </v-list-item-action>
                         </template>
                         <template #action-right="{ result: child }">
