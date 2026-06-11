@@ -87,11 +87,14 @@ export default defineComponent({
               <v-checkbox
                 v-model="sampleEnvironmentForm.packageName"
                 hide-details
-                :disabled="checkboxDisabledReason[option[0]] !== null"
+                :disabled="formRef?.isDisabled || checkboxDisabledReason[option[0]] !== null"
                 :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
                 :value="option[0]"
               />
-              <div class="ml-8 text-caption">
+              <div
+                v-if="checkboxDisabledReason[option[0]]"
+                class="ml-8 text-caption"
+              >
                 {{ checkboxDisabledReason[option[0]] }}
               </div>
             </template>
