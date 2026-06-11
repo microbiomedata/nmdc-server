@@ -30,7 +30,7 @@ export default defineComponent({
           multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi') ||
           multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')
         )) {
-          notes[key] = 'This template cannot be deselected because an isolate omics processing type is selected in Multi-omics Data page.';
+          notes[key] = 'This template cannot be deselected because an isolate omics processing type is selected on the Multi-omics Data page.';
         } else {
           notes[key] = null;
         }
