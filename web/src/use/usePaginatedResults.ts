@@ -1,7 +1,7 @@
 import {
   watch, Ref, computed, shallowReactive,
 } from 'vue';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,
 } from '@/data/api';
@@ -76,8 +76,9 @@ export default function usePaginatedResult<T>(
 
   const debouncedFetchResults = debounce(fetchResults, 500);
 
-  watch([conditions], () => {
-    const doFetch = data.offset === 0;
+  watch([conditions], (newValues, oldValues) => {
+    const conditionsChanged = !isEqual(newValues, oldValues);
+    const doFetch = data.offset === 0 && conditionsChanged;
     data.offset = 0;
     if (doFetch) {
       debouncedFetchResults();

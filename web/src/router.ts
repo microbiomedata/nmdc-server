@@ -132,6 +132,9 @@ const router = createRouter({
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) {
       return savedPosition;
+    } else if (to.name === from.name) {
+      // If navigating to the same route (e.g. changing query params), don't scroll to top
+      return false;
     } else {
       return { top: 0, left: 0 };
     }
