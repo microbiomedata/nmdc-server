@@ -188,6 +188,20 @@ export default defineComponent({
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Isolate Genome"
+        value="isolate-genome-jgi"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_isolate_genome?.sampleDataSlot) || undefined"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Isolate Transcriptome"
+        value="isolate-transcriptome-jgi"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_isolate_transcriptome?.sampleDataSlot) || undefined"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-jgi"
         disabled

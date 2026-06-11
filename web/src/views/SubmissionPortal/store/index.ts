@@ -14,6 +14,8 @@ import {
   Doi,
   EMSL,
   HARMONIZER_TEMPLATES,
+  JGI_ISOLATE_GENOME,
+  JGI_ISOLATE_TRANSCRIPTOME,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
@@ -374,9 +376,10 @@ interface Protocols {
  */
 export type OmicsProcessingType =
   // non-doe types
-  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' | 'isolate-genome' | 'isolate-transcriptome' |
   // doe facility associated types
-  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' |
+  'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi' | 'isolate-genome-jgi' | 'isolate-transcriptome-jgi';
 const multiOmicsFormDefault = {
   award: null as null | string,
   awardDois: [] as Doi[] | null,
@@ -530,6 +533,31 @@ watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
   if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
     multiOmicsForm.lipProtocols = null;
   }
+
+  // isolate genome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-genome') && !oldValue.includes('isolate-genome')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
+  // isolate transcriptome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-transcriptome') && !oldValue.includes('isolate-transcriptome')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
+  // JGI isolate genome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-genome-jgi') && !oldValue.includes('isolate-genome-jgi')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
+  // JGI isolate transcriptome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-transcriptome-jgi') && !oldValue.includes('isolate-transcriptome-jgi')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
 });
 
 // When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
@@ -632,6 +660,14 @@ const templateList = computed<string[]>((prevTemplates) => {
         if (multiOmicsForm.omicsProcessingTypes.includes('mt-jgi')) {
           // Data types? Metatranscriptome
           templates.add(JGI_MT);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi')) {
+          // Data types? Isolate Genome
+          templates.add(JGI_ISOLATE_GENOME);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')) {
+          // Data types? Isolate Transcriptome
+          templates.add(JGI_ISOLATE_TRANSCRIPTOME);
         }
       }
     }
