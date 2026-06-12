@@ -103,9 +103,9 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
                 v-for="id in result.emsl_biosample_identifiers"
                 :key="id"
               >
-                <span>
+                <ClickToCopyText icon-overlay>
                   {{ id }}
-                </span>
+                </ClickToCopyText>
               </v-slide-group-item>
             </v-slide-group>
           </span>
