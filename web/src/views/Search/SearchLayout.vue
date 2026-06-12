@@ -222,7 +222,6 @@ function toggleChildren(value:StudySearchResult) {
                   <template #item-title="{ result }">
                     <div class="d-flex align-center">
                       <router-link
-                        class="text-decoration-none"
                         :to="{ name: 'Study', params: { id: result.id }}"
                       >
                         <span class="text-subtitle-2">
@@ -334,7 +333,6 @@ function toggleChildren(value:StudySearchResult) {
                         </template>
                         <template #item-title="{ result: child }">
                           <router-link
-                            class="text-decoration-none"
                             :to="{ name: 'Study', params: { id: child.id }}"
                           >
                             <span class="text-subtitle-2">

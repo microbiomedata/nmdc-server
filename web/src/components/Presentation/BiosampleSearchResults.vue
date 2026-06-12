@@ -52,7 +52,6 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
   >
     <template #item-title="{ result }">
       <router-link
-        class="text-decoration-none"
         :to="{ name: 'Sample', params: { id: result.id }}"
       >
         <span class="text-subtitle-2">

@@ -8,6 +8,7 @@ const blue = '#00AAE7';
 const blueDark = '#0087B8';
 const blueDarker = '#004B66';
 const purple = '#4F3B80';
+const purpleLight = '#7D6FA1';
 
 export default {
   red,
@@ -22,8 +23,8 @@ export default {
   secondary: red,
   info: blue,
   accent: orange,
-  link: blueDark,
-  visited: blueDarker,
+  link: purple,
+  visited: purpleLight,
   aquatic: blue,
   terrestrial: green,
   hostAssociated: red,
