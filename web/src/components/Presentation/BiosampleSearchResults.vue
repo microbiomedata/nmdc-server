@@ -59,32 +59,58 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
         </span>
       </router-link>
     </template>
-    <template #item-subtitle="props">
-      <span class="pr-2">Study ID:</span>
-      <router-link
-        :to="{name: 'Study', params: { id: (props.result as BiosampleSearchResult).study_id }}"
-        class="pr-2 text-grey-darken-2"
-        v-text="props.result.study_id"
-      />
-      <template
-        v-if="props.result.alternate_identifiers.length || (props.result as BiosampleSearchResult).emsl_biosample_identifiers.length"
-      >
-        <span class="pr-2">Sample Identifiers:</span>
-        <a
-          v-for="id in props.result.alternate_identifiers"
-          :key="id"
-          :href="`https://identifiers.org/${id}`"
-          class="pr-2 text-grey-darken-2"
-          target="_blank"
-          rel="noopener noreferrer"
-        >{{ id }}</a>
-        <span
-          v-for="id in props.result.emsl_biosample_identifiers"
-          :key="id"
-        >
-          {{ id }}
+    <template #item-subtitle="{ result }">
+      <div class="d-flex ga-1">
+        <span class="flex-shrink-0 text-no-wrap">
+          <strong class="mr-1">ID:</strong>
+          <ClickToCopyText>
+            {{ result.id }}
+          </ClickToCopyText>
         </span>
-      </template>
+        <v-icon>mdi-circle-small</v-icon>
+        <span class="flex-shrink-0 text-no-wrap">
+          <strong class="mr-2">Study ID:</strong>
+          <ClickToCopyText>
+            {{ (result as BiosampleSearchResult).study_id }}
+          </ClickToCopyText>
+        </span>
+        <template
+          v-if="result.alternate_identifiers.length || (result as BiosampleSearchResult).emsl_biosample_identifiers.length"
+        >
+          <v-icon>mdi-circle-small</v-icon>
+          <strong class="mr-2">External:</strong>
+          <span class="identifiers-slide-group">
+            <v-slide-group
+              show-arrows
+              next-icon="mdi-chevron-double-right"
+              prev-icon="mdi-chevron-double-left"
+              class="align-center"
+            >
+              <v-slide-group-item
+                v-for="id in result.alternate_identifiers"
+                :key="id"
+              >
+                <a
+                  :href="`https://identifiers.org/${id}`"
+                  class="pr-2 text-grey-darken-2 text-decoration-underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ id }}
+                </a>
+              </v-slide-group-item>
+              <v-slide-group-item
+                v-for="id in result.emsl_biosample_identifiers"
+                :key="id"
+              >
+                <span>
+                  {{ id }}
+                </span>
+              </v-slide-group-item>
+            </v-slide-group>
+          </span>
+        </template>
+      </div>
     </template>
     <template #item-content="props">
       <SampleListExpansion
@@ -113,3 +139,10 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     </template>
   </SearchResults>
 </template>
+
+<style lang="scss" scoped>
+.identifiers-slide-group {
+  max-width: 500px;
+  overflow: hidden;
+}
+</style>
