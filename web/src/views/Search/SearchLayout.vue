@@ -36,28 +36,17 @@ const studyCheckboxState = computed(() => (
 ));
 
 /**
- * Set a study (or consortium) as checked in the search results.
+ * Set a study as checked in the search results.
  * @param checked - Whether the item is currently being checked (true) or unchecked (false)
  * @param studyId - ID of the study to select
- * @param children - Optional children studies to also select
  */
-function setChecked(checked: boolean, studyId: string, children: StudySearchResult[] = []) {
+function setChecked(checked: boolean, studyId: string) {
   const conditions: Condition[] = [{
     value: studyId,
     table: 'study',
     op: '==',
     field: 'study_id',
   }];
-  // if (children.length > 0) {
-  //   children.forEach((child) => {
-  //     conditions.push({
-  //       value: child.id,
-  //       table: 'study',
-  //       field: 'study_id',
-  //       op: '==',
-  //     });
-  //   });
-  // }
   if (checked) {
     setConditions([...stateRefs.conditions.value, ...conditions]);
   } else {
@@ -225,7 +214,7 @@ function toggleChildren(value:StudySearchResult) {
                         :model-value="studyCheckboxState"
                         :value="result.id"
                         @click.stop
-                        @change="setChecked($event.target.checked, result.id, result.children as StudySearchResult[])"
+                        @change="setChecked($event.target.checked, result.id)"
                       />
                     </v-list-item-action>
                   </template>
@@ -236,7 +225,7 @@ function toggleChildren(value:StudySearchResult) {
                     >
                       <v-btn
                         variant="flat"
-                        color="grey"
+                        color="grey-darken-1"
                         size="x-small"
                         @click="toggleChildren(result as StudySearchResult)"
                       >
