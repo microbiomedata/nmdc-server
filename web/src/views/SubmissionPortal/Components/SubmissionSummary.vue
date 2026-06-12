@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import {
-  author,
-  createdDate,
-  isTestSubmission,
-  modifiedDate,
-  statusDisplay,
-  submissionPages,
-} from '../store';
+import { useSubmissionStore } from '../store';
 import { computed } from 'vue';
 import { stateRefs } from '@/store';
+
+const store = useSubmissionStore();
+
+const author = computed(() => store.submission.record?.author);
+const createdDate = computed(
+  () => store.submission.record?.created ? new Date(store.submission.record.created + 'Z') : null
+);
+const modifiedDate = computed(
+  () => store.submission.record?.date_last_modified ? new Date(store.submission.record.date_last_modified + 'Z') : null
+);
 
 // Check if the current logged-in user is also the author of the submission
 const isCurrentUserAuthor = computed(() => {
@@ -54,37 +57,12 @@ const isCurrentUserAuthor = computed(() => {
       <AttributeRow label="Last Modified">
         {{ modifiedDate?.toLocaleString() }}
       </AttributeRow>
-      <AttributeRow label="Status">
-        {{ statusDisplay }}
-      </AttributeRow>
       <AttributeRow
-        v-if="isTestSubmission"
+        v-if="store.submission.record?.is_test_submission"
         label="Is Test Submission?"
       >
         Yes
       </AttributeRow>
-    </PageSection>
-
-    <PageSection>
-      <v-list class="pa-0 border rounded">
-        <template
-          v-for="(page, index) in submissionPages"
-          :key="page.title"
-        >
-          <v-divider v-if="index > 0" />
-          <v-list-item
-            :to="page.link"
-            link
-            :title="page.title"
-          >
-            <template #append>
-              <v-icon>
-                mdi-chevron-right
-              </v-icon>
-            </template>
-          </v-list-item>
-        </template>
-      </v-list>
     </PageSection>
   </div>
 </template>

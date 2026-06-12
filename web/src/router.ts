@@ -19,12 +19,11 @@ import StudyForm from '@/views/SubmissionPortal/Components/StudyForm.vue';
 import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
 import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
 import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
-import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
 
-import { incrementalSaveRecord, lockRecord, unlockRecord } from '@/views/SubmissionPortal/store';
+import { useSubmissionStore } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -86,20 +85,14 @@ const router = createRouter({
             },
             {
               name: 'Multiomics Form',
-              path: ':id/multiomics',
+              path: ':id/sample_set/:sampleSetId/multiomics',
               component: MultiOmicsDataForm,
               meta: { requiresSubmissionLock: true },
             },
             {
               name: 'Sample Environment',
               component: TemplateChooser,
-              path: ':id/templates',
-              meta: { requiresSubmissionLock: true },
-            },
-            {
-              name: 'Validate And Submit',
-              component: ValidateSubmit,
-              path: ':id/submit',
+              path: ':id/sample_set/:sampleSetId/templates',
               meta: { requiresSubmissionLock: true },
             },
           ],
@@ -107,7 +100,7 @@ const router = createRouter({
         {
           name: 'Submission Sample Editor',
           component: HarmonizerView,
-          path: ':id/samples',
+          path: ':id/sample_set/:sampleSetId/samples',
           props: true,
           meta: { requiresSubmissionLock: true },
         },
@@ -140,19 +133,20 @@ const router = createRouter({
   stringifyQuery,
 });
 router.beforeEach(async (to, from) => {
+  const { lockSubmission, unlockSubmission, saveFormEdits } = useSubmissionStore();
   try {
     if (from.meta.requiresSubmissionLock && 'id' in from.params) {
       const id = from.params.id as string;
       // We are navigating away from a submission edit screen, so save the progress
-      await incrementalSaveRecord(id);
+      await saveFormEdits();
       if (!to.meta.requiresSubmissionLock) {
         // We are navigating to a screen that does not require a lock, so unlock
-        await unlockRecord(id);
+        await unlockSubmission(id);
       }
     } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
       const id = to.params.id as string;
       // We are navigating to a submission edit screen, so lock the record
-      await lockRecord(id);
+      await lockSubmission(id);
     }
   } catch (e) {
     // If an error occurs during locking/unlocking, log it but allow navigation

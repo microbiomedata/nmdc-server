@@ -1,162 +1,148 @@
-<script lang="ts">
+<script setup lang="ts">
 import {
   computed,
-  defineComponent,
-  InjectionKey,
-  PropType,
   provide,
-  Ref,
-  toRef,
   useTemplateRef,
   watch,
 } from 'vue';
 import { stateRefs } from '@/store';
-import useRequest from '@/use/useRequest';
 import AppBanner from '@/components/AppBanner.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
-import { loadRecord } from './store';
-import { useRoute } from 'vue-router';
+import { useSubmissionStore } from './store';
+import { AppBannerHeightKey } from '@/views/SubmissionPortal/types.ts';
 
-export const AppBannerHeightKey = Symbol() as InjectionKey<Ref<number>>;
+const { id, sampleSetId } = defineProps<{
+  id?: string,
+  sampleSetId?: string,
+}>();
 
-export default defineComponent({
-  components: {
-    AppBanner,
-    IconBar,
-    IntroBlurb,
-    LoginPrompt,
-    TitleBanner,
+const store = useSubmissionStore();
+
+watch(() => id, (nextId) => {
+  if (nextId !== undefined) {
+    void store.loadSubmission(nextId);
+  } else {
+    store.submission.requests.loading.reset();
+  }
+}, { immediate: true });
+
+watch(() => sampleSetId, (nextSampleSetId) => {
+  if (nextSampleSetId !== undefined) {
+    void store.loadSampleSet(nextSampleSetId);
+  } else {
+    store.sampleSet.requests.loading.reset();
+  }
+}, { immediate: true });
+
+const submissionLoading = computed(() => store.submission.requests.loading.loading);
+const sampleSetLoading = computed(() => store.sampleSet.requests.loading.loading);
+
+const submissionReady = computed(() => (
+  id === undefined || store.submission.record?.id === id
+));
+
+const submissionError = computed(() => store.submission.requests.loading.error);
+
+const color = 'primary';
+const density = 'comfortable';
+const styleDefaults = {
+  VBtn: {
+    variant: "flat",
   },
-  props: {
-    id: {
-      type: String as PropType<string | null>,
-      default: null,
-    },
+  VBtnGrey: {
+    variant: "flat",
   },
-  setup(props) {
-    const route = useRoute();
-    const req = useRequest();
-
-    function load() {
-      const { id } = props;
-      if (id) req.request(() => loadRecord(id));
-      else req.reset();
-    }
-
-    watch(toRef(props, 'id'), load);
-    load();
-
-    const showBanner = computed(() => route.path === '/submission/home');
-
-    const color = 'primary';
-    const density = 'comfortable';
-    const styleDefaults = {
-      VBtn: {
-        variant: "flat",
-      },
-      VBtnGrey: {
-        variant: "flat",
-      },
-      VCombobox: {
-        density,
-        color,
-      },
-      VCheckbox: {
-        density,
-        color,
-      },
-      VFileInput: {
-        density,
-        color,
-      },
-      VRadio: {
-        density,
-        color,
-      },
-      VRadioGroup: {
-        density,
-        color,
-      },
-      VSelect: {
-        density,
-        color,
-      },
-      VTextField: {
-        density,
-        color,
-      },
-      VTextarea: {
-        density,
-        color,
-      },
-    }
-
-    // Get the height of the app banner to provide to child components
-    const appBanner = useTemplateRef<InstanceType<typeof AppBanner>>("appBanner");
-    const appBannerHeight = computed(() => appBanner.value?.height || 0);
-    provide(AppBannerHeightKey, appBannerHeight);
-
-    return {
-      stateRefs,
-      req,
-      showBanner,
-      styleDefaults,
-    };
+  VCombobox: {
+    density,
+    color,
   },
-});
+  VCheckbox: {
+    density,
+    color,
+  },
+  VFileInput: {
+    density,
+    color,
+  },
+  VRadio: {
+    density,
+    color,
+  },
+  VRadioGroup: {
+    density,
+    color,
+  },
+  VSelect: {
+    density,
+    color,
+  },
+  VTextField: {
+    density,
+    color,
+  },
+  VTextarea: {
+    density,
+    color,
+  },
+}
+
+// Get the height of the app banner to provide to child components
+const appBanner = useTemplateRef<InstanceType<typeof AppBanner>>("appBanner");
+const appBannerHeight = computed(() => appBanner.value?.height || 0);
+provide(AppBannerHeightKey, appBannerHeight);
 </script>
 
 <template>
   <v-defaults-provider :defaults="styleDefaults">
     <v-main class="d-flex flex-column">
       <AppBanner ref="appBanner" />
-      <v-container
-        v-if="!stateRefs.user.value && !req.loading.value"
-      >
-        <v-container class="mt-4 ">
-          <v-row>
-            <v-col class="pb-0">
-              <TitleBanner />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <LoginPrompt />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <IconBar />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <IntroBlurb />
-            </v-col>
-          </v-row>
+      <div class="position-relative">
+        <v-progress-linear
+          :active="submissionLoading || sampleSetLoading"
+          absolute
+          indeterminate
+          color="primary"
+        />
+        <v-container
+          v-if="!stateRefs.user.value && !submissionLoading"
+        >
+          <v-container class="mt-4 ">
+            <v-row>
+              <v-col class="pb-0">
+                <TitleBanner />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <LoginPrompt />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <IconBar />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <IntroBlurb />
+              </v-col>
+            </v-row>
+          </v-container>
         </v-container>
-      </v-container>
-      <router-view v-else-if="!req.loading.value && !req.error.value" />
-      <div
-        v-else-if="req.loading.value"
-        class="text-h3"
-      >
-        Submission portal is loading...
-      </div>
-      <div
-        v-else-if="req.error.value"
-      >
-        <v-container>
-          <v-alert type="error">
-            <div class="text-h6">
-              Error loading record {{ id }}
-            </div>
-            {{ req.error.value }}
-          </v-alert>
-        </v-container>
+        <div v-else-if="submissionError">
+          <v-container>
+            <v-alert type="error">
+              <div class="text-h6">
+                Error loading submission {{ id }}
+              </div>
+              {{ submissionError }}
+            </v-alert>
+          </v-container>
+        </div>
+        <router-view v-else-if="submissionReady" />
       </div>
     </v-main>
   </v-defaults-provider>
