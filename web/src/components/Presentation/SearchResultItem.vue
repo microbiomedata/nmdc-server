@@ -2,13 +2,11 @@
 import { BiosampleSearchResult, StudySearchResult } from '@/data/api';
 
 interface Props {
-  titleKey?: string;
   result: BiosampleSearchResult | StudySearchResult;
   icon?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  titleKey: 'name',
   icon: 'mdi-book-outline',
 });
 </script>

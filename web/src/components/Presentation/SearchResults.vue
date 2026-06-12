@@ -7,14 +7,12 @@ interface Props {
   page: number;
   itemsPerPage: number;
   count: number;
-  titleKey?: string;
   results?: StudySearchResult[] | BiosampleSearchResult[];
   icon?: string;
   disablePagination?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  titleKey: 'name',
   results: () => [] as StudySearchResult[] | BiosampleSearchResult[],
   icon: 'mdi-book-outline',
   disablePagination: false,
@@ -41,7 +39,6 @@ const rows = ref(props.itemsPerPage);
         <SearchResultItem
           v-bind="{
             result,
-            titleKey,
             icon,
           }"
         >

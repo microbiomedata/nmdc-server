@@ -46,7 +46,6 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     :items-per-page="biosampleSearch.data.limit"
     :results="biosampleSearch.data.results.results"
     :page="biosampleSearch.data.pageSync"
-    :subtitle-key="'study_id'"
     :loading="biosampleSearch.loading.value"
     @set-page="biosampleSearch.setPage($event)"
     @set-items-per-page="biosampleSearch.setItemsPerPage($event)"

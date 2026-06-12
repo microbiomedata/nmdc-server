@@ -76,13 +76,11 @@ export default function usePaginatedResult<T>(
 
   const debouncedFetchResults = debounce(fetchResults, 500);
 
+  // If conditions change, reset to page 1 and fetch results
   watch([conditions], (newValues, oldValues) => {
-    const conditionsChanged = !isEqual(newValues, oldValues);
-    const doFetch = data.offset === 0 && conditionsChanged;
+    if (isEqual(newValues, oldValues)) return;
     data.offset = 0;
-    if (doFetch) {
-      debouncedFetchResults();
-    }
+    debouncedFetchResults();
   });
 
   if (dataObjectFilter !== undefined) {
