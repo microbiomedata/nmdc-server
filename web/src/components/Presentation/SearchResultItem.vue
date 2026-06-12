@@ -3,20 +3,19 @@ import { BiosampleSearchResult, StudySearchResult } from '@/data/api';
 
 interface Props {
   titleKey?: string;
-  subtitleKey?: string;
   result: BiosampleSearchResult | StudySearchResult;
   icon?: string;
 }
 
 withDefaults(defineProps<Props>(), {
   titleKey: 'name',
-  subtitleKey: 'description',
   icon: 'mdi-book-outline',
 });
 </script>
 
 <template>
   <v-list-item
+    class="py-2"
     :ripple="false"
     :active="false"
     :link="false"
@@ -34,31 +33,24 @@ withDefaults(defineProps<Props>(), {
         }}
       </v-icon>
     </template>
-
-    <v-list-item-title>
-      <div class="d-flex align-center">
-        <div class="text-subtitle-2">
-          {{ result[titleKey] }}
-        </div>
+    <div class="d-flex flex-column ga-1">
+      <v-list-item-title>
         <slot
-          name="action-title-right"
+          name="item-title"
           v-bind="{ result }"
         />
-      </div>
-    </v-list-item-title>
-    <v-list-item-subtitle>
+      </v-list-item-title>
+      <v-list-item-subtitle>
+        <slot
+          name="item-subtitle"
+          v-bind="{ result }"
+        />
+      </v-list-item-subtitle>
       <slot
-        name="subtitle"
+        name="item-content"
         v-bind="{ result }"
-      >
-        {{ result[subtitleKey] || 'No description' }}
-      </slot>
-    </v-list-item-subtitle>
-    <slot
-      name="item-content"
-      v-bind="{ result }"
-    />
-
+      />
+    </div>
     <template #append>
       <slot
         name="action-right"

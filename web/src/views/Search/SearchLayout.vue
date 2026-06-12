@@ -20,6 +20,7 @@ import usePaginatedResults from '@/use/usePaginatedResults';
 import useClockGate from '@/use/useClockGate';
 import AppBanner from '@/components/AppBanner.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
+import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
@@ -218,25 +219,47 @@ function toggleChildren(value:StudySearchResult) {
                       />
                     </v-list-item-action>
                   </template>
-                  <template #action-title-right="{ result }">
-                    <v-list-item-action
-                      v-if="result.children && result.children.length > 0"
-                      class="ml-2"
-                    >
-                      <v-btn
-                        variant="flat"
-                        color="grey-darken-1"
-                        size="x-small"
-                        @click="toggleChildren(result as StudySearchResult)"
+                  <template #item-title="{ result }">
+                    <div class="d-flex align-center">
+                      <router-link
+                        class="text-decoration-none"
+                        :to="{ name: 'Study', params: { id: result.id }}"
                       >
-                        {{ result.children.length }} child {{ result.children.length > 1 ? 'studies' : 'study' }}
-                        <template #append>
-                          <v-icon>
-                            {{ showChildren.includes(result.id) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
-                          </v-icon>
-                        </template>
-                      </v-btn>
-                    </v-list-item-action>
+                        <span class="text-subtitle-2">
+                          {{ result.name }}
+                        </span>
+                      </router-link>
+                      <v-list-item-action
+                        v-if="result.children && result.children.length > 0"
+                        class="ml-2"
+                      >
+                        <v-btn
+                          variant="flat"
+                          color="grey-darken-1"
+                          size="x-small"
+                          @click="toggleChildren(result as StudySearchResult)"
+                        >
+                          {{ result.children.length }} child {{ result.children.length > 1 ? 'studies' : 'study' }}
+                          <template #append>
+                            <v-icon>
+                              {{ showChildren.includes(result.id) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                            </v-icon>
+                          </template>
+                        </v-btn>
+                      </v-list-item-action>
+                    </div>
+                  </template>
+                  <template #item-subtitle="{ result }">
+                    <div class="d-flex ga-1">
+                      <span class="flex-shrink-0 text-no-wrap">
+                        <strong class="mr-1">ID:</strong>
+                        <ClickToCopyText>
+                          {{ result.id }}
+                        </ClickToCopyText>
+                      </span>
+                      <v-icon>mdi-circle-small</v-icon>
+                      <span class="text-truncate flex-grow-1">{{ result.description }}</span>
+                    </div>
                   </template>
                   <template #action-right="{ result }">
                     <v-list-item-action>
@@ -253,7 +276,10 @@ function toggleChildren(value:StudySearchResult) {
                     </v-list-item-action>
                   </template>
                   <template #item-content="{ result }">
-                    <div v-if="result.omics_processing_counts">
+                    <div 
+                      v-if="result.omics_processing_counts"
+                      class="d-flex ga-2"
+                    >
                       <template
                         v-for="item in result.omics_processing_counts"
                       >
@@ -261,7 +287,6 @@ function toggleChildren(value:StudySearchResult) {
                           v-if="(item as any).count"
                           :key="(item as any).type"
                           size="small"
-                          class="mr-2 my-1"
                           @click.stop="selectStudyAndOmics(result.id, (item as any).type)"
                         >
                           {{ fieldDisplayName((item as any).type) }}: {{ (item as any).count }}
@@ -306,6 +331,28 @@ function toggleChildren(value:StudySearchResult) {
                               />
                             </span>
                           </v-list-item-action>
+                        </template>
+                        <template #item-title="{ result: child }">
+                          <router-link
+                            class="text-decoration-none"
+                            :to="{ name: 'Study', params: { id: child.id }}"
+                          >
+                            <span class="text-subtitle-2">
+                              {{ child.name }}
+                            </span>
+                          </router-link>
+                        </template>
+                        <template #item-subtitle="{ result: child }">
+                          <div class="d-flex ga-1">
+                            <span class="flex-shrink-0 text-no-wrap">
+                              <strong class="mr-1">ID:</strong>
+                              <ClickToCopyText>
+                                {{ child.id }}
+                              </ClickToCopyText>
+                            </span>
+                            <v-icon>mdi-circle-small</v-icon>
+                            <span class="text-truncate flex-grow-1">{{ child.description }}</span>
+                          </div>
                         </template>
                         <template #action-right="{ result: child }">
                           <v-list-item-action>

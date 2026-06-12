@@ -8,7 +8,6 @@ interface Props {
   itemsPerPage: number;
   count: number;
   titleKey?: string;
-  subtitleKey?: string;
   results?: StudySearchResult[] | BiosampleSearchResult[];
   icon?: string;
   disablePagination?: boolean;
@@ -16,7 +15,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   titleKey: 'name',
-  subtitleKey: 'description',
   results: () => [] as StudySearchResult[] | BiosampleSearchResult[],
   icon: 'mdi-book-outline',
   disablePagination: false,
@@ -32,10 +30,7 @@ const rows = ref(props.itemsPerPage);
 
 <template>
   <div>
-    <v-list
-      density="compact"
-      class="rounded-b"
-    >
+    <v-list>
       <template
         v-for="(result, resultIndex) in results"
         :key="result.id"
@@ -47,7 +42,6 @@ const rows = ref(props.itemsPerPage);
           v-bind="{
             result,
             titleKey,
-            subtitleKey,
             icon,
           }"
         >
@@ -61,20 +55,20 @@ const rows = ref(props.itemsPerPage);
             />
           </template>
           <template
-            v-if="$slots['action-title-right']"
-            #action-title-right="slotProps"
+            v-if="$slots['item-title']"
+            #item-title="slotProps"
           >
             <slot
-              name="action-title-right"
+              name="item-title"
               v-bind="slotProps"
             />
           </template>
           <template
-            v-if="$slots.subtitle"
-            #subtitle="slotProps"
+            v-if="$slots['item-subtitle']"
+            #item-subtitle="slotProps"
           >
             <slot
-              name="subtitle"
+              name="item-subtitle"
               v-bind="slotProps"
             />
           </template>

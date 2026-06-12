@@ -51,7 +51,17 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     @set-page="biosampleSearch.setPage($event)"
     @set-items-per-page="biosampleSearch.setItemsPerPage($event)"
   >
-    <template #subtitle="props">
+    <template #item-title="{ result }">
+      <router-link
+        class="text-decoration-none"
+        :to="{ name: 'Sample', params: { id: result.id }}"
+      >
+        <span class="text-subtitle-2">
+          {{ result.name }}
+        </span>
+      </router-link>
+    </template>
+    <template #item-subtitle="props">
       <span class="pr-2">Study ID:</span>
       <router-link
         :to="{name: 'Study', params: { id: (props.result as BiosampleSearchResult).study_id }}"
