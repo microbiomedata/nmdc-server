@@ -10,7 +10,7 @@ import { PaginatedResult } from '@/use/usePaginatedResults';
 import { BiosampleSearchResult, DataObjectFilter } from '@/data/api';
 import { stateRefs } from '@/store';
 
-defineProps<{
+const { biosampleSearch, dataObjectFilter } = defineProps<{
   biosampleSearch: PaginatedResult<BiosampleSearchResult>;
   dataObjectFilter: DataObjectFilter[];
 }>();
