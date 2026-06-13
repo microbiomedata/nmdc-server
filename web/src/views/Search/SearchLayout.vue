@@ -3,6 +3,7 @@ import {
   computed, Ref, ref,
 
 } from 'vue';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
@@ -26,6 +27,11 @@ import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
+
+const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
+// TODO: would we rather use the study description from the schema?
+// const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
+const studyDescription = 'Research-driven experimental datasets and standardized data collections.';
 
 /**
  * Study checkbox state logic
@@ -179,10 +185,36 @@ function toggleChildren(value:StudySearchResult) {
               color="primary"
             >
               <v-tab key="studies">
-                Studies ({{ study.data.results.count }})
+                <div class="d-flex align-center ga-2">
+                  <span>Studies ({{ study.data.results.count }})</span>
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        color="grey-darken-1"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    <span>{{ studyDescription }}</span>
+                  </v-tooltip>
+                </div>
               </v-tab>
               <v-tab key="samples">
-                Samples ({{ biosample.data.results.count }})
+                <div class="d-flex align-center ga-2">
+                  <span>Samples ({{ biosample.data.results.count }})</span>
+                  <v-tooltip location="top">
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        color="grey-darken-1"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    <span>{{ biosampleDescription }}</span>
+                  </v-tooltip>
+                </div>
               </v-tab>
               <v-spacer />
               <div 
