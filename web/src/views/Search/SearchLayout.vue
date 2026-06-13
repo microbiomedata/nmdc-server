@@ -170,12 +170,21 @@ function toggleChildren(value:StudySearchResult) {
               color="primary"
             >
               <v-tab key="sampling">
+                <v-icon class="mr-1">
+                  mdi-map-marker-outline
+                </v-icon>
                 Sampling
               </v-tab>
               <v-tab key="analysis">
+                <v-icon class="mr-1">
+                  mdi-chart-box-outline
+                </v-icon>
                 Analysis
               </v-tab>
               <v-tab key="environments">
+                <v-icon class="mr-1">
+                  mdi-chart-sankey-variant
+                </v-icon>
                 Environment
               </v-tab>
             </v-tabs>
