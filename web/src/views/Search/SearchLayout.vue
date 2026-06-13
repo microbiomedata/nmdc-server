@@ -314,12 +314,12 @@ function toggleChildren(value:StudySearchResult) {
                         v-for="item in result.omics_processing_counts"
                       >
                         <v-chip
-                          v-if="(item as any).count"
-                          :key="(item as any).type"
+                          v-if="item.count"
+                          :key="item.type"
                           size="small"
-                          @click.stop="selectStudyAndOmics(result.id, (item as any).type)"
+                          @click.stop="selectStudyAndOmics(result.id, item.type)"
                         >
-                          {{ fieldDisplayName((item as any).type) }}: {{ (item as any).count }}
+                          {{ fieldDisplayName(item.type) }}: {{ item.count }}
                         </v-chip>
                       </template>
                     </div>
