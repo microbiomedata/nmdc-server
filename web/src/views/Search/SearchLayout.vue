@@ -143,20 +143,23 @@ function toggleChildren(value:StudySearchResult) {
     <AppBanner />
     <v-container
       fluid
-      class="py-2"
+      class="py-3"
     >
       <v-row>
         <v-col>
-          <div class="font-weight-bold text-title-2 text-primary mb-3">
-            <span v-if="biosample.loading.value">
-              Loading results...
-            </span>
-            <span
-              v-else
-              class="d-flex align-center"
-            >
-              <span>Found {{ biosample.data.results.count }} samples</span>
-            </span>
+          <div class="d-flex align-center mb-3">
+            <div class="font-weight-bold text-title-2 text-primary flex-grow-1">
+              <span v-if="biosample.loading.value">
+                Loading results...
+              </span>
+              <span
+                v-else
+                class="d-flex align-center"
+              >
+                <span>Found {{ biosample.data.results.count }} samples</span>
+              </span>
+            </div>
+            <SearchHelpMenu />
           </div>
           <v-card
             class="mb-3" 
@@ -175,7 +178,6 @@ function toggleChildren(value:StudySearchResult) {
               <v-tab key="environments">
                 Environment
               </v-tab>
-              <search-help-menu />
             </v-tabs>
             <v-divider />
             <v-window
