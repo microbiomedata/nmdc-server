@@ -24,6 +24,7 @@ import BulkDownload from '@/components/BulkDownload.vue';
 import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
+import AnalysisVizGroup from './AnalysisVizGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
@@ -142,42 +143,61 @@ function toggleChildren(value:StudySearchResult) {
     <AppBanner />
     <v-container
       fluid
-      class="py-0"
+      class="py-2"
     >
       <v-row>
         <v-col>
-          <v-row class="align-center">
-            <v-col>
-              <v-tabs
-                v-model="visTab"
-                color="primary"
-              >
-                <v-tab key="omics">
-                  Data Type
-                </v-tab>
-                <v-tab key="environments">
-                  Environment
-                </v-tab>
-              </v-tabs>
-            </v-col>
-            <v-col class="d-flex justify-end flex-grow-0 flex-shrink-0">
-              <search-help-menu />
-            </v-col>
-          </v-row>
-          <v-window
-            v-model="visTab"
-            class="my-3"
+          <div class="font-weight-bold text-title-2 text-primary mb-3">
+            <span v-if="biosample.loading.value">
+              Loading results...
+            </span>
+            <span
+              v-else
+              class="d-flex align-center"
+            >
+              <span>Found {{ biosample.data.results.count }} samples</span>
+            </span>
+          </div>
+          <v-card
+            class="mb-3" 
+            variant="outlined"
           >
-            <v-window-item key="omics">
-              <BiosampleVisGroup
-                :conditions="gatedOmicsVisConditions"
-                :vis-tab="visTab"
-              />
-            </v-window-item>
-            <v-window-item key="environments">
-              <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
-            </v-window-item>
-          </v-window>
+            <v-tabs
+              v-model="visTab"
+              color="primary"
+            >
+              <v-tab key="sampling">
+                Sampling
+              </v-tab>
+              <v-tab key="analysis">
+                Analysis
+              </v-tab>
+              <v-tab key="environments">
+                Environment
+              </v-tab>
+              <search-help-menu />
+            </v-tabs>
+            <v-divider />
+            <v-window
+              v-model="visTab"
+            >
+              <v-window-item key="sampling">
+                <BiosampleVisGroup
+                  :conditions="gatedOmicsVisConditions"
+                  :vis-tab="visTab"
+                />
+              </v-window-item>
+              <v-window-item key="analysis">
+                <AnalysisVizGroup
+                  :conditions="gatedOmicsVisConditions"
+                  :vis-tab="visTab"
+                />
+              </v-window-item>
+              <v-window-item key="environments">
+                <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
+              </v-window-item>
+            </v-window>
+          </v-card>
           <v-card variant="outlined">
             <v-tabs
               v-model="resultsTab"

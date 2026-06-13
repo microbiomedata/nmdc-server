@@ -112,11 +112,8 @@ function setBoundsFromMap(val: Condition[]) {
 
 <template>
   <div>
-    <v-row>
-      <v-col
-        class="border-e"
-        :cols="5"
-      >
+    <!-- <v-row>
+      <v-col :cols="5">
         <HelpWrapper :text="helpBarchart">
           <FacetSummaryWrapper
             table="omics_processing"
@@ -144,6 +141,7 @@ function setBoundsFromMap(val: Condition[]) {
       >
         <HelpWrapper
           :text="helpMap"
+          class="pa-1"
         >
           <ClusterMap
             :conditions="conditions"
@@ -153,12 +151,14 @@ function setBoundsFromMap(val: Condition[]) {
           />
         </HelpWrapper>
       </v-col>
-    </v-row>
-    <!-- <v-row class="mt-0">
-      <v-col cols="6">
-        <TooltipCard
+    </v-row> -->
+    <v-row class="mt-0">
+      <v-col
+        class="border-e"
+        cols="6"
+      >
+        <HelpWrapper
           :text="helpTimeline"
-          class="py-2"
         >
           <BinnedSummaryWrapper
             table="biosample"
@@ -174,13 +174,13 @@ function setBoundsFromMap(val: Condition[]) {
               />
             </template>
           </BinnedSummaryWrapper>
-        </TooltipCard>
+        </HelpWrapper>
       </v-col>
       <v-col
         class="pl-0"
         cols="6"
       >
-        <TooltipCard
+        <HelpWrapper
           :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
@@ -214,9 +214,9 @@ function setBoundsFromMap(val: Condition[]) {
               {{ key }}: {{ value }}
             </span>
           </div>
-        </TooltipCard>
+        </HelpWrapper>
       </v-col>
-    </v-row> -->
+    </v-row>
   </div>
 </template>
 
