@@ -98,7 +98,6 @@ const studySummaryData = useFacetSummaryData({
   table: ref('study'),
   conditions: stateRefs.conditions,
 });
-// const studyCondition = studySummaryData.otherConditions.value || [];
 const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 10);
 const studyResults = computed<StudySearchResult[]>(() => Object.values(study.data.results.results)
   .map((r) => ({
