@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
@@ -20,8 +21,8 @@
     "@vue-leaflet/vue-leaflet": "^0.10.1",
     "@vueuse/core": "^13.9.0",
     "@zanmato/vue3-treeselect": "^0.4.3",
-    "axios": "^0.28.0",
-    "axios-cache-adapter": "^2.7.3",
+    "axios": "^1.15.2",
+    "axios-cache-interceptor": "^1.12.0",
     "bootstrap": "4.3.1",
     "chrono-node": "^2.4.1",
     "citation-js": "^0.5.4",
@@ -40,12 +41,11 @@
     "leaflet": "^1.7.1",
     "leaflet.markercluster": "^1.5.3",
     "linkify-it": "^4.0.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "moment": "^2.29.4",
-    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.18.0",
+    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.20.0",
     "popper.js": "1.16.1",
-    "protobufjs": "^6.11.3",
-    "serialize-javascript": "^6.0.0",
+    "protobufjs": "^7.5.6",
     "vue": "^3.5.21",
     "vue-google-charts": "^1.1.0",
     "vue-gtag": "^3.6.3",
@@ -69,9 +69,13 @@
     "unplugin-fonts": "^1.4.0",
     "unplugin-vue-components": "^29.0.0",
     "unplugin-vue-router": "^0.15.0",
-    "vite": "^7.1.5",
+    "vite": "7.3.2",
+    "vitest": "^4.1.7",
     "vite-plugin-vuetify": "^2.1.2",
     "vue-tsc": "^3.0.7"
+  },
+  "resolutions": {
+    "vite": "7.3.2"
   },
   "packageManager": "yarn@1.22.22+sha256.c17d3797fb9a9115bf375e31bfd30058cac6bc9c3b8807a3d8cb2094794b51ca"
 }

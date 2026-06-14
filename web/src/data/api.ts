@@ -1,6 +1,6 @@
 import { merge } from 'lodash';
 import axios, { AxiosError } from 'axios';
-import { setupCache } from 'axios-cache-adapter';
+import { setupCache } from 'axios-cache-interceptor';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
 import type { User } from '@/types';
@@ -16,19 +16,17 @@ declare module "axios" {
 // Consider moving this to a separate module if we end up having more custom events
 export const REFRESH_TOKEN_EXPIRED_EVENT = "nmdc:refreshTokenExpired";
 
-const cache = setupCache({
-  key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
-  maxAge: 15 * 60 * 1000,
-  exclude: {
-    query: false,
-    methods: ["delete"],
-    paths: [/me/, /users/, /logout/, /bulk_download/, /data_object\/.*/],
-  },
-});
-
-const client = axios.create({
+const axiosApiInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL || "/api",
-  adapter: cache.adapter,
+});
+// This client instance is used for requests to `/api` endpoints.
+// !! CACHE IS DISABLED BY DEFAULT !!
+// Caching can be enabled on a per-request basis by adding `{ cache: { enabled: true } }` to the request config.
+// See: https://axios-cache-interceptor.js.org/config/request-specifics#cache-enabled
+const client = setupCache(axiosApiInstance, {
+  enabled: false,
+  methods: ["get", "post"],
+  ttl: 15 * 60 * 1000,
 });
 
 const staticFileClient = axios.create({
@@ -477,6 +475,7 @@ async function _search<T>(
     { conditions, data_object_filter },
     {
       params: { offset, limit },
+      cache: { enabled: true },
     }
   );
   return data;
@@ -555,7 +554,10 @@ async function search(type: EntityType, params: SearchParams) {
 }
 
 async function _getById<T>(route: string, id: string): Promise<T> {
-  const { data } = await client.get<T>(`${route}/${id}`);
+  const { data } = await client.get<T>(
+    `${route}/${id}`,
+    { cache: { enabled: true } },
+  );
   return data;
 }
 
@@ -569,7 +571,8 @@ async function getStudy(id: string): Promise<StudySearchResults> {
 
 async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource> {
   const { data } = await client.get<BiosampleResultFromSource>(
-    `biosample/${id}/source_metadata`
+    `biosample/${id}/source_metadata`,
+    { cache: { enabled: true } },
   );
   return data;
 }
@@ -579,13 +582,15 @@ async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
     `download_metadata`,
     { conditions, endpoints },
     { responseType: 'blob' }
-
   );
   return data;
 }
 
 async function getStudySource(id: string): Promise<StudyResultFromSource> {
-  const { data } = await client.get<StudyResultFromSource>(`study/${id}/source_metadata`);
+  const { data } = await client.get<StudyResultFromSource>(
+    `study/${id}/source_metadata`,
+    { cache: { enabled: true } },
+  );
   return data;
 }
 
@@ -608,6 +613,9 @@ async function getFacetSummary(
     {
       conditions,
       attribute: field,
+    },
+    {
+      cache: { enabled: true },
     }
   );
   return Object.keys(data.facets)
@@ -626,17 +634,26 @@ async function getBinnedFacet<T = string | number>(
   resolution: "day" | "week" | "month" | "year" = "month"
 ) {
   const path = table === "omics_processing" ? "data_generation" : table;
-  const { data } = await client.post<BinResponse<T>>(`${path}/binned_facet`, {
-    attribute,
-    conditions,
-    resolution,
-    num_bins: numBins,
-  });
+  const { data } = await client.post<BinResponse<T>>(
+    `${path}/binned_facet`,
+    {
+      attribute,
+      conditions,
+      resolution,
+      num_bins: numBins,
+    },
+    {
+      cache: { enabled: true },
+    }
+  );
   return data;
 }
 
 async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
-  const { data } = await client.get<DatabaseSummaryResponse>("summary");
+  const { data } = await client.get<DatabaseSummaryResponse>(
+    "summary",
+    { cache: { enabled: true } },
+  );
   // TODO: fix this on the server
   // merge this object with summary response
   const mergeSummary = {
@@ -672,7 +689,10 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
 }
 
 async function getDatabaseStats() {
-  const { data } = await client.get<DatabaseStatsResponse>("stats");
+  const { data } = await client.get<DatabaseStatsResponse>(
+    "stats",
+    { cache: { enabled: true } },
+  );
   return data;
 }
 
@@ -683,6 +703,9 @@ async function getEnvironmentGeospatialAggregation(
     "environment/geospatial",
     {
       conditions,
+    },
+    {
+      cache: { enabled: true },
     }
   );
   return data;
@@ -695,6 +718,9 @@ async function getEnvironmentSankeyAggregation(
     "environment/sankey",
     {
       conditions,
+    },
+    {
+      cache: { enabled: true },
     }
   );
   return data;
@@ -729,7 +755,10 @@ async function getDataObjectList(
  * ENVO Tree API
  */
 async function getEnvoTrees() {
-  const { data } = await client.get<EnvoTree>("envo/tree");
+  const { data } = await client.get<EnvoTree>(
+    "envo/tree",
+    { cache: { enabled: true } },
+  );
   return data;
 }
 
@@ -789,22 +818,43 @@ export interface KeggTermSearchResponse {
   text: string;
 }
 async function keggSearch(query: string) {
-  const { data } = await client.get("kegg/term/search", { params: { query } });
+  const { data } = await client.get(
+    "kegg/term/search",
+    {
+      params: { query },
+      cache: { enabled: true },
+    }
+  );
   return data.terms as KeggTermSearchResponse[];
 }
 
 async function cogSearch(query: string) {
-  const { data } = await client.get("cog/term/search", { params: { query } });
+  const { data } = await client.get(
+    "cog/term/search",
+    {
+      params: { query },
+      cache: { enabled: true },
+    });
   return data.terms as KeggTermSearchResponse[];
 }
 
 async function pfamSearch(query: string) {
-  const { data } = await client.get("pfam/term/search", { params: { query } });
+  const { data } = await client.get(
+    "pfam/term/search",
+    {
+      params: { query },
+      cache: { enabled: true },
+    });
   return data.terms as KeggTermSearchResponse[];
 }
 
 async function goSearch(query: string) {
-  const { data } = await client.get("go/term/search", { params: { query } });
+  const { data } = await client.get(
+    "go/term/search",
+    {
+      params: { query },
+      cache: { enabled: true },
+    });
   return data.terms as KeggTermSearchResponse[];
 }
 
@@ -814,6 +864,7 @@ async function goSearch(query: string) {
 async function textSearch(terms: string) {
   const { data } = await client.get<Condition[]>("search", {
     params: { terms, limit: 10 },
+    cache: { enabled: true },
   });
   return data;
 }
@@ -853,7 +904,10 @@ interface PortalSettings {
 }
 
 async function getAppSettings(): Promise<PortalSettings> {
-  const { data } = await client.get<PortalSettings>("settings");
+  const { data } = await client.get<PortalSettings>(
+    "settings",
+    { cache: { enabled: true } },
+  );
   return data;
 }
 
@@ -894,7 +948,7 @@ function initiateOrcidLogin(state: string = "") {
  */
 function handleTokenResponse(response: TokenResponse) {
   const { access_token, refresh_token } = response;
-  client.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+  client.defaults.headers.Authorization = `Bearer ${access_token}`;
   if (refresh_token) {
     setRefreshToken(refresh_token);
   }
@@ -923,11 +977,11 @@ async function logout() {
   try {
     await authClient.post("/logout", null, {
       headers: {
-        Authorization: client.defaults.headers.common.Authorization,
+        Authorization: client.defaults.headers.Authorization,
       },
     });
   } finally {
-    delete client.defaults.headers.common.Authorization;
+    delete client.defaults.headers.Authorization;
     clearRefreshToken();
   }
 }
@@ -950,7 +1004,7 @@ function exchangeRefreshToken(): Promise<TokenResponse> {
     if (!refreshToken) {
       throw new RefreshTokenExchangeError("No refresh token found");
     }
-    delete client.defaults.headers.common.Authorization;
+    delete client.defaults.headers.Authorization;
     try {
       const { data } = await authClient.post<TokenResponse>("/refresh", {
         refresh_token: refreshToken,
@@ -989,10 +1043,7 @@ client.interceptors.response.use(undefined, async (error: AxiosError) => {
       const tokenResponse = await exchangeRefreshToken();
       // Retrying the original request will *not* pick up the new default Authorization header. We
       // must set it manually here before sending out the retry.
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${tokenResponse.access_token}`,
-      };
+      config.headers.set("Authorization", `Bearer ${tokenResponse.access_token}`);
       return client.request(config);
     }
   }

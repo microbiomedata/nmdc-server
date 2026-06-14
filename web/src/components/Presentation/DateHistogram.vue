@@ -105,7 +105,7 @@ watch(() => props.myConditions, () => {
       :height="height"
     />
     <ChartContainer
-      v-if="facetSummaryUnconditional && facetSummary"
+      v-if="facetSummaryUnconditional && facetSummary && facetSummary.bins && facetSummary.bins.length > 0"
       :height="height"
     >
       <template #default="{ width }">
@@ -123,6 +123,13 @@ watch(() => props.myConditions, () => {
         </div>
       </template>
     </ChartContainer>
+    <div
+      v-else-if="!loading && facetSummaryUnconditional"
+      class="d-flex align-center justify-center"
+      :style="{ height: `${height}px` }"
+    >
+      <p class="text-grey">No results for this search</p>
+    </div>
   </div>
 </template>
 

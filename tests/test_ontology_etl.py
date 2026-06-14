@@ -2,8 +2,9 @@
 
 from sqlalchemy.orm import Session
 
-from nmdc_server import fakes, models
+from nmdc_server import models
 from nmdc_server.ingest import envo, ontology
+from tests import fakes
 
 
 def test_populate_envo_from_generic_ontology(db: Session):

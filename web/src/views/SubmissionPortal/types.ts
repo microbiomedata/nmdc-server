@@ -10,6 +10,8 @@ export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
 export const JGI_MT = 'jgi_mt';
+export const JGI_ISOLATE_GENOME = 'jgi_isolate_genome';
+export const JGI_ISOLATE_TRANSCRIPTOME = 'jgi_isolate_transcriptome';
 export const DATA_MG = 'data_mg';
 export const DATA_MG_INTERLEAVED = 'data_mg_interleaved';
 export const DATA_MT = 'data_mt';
@@ -110,6 +112,12 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'water_data',
     status: 'published',
   },
+  isolate: {
+    displayName: 'isolate',
+    schemaClass: 'IsolateInterface',
+    sampleDataSlot: 'isolate_data',
+    status: 'published',
+  },
   [EMSL]: {
     displayName: 'EMSL',
     schemaClass: 'EmslInterface',
@@ -132,6 +140,18 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     displayName: 'JGI MT',
     schemaClass: 'JgiMtInterface',
     sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
+  },
+  [JGI_ISOLATE_GENOME]: {
+    displayName: 'Isolate Genome',
+    schemaClass: 'JgiIsolateGenomeInterface',
+    sampleDataSlot: 'jgi_isolate_genome_data',
+    status: 'mixin',
+  },
+  [JGI_ISOLATE_TRANSCRIPTOME]: {
+    displayName: 'Isolate Transcriptome',
+    schemaClass: 'JgiIsolateTranscriptomeInterface',
+    sampleDataSlot: 'jgi_isolate_transcriptome_data',
     status: 'mixin',
   },
   [DATA_MG]: {
@@ -244,25 +264,26 @@ export interface SampleMetadataValidationState {
   tabsValidated: Record<string, boolean>;
 }
 
-// null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
-// an array of strings indicates validation errors for the form
-// an empty array indicates the form has been validated with no errors
-export interface SubmissionValidationState {
-  studyForm: string[] | null;
-  multiOmicsForm: string[] | null;
-  sampleEnvironmentForm: string[] | null;
-  senderShippingInfoForm: string[] | null;
-  sampleMetadata: SampleMetadataValidationState | null;
+export interface SampleData {
+  data: Record<string, any[]>;
+  validation: SampleMetadataValidationState | null;
 }
 
-export interface MetadataSubmission {
+export interface SampleEnvironmentForm {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  addressForm: any;
+  validation: Record<string, any> | null;
+}
+
+//Validation states are null if they have not been checked,
+//and an object with details if they have been checked and issues were found.
+//If no issues are found, the object will be empty.
+export interface MetadataSubmission {
+  sampleEnvironmentForm: SampleEnvironmentForm;
+  senderShippingInfoForm: any;
   templates: string[];
   studyForm: any;
   multiOmicsForm: any;
-  sampleData: Record<string, any[]>;
-  validationState: SubmissionValidationState;
+  sampleData: SampleData;
 }
 
 export interface MetadataSubmissionRecordSlim {
@@ -283,7 +304,7 @@ export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   author_orcid: string;
   metadata_submission: MetadataSubmission;
   nmdc_study_id: string | null;
-  locked_by: User;
+  locked_by: User | null;
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
@@ -325,6 +346,8 @@ export interface SampleProtocol extends AcquisitionProtocol {
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
+
+export type UneditableReason = 'locked_by_other' | 'insufficient_permissions' | 'uneditable_status';
 
 export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
 

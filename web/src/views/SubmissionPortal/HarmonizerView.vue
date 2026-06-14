@@ -13,9 +13,12 @@ import {
   DATA_MT_INTERLEAVED,
   EMSL,
   HARMONIZER_TEMPLATES,
+  JGI_ISOLATE_GENOME,
+  JGI_ISOLATE_TRANSCRIPTOME,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
+  SubmissionEditorRole,
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
@@ -25,8 +28,8 @@ import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
   fetchSuggestionsFromSampleRows,
-  canEditSampleMetadata,
-  canEditSubmissionByStatus,
+  fetchSuggestionsFromStudyInfo,
+  getSubmissionUneditableReason,
   hasChanged,
   incrementalSaveRecord,
   incrementalSaveRecordRequest,
@@ -43,17 +46,15 @@ import {
   submit,
   suggestionMode,
   templateList,
-  validationState,
-  packageName,
-  fetchSuggestionsFromStudyInfo,
+  sampleEnvironmentForm,
+  multiOmicsForm,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import StatusAlert from './Components/StatusAlert.vue';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/views/SubmissionPortal/colors.ts';
+import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
 import { textSpanOverlap } from 'typescript';
 
 interface ValidationErrors {
@@ -142,11 +143,11 @@ const activeTemplateData = computed(() => {
   if (!activeTemplate.value?.sampleDataSlot) {
     return [];
   }
-  return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
+  return sampleData.data[activeTemplate.value.sampleDataSlot] || [];
 });
-const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
-const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
-const tabsValidated = computed(() => validationState.sampleMetadata?.tabsValidated || {});
+const hasValidSampleEnvironmentSelection = computed(() => isEqual(sampleEnvironmentForm.validation, []));
+const hasValidUserFacilitySelection = computed(() => isEqual(multiOmicsForm.validation, []));
+const tabsValidated = computed(() => sampleData.validation?.tabsValidated || {});
 
 const submitDialog = ref(false);
 
@@ -154,6 +155,9 @@ const validationSuccessSnackbar = ref(false);
 const importErrorSnackbar = ref(false);
 const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
+
+const minimumPermissionLevel: SubmissionEditorRole = "metadata_contributor"
+const isEditable = computed(() => getSubmissionUneditableReason(minimumPermissionLevel) === undefined);
 
 watch(activeTemplate, () => {
   // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -167,13 +171,13 @@ watch(activeTemplate, () => {
     harmonizerApi.setMaxRows(activeTemplateData.value.length);
   }
   harmonizerApi.loadData(activeTemplateData.value);
-  harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+  harmonizerApi.setInvalidCells(sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
   harmonizerApi.changeVisibility(columnVisibility.value);
 });
 
 const validationErrors = computed(() => {
   const remapped: ValidationErrors = {};
-  const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
+  const invalid: Record<number, Record<number, string>> = sampleData.validation?.invalidCells[activeTemplateKey.value!] || {};
   if (Object.keys(invalid).length) {
     remapped['All Errors'] = [];
   }
@@ -195,7 +199,7 @@ const validationErrors = computed(() => {
 const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
 const validationTotalCounts = computed(() => Object.fromEntries(
-  Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
+  Object.entries(sampleData.validation?.invalidCells || {}).map(([template, cells]) => ([
     template,
     sum(Object.values(cells).map((row) => Object.keys(row).length)),
   ])),
@@ -253,6 +257,12 @@ function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) 
   if (templateKey === JGI_MT) {
     return row_types.includes('metatranscriptomics');
   }
+  if (templateKey === JGI_ISOLATE_GENOME) {
+    return row_types.includes('isolate genome sequencing')
+  }
+  if (templateKey === JGI_ISOLATE_TRANSCRIPTOME) {
+    return row_types.includes('isolate transcriptome sequencing')
+  }
   if (templateKey === DATA_MG) {
     return row_types.includes('metagenomics');
   }
@@ -276,7 +286,7 @@ function synchronizeTabData(templateKey: string) {
   if (environmentKeys.includes(templateKey)) {
     return;
   }
-  const nextData = { ...sampleData.value };
+  const nextData = { ...sampleData.data };
   const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
 
   const environmentSlots = templateList.value
@@ -339,7 +349,7 @@ function synchronizeTabData(templateKey: string) {
       });
     });
   }
-  sampleData.value = nextData;
+  sampleData.data = nextData;
 }
 
 /**
@@ -354,7 +364,7 @@ const syncAndMergeTabsForRemovedRows = () => {
   );
   // If there are any sampleDataSlots populated that somehow are missing from
   // the template list, make sure those data are updated as well.
-  Object.keys(sampleData.value).forEach((key) => {
+  Object.keys(sampleData.data).forEach((key) => {
     // Loop through keys in the sampleData for the submission. Each
     // key maps to a template. We have to find that template.
     const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
@@ -372,7 +382,7 @@ const syncAndMergeTabsForRemovedRows = () => {
 const onDataChange = async (changes: any[]) => {
   // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
   // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
-  if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
+  if (suggestionMode.value === SuggestionsMode.LIVE && isEditable.value) {
     // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
     // where either the previous value or updated value (or both) are non-empty.
     const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
@@ -427,13 +437,13 @@ function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number,
   const sampleNameMap = new Map<string, Array<{ templateKey: string; rowIndex: number }>>();
 
   // Collect all sample names from environmental tabs
-  packageName.value.forEach((templateKey) => {
+  sampleEnvironmentForm.packageName.forEach((templateKey) => {
     const template = HARMONIZER_TEMPLATES[templateKey];
     if (!template?.sampleDataSlot || !template?.schemaClass) {
       return;
     }
 
-    const tabData = sampleData.value[template.sampleDataSlot] || [];
+    const tabData = sampleData.data[template.sampleDataSlot] || [];
     tabData.forEach((row, rowIndex) => {
       const sampleName = row[SAMP_NAME];
       if (sampleName && sampleName.trim()) {
@@ -514,7 +524,7 @@ async function validate() {
   if (valid === false) {
     errorClick(0);
   }
-  validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
+  validationSuccessSnackbar.value = Object.values(sampleData.validation?.tabsValidated || {}).every((value) => value);
 }
 
 const submissionState = computed(() => {
@@ -535,12 +545,6 @@ const submissionState = computed(() => {
     canSubmit: submitDisabledReason === null,
   };
 });
-
-const handleSubmitClick = () => {
-  if (submissionState.value.canSubmit) {
-    submitDialog.value = true;
-  }
-};
 
 const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
   .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -578,7 +582,19 @@ const selectedHelpDict = computed(() => {
   return null;
 });
 
-const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+const {
+  request: submitRequest,
+  loading: submitLoading,
+  count: submitCount,
+  error: submitError,
+  reset: submitReset,
+} = useRequest();
+const handleSubmitClick = () => {
+  if (submissionState.value.canSubmit) {
+    submitReset();
+    submitDialog.value = true;
+  }
+};
 const doSubmit = () => submitRequest(async () => {
   const data = await harmonizerApi.exportJson();
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
@@ -599,7 +615,7 @@ async function downloadSamples() {
     }
     const worksheet = utils.json_to_sheet([
       harmonizerApi.getHeaderRow(template.schemaClass),
-      ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
+      ...HarmonizerApi.flattenArrayValues(sampleData.data[template.sampleDataSlot] || []),
     ], {
       skipHeader: true,
     });
@@ -654,7 +670,7 @@ function openFile(file: File) {
     importErrorSnackbar.value = notImported.length > 0;
 
     // Load imported data
-    sampleData.value = imported;
+    sampleData.data = imported;
 
     // Clear validation state
     harmonizerApi.setInvalidCells({});
@@ -711,13 +727,13 @@ async function fetchSuggestionsFromStudyDetails() {
   if (!activeTemplate.value?.schemaClass) {
     return [];
   }
-  const allSchemaClassNames = packageName.value
+  const allSchemaClassNames = sampleEnvironmentForm.packageName
     .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
     .filter((c) => c !== undefined);
   return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
 }
 
-watch(() => canEditSampleMetadata(), (canEdit) => {
+watch(isEditable, (canEdit) => {
   if (harmonizerApi.ready.value) {
     if (!canEdit) {
       harmonizerApi.setTableReadOnly();
@@ -737,13 +753,13 @@ onMounted(async () => {
     await nextTick();
     // Load data and invalid cells for the active tab
     harmonizerApi.loadData(activeTemplateData.value);
-    harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+    harmonizerApi.setInvalidCells(sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
     // If the tab has no validation state from the server, mark it as unvalidated
-    if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
+    if (!sampleData.validation || !has(sampleData.validation.tabsValidated, activeTemplateKey.value!)) {
       setTabValidated(activeTemplateKey.value!, false);
     }
     addHooks();
-    if (canEditSampleMetadata()) {
+    if (isEditable.value) {
       // Revive any stashed suggestions (in localstorage) for the active template
       metadataSuggestions.value = getPendingSuggestions(props.id, activeTemplate.value?.schemaClass!);
       // Fetch suggestions generated by study-level forms
@@ -766,10 +782,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionPermissionBanner
-      v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
+    <SubmissionUneditableBanner :minimum-permission-level="minimumPermissionLevel" />
     <v-alert
       v-if="!hasValidSampleEnvironmentSelection"
       class="ma-8 flex-grow-0 overflow-visible"
@@ -795,7 +808,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
             v-if="validationErrorGroups.length === 0"
             color="primary"
             variant="outlined"
-            :disabled="!canEditSampleMetadata()"
+            :disabled="!isEditable"
             @click="validate"
           >
             Validate
@@ -1094,7 +1107,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :column-help="selectedHelpDict"
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
-            :metadata-editing-allowed="canEditSampleMetadata()"
+            :metadata-editing-allowed="isEditable"
             :show-suggester-badge="showSuggesterBadge"
             @import-xlsx="openFile"
             @export-xlsx="downloadSamples"
@@ -1105,7 +1118,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
       <div class="harmonizer-bottom-container">
         <div class="harmonizer-style-container">
           <div
-            v-if="canEditSampleMetadata()"
+            v-if="isEditable"
             id="harmonizer-footer-root"
           />
         </div>
@@ -1139,7 +1152,6 @@ const appBannerHeight = inject(AppBannerHeightKey);
               >
                 <v-btn
                   color="success"
-                  depressed
                   :disabled="!submissionState.canSubmit"
                   :loading="submitLoading"
                   @click="handleSubmitClick"
@@ -1155,39 +1167,47 @@ const appBannerHeight = inject(AppBannerHeightKey);
                     v-model="submitDialog"
                     width="auto"
                   >
-                    <v-card v-if="isTestSubmission">
-                      <v-card-title>
-                        Submit
-                      </v-card-title>
-                      <v-card-text>
-                        Test submissions cannot be submitted for NMDC review.
-                      </v-card-text>
+                    <v-card
+                      v-if="isTestSubmission"
+                      title="Submit"
+                      text="Test submissions cannot be submitted for NMDC review."
+                    >
                       <v-card-actions>
                         <v-btn
-                          text
                           @click="submitDialog = false"
                         >
                           Close
                         </v-btn>
                       </v-card-actions>
                     </v-card>
-                    <v-card v-else>
-                      <v-card-title>
-                        Submit
-                      </v-card-title>
+                    <v-card
+                      v-else
+                      title="Submit"
+                    >
                       <v-card-text>
-                        You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                        <p>You are about to submit this study and metadata for NMDC review. Would you like to continue?</p>
+                        <p
+                          v-if="submitError"
+                          class="text-red-darken-2"
+                        >
+                          An error occurred while processing your submission. Please try again. If the problem persists, contact support.
+                        </p>
                       </v-card-text>
                       <v-card-actions>
                         <v-btn
-                          color="primary"
-                          class="mr-2"
+                          :disabled="submitLoading"
+                          @click="submitDialog = false"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          color="success"
+                          :disabled="submitLoading"
+                          variant="elevated"
+                          :loading="submitLoading"
                           @click="doSubmit"
                         >
-                          Yes- Submit
-                        </v-btn>
-                        <v-btn @click="submitDialog = false">
-                          Cancel
+                          Yes - Submit
                         </v-btn>
                       </v-card-actions>
                     </v-card>

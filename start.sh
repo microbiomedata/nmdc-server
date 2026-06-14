@@ -37,4 +37,4 @@ nmdc-server generate-static-files --remove-existing
 nmdc-server storage init
 
 ## Start the server
-uvicorn nmdc_server.asgi:app --host 0.0.0.0 --port 8000
+uvicorn nmdc_server.asgi:app --host 0.0.0.0 --port 8000 --log-config log_config.yaml

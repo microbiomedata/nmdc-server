@@ -1,23 +1,18 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
+import { defineComponent, PropType } from 'vue';
 
-import OrcidId from '@/components/Presentation/OrcidId.vue';
-
-import { stateRefs } from '@/store';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
-import {
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
-  getSubmissionLockedBy,
-  incrementalSaveRecordRequest
-} from './store';
+import { incrementalSaveRecordRequest } from './store';
 import { unlockSubmission } from './store/api';
-import SubmissionPermissionBanner from '@/views/SubmissionPortal/Components/SubmissionPermissionBanner.vue';
-import StatusAlert from '@/views/SubmissionPortal/Components/StatusAlert.vue';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
+import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
 
 export default defineComponent({
-  components: {SaveErrorSnackbar, StatusAlert, SubmissionPermissionBanner, SubmissionNavigationSidebar, OrcidId },
+  components: {
+    SaveErrorSnackbar,
+    SubmissionNavigationSidebar,
+    SubmissionUneditableBanner,
+  },
 
   props: {
     id: {
@@ -27,36 +22,14 @@ export default defineComponent({
   },
 
   setup(props) {
-    const loggedInUserHasLock = computed(() => {
-      const lockedByUser = getSubmissionLockedBy();
-      if (!lockedByUser) {
-        return true;
-      }
-      if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
-        return true;
-      }
-      return false;
-    });
-
-    const isEditingSubmission = computed(() => props.id !== null);
-    const showPermissionBanner = computed(() => canEditSubmissionByStatus() && !canEditSubmissionMetadata());
-    const showStatusAlert = computed(() => !canEditSubmissionByStatus());
-
     window.addEventListener('beforeunload', () => {
-      if (isEditingSubmission.value) {
-        if (props.id) {
-          unlockSubmission(props.id);
-        }
+      if (props.id) {
+        unlockSubmission(props.id);
       }
     });
 
     return {
-      loggedInUserHasLock,
-      getSubmissionLockedBy,
-      isEditingSubmission,
-      showPermissionBanner,
-      showStatusAlert,
-      incrementalSaveRecordRequest
+      incrementalSaveRecordRequest,
     };
   },
 
@@ -73,26 +46,9 @@ export default defineComponent({
     />
     <SaveErrorSnackbar />
     <SubmissionNavigationSidebar class="mx-0" />
-    <div v-if="loggedInUserHasLock || !isEditingSubmission">
-      <SubmissionPermissionBanner v-if="showPermissionBanner" />
-      <StatusAlert v-if="showStatusAlert" />
-      <v-container>
-        <router-view />
-      </v-container>
-    </div>
-    <v-alert v-else>
-      <p class="text-h5">
-        This submission is currently being edited by:
-      </p>
-      <orcid-id
-        v-if="getSubmissionLockedBy()"
-        :orcid-id="getSubmissionLockedBy()?.orcid || ''"
-        :name="getSubmissionLockedBy()?.name"
-        :authenticated="true"
-      />
-      <router-link :to="'/submission/home'">
-        Return to submission list
-      </router-link>
-    </v-alert>
+    <SubmissionUneditableBanner minimum-permission-level="editor" />
+    <v-container>
+      <router-view />
+    </v-container>
   </div>
 </template>

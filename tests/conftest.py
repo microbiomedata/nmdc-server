@@ -13,9 +13,9 @@ from nmdc_server.app import create_app
 from nmdc_server.auth import create_token_response
 from nmdc_server.config import settings
 from nmdc_server.database import engine
-from nmdc_server.fakes import UserFactory
-from nmdc_server.fakes import db as _db
 from nmdc_server.storage import BucketName, storage
+from tests.fakes import UserFactory
+from tests.fakes import db as _db
 
 
 @pytest.fixture(autouse=True)

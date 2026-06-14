@@ -4,8 +4,7 @@
 
 * [Docker](https://docs.docker.com/get-started/)
 * [Docker Compose](https://docs.docker.com/compose/install/) (does not need to be installed separately if using Docker Desktop)
-* Python 3.9
-  * Optional: [pyenv](https://github.com/pyenv/pyenv) for managing Python versions
+* [uv](https://docs.astral.sh/uv/) for Python project management
 * Node.js >= 20
   * Optional: [nvm](https://github.com/nvm-sh/nvm) for managing Node.js versions
 * Yarn 1.x
@@ -127,6 +126,13 @@ You also must generate a local object name prefix. This prefix is used to differ
    NMDC_GCS_OBJECT_NAME_PREFIX=local_1234abcd  # replace 1234abcd with your random suffix
    ```
 
+### Google Cloud LLM Access
+To test LLM features locally, you will need to get the `nmdc-llm` GCP service account credential file from an NMDC team member. The file should be copied into the `nmdc-server/auth/` directory of this project. Then add the following variable in `.env`:
+    
+```bash
+NMDC_LLM_SERVICE_ACCOUNT_CREDENTIALS_FILE=/auth/name-of-your-file.json
+```
+This path is used by nmdc-metadata-suggestor-ai-tool on the backend
 
 ## Load production data
 
@@ -174,14 +180,9 @@ Although the project is designed to be run in Docker, having the dependencies in
 
 ### Backend dependencies
 
-1. If necessary, create a new virtual environment.
+1. Install the backend dependencies using `uv`. This will create a new virtual environment in the `.venv` directory if one does not already exist.
     ```bash
-    python -m venv .venv
-    ````
-2. Activate your virtual environment and install the backend dependencies.
-    ```bash
-    source .venv/bin/activate
-    pip install -e .
+    uv sync --all-groups
     ```
 
 ### Frontend dependencies
@@ -287,7 +288,7 @@ It is recommended to use `127.0.0.1` instead of `localhost` for local developmen
     ```
 5. Run the ingest command:
     ```bash
-    docker-compose run backend nmdc-server ingest -vv --function-limit 100
+    docker compose run backend nmdc-server ingest -vv --function-limit 100
     ```
 
     > **Note**: The `--function-limit` flag is optional. It is used to reduce the time that the ingest takes by limiting the number of certain types of objects loaded. This can be useful for testing purposes. For more information on options run `nmdc-server ingest --help`.
@@ -321,21 +322,21 @@ export NMDC_GCS_FAKE_API_ENDPOINT=http://localhost:4443
 
 ```bash
 # Autogenerate a migration diff from the current HEAD
-docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
+docker compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
 ```
 
 In order to generate a migration, your database state should match HEAD.  If you started the server from a totally empty database, then the default behavior is to ignore migration scripts and set up the database to match `models.py`.  Before you can generate a migration, you need to reset your database to match HEAD.
 
 ```bash
 # Destroy everything.  You'll lose your data!
-docker-compose down -v
-docker-compose up -d db
+docker compose down -v
+docker compose up -d db
 # Create the database
-docker-compose run backend psql -c "create database nmdc_a;" -d postgres
+docker compose run backend psql -c "create database nmdc_a;" -d postgres
 # Run migrations to HEAD
-docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
+docker compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 # Autogenerate a migration diff from the current HEAD
-docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
+docker compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
 ```
 
 ## Testing migrations
@@ -358,7 +359,7 @@ A handy IPython shell is provided with some commonly used symbols automatically
 imported, and `autoreload 2` enabled. To run it:
 
 ```bash
-docker-compose run --rm backend nmdc-server shell
+docker compose run --rm backend nmdc-server shell
 ```
 
 You can also pass `--print-sql` to output all SQL queries. Note that if you have SQL logging enabled via the `NMDC_PRINT_SQL` environment variable, you will not need to pass `--print-sql` to the command.

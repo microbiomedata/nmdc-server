@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed, useTemplateRef, watch } from 'vue';
 import { isEqual } from 'lodash';
-import { canEditSubmissionMetadata } from '@/views/SubmissionPortal/store';
+import { getSubmissionUneditableReason } from '@/views/SubmissionPortal/store';
+import { SubmissionEditorRole } from '@/views/SubmissionPortal/types.ts';
+
+const {
+  minimumPermissionLevel = 'editor'
+} = defineProps<{
+  minimumPermissionLevel?: SubmissionEditorRole
+}>()
 
 const emit = defineEmits<{
   validStateChanged: [state: null | string[]];
 }>();
 
 const formRef = useTemplateRef('formRef');
-const isDisabled = computed(() => !canEditSubmissionMetadata());
+const isDisabled = computed(() => getSubmissionUneditableReason(minimumPermissionLevel) !== undefined);
 
 let prevErrors: null | string[] = null;
 const handleValidStateChanged = () => {

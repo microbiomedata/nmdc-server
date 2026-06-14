@@ -6,7 +6,7 @@ export default defineComponent({
   setup() {
     return {
       submissionPages,
-      studyName
+      studyName,
     };
   },
 });

@@ -1,7 +1,7 @@
 from starlette.testclient import TestClient
 
-from nmdc_server import fakes
 from nmdc_server.config import Settings
+from tests import fakes
 
 
 def test_login(client: TestClient):

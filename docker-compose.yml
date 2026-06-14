@@ -41,6 +41,7 @@ services:
     environment:
       - PGHOST=db
       - UVICORN_RELOAD=True
+      - UV_COMPILE_BYTECODE=0
       - GOOGLE_APPLICATION_CREDENTIALS=/gcp/credentials.json
     networks:
       - public

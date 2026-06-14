@@ -1,21 +1,25 @@
-import json
 from csv import DictReader
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.encoders import jsonable_encoder
+from github.Issue import Issue
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
-from nmdc_server import fakes
-from nmdc_server.models import SubmissionEditorRole, SubmissionImagesObject, SubmissionRole
+from nmdc_server.models import (
+    SubmissionEditorRole,
+    SubmissionImagesObject,
+    SubmissionRole,
+)
 from nmdc_server.schemas_submission import (
     SubmissionMetadataSchema,
     SubmissionMetadataSchemaPatch,
 )
 from nmdc_server.storage import BucketName, storage
+from tests import fakes
 
 
 @pytest.fixture
@@ -69,22 +73,28 @@ def test_get_metadata_submissions_mixs_as_admin(
         status=SubmissionStatusEnum.SubmittedPendingReview.text,
         metadata_submission={
             "sampleData": {
-                "built_env_data": [
-                    {
-                        "samp_name": "Sample A",
-                        "env_medium": "Medium A",
-                        "env_broad_scale": "Broad Scale A",
-                        "env_local_scale": "Local Scale A",
-                    },
-                    {
-                        "samp_name": "Sample B",
-                        "env_medium": "Medium B",
-                        "env_broad_scale": "Broad Scale B",
-                        "env_local_scale": "Local Scale B",
-                    },
-                ]
+                "data": {
+                    "built_env_data": [
+                        {
+                            "samp_name": "Sample A",
+                            "env_medium": "Medium A",
+                            "env_broad_scale": "Broad Scale A",
+                            "env_local_scale": "Local Scale A",
+                        },
+                        {
+                            "samp_name": "Sample B",
+                            "env_medium": "Medium B",
+                            "env_broad_scale": "Broad Scale B",
+                            "env_local_scale": "Local Scale B",
+                        },
+                    ]
+                },
+                "validation": {
+                    "invalidCells": {},
+                    "tabsValidated": {},
+                },
             },
-            "packageName": "Env Pkg 1",
+            "sampleEnvironmentForm": {"packageName": "Env Pkg 1", "validation": None},
         },
     )
     db.commit()
@@ -179,85 +189,91 @@ def test_get_metadata_submissions_report_as_admin(
         # See: https://microbiomedata.github.io/submission-schema/SampleData/
         metadata_submission={
             "sampleData": {
-                "soil_data": [
-                    {
-                        "ph": "\n4\n",
-                        "depth": ".10-.20 meters",
-                        "ph_meth": (
-                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
-                            "Water and Forage Analytical Laboratory. "
-                            "Oklahoma Cooperative Extension "
-                            "Service, 2016."
-                        ),
-                        "ecosystem": "Environmental",
-                        "fao_class": "Histosols",
-                        "samp_name": "June2016WEW_Plot6_D2",
-                        "samp_size": "+10 grams",
-                        "env_medium": "peat soil [ENVO:00005774]",
-                        "store_cond": "frozen",
-                        "annual_temp": "5.0 C",
-                        "cur_land_use": "conifers",
-                        "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
-                        "growth_facil": "field",
-                        "analysis_type": ["metagenomics"],
-                        "annual_precpt": "804 mm/year",
-                        "water_content": "84 %",
-                        "ecosystem_type": "Soil",
-                        "collection_date": "08/23/2016",
-                        "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
-                        "env_local_scale": "peatland [ENVO:00000044]",
-                        "samp_store_temp": "-80",
-                        "ecosystem_subtype": "Peat",
-                        "ecosystem_category": "Terrestrial",
-                        "samp_collec_device": "russian corer",
-                        "specific_ecosystem": "Bog",
-                        "gaseous_environment": "ambient",
-                        "water_cont_soil_meth": (
-                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
-                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
-                        ),
-                    },
-                    {
-                        "ph": "\n4\n",
-                        "depth": "\n.40-.50\n",
-                        "lat_lon": "47.506961 -93.455715",
-                        "ph_meth": (
-                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
-                            "Water and Forage Analytical Laboratory. "
-                            "Oklahoma Cooperative Extension "
-                            "Service, 2016."
-                        ),
-                        "ecosystem": "Environmental",
-                        "fao_class": "Histosols",
-                        "samp_name": "Aug2016WEW_Plot6_D5",
-                        "samp_size": "+10 grams",
-                        "env_medium": "peat soil [ENVO:00005774]",
-                        "annual_temp": "5.0 C",
-                        "cur_land_use": "conifers (e.g. pine,spruce,fir,cypress)",
-                        "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
-                        "analysis_type": ["metagenomics"],
-                        "annual_precpt": "804 mm/year",
-                        "water_content": "\n84%\n",
-                        "ecosystem_type": "Soil",
-                        "collection_date": "08/23/2016",
-                        "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
-                        "env_local_scale": "peatland [ENVO:00000044]",
-                        "samp_store_temp": "-80",
-                        "ecosystem_subtype": "Peat",
-                        "ecosystem_category": "Terrestrial",
-                        "samp_collec_device": "russian corer",
-                        "specific_ecosystem": "Bog",
-                        "gaseous_environment": "ambient",
-                        "water_cont_soil_meth": (
-                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
-                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
-                        ),
-                    },
-                ],
-                "jgi_mg_data": [
-                    {"samp_name": "June2016WEW_Plot6_D2", "analysis_type": ["metagenomics"]},
-                    {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
-                ],
+                "data": {
+                    "soil_data": [
+                        {
+                            "ph": "\n4\n",
+                            "depth": ".10-.20 meters",
+                            "ph_meth": (
+                                "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                                "Water and Forage Analytical Laboratory. "
+                                "Oklahoma Cooperative Extension "
+                                "Service, 2016."
+                            ),
+                            "ecosystem": "Environmental",
+                            "fao_class": "Histosols",
+                            "samp_name": "June2016WEW_Plot6_D2",
+                            "samp_size": "+10 grams",
+                            "env_medium": "peat soil [ENVO:00005774]",
+                            "store_cond": "frozen",
+                            "annual_temp": "5.0 C",
+                            "cur_land_use": "conifers",
+                            "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
+                            "growth_facil": "field",
+                            "analysis_type": ["metagenomics"],
+                            "annual_precpt": "804 mm/year",
+                            "water_content": "84 %",
+                            "ecosystem_type": "Soil",
+                            "collection_date": "08/23/2016",
+                            "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
+                            "env_local_scale": "peatland [ENVO:00000044]",
+                            "samp_store_temp": "-80",
+                            "ecosystem_subtype": "Peat",
+                            "ecosystem_category": "Terrestrial",
+                            "samp_collec_device": "russian corer",
+                            "specific_ecosystem": "Bog",
+                            "gaseous_environment": "ambient",
+                            "water_cont_soil_meth": (
+                                'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                                "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
+                            ),
+                        },
+                        {
+                            "ph": "\n4\n",
+                            "depth": "\n.40-.50\n",
+                            "lat_lon": "47.506961 -93.455715",
+                            "ph_meth": (
+                                "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                                "Water and Forage Analytical Laboratory. "
+                                "Oklahoma Cooperative Extension "
+                                "Service, 2016."
+                            ),
+                            "ecosystem": "Environmental",
+                            "fao_class": "Histosols",
+                            "samp_name": "Aug2016WEW_Plot6_D5",
+                            "samp_size": "+10 grams",
+                            "env_medium": "peat soil [ENVO:00005774]",
+                            "annual_temp": "5.0 C",
+                            "cur_land_use": "conifers (e.g. pine,spruce,fir,cypress)",
+                            "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
+                            "analysis_type": ["metagenomics"],
+                            "annual_precpt": "804 mm/year",
+                            "water_content": "\n84%\n",
+                            "ecosystem_type": "Soil",
+                            "collection_date": "08/23/2016",
+                            "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
+                            "env_local_scale": "peatland [ENVO:00000044]",
+                            "samp_store_temp": "-80",
+                            "ecosystem_subtype": "Peat",
+                            "ecosystem_category": "Terrestrial",
+                            "samp_collec_device": "russian corer",
+                            "specific_ecosystem": "Bog",
+                            "gaseous_environment": "ambient",
+                            "water_cont_soil_meth": (
+                                'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                                "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
+                            ),
+                        },
+                    ],
+                    "jgi_mg_data": [
+                        {"samp_name": "June2016WEW_Plot6_D2", "analysis_type": ["metagenomics"]},
+                        {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
+                    ],
+                },
+                "validation": {
+                    "invalidCells": {},
+                    "tabsValidated": {},
+                },
             },
             "multiOmicsForm": {
                 "studyNumber": "",
@@ -271,6 +287,7 @@ def test_get_metadata_submissions_report_as_admin(
                 "award": "MONet",
                 "awardDois": [],
                 "mgCompatible": None,
+                "validation": None,
             },
             "studyForm": {
                 "studyName": "My study name",
@@ -285,9 +302,10 @@ def test_get_metadata_submissions_report_as_admin(
                 "alternativeNames": [],
                 "GOLDStudyId": "",
                 "NCBIBioProjectId": "",
+                "validation": None,
             },
             "templates": [],
-            "addressForm": {
+            "senderShippingInfoForm": {
                 "shipper": {
                     "name": "",
                     "email": "",
@@ -307,15 +325,12 @@ def test_get_metadata_submissions_report_as_admin(
                 "permitNumber": "",
                 "biosafetyLevel": "",
                 "comments": "",
+                "validation": None,
             },
-            "validationState": {
-                "studyForm": None,
-                "multiOmicsForm": None,
-                "sampleEnvironmentForm": None,
-                "senderShippingInfoForm": None,
-                "sampleMetadata": None,
+            "sampleEnvironmentForm": {
+                "packageName": [],
+                "validation": None,
             },
-            "packageName": [],
         },
         is_test_submission=True,
         status=SubmissionStatusEnum.InProgress.text,
@@ -669,7 +684,7 @@ def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     fakes.SubmissionRoleFactory(
         submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
     )
-    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    payload = SubmissionMetadataSchemaPatch.model_validate(submission)
     db.commit()
 
     payload.permissions = {str(pi_orcid): SubmissionEditorRole.owner.value}
@@ -1789,6 +1804,51 @@ def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_a
     assert response.status_code == 422
 
 
+def test_github_issue_creation_on_submission(db: Session, client: TestClient, logged_in_user):
+    """
+    Confirm that when a submission status becomes 'SubmittedPendingReview'
+    and no GitHub issue number exists, a new GitHub issue is created.
+    """
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        status=SubmissionStatusEnum.InProgress.text,
+        is_test_submission=False,
+        submission_issue=None,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    with (
+        patch("nmdc_server.api.github.get_issue", return_value=None),
+        patch("nmdc_server.api.github.create_issue", return_value="9876") as mock_create_issue,
+    ):
+        response = client.request(
+            method="PATCH",
+            url=f"/api/metadata_submission/{submission.id}/status",
+            json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
+        )
+
+        # Verify the request was handled successfully
+        assert response.status_code == 200
+
+        # Verify that create_issue was called
+        assert mock_create_issue.call_count == 1
+
+        # Verify the create_issue function was called with the correct arguments
+        assert str(submission.id) in mock_create_issue.call_args.kwargs["title"]
+        assert logged_in_user.name in mock_create_issue.call_args.kwargs["body"]
+
+        # Verify that the submission_issue field was updated with the new issue number
+        db.refresh(submission)
+        assert submission.submission_issue == "9876"
+
+
 def test_github_issue_resubmission_creates_comment_only(
     db: Session, client: TestClient, logged_in_user
 ):
@@ -1811,37 +1871,28 @@ def test_github_issue_resubmission_creates_comment_only(
     )
     db.commit()
 
-    comment_response = Mock(status_code=201, json=lambda: {"id": 456})
-    get_response = Mock(status_code=200, json=lambda: {"state": "open", "number": 123})
+    mock_issue = MagicMock(spec=Issue)
+    mock_issue.id = 123
+    mock_issue.state = "open"
 
     with (
-        patch("nmdc_server.api.requests.post", return_value=comment_response) as mock_post,
-        patch("nmdc_server.api.requests.get", return_value=get_response) as mock_get,
-        patch("nmdc_server.api.requests.patch") as mock_patch,
-        patch("nmdc_server.api.settings") as mock_settings,
+        patch("nmdc_server.api.github.get_issue", return_value=mock_issue),
+        patch("nmdc_server.api.github.create_issue") as mock_create_issue,
+        patch("nmdc_server.api.github.add_issue_comment") as mock_add_issue_comment,
     ):
-        mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
-        mock_settings.github_authentication_token = "fake_token"
-
         response = client.request(
             method="PATCH",
             url=f"/api/metadata_submission/{submission.id}/status",
             json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
         )
 
+        # Verify the request was handled successfully
         assert response.status_code == 200
-        assert mock_post.call_count == 1
 
-        # Verify comment endpoint was called
-        assert "/issues/123/comments" in mock_post.call_args[0][0]
+        # Verify that add_issue_comment was called and create_issue was not called
+        assert mock_add_issue_comment.call_count == 1
+        assert mock_create_issue.call_count == 0
 
-        # Verify comment content
-        comment_data = json.loads(mock_post.call_args[1]["data"])
-        assert "Submission Resubmitted" in comment_data["body"]
-        assert logged_in_user.name in comment_data["body"]
-
-        # Verify issue state was checked
-        assert mock_get.call_count == 1
-
-        # Verify issue was not reopened (it's already open)
-        assert mock_patch.call_count == 0
+        # Verify the add_issue_comment function was called with the correct arguments
+        assert mock_add_issue_comment.call_args.args[0].id == 123
+        assert "Submission Resubmitted" in mock_add_issue_comment.call_args.args[1]

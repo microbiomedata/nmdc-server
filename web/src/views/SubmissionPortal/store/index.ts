@@ -1,5 +1,5 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import { computed, reactive, Ref, ref, shallowRef, watch, } from 'vue';
+import { computed, reactive, Ref, ref, watch, } from 'vue';
 import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
@@ -14,6 +14,8 @@ import {
   Doi,
   EMSL,
   HARMONIZER_TEMPLATES,
+  JGI_ISOLATE_GENOME,
+  JGI_ISOLATE_TRANSCRIPTOME,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
@@ -28,15 +30,16 @@ import {
   SubmissionEditorRole,
   SubmissionPage,
   SubmissionStatusKey,
-  SubmissionValidationState,
   SuggestionsMode,
   SuggestionFill,
   SuggestionType,
+  UneditableReason,
 } from '@/views/SubmissionPortal/types';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
 import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
+import { stateRefs } from '@/store';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -103,18 +106,24 @@ const author = ref<User | null>(null);
 /**
  * Submission record locking information
  */
-let _submissionLockedBy: User | null = null;
-function getSubmissionLockedBy(): User | null {
-  return _submissionLockedBy;
-}
+const submissionLockedBy = ref<User | null>(null);
+const loggedInUserHasLock = computed(() => {
+  const lockedByUser = submissionLockedBy.value;
+  if (!lockedByUser) {
+    return true;
+  }
+  if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
+    return true;
+  }
+  return false;
+});
 
 let _permissionLevel: SubmissionEditorRole | null = null;
-function getPermissionLevel(): SubmissionEditorRole | null {
-  return _permissionLevel;
-}
 
 function isOwner(): boolean {
-  if (!_permissionLevel) return false;
+  if (!_permissionLevel) {
+    return false;
+  }
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
@@ -127,16 +136,36 @@ function canEditSubmissionByStatus(): boolean {
   return editableByStatus(status.value);
 }
 
-function canEditSubmissionMetadata(): boolean {
-  if (!_permissionLevel) return false;
-  if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
+/**
+ * Check if the given permission level meets the minimum required permission level
+ * @param permissionLevel
+ * @param minimumPermissionLevel
+ */
+function hasMinimumPermissionLevel(permissionLevel: SubmissionEditorRole | null, minimumPermissionLevel: SubmissionEditorRole): boolean {
+  return permissionLevel !== null && permissionLevelHierarchy[permissionLevel] >= permissionLevelHierarchy[minimumPermissionLevel];
 }
 
-function canEditSampleMetadata(): boolean {
-  if (!_permissionLevel) return false;
-  if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
+/**
+ * Get the reason why the submission is not editable, if applicable. This checks
+ * for lock status, permission level, and submission status.
+ *
+ * @param minimumPermissionLevel The minimum permission level required to edit the submission
+ * @returns A string describing the reason why the submission is not editable, or undefined if it is editable
+ */
+function getSubmissionUneditableReason(minimumPermissionLevel: SubmissionEditorRole): UneditableReason | undefined {
+  if (!loggedInUserHasLock.value) {
+    return 'locked_by_other';
+  }
+
+  if (!hasMinimumPermissionLevel(_permissionLevel, minimumPermissionLevel)) {
+    return 'insufficient_permissions'
+  }
+
+  if (!canEditSubmissionByStatus()) {
+    return 'uneditable_status'
+  }
+
+  return undefined;
 }
 
 const hasChanged = ref(0);
@@ -144,19 +173,9 @@ const hasChanged = ref(0);
 /**
  * Validating forms
 */
-
-const validationStateDefault: SubmissionValidationState = {
-  studyForm: null,
-  multiOmicsForm: null,
-  sampleEnvironmentForm: null,
-  senderShippingInfoForm: null,
-  sampleMetadata: null,
-};
-const validationState = reactive(clone(validationStateDefault));
-
 function setTabValidated(tabName: string, validated: boolean) {
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleData.validation === null) {
+      sampleData.validation = {
       invalidCells: {},
       tabsValidated: {},
     };
@@ -164,12 +183,12 @@ function setTabValidated(tabName: string, validated: boolean) {
   if (!templateList.value.includes(tabName)) {
     return;
   }
-  validationState.sampleMetadata.tabsValidated[tabName] = validated;
+  sampleData.validation.tabsValidated[tabName] = validated;
 }
 
 function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record<number, string>>) {
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleData.validation === null) {
+    sampleData.validation = {
       invalidCells: {},
       tabsValidated: {},
     };
@@ -177,49 +196,49 @@ function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record
   if (!templateList.value.includes(tabName)) {
     return;
   }
-  validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
+  sampleData.validation.invalidCells[tabName] = invalidCells;
 }
 
 function resetSampleMetadataValidation() {
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleData.validation === null) {
+    sampleData.validation = {
       invalidCells: {},
       tabsValidated: {},
     };
   }
-  validationState.sampleMetadata.invalidCells = {};
-  Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
-    validationState.sampleMetadata!.tabsValidated[tab] = false;
+  sampleData.validation.invalidCells = {};
+  Object.keys(sampleData.validation.tabsValidated).forEach((tab) => {
+    sampleData.validation!.tabsValidated[tab] = false;
   });
 }
 
 function isSubmissionValid() {
   // The required forms must be validated with no errors
-  if (!isEqual(validationState.studyForm, [])) {
+  if (!isEqual(studyForm.validation, [])) {
     return false;
   }
-  if (!isEqual(validationState.multiOmicsForm, [])) {
+  if (!isEqual(multiOmicsForm.validation, [])) {
     return false;
   }
-  if (!isEqual(validationState.sampleEnvironmentForm, [])) {
+  if (!isEqual(sampleEnvironmentForm.validation, [])) {
     return false;
   }
   // The sender shipping info form is optional. If it has been validated, it must have no errors
-  if (validationState.senderShippingInfoForm != null && !isEqual(validationState.senderShippingInfoForm, [])) {
+  if (senderShippingInfoForm.validation != null && !isEqual(senderShippingInfoForm.validation, [])) {
     return false;
   }
   // The sample metadata must be validated with no errors
-  if (validationState.sampleMetadata == null) {
+  if (sampleData.validation == null) {
     return false;
   }
-  const tabsValidatedValues = Object.values(validationState.sampleMetadata.tabsValidated);
+  const tabsValidatedValues = Object.values(sampleData.validation.tabsValidated);
   if (tabsValidatedValues.length === 0) {
     return false;
   }
   if (tabsValidatedValues.some((validated) => !validated)) {
     return false;
   }
-  if (Object.values(validationState.sampleMetadata.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
+  if (Object.values(sampleData.validation.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
     return false;
   }
   return true;
@@ -270,26 +289,26 @@ const submissionPages = computed<SubmissionPage[]>(() => ([
   {
     title: 'Study Information',
     link: { name: 'Study Form' },
-    validationMessages: validationState.studyForm,
+    validationMessages: studyForm.validation,
   },
   {
     title: 'Multi-omics Data',
     link: { name: 'Multiomics Form' },
-    validationMessages: combineErrors(validationState.multiOmicsForm, validationState.senderShippingInfoForm),
+    validationMessages: combineErrors(multiOmicsForm.validation, senderShippingInfoForm.validation),
   },
   {
     title: 'Sample Environment',
     link: { name: 'Sample Environment' },
-    validationMessages: validationState.sampleEnvironmentForm,
+    validationMessages: sampleEnvironmentForm.validation,
   },
   {
     title: 'Sample Metadata',
     link: { name: 'Submission Sample Editor' },
-    validationMessages: combineSampleMetadataErrors(validationState.sampleMetadata),
+    validationMessages: combineSampleMetadataErrors(sampleData.validation),
   },
 ]));
 
-const addressFormDefault = {
+const senderShippingInfoFormDefault = {
   // Shipper info
   shipper: {
     name: '',
@@ -314,9 +333,10 @@ const addressFormDefault = {
   biosafetyLevel: '',
   irbOrHipaa: undefined as undefined | boolean,
   comments: '',
+  validation: null as null | string[],
 };
 
-const addressForm = reactive(clone(addressFormDefault));
+const senderShippingInfoForm = reactive(clone(senderShippingInfoFormDefault));
 
 /**
  * Study Form Step
@@ -342,6 +362,7 @@ const studyFormDefault = {
   alternativeNames: [] as string[],
   GOLDStudyId: '',
   NCBIBioProjectId: '',
+  validation: null as null | string[],
 };
 const studyForm = reactive(clone(studyFormDefault));
 
@@ -356,9 +377,10 @@ interface Protocols {
  */
 export type OmicsProcessingType =
   // non-doe types
-  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' | 'isolate-genome' | 'isolate-transcriptome' |
   // doe facility associated types
-  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' |
+  'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi' | 'isolate-genome-jgi' | 'isolate-transcriptome-jgi';
 const multiOmicsFormDefault = {
   award: null as null | string,
   awardDois: [] as Doi[] | null,
@@ -382,6 +404,7 @@ const multiOmicsFormDefault = {
   lipProtocols: null as null | Protocols,
   nomProtocols: null as null | Protocols,
   nomLcProtocols: null as null | Protocols,
+  validation: null as null | string[],
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
@@ -511,6 +534,31 @@ watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
   if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
     multiOmicsForm.lipProtocols = null;
   }
+
+  // isolate genome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-genome') && !oldValue.includes('isolate-genome')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
+  // isolate transcriptome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-transcriptome') && !oldValue.includes('isolate-transcriptome')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
+  // JGI isolate genome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-genome-jgi') && !oldValue.includes('isolate-genome-jgi')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
+  // JGI isolate transcriptome was added, the isolate environment template is automatically added as well.
+  if (newValue.includes('isolate-transcriptome-jgi') && !oldValue.includes('isolate-transcriptome-jgi')) {
+    if (!sampleEnvironmentForm.packageName.includes('isolate')) {
+      sampleEnvironmentForm.packageName.push('isolate');
+    }
+  }
 });
 
 // When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
@@ -531,16 +579,20 @@ watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
 // reset the sender shipping info form validation state to null (untouched).
 watch(() => multiOmicsForm.ship, (newVal) => {
   if (newVal !== true) {
-    validationState.senderShippingInfoForm = null;
+    senderShippingInfoForm.validation = null;
   }
 });
 
 /**
  * Environmental Package Step
  */
-const packageName = ref([] as (keyof typeof HARMONIZER_TEMPLATES)[]);
+const sampleEnvironmentFormDefault = {
+  validation: null as null | string[],
+  packageName: [] as (keyof typeof HARMONIZER_TEMPLATES)[],
+};
+const sampleEnvironmentForm = reactive(clone(sampleEnvironmentFormDefault));
 const templateList = computed<string[]>((prevTemplates) => {
-  const templates = new Set(packageName.value);
+  const templates = new Set(sampleEnvironmentForm.packageName);
   if (multiOmicsForm.dataGenerated) {
     // Have data already been generated? Yes
     if (!multiOmicsForm.doe) {
@@ -610,6 +662,14 @@ const templateList = computed<string[]>((prevTemplates) => {
           // Data types? Metatranscriptome
           templates.add(JGI_MT);
         }
+        if (multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi')) {
+          // Data types? Isolate Genome
+          templates.add(JGI_ISOLATE_GENOME);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')) {
+          // Data types? Isolate Transcriptome
+          templates.add(JGI_ISOLATE_TRANSCRIPTOME);
+        }
       }
     }
   }
@@ -622,7 +682,11 @@ const templateList = computed<string[]>((prevTemplates) => {
 /**
  * DataHarmonizer Step
  */
-const sampleData = shallowRef({} as Record<string, any[]>);
+const sampleDataDefault = {
+  data: {} as Record<string, any[]>,
+  validation: null as SampleMetadataValidationState | null,
+};
+const sampleData = reactive(clone(sampleDataDefault));
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionFill = ref(SuggestionFill.BY_ROW);
@@ -636,39 +700,39 @@ watch(templateList, (newList, oldList) => {
   if (isEqual(newList, oldList)) {
     return;
   }
-  if (packageName.value.length === 0) {
+  if (sampleEnvironmentForm.packageName.length === 0) {
     // If no package is selected, set the sample metadata validation to an untouched state
-    validationState.sampleMetadata = null;
+    sampleData.validation = null;
     return;
   }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
   });
-  if (validationState.sampleMetadata === null) {
-    validationState.sampleMetadata = {
+  if (sampleData.validation === null) {
+    sampleData.validation = {
       invalidCells: {},
       tabsValidated: {},
     };
   }
-  validationState.sampleMetadata.tabsValidated = newTabsValidated;
+  sampleData.validation.tabsValidated = newTabsValidated;
 
   // Remove sampleData and validation state for any templates that are no longer included in the package
   const removedTemplates = oldList.filter((template) => !newList.includes(template));
   if (removedTemplates.length > 0) {
-    const newSampleData = { ...sampleData.value };
+    const newSampleData = { ...sampleData.data };
     removedTemplates.forEach((template) => {
       const sampleDataSlot = HARMONIZER_TEMPLATES[template as keyof typeof HARMONIZER_TEMPLATES]?.sampleDataSlot;
       if (sampleDataSlot === undefined) {
         return;
       }
       delete newSampleData[sampleDataSlot];
-      if (validationState.sampleMetadata) {
-        delete validationState.sampleMetadata.tabsValidated[template];
-        delete validationState.sampleMetadata.invalidCells[template];
+      if (sampleData.validation) {
+        delete sampleData.validation.tabsValidated[template];
+        delete sampleData.validation.invalidCells[template];
       }
     });
-    sampleData.value = newSampleData;
+    sampleData.data = newSampleData;
   }
   hasChanged.value += 1;
 });
@@ -677,24 +741,23 @@ watch(templateList, (newList, oldList) => {
 // If you add a new field here, check whether the list of fields in the `can_save_submission` function
 // in `nmdc_server/api.py` also needs to be updated.
 const payloadObject: Ref<MetadataSubmission> = computed(() => ({
-  packageName: packageName.value,
-  addressForm,
+  sampleEnvironmentForm,
+  senderShippingInfoForm,
   templates: templateList.value,
   studyForm,
   multiOmicsForm,
-  sampleData: sampleData.value,
-  validationState,
+  sampleData,
 }));
 
 function templateHasData(templateName: string = ''): boolean {
   //if DH hasn't been touched at all then there's no data nd it's ok edit
-  if (Object.keys(sampleData.value).length === 0) {
+  if (Object.keys(sampleData.data).length === 0) {
     return false;
   }
 
   //case where we want behavior the same as 'templateChoiceDisabled'
   if (templateName === 'all') {
-    const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
+    const templateWithDataIndex = Object.values(sampleData.data).findIndex((value) => value.length > 0);
     if (templateWithDataIndex >= 0) {
       return true;
     }
@@ -704,13 +767,13 @@ function templateHasData(templateName: string = ''): boolean {
   // If there are no keys in sampleData, the DH view hasn't been touched
   // yet, so it's still okay to change the template.
   // Or if the template is not present/hasn't been selected
-  if (!Object.keys(sampleData.value).includes(templateName)) {
+  if (!Object.keys(sampleData.data).includes(templateName)) {
     return false;
   }
   // If the DH has been touched, see if the given template actually
   // contain data. If it does, then do not allow changing that template.
   // Otherwise, allow it to be changed.
-  if (Object.values(sampleData.value[templateName] || {}).length > 0) {
+  if (Object.values(sampleData.data[templateName] || {}).length > 0) {
     return true;
   }
   return false;
@@ -750,11 +813,9 @@ const submitPayload = computed(() => {
 });
 
 async function submit(id: string, status?: SubmissionStatusKey) {
-  if (!canEditSubmissionMetadata()) {
-    throw new Error('Unable to submit due to inadequate permission level for this submission.');
-  }
-  if (!canEditSubmissionByStatus()) {
-    throw new Error('Unable to submit with current submission status.');
+  const uneditableReason = getSubmissionUneditableReason('owner');
+  if (uneditableReason) {
+    throw new Error(`Unable to submit: ${ uneditableReason }`);
   }
   let record = await api.updateRecord(id, payloadObject.value);
   if (status) {
@@ -764,14 +825,13 @@ async function submit(id: string, status?: SubmissionStatusKey) {
 }
 
 function reset() {
-  Object.assign(addressForm, addressFormDefault);
-  Object.assign(addressForm, addressFormDefault);
+  Object.assign(senderShippingInfoForm, senderShippingInfoFormDefault);
+  Object.assign(senderShippingInfoForm, senderShippingInfoFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  Object.assign(validationState, validationStateDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  packageName.value = [];
-  sampleData.value = {};
+  Object.assign(sampleEnvironmentForm, sampleEnvironmentFormDefault);
+  Object.assign(sampleData, sampleDataDefault);
   status.value = 'InProgress';
   studyName.value = '';
   isTestSubmission.value = false;
@@ -781,10 +841,8 @@ function reset() {
 
 const incrementalSaveRecordRequest = useRequest();
 async function incrementalSaveRecord(id: string): Promise<void> {
-  if (!canEditSampleMetadata()) {
-    return;
-  }
-  if (!canEditSubmissionByStatus()) {
+  const uneditableReason = getSubmissionUneditableReason('metadata_contributor');
+  if (uneditableReason) {
     return;
   }
 
@@ -793,9 +851,9 @@ async function incrementalSaveRecord(id: string): Promise<void> {
   if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
-  } else if (canEditSubmissionMetadata()) {
+  } else if (hasMinimumPermissionLevel(_permissionLevel, "editor")) {
     payload = payloadObject.value;
-  } else if (canEditSampleMetadata()) {
+  } else if (hasMinimumPermissionLevel(_permissionLevel, "metadata_contributor")) {
     payload = {
       sampleData: payloadObject.value.sampleData,
     };
@@ -823,22 +881,23 @@ async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '',
 }
 
 function updateStateFromRecord(record: MetadataSubmissionRecord) {
-  packageName.value = record.metadata_submission.packageName;
+  if (!isEqual(sampleEnvironmentForm, record.metadata_submission.sampleEnvironmentForm)) {
+    Object.assign(sampleEnvironmentForm, record.metadata_submission.sampleEnvironmentForm);
+  }
   if (!isEqual(studyForm, record.metadata_submission.studyForm)) {
     Object.assign(studyForm, record.metadata_submission.studyForm);
   }
   if (!isEqual(multiOmicsForm, record.metadata_submission.multiOmicsForm)) {
     Object.assign(multiOmicsForm, record.metadata_submission.multiOmicsForm);
   }
-  if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
-    Object.assign(addressForm, record.metadata_submission.addressForm);
+  if (!isEqual(senderShippingInfoForm, record.metadata_submission.senderShippingInfoForm)) {
+    Object.assign(senderShippingInfoForm, record.metadata_submission.senderShippingInfoForm);
   }
-  if (!isEqual(validationState, record.metadata_submission.validationState)) {
-    Object.assign(validationState, record.metadata_submission.validationState);
+   if (!isEqual(sampleData, record.metadata_submission.sampleData)) {
+    Object.assign(sampleData, record.metadata_submission.sampleData);
   }
   createdDate.value = new Date(record.created + 'Z');
   modifiedDate.value = new Date(record.date_last_modified + 'Z');
-  sampleData.value = record.metadata_submission.sampleData;
   status.value = record.status;
   if (record.permission_level !== null) {
     _permissionLevel = (record.permission_level as SubmissionEditorRole);
@@ -849,21 +908,22 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   piImageUrl.value = record.pi_image_url;
   hasChanged.value = 0;
   author.value = record.author;
+  submissionLockedBy.value = record.locked_by;
 }
 
 async function lockRecord(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
-    _submissionLockedBy = lockResponse.locked_by || null;
+    submissionLockedBy.value = lockResponse.locked_by || null;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 409) {
         // Another user has the lock
-        _submissionLockedBy = error.response.data.locked_by || null;
+        submissionLockedBy.value = error.response.data.locked_by || null;
       }
     } else {
       // Something went wrong, and we don't know who has the lock
-      _submissionLockedBy = null;
+      submissionLockedBy.value = null;
     }
   }
 }
@@ -871,7 +931,7 @@ async function lockRecord(id: string) {
 async function unlockRecord(id: string) {
   try {
     await api.unlockSubmission(id);
-    _submissionLockedBy = null;
+    submissionLockedBy.value = null;
   } catch {
     // Ignore errors when unlocking
   }
@@ -889,8 +949,8 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   if (!key) {
     return;
   }
-  sampleData.value = {
-    ...sampleData.value,
+  sampleData.data = {
+    ...sampleData.data,
     [key]: data,
   };
 }
@@ -991,12 +1051,11 @@ export {
   addAwardDoi,
   removeAwardDoi,
   sampleData,
-  addressForm,
-  addressFormDefault,
+  senderShippingInfoForm,
+  senderShippingInfoFormDefault,
   studyForm,
-  validationState,
   submitPayload,
-  packageName,
+  sampleEnvironmentForm,
   templateList,
   hasChanged,
   author,
@@ -1005,6 +1064,8 @@ export {
   studyName,
   createdDate,
   modifiedDate,
+  submissionLockedBy,
+  loggedInUserHasLock,
   isTestSubmission,
   incrementalSaveRecordRequest,
   primaryStudyImageUrl,
@@ -1018,8 +1079,7 @@ export {
   fetchSuggestionsFromSampleRowsRequest,
   fetchSuggestionsFromStudyInfoRequest,
   /* functions */
-  getSubmissionLockedBy,
-  getPermissionLevel,
+  getSubmissionUneditableReason,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
@@ -1028,9 +1088,6 @@ export {
   submit,
   mergeSampleData,
   isOwner,
-  canEditSampleMetadata,
-  canEditSubmissionMetadata,
-  canEditSubmissionByStatus,
   editableByStatus,
   fetchSuggestionsFromSampleRows,
   fetchSuggestionsFromStudyInfo,

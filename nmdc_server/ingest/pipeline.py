@@ -1,10 +1,9 @@
 import re
-from typing import Any, Dict, Iterable, List, Set, cast
+from typing import Any, Dict, Iterable, List, Protocol, Set, cast
 
 from pymongo.collection import Collection
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
-from typing_extensions import Protocol
 
 from nmdc_server import models, schemas
 from nmdc_server.ingest.errors import errors

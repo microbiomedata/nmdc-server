@@ -2,8 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import fakes, query
+from nmdc_server import query
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
+from tests import fakes
 
 
 def test_bulk_download_query(db: Session):

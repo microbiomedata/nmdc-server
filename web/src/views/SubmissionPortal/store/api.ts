@@ -1,4 +1,3 @@
-import { AxiosResponse } from 'axios';
 import { client, SearchParams } from '@/data/api';
 import {
   AllowedStatusTransitions,
@@ -34,7 +33,6 @@ function addressToString(address: NmdcAddress): string {
 async function createRecord(record: MetadataSubmission, isTestSubmission: boolean) {
   const resp = await client.post<
     MetadataSubmissionRecord,
-    AxiosResponse<MetadataSubmissionRecord>,
     Partial<MetadataSubmissionRecord>
   >('metadata_submission', {
     metadata_submission: record,
@@ -60,8 +58,12 @@ async function updateSubmissionStatus(submission_id: string, newStatus: string) 
 }
 
 async function getAllStatusTransitions() {
-  const resp = await client.get<AllowedStatusTransitions>('status_transitions', {
-  });
+  const resp = await client.get<AllowedStatusTransitions>(
+    'status_transitions',
+    {
+      cache: { enabled: true }
+    }
+  );
   return resp.data;
 }
 
@@ -127,7 +129,6 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
   }
   const resp = await client.post<
     MetadataSuggestion[],
-    AxiosResponse<MetadataSuggestion[]>,
     MetadataSuggestionRequest[]
   >(endpoint, data);
   return resp.data;

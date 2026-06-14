@@ -1,7 +1,7 @@
 """add_fts_gin_indexes
 
 Revision ID: b7d4b19db410
-Revises: 87821b18f9e3
+Revises: 6867009bb496
 Create Date: 2026-04-08 15:51:00.970401
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "b7d4b19db410"
-down_revision: Optional[str] = "87821b18f9e3"
+down_revision: Optional[str] = "6867009bb496"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 

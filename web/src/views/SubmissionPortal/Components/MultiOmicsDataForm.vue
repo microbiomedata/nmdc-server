@@ -6,15 +6,12 @@ import doiProviderValues from '@/schema';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   addAwardDoi,
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
   checkDoiFormat,
   checkJGITemplates,
   multiOmicsAssociations,
   multiOmicsForm,
   removeAwardDoi,
   templateHasData,
-  validationState,
 } from '../store';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -128,15 +125,12 @@ export default defineComponent({
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
-      validationState,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,
       /* functions */
-      canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
-      canEditSubmissionByStatus,
     };
   },
 });
@@ -154,7 +148,7 @@ export default defineComponent({
     </PageTitle>
     <SubmissionForm
       ref="formRef"
-      @valid-state-changed="(state) => validationState.multiOmicsForm = state"
+      @valid-state-changed="(state) => multiOmicsForm.validation = state"
     >
       <v-radio-group
         v-model="multiOmicsForm.dataGenerated"

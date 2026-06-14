@@ -13,15 +13,16 @@ jobs:
     name: Client Tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: 'recursive'
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
       with:
         node-version: 'lts/*'
     - run: yarn install --frozen-lockfile --network-timeout 300000
     - run: yarn lint
     - run: yarn build
+    - run: yarn test
 
   server:
     runs-on: ubuntu-latest
@@ -39,11 +40,6 @@ jobs:
         ports:
           - 5432:5432
 
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.12]
-
     steps:
     # Use docker run directly instead of the `services` key because otherwise it's not possible
     # to pass the `-scheme` flag.
@@ -56,11 +52,20 @@ jobs:
           -p 4443:4443 \
           fsouza/fake-gcs-server \
           -scheme http
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version-file: ".python-version"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      with:
+        version: "0.11.7"
+        enable-cache: true
+
     - name: Create environment
       run: |
         echo 'export NMDC_DATABASE_URI="postgresql://nmdc:nmdc@localhost:5432/nmdc"' >> .env
@@ -71,9 +76,9 @@ jobs:
         echo 'export NMDC_GCS_OBJECT_NAME_PREFIX="testing"' >> .env
         echo 'export NMDC_GCS_FAKE_API_ENDPOINT="http://localhost:4443"' >> .env
         echo 'export NMDC_GOOGLE_MAP_API_KEY=testing"' >> .env
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
+
+    - name: Install the project
+      run: uv sync --locked --all-groups
+
     - name: Test with tox
-      run: tox
+      run: uv run tox
