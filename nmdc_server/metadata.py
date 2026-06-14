@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 import nmdc_geoloc_tools
 from nmdc_metadata_suggestor_ai_tool.llm_client import LLMClient
 from nmdc_metadata_suggestor_ai_tool.recommendation_pipeline import run_recommendation_pipeline
+from nmdc_metadata_suggestor_ai_tool.env_triad_recommendation import get_env_triad_recommendation
 
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
@@ -88,9 +89,17 @@ class SampleMetadataSuggester:
 
     def get_suggestions_from_study_information(
         self,
+        interface_tab : str,
+        interface_data_section_name: Optional[str],
         submission: SubmissionMetadataSchema,
     ) -> List[MetadataSuggestion]:
-        """Get suggestions based on study-level information from a submission"""
+        """
+        Get suggestions based on study-level information from a submission
+        Parameters:
+            - interface_tab: The name of the interface tab for which to generate suggestions
+            - interface_data_section_name: The name of the data section within the submission object which to generate suggestions. This is optional because some suggestors may only need the interface tab level information.
+            - submission: The full submission metadata, which may provide additional context for generating suggestions.
+        """
         if not settings.llm_service_account_credentials_file:
             logger.warning(
                 "LLM service account credentials file is not set. Not providing study-level suggestions."
@@ -100,12 +109,18 @@ class SampleMetadataSuggester:
         llm_client = LLMClient(
             access_provider="gcp", credentials_file=settings.llm_service_account_credentials_file
         )
+        # collect samples from the submission
+        samples = submission.metadata_submission.sampleData.get(interface_data_section_name, None) if interface_data_section_name else None
+
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(),
             llm_client,
+            # interface_name=interface_tab  # TODO - uncomment after suggestor 1.2.1 release
         )
 
         suggestions: List[MetadataSuggestion] = []
+
+        # slot loop
         for metadata_field in recommendation_pipeline_output.metadata_fields:
             suggestions.append(
                 MetadataSuggestion(
@@ -115,6 +130,28 @@ class SampleMetadataSuggester:
                     is_ai_generated=True,
                 )
             )
+        
+        # env triad suggestions 
+        if samples:
+            env_triad_pipeline_output = get_env_triad_recommendation(
+                samples=samples,
+                submission_object=submission,
+                llm_client=llm_client,
+                interface_names=[interface_tab]
+            )
+        
+            for metadata_field in env_triad_pipeline_output.metadata_fields:
+                suggestions.append(
+                    MetadataSuggestion(
+                        # TODO - add loop to detect add or replace for env triad value suggestions
+                        type=MetadataSuggestionType.ATTENTION,
+                        row=metadata_field.id,
+                        slot=metadata_field.field_name,
+                        source=metadata_field.reason,
+                        is_ai_generated=True,
+                    )
+                )
+
         return suggestions
 
     def get_suggestions(

@@ -997,9 +997,9 @@ const fetchSuggestionsFromStudyInfoRequest = useRequest();
  * suggestion, the existing suggestion will be replaced by the incoming one. The in-memory list of suggestions will also
  * be updated to trigger reactivity in the UI if the active schema class is the one being updated.
  */
-async function fetchSuggestionsFromStudyInfo(submissionId: string, allSchemaClassNames: string[], activeSchemaClassName: string, harmonizerApi: HarmonizerApi) {
+async function fetchSuggestionsFromStudyInfo(submissionId: string, allSchemaClassNames: string[], activeSchemaClassName: string, activeSampleDataSlot:string, harmonizerApi: HarmonizerApi) {
   return fetchSuggestionsFromStudyInfoRequest.request(async () => {
-    const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId);
+    const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId, activeSchemaClassName, activeSampleDataSlot);
     for (const schemaClassName of allSchemaClassNames) {
       const suggestionsForClass = getPendingSuggestions(submissionId, schemaClassName);
       suggestions.forEach((suggestion) => {

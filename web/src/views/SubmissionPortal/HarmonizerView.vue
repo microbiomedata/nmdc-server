@@ -730,7 +730,7 @@ async function fetchSuggestionsFromStudyDetails() {
   const allSchemaClassNames = sampleEnvironmentForm.packageName
     .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
     .filter((c) => c !== undefined);
-  return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
+  return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, activeTemplate.value.sampleDataSlot, harmonizerApi);
 }
 
 watch(isEditable, (canEdit) => {

@@ -134,8 +134,11 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
   return resp.data;
 }
 
-async function getMetadataSuggestionsFromStudyDetails(submissionId: string) {
-  const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/${submissionId}/study-suggest`);
+async function getMetadataSuggestionsFromStudyDetails(submissionId: string, activeInterfaceTab: string, activeInterfaceDataSectionName: string) {
+  const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/${submissionId}/study-suggest`, {
+    interface_tab: activeInterfaceTab,
+    interface_data_section_name: activeInterfaceDataSectionName,
+  });
   return resp.data;
 }
 

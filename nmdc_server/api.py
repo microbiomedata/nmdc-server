@@ -1980,10 +1980,13 @@ async def submit_metadata(
 )
 def suggest_meta_from_study(
     id: str,
+    interface_tab: str,
+    interface_data_section_name: str, 
     db: Session = Depends(get_db),
     suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.MetadataSuggestion]:
+    
     submission_model = get_submission_for_user(
         db,
         id,
@@ -1994,8 +1997,10 @@ def suggest_meta_from_study(
             SubmissionEditorRole.metadata_contributor,
         ],
     )
+
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    return suggester.get_suggestions_from_study_information(submission)
+
+    return suggester.get_suggestions_from_study_information(interface_tab=interface_tab, interface_data_section_name=interface_data_section_name, submission=submission)
 
 
 @router.post(
