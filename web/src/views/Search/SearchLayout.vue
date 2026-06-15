@@ -173,7 +173,7 @@ function toggleChildren(value:StudySearchResult) {
                 <v-icon class="mr-1">
                   mdi-map-marker-outline
                 </v-icon>
-                Sampling
+                Data
               </v-tab>
               <v-tab key="analysis">
                 <v-icon class="mr-1">
