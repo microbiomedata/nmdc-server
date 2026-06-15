@@ -17,7 +17,6 @@ import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
 import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
-  HARMONIZER_TEMPLATES,
   AllowedStatusTransitions,
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
@@ -219,7 +218,6 @@ export default defineComponent({
     }
 
     return {
-      HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
       isTestFilter,
       deleteDialogSubmission,

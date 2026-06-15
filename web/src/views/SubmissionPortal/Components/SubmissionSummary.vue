@@ -6,15 +6,18 @@ import {
   modifiedDate,
   statusDisplay,
   submissionPages,
+  currentID,
 } from '../store';
-import { computed } from 'vue';
+import { HARMONIZER_TEMPLATES, SampleSet } from '@/views/SubmissionPortal/types';
+import { computed, ref } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import { stateRefs } from '@/store';
+import * as api from '../store/api';
 
 const headers: DataTableHeader[] = [
   {
-    title: 'Study Name',
-    value: 'study_name',
+    title: 'Sample Set Name',
+    value: 'sample_set_name',
     sortable: true,
   },
   {
@@ -45,9 +48,39 @@ const headers: DataTableHeader[] = [
     sortable: false,
   },
 ];
+const defaultSortBy = 'date_last_modified';
+const defaultSortOrder = 'desc';
+const itemsPerPage = 10;
+const currentUser = stateRefs.user;
 
-const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+const sampleSet = await api.getSampleSetsForSubmission(currentID.value!);
+const options = ref({
+      page: 1,
+      itemsPerPage,
+      sortBy: [{ key: defaultSortBy, order: defaultSortOrder }],
+      groupBy: {},
+      search: null,
+    });
 
+function applySortOptions() {
+    const sortOrder = options.value.sortBy[0] ? options.value.sortBy[0].order : defaultSortOrder;
+    const sortBy = options.value.sortBy[0] ? options.value.sortBy[0].key : defaultSortBy;
+    //sampleSet.setSortOptions(sortBy, sortOrder);
+}
+
+function updateTableOptions(newOptions: any) {
+  options.value = newOptions;
+  applySortOptions();
+}
+
+function isReviewerForSampleSet(item: SampleSet): boolean {
+  if (!currentUser.value?.orcid) {
+    return false;
+  }
+  return item.reviewers.includes(currentUser.value.orcid);
+}
+
+//:loading="sampleSet.loading.value" was removed
 
 // Check if the current logged-in user is also the author of the submission
 const isCurrentUserAuthor = computed(() => {
@@ -107,12 +140,11 @@ const isCurrentUserAuthor = computed(() => {
     <PageSection>
       <v-card variant="outlined">
         <v-data-table-server
-          v-model:items-per-page="submission.data.limit"
+          v-model:items-per-page="sampleSet.length"
           :headers="headers"
-          :items="submission.data.results.results"
-          :items-length="submission.data.results.count"
+          :items="sampleSet"
+          :items-length="sampleSet.length"
           :items-per-page-options="[10, 20, 50]"
-          :loading="submission.loading.value"
           @update:options="updateTableOptions"
         >
           <template #[`item.study_name`]="{ item }">
@@ -143,7 +175,7 @@ const isCurrentUserAuthor = computed(() => {
           <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
             <div class="d-flex align-center ga-1">
               <v-tooltip
-                v-if="currentUser?.is_admin || (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser!.orcid)))"
+                v-if="currentUser?.is_admin || (currentUser?.orcid && sampleSet.some(item => item.reviewers.includes(currentUser!.orcid)))"
                 location="bottom"
               >
                 <template #activator="{ props }">
@@ -170,7 +202,7 @@ const isCurrentUserAuthor = computed(() => {
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
+                v-if="currentUser?.is_admin || isReviewerForSampleSet(item)"
                 :model-value="item.status"
                 :items="getFormattedStatusTransitions(item)"
                 :loading="statusUpdatingSubmissionId === item.id"
