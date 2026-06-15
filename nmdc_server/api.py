@@ -1957,6 +1957,7 @@ async def set_submission_image(
 
 @router.delete(
     "/metadata_submission/{id}/image/{image_type}",
+    response_model=schemas_submission.SubmissionMetadataSchema,
 )
 async def delete_submission_image(
     id: str,
@@ -1966,7 +1967,7 @@ async def delete_submission_image(
     image_name: Optional[str] = Query(
         None, description="Image name for study_images, not needed for single image fields"
     ),
-):
+) -> models.SubmissionMetadata:
     submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     if image_type == ImageType.STUDY_IMAGES:
@@ -2002,7 +2003,7 @@ async def delete_submission_image(
             setattr(submission, image_type, None)
 
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return submission
 
 
 @router.get(

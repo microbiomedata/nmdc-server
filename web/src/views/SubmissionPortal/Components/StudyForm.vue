@@ -1,154 +1,136 @@
-<script lang="ts">
+<script setup lang="ts">
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import { computed, defineComponent, ref, Ref, useTemplateRef } from 'vue';
+import { computed, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
-import {
-  checkDoiFormat,
-  isOwner,
-  permissionTitleToDbValueMap,
-  piImageUrl,
-  primaryStudyImageUrl,
-  studyForm,
-} from '../store';
-import { PermissionTitle } from '@/views/SubmissionPortal/types';
+import { PermissionTitle, SubmissionEditorRole } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import ImageUpload from './ImageUpload.vue';
+import SubmissionUneditableBanner from './SubmissionUneditableBanner.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageSection from '@/components/Presentation/PageSection.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import { checkDoiFormat } from '@/views/SubmissionPortal/utils.ts';
+import { useSubmissionStore } from '../store';
+import { storeToRefs } from 'pinia';
 
-export default defineComponent({
-  components: {
-    SubmissionForm,
-    ImageUpload,
-    SubmissionDocsLink,
-    PageSection,
-    PageTitle,
+const PERMISSION_TITLE_TO_DB_VALUE_MAP: Record<PermissionTitle, SubmissionEditorRole> = {
+  Viewer: 'viewer',
+  'Metadata Contributor': 'metadata_contributor',
+  Editor: 'editor',
+};
+
+const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
+const store = useSubmissionStore();
+const { isOwner } = storeToRefs(store);
+const studyForm = computed(() => store.submission.forms.studyForm);
+const primaryStudyImageUrl = computed(() => store.submission.record?.primary_study_image_url ?? null);
+const piImageUrl = computed(() => store.submission.record?.pi_image_url ?? null);
+
+const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
+
+const permissionHelpText = ref([
+  {
+    title: 'Viewer',
+    description: 'Viewers can see all components of a submission, but cannot edit.',
   },
-  setup() {
-    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
-
-    const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
-
-    const permissionHelpText = ref([
-      {
-        title: 'Viewer',
-        description: 'Viewers can see all components of a submission, but cannot edit.',
-      },
-      {
-        title: 'Metadata Contributor',
-        description: 'Metadata contributors can view all components of a submission and can only edit the sample metadata information in the "Sample Metadata" page.',
-      },
-      {
-        title: 'Editor',
-        description: 'Editors of a submission have full permission to edit every aspect of the submission with the exception of permission levels.',
-      },
-      {
-        title: 'Owner',
-        description: 'This level of permission is automatically assigned to the submission author and Principal Investigator. These users can edit every aspect of the submission.',
-      },
-    ]);
-
-    function addContributor() {
-      studyForm.contributors.push({
-        name: '',
-        orcid: '',
-        roles: [],
-        permissionLevel: null,
-      });
-    }
-
-    function addFundingSource() {
-      if (studyForm.fundingSources === null || studyForm.fundingSources.length === 0) {
-        studyForm.fundingSources = [''];
-      } else {
-        studyForm.fundingSources.push('');
-      }
-    }
-
-    function addDataDoi() {
-      if (!Array.isArray(studyForm.dataDois)) {
-        studyForm.dataDois = [];
-      }
-      studyForm.dataDois.push({
-        value: '',
-        provider: '',
-      });
-    }
-
-    function addPublicationDoi() {
-      if (!Array.isArray(studyForm.publicationDois)) {
-        studyForm.publicationDois = [];
-      }
-      studyForm.publicationDois.push({
-        value: '',
-        provider: null,
-      });
-    }
-
-    function revalidate() {
-      formRef.value?.validate();
-    }
-
-    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
-      return [
-        (v: string) => !!v || msg,
-        ...otherRules,
-      ];
-    }
-
-    const orcidRequiredRule = (idx: number) => (v: string) => {
-      if (idx > studyForm.contributors.length) return true;
-      const contributor = studyForm.contributors[idx];
-      // show error when: permission level exists, but orcid does not
-      return (contributor?.permissionLevel && !!v) || !contributor?.permissionLevel || 'ORCID iD is required if a permission level is specified';
-    };
-
-    const uniqueOrcidRule = (idx: number) => (v: string) => {
-      if (idx > studyForm.contributors.length || !v) return true;
-      const existingOrcids = new Set(studyForm.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
-      return !existingOrcids.has(v) || 'ORCID iDs must be unique';
-    };
-
-    const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
-    Object.keys(permissionTitleToDbValueMap).forEach((title) => {
-      permissionLevelChoices.value.push({
-        title,
-        value: permissionTitleToDbValueMap[title as PermissionTitle],
-      });
-    });
-
-    return {
-      formRef,
-      studyForm,
-      NmdcSchema,
-      Definitions,
-      addContributor,
-      addFundingSource,
-      addDataDoi,
-      addPublicationDoi,
-      doiProviderValues,
-      requiredRules,
-      permissionLevelChoices,
-      isOwner,
-      orcidRequiredRule,
-      uniqueOrcidRule,
-      currentUserOrcid,
-      permissionHelpText,
-      checkDoiFormat,
-      primaryStudyImageUrl,
-      piImageUrl,
-      revalidate,
-    };
+  {
+    title: 'Metadata Contributor',
+    description: 'Metadata contributors can view all components of a submission and can only edit the sample metadata information in the "Sample Metadata" page.',
   },
+  {
+    title: 'Editor',
+    description: 'Editors of a submission have full permission to edit every aspect of the submission with the exception of permission levels.',
+  },
+  {
+    title: 'Owner',
+    description: 'This level of permission is automatically assigned to the submission author and Principal Investigator. These users can edit every aspect of the submission.',
+  },
+]);
+
+function addContributor() {
+  studyForm.value.contributors.push({
+    name: '',
+    orcid: '',
+    roles: [],
+    permissionLevel: null,
+  });
+}
+
+function addFundingSource() {
+  if (studyForm.value.fundingSources === null || studyForm.value.fundingSources.length === 0) {
+    studyForm.value.fundingSources = [''];
+  } else {
+    studyForm.value.fundingSources.push('');
+  }
+}
+
+function addDataDoi() {
+  if (!Array.isArray(studyForm.value.dataDois)) {
+    studyForm.value.dataDois = [];
+  }
+  studyForm.value.dataDois.push({
+    value: '',
+    provider: '',
+  });
+}
+
+function addPublicationDoi() {
+  if (!Array.isArray(studyForm.value.publicationDois)) {
+    studyForm.value.publicationDois = [];
+  }
+  studyForm.value.publicationDois.push({
+    value: '',
+    provider: null,
+  });
+}
+
+function revalidate() {
+  void formRef.value?.validate();
+}
+
+function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
+  return [
+    (v: string) => !!v || msg,
+    ...otherRules,
+  ];
+}
+
+const orcidRequiredRule = (idx: number) => (v: string) => {
+  if (idx > studyForm.value.contributors.length) return true;
+  const contributor = studyForm.value.contributors[idx];
+  // show error when: permission level exists, but orcid does not
+  return (contributor?.permissionLevel && !!v) || !contributor?.permissionLevel || 'ORCID iD is required if a permission level is specified';
+};
+
+const uniqueOrcidRule = (idx: number) => (v: string) => {
+  if (idx > studyForm.value.contributors.length || !v) return true;
+  const existingOrcids = new Set(studyForm.value.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
+  return !existingOrcids.has(v) || 'ORCID iDs must be unique';
+};
+
+const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
+Object.keys(PERMISSION_TITLE_TO_DB_VALUE_MAP).forEach((title) => {
+  permissionLevelChoices.value.push({
+    title,
+    value: PERMISSION_TITLE_TO_DB_VALUE_MAP[title as PermissionTitle],
+  });
 });
+
+function handleSave() {
+  revalidate();
+  return store.saveSubmissionFormEdits();
+}
 </script>
 
 <template>
   <div>
+    <SubmissionUneditableBanner
+      :allowed-roles="['owner', 'editor']"
+      edge-to-edge
+    />
     <PageTitle
       title="Study Information"
       :subtitle="NmdcSchema.classes.Study.description"
@@ -208,12 +190,6 @@ export default defineComponent({
             input-icon="mdi-image"
             :image-url="primaryStudyImageUrl"
             image-type="primary_study_image"
-            @on-upload-success="(updated) => {
-              primaryStudyImageUrl = updated.primary_study_image_url;
-            }"
-            @on-delete-success="() => {
-              primaryStudyImageUrl = null
-            }"
           />
         </div>
       </PageSection>
@@ -245,7 +221,7 @@ export default defineComponent({
             :rules="[
               v => !v || /(\d{4}-){3}\d{3}(\d|X)/.test(v) || 'ORCID iD must be in valid format (0000-0000-0000-0000)',
             ]"
-            :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
+            :disabled="!isOwner || currentUserOrcid === studyForm.piOrcid || undefined"
             variant="outlined"
             :hint="Definitions.piOrcid"
             persistent-hint
@@ -261,12 +237,6 @@ export default defineComponent({
             input-icon="mdi-account-box"
             :image-url="piImageUrl"
             image-type="pi_image"
-            @on-upload-success="(updated) => {
-              piImageUrl = updated.pi_image_url;
-            }"
-            @on-delete-success="() => {
-              piImageUrl = null
-            }"
           />
         </div>
       </PageSection>
@@ -302,7 +272,7 @@ export default defineComponent({
             v-if="studyForm.fundingSources !== null"
             icon
             variant="plain"
-            :disabled="!isOwner() || formRef?.isDisabled"
+            :disabled="!isOwner || formRef?.isDisabled"
             @click="studyForm.fundingSources.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>
@@ -376,7 +346,7 @@ export default defineComponent({
                 </template>
               </v-select>
               <v-select
-                v-if="isOwner()"
+                v-if="isOwner"
                 v-model="contributor.permissionLevel"
                 :items="permissionLevelChoices"
                 clearable
@@ -419,7 +389,7 @@ export default defineComponent({
           <v-btn
             icon
             variant="plain"
-            :disabled="!isOwner() || currentUserOrcid === contributor.orcid || formRef?.isDisabled"
+            :disabled="!isOwner || currentUserOrcid === contributor.orcid || formRef?.isDisabled"
             @click="studyForm.contributors.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>
@@ -597,13 +567,9 @@ export default defineComponent({
       <v-spacer />
       <v-btn
         color="primary"
-        :to="{ name: 'Multiomics Form' }"
-        @click="revalidate()"
+        @click="handleSave"
       >
-        Go to Multi-Omics Form
-        <v-icon class="pl-2">
-          mdi-arrow-right-circle
-        </v-icon>
+        Save
       </v-btn>
     </div>
   </div>

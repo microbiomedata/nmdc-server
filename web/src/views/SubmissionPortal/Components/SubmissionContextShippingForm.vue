@@ -1,91 +1,54 @@
-<script lang="ts">
-import { computed, defineComponent, ref, useTemplateRef, watch, } from 'vue';
+<script setup lang="ts">
+import { computed, ref, useTemplateRef, watch, } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
-import { senderShippingInfoForm } from '../store';
-import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import { formatShippingDate } from '../utils';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import { useSubmissionStore } from '../store';
 
-export default defineComponent({
-  components: { SubmissionForm, SubmissionContextShippingSummary },
-  setup() {
-    const senderShippingInfoFormRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('senderShippingInfoFormRef');
-    const senderShippingInfoFormValid = computed(() => senderShippingInfoForm.validation?.length === 0);
-    const showsenderShippingInfoForm = ref(false);
-    const datePicker = ref(false);
-    const sampleItems = ref(['water_extract_soil']);
-    const sampleEnumValues = Object.keys(NmdcSchema.enums.SampleTypeEnum.permissible_values);
-    const biosafetyLevelValues = Object.values(BiosafetyLevels);
-    const shippingConditionsItems = [
-      'Store frozen: transported within a cold chain and stored at -70°C to -80°C upon delivery.',
-      'Store frozen: transported within a cold chain and stored at -20°C (4°F).',
-      'Store Refrigerated: at 2°-8°C (36°-46°F): for heat sensitive products that must not be frozen.',
-      'Room temperature: Store at 15°-25°C (59°-77°F).',
-    ];
+const store = useSubmissionStore();
+const senderShippingInfoForm = computed(() => store.sampleSet.forms.senderShippingInfoForm);
 
-    const shipperSummary = computed(() => {
-      let result = '';
-      result += addressToString(senderShippingInfoForm.shipper);
+const senderShippingInfoFormRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('senderShippingInfoFormRef');
+const senderShippingInfoFormValid = computed(() => store.sampleSet.forms.senderShippingInfoForm.validation?.length === 0);
+const showSenderShippingInfoForm = ref(false);
+const datePicker = ref(false);
+const sampleEnumValues = Object.keys(NmdcSchema.enums.SampleTypeEnum.permissible_values);
+const biosafetyLevelValues = Object.values(BiosafetyLevels);
+const shippingConditionsItems = [
+  'Store frozen: transported within a cold chain and stored at -70°C to -80°C upon delivery.',
+  'Store frozen: transported within a cold chain and stored at -20°C (4°F).',
+  'Store Refrigerated: at 2°-8°C (36°-46°F): for heat sensitive products that must not be frozen.',
+  'Room temperature: Store at 15°-25°C (59°-77°F).',
+];
 
-      return result;
-    });
-
-    const addressSummary = computed(() => [{
-      id: 'shipper',
-      name: 'Shipper',
-      children: [
-        { id: 'shipperSummary', name: shipperSummary.value },
-      ],
-    }]);
-
-    const expectedShippingDate = computed({
-      get: () => {
-        return senderShippingInfoForm.expectedShippingDate
-          ? new Date(senderShippingInfoForm.expectedShippingDate)
-          : undefined;
-      },
-      set: (newValue: Date | undefined) => {
-        senderShippingInfoForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
-      },
-    });
-
-    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
-      return [
-        (v: string) => !!v || msg,
-        ...otherRules,
-      ];
-    }
-
-    watch(showsenderShippingInfoForm, () => {
-      senderShippingInfoFormRef.value?.validate();
-    });
-
-    function handleExpectedShippingDateClear() {
-      expectedShippingDate.value = undefined;
-    }
-
-    return {
-      senderShippingInfoFormRef,
-      senderShippingInfoForm,
-      senderShippingInfoFormValid,
-      showsenderShippingInfoForm,
-      datePicker,
-      expectedShippingDate,
-      sampleItems,
-      biosafetyLevelValues,
-      BiosafetyLevels,
-      addressSummary,
-      sampleEnumValues,
-      shippingConditionsItems,
-      requiredRules,
-      handleExpectedShippingDateClear,
-      formatShippingDate,
-    };
+const expectedShippingDate = computed({
+  get: () => {
+    return store.sampleSet.forms.senderShippingInfoForm.expectedShippingDate
+      ? new Date(store.sampleSet.forms.senderShippingInfoForm.expectedShippingDate)
+      : null;
+  },
+  set: (newValue: Date | null) => {
+    store.sampleSet.forms.senderShippingInfoForm.expectedShippingDate = newValue ? newValue.toISOString() : null;
   },
 });
+
+function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
+  return [
+    (v: string) => !!v || msg,
+    ...otherRules,
+  ];
+}
+
+watch(showSenderShippingInfoForm, () => {
+  void senderShippingInfoFormRef.value?.validate();
+});
+
+function handleExpectedShippingDateClear() {
+  expectedShippingDate.value = null;
+}
 </script>
 
 <template>
@@ -109,7 +72,7 @@ export default defineComponent({
         <submission-context-shipping-summary class="mt-6" />
       </v-card-text>
       <v-dialog
-        v-model="showsenderShippingInfoForm"
+        v-model="showSenderShippingInfoForm"
         scrollable
         width="1200"
         eager
@@ -145,6 +108,7 @@ export default defineComponent({
           <v-card-text>
             <SubmissionForm
               ref="senderShippingInfoFormRef"
+              in-sample-set-context
               @valid-state-changed="(state) => senderShippingInfoForm.validation = state"
             >
               <v-list-subheader>
@@ -346,7 +310,7 @@ export default defineComponent({
             <v-btn
               color="primary"
               variant="elevated"
-              @click="showsenderShippingInfoForm = false"
+              @click="showSenderShippingInfoForm = false"
             >
               Save
             </v-btn>

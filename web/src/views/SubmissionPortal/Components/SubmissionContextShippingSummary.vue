@@ -1,83 +1,78 @@
-<script lang="ts">
-import { computed, defineComponent } from 'vue';
-import { senderShippingInfoForm } from '../store';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { addressToString } from '../store/api';
 import { formatShippingDate } from '../utils';
+import { useSubmissionStore } from '../store';
 
-export default defineComponent({
-  setup() {
-    const shipperAddressOneLiner = computed(() => {
-      const shipperData = [
-        senderShippingInfoForm.shipper.name,
-        senderShippingInfoForm.shipper.line1,
-        senderShippingInfoForm.shipper.line2,
-        senderShippingInfoForm.shipper.city,
-        senderShippingInfoForm.shipper.state,
-        senderShippingInfoForm.shipper.postalCode,
-        senderShippingInfoForm.shipper.country,
-      ];
-      const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
-      return existingShipperData.join(', ');
-    });
+const store = useSubmissionStore();
 
-    const shipperAddressString = computed(() => addressToString(senderShippingInfoForm.shipper));
-    const shipperSummary = computed(() => {
-      let result = '';
-      result += shipperAddressString.value.trim();
-      if (senderShippingInfoForm.shippingConditions) {
-        result += `\nShipping Conditions: ${senderShippingInfoForm.shippingConditions}`;
-      }
-      if (senderShippingInfoForm.expectedShippingDate) {
-        const date = new Date(senderShippingInfoForm.expectedShippingDate);
-        result += `\nExpected Shipping Date: ${formatShippingDate(date)}`;
-      }
+const shipperAddressOneLiner = computed(() => {
+  const { senderShippingInfoForm } = store.sampleSet.forms;
+  const shipperData = [
+    senderShippingInfoForm.shipper.name,
+    senderShippingInfoForm.shipper.line1,
+    senderShippingInfoForm.shipper.line2,
+    senderShippingInfoForm.shipper.city,
+    senderShippingInfoForm.shipper.state,
+    senderShippingInfoForm.shipper.postalCode,
+    senderShippingInfoForm.shipper.country,
+  ];
+  const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
+  return existingShipperData.join(', ');
+});
 
-      return result.trim();
-    });
+const shipperAddressString = computed(() => addressToString(store.sampleSet.forms.senderShippingInfoForm.shipper));
+const shipperSummary = computed(() => {
+  const { senderShippingInfoForm } = store.sampleSet.forms;
+  let result = '';
+  result += shipperAddressString.value.trim();
+  if (senderShippingInfoForm.shippingConditions) {
+    result += `\nShipping Conditions: ${senderShippingInfoForm.shippingConditions}`;
+  }
+  if (senderShippingInfoForm.expectedShippingDate) {
+    const date = new Date(senderShippingInfoForm.expectedShippingDate);
+    result += `\nExpected Shipping Date: ${formatShippingDate(date)}`;
+  }
 
-    const sampleProperties = computed(() => [
-      {
-        title: 'Sample Name',
-        value: senderShippingInfoForm.sample,
-      },
-      {
-        title: 'Sample Description',
-        value: senderShippingInfoForm.description,
-      },
-      {
-        title: 'Experiment Goals',
-        value: senderShippingInfoForm.experimentalGoals,
-      },
-      {
-        title: 'Randomization',
-        value: senderShippingInfoForm.randomization,
-      },
-      {
-        title: 'USDA Regulated',
-        value: senderShippingInfoForm.usdaRegulated,
-      },
-      {
-        title: 'Permit Number',
-        value: senderShippingInfoForm.permitNumber,
-      },
-      {
-        title: 'Biosafety Level',
-        value: senderShippingInfoForm.biosafetyLevel,
-      },
-      {
-        title: 'IRB/HIPAA Compliance?',
-        value: (senderShippingInfoForm.irbOrHipaa ? 'Yes' : 'No'),
-      },
-    ]);
+  return result.trim();
+});
 
-    return {
-      shipperAddressOneLiner,
-      shipperSummary,
-      senderShippingInfoForm,
-      sampleProperties,
-      formatShippingDate,
-    };
-  },
+const sampleProperties = computed(() => {
+  const { senderShippingInfoForm } = store.sampleSet.forms;
+  return [
+    {
+      title: 'Sample Name',
+      value: senderShippingInfoForm.sample,
+    },
+    {
+      title: 'Sample Description',
+      value: senderShippingInfoForm.description,
+    },
+    {
+      title: 'Experiment Goals',
+      value: senderShippingInfoForm.experimentalGoals,
+    },
+    {
+      title: 'Randomization',
+      value: senderShippingInfoForm.randomization,
+    },
+    {
+      title: 'USDA Regulated',
+      value: senderShippingInfoForm.usdaRegulated,
+    },
+    {
+      title: 'Permit Number',
+      value: senderShippingInfoForm.permitNumber,
+    },
+    {
+      title: 'Biosafety Level',
+      value: senderShippingInfoForm.biosafetyLevel,
+    },
+    {
+      title: 'IRB/HIPAA Compliance?',
+      value: (senderShippingInfoForm.irbOrHipaa ? 'Yes' : 'No'),
+    },
+  ]
 });
 </script>
 
@@ -147,7 +142,7 @@ export default defineComponent({
         <span
           style="white-space: pre-line;"
         >
-          {{ senderShippingInfoForm.comments }}
+          {{ store.sampleSet.forms.senderShippingInfoForm.comments }}
         </span>
       </v-expansion-panel-text>
     </v-expansion-panel>

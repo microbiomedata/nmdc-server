@@ -1,17 +1,8 @@
 <script setup lang="ts">
-import {
-  author,
-  createdDate,
-  isTestSubmission,
-  modifiedDate,
-  statusDisplay,
-  submissionPages,
-  currentID,
-} from '../store';
-import { HARMONIZER_TEMPLATES, SampleSet } from '@/views/SubmissionPortal/types';
-import { computed, ref } from 'vue';
-import { DataTableHeader } from 'vuetify';
+import { useSubmissionStore } from '../store';
+import { computed } from 'vue';
 import { stateRefs } from '@/store';
+import { DataTableHeader } from 'vuetify';
 import * as api from '../store/api';
 
 const headers: DataTableHeader[] = [
@@ -82,6 +73,16 @@ function isReviewerForSampleSet(item: SampleSet): boolean {
 
 //:loading="sampleSet.loading.value" was removed
 
+const store = useSubmissionStore();
+
+const author = computed(() => store.submission.record?.author);
+const createdDate = computed(
+  () => store.submission.record?.created ? new Date(store.submission.record.created + 'Z') : null
+);
+const modifiedDate = computed(
+  () => store.submission.record?.date_last_modified ? new Date(store.submission.record.date_last_modified + 'Z') : null
+);
+
 // Check if the current logged-in user is also the author of the submission
 const isCurrentUserAuthor = computed(() => {
   return stateRefs.user.value && stateRefs.user.value.orcid === author.value?.orcid;
@@ -126,11 +127,8 @@ const isCurrentUserAuthor = computed(() => {
       <AttributeRow label="Last Modified">
         {{ modifiedDate?.toLocaleString() }}
       </AttributeRow>
-      <AttributeRow label="Status">
-        {{ statusDisplay }}
-      </AttributeRow>
       <AttributeRow
-        v-if="isTestSubmission"
+        v-if="store.submission.record?.is_test_submission"
         label="Is Test Submission?"
       >
         Yes
