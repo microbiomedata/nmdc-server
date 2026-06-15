@@ -110,7 +110,7 @@ class SampleMetadataSuggester:
             access_provider="gcp", credentials_file=settings.llm_service_account_credentials_file
         )
         # collect samples from the submission
-        samples = submission.metadata_submission.sampleData.get(interface_data_section_name, None) if interface_data_section_name else None
+        samples = submission.metadata_submission.sampleData.data.get(interface_data_section_name, None) if interface_data_section_name else None
 
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(),
@@ -135,7 +135,7 @@ class SampleMetadataSuggester:
         if samples:
             env_triad_pipeline_output = get_env_triad_recommendation(
                 samples=samples,
-                submission_object=submission,
+                submission_object=submission.model_dump(),
                 llm_client=llm_client,
                 interface_names=[interface_tab]
             )

@@ -10,7 +10,7 @@ import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExpor
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
 import MetadataSuggester from '@/views/SubmissionPortal/Components/MetadataSuggester.vue';
 import { ColumnHelpInfo, HarmonizerTemplateInfo } from '@/views/SubmissionPortal/types';
-import { hasChanged, sampleData } from '../store';
+import { sampleData } from '../store';
 
 interface HarmonizerSidebarProps {
   /**
@@ -33,6 +33,10 @@ interface HarmonizerSidebarProps {
    * The Harmonizer API instance.
    */
   harmonizerApi: HarmonizerApi;
+  /**
+   * Callback to fetch suggestions from the study info forms.
+   */
+  fetchStudyInfoSuggestions?: () => Promise<any>;
 }
 
 withDefaults(defineProps<HarmonizerSidebarProps>(), {
@@ -57,7 +61,7 @@ const showBadge = ref(false);
 // });
 
 // Show badge on page load/reload if the submission already has sample data
-watch(sampleData, (newData: Record<string, any[]>) => {
+watch(() => sampleData.data, (newData: Record<string, any[]>) => {
   const hasData = Object.values(newData).some(rows => rows.length > 0);
   if (hasData && tabModel.value !== SUGGESTER_TAB_INDEX) {
     showBadge.value = true;
@@ -148,6 +152,7 @@ const handleImport = (file: File) => {
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
           :schema-class-name="harmonizerTemplate.schemaClass || ''"
+          :fetch-study-info-suggestions="fetchStudyInfoSuggestions"
         />
       </v-window-item>
       <v-window-item>

@@ -41,6 +41,10 @@ interface MetadataSuggesterProps {
    * The schema class name for the active template.
    */
   schemaClassName: string;
+  /**
+   * Callback to fetch suggestions from the study info forms.
+   */
+  fetchStudyInfoSuggestions?: () => Promise<any>;
 }
 
 const displayFilter = ref<string | null>(null);
@@ -188,6 +192,7 @@ const filteredSuggestions = computed(() => {
 interface SuggestionCluster {
   key: string;
   suggestions: MetadataSuggestion[];
+  firstSuggestion: MetadataSuggestion;
   isCollapsible: boolean;
 }
 
@@ -202,6 +207,7 @@ const groupedFilteredSuggestions = computed<SuggestionCluster[]>(() => {
   return [...groups.entries()].map(([key, suggestions]) => ({
     key,
     suggestions,
+    firstSuggestion: suggestions[0]!,
     isCollapsible: suggestions.length > 1,
   }));
 });
@@ -220,15 +226,15 @@ function toggleGroup(key: string) {
 function formatRowRanges(suggestions: MetadataSuggestion[]): string {
   const rows = suggestions.map((s) => s.row!).sort((a, b) => a - b);
   const ranges: string[] = [];
-  let start = rows[0];
-  let end = rows[0];
+  let start = rows[0]!;
+  let end = rows[0]!;
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i] === end + 1) {
-      end = rows[i];
+    if (rows[i]! === end + 1) {
+      end = rows[i]!;
     } else {
       ranges.push(start === end ? `${start + 1}` : `${start + 1}-${end + 1}`);
-      start = rows[i];
-      end = rows[i]; 
+      start = rows[i]!;
+      end = rows[i]!;
     }
   }
   ranges.push(start === end ? `${start + 1}` : `${start + 1}-${end + 1}`);
@@ -334,13 +340,14 @@ function handleRejectAllSuggestions() {
 }
 
 /**
- * Handle clicking the "Suggest for Selected Rows" button.
+ * Handle clicking the "Suggest Metadata" button.
  *
- * This will get the data for the selected rows, send it to the backend to get suggestions, and then add the
- * suggestions to the store.
+ * Fetches suggestions from study info, then marks suggestion as started.
  */
-function handleStartSuggestion() {
-  metadataSuggestions.value = allMockSuggestions;
+async function handleStartSuggestion() {
+  if (props.fetchStudyInfoSuggestions) {
+    await props.fetchStudyInfoSuggestions();
+  }
   suggestionStarted.value = true;
 }
 
@@ -514,11 +521,11 @@ const loading = computed(() => (
                 v-if="cluster.isCollapsible"
                 class="mb-4 mx-n2"
                 elevation="2"
-                :color="cluster.suggestions[0].is_ai_generated ? AI_SUGGESTION_BG : undefined"
+                :color="cluster.firstSuggestion.is_ai_generated ? AI_SUGGESTION_BG : undefined"
               >
                 <v-card-text class="pa-2">
                   <div
-                    v-if="cluster.suggestions[0].is_ai_generated"
+                    v-if="cluster.firstSuggestion.is_ai_generated"
                     class="d-flex justify-space-between align-center mb-1 text-blue-darken-4 font-weight-medium"
                   >
                     <div class=""d-flex align-baseline>
@@ -591,16 +598,16 @@ const loading = computed(() => (
                   <div class="d-flex align-center flex-wrap ga-1 mt-1">
                     <span class="text-body-2">
                       <span class="font-weight-medium">Column:</span> 
-                      {{ getSlotTitle(cluster.suggestions[0].slot) }}
+                      {{ getSlotTitle(cluster.firstSuggestion.slot) }}
                     </span>
                   </div>
-                  <div v-if="cluster.suggestions[0].source">
-                    <span class="font-weight-medium">Reasoning:</span> {{ cluster.suggestions[0].source }}
+                  <div v-if="cluster.firstSuggestion.source">
+                    <span class="font-weight-medium">Reasoning:</span> {{ cluster.firstSuggestion.source }}
                   </div>
                   <span
-                    v-if="cluster.suggestions[0].value"
+                    v-if="cluster.firstSuggestion.value"
                     class="value suggested"
-                    v-text="cluster.suggestions[0].value"
+                    v-text="cluster.firstSuggestion.value"
                   />
                   <div
                     v-if="expandedGroups.includes(cluster.key)"
@@ -678,15 +685,15 @@ const loading = computed(() => (
                 class="mb-4 mx-n2"
                 elevation="2"
                 density="default"
-                :color="cluster.suggestions[0].is_ai_generated ? AI_SUGGESTION_BG : undefined"
-                @mouseenter="handleSuggestionHover(cluster.suggestions[0])"
+                :color="cluster.firstSuggestion.is_ai_generated ? AI_SUGGESTION_BG : undefined"
+                @mouseenter="handleSuggestionHover(cluster.firstSuggestion)"
                 @mouseleave="handleSuggestionLeave()"
               >
                 <v-card-text class="pa-2">
                   <div class="flex-grow-1 full-width">
                     <div class="text-body-2">
                       <div
-                        v-if="cluster.suggestions[0].is_ai_generated"
+                        v-if="cluster.firstSuggestion.is_ai_generated"
                         class="d-flex justify-space-between align-center mb-1 text-blue-darken-4 font-weight-medium"
                       >
                         <div class="d-flex align-baseline">
@@ -711,14 +718,14 @@ const loading = computed(() => (
                           <span>AI recommends areas of interest based on the content of the submission summary. To dismiss, select the X to remove it.</span>
                         </v-tooltip>
                       </div>
-                      <div v-if="cluster.suggestions[0].row !== null">
-                        <span class="font-weight-medium">Row:</span> {{ cluster.suggestions[0].row + 1 }}
+                      <div v-if="cluster.firstSuggestion.row !== null">
+                        <span class="font-weight-medium">Row:</span> {{ cluster.firstSuggestion.row + 1 }}
                       </div>
                       <div>
-                        <span class="font-weight-medium">Column:</span> {{ getSlotTitle(cluster.suggestions[0].slot) }}
+                        <span class="font-weight-medium">Column:</span> {{ getSlotTitle(cluster.firstSuggestion.slot) }}
                       </div>
-                      <div v-if="cluster.suggestions[0].source">
-                        <span class="font-weight-medium">Reasoning:</span> {{ cluster.suggestions[0].source }}
+                      <div v-if="cluster.firstSuggestion.source">
+                        <span class="font-weight-medium">Reasoning:</span> {{ cluster.firstSuggestion.source }}
                       </div>
                     </div>
                   </div>
@@ -726,14 +733,14 @@ const loading = computed(() => (
                   <div class="d-flex flex-wrap align-center justify-end">
                     <div class="flex-grow-1">
                       <span
-                        v-if="cluster.suggestions[0].current_value"
+                        v-if="cluster.firstSuggestion.current_value"
                         class="value previous"
-                        v-text="cluster.suggestions[0].current_value"
+                        v-text="cluster.firstSuggestion.current_value"
                       />
                       <span
-                        v-if="cluster.suggestions[0].value"
+                        v-if="cluster.firstSuggestion.value"
                         class="value suggested"
-                        v-text="cluster.suggestions[0].value"
+                        v-text="cluster.firstSuggestion.value"
                       />
                     </div>
 
@@ -746,7 +753,7 @@ const loading = computed(() => (
                             icon
                             color="primary"
                             v-bind="activatorProps"
-                            @click="handleJumpToCell(cluster.suggestions[0])"
+                            @click="handleJumpToCell(cluster.firstSuggestion)"
                           >
                             <v-icon>
                               mdi-target
@@ -764,7 +771,7 @@ const loading = computed(() => (
                             icon
                             color="primary"
                             v-bind="activatorProps"
-                            @click="handleRejectSuggestion(cluster.suggestions[0])"
+                            @click="handleRejectSuggestion(cluster.firstSuggestion)"
                           >
                             <v-icon>
                               mdi-close
@@ -775,7 +782,7 @@ const loading = computed(() => (
                       </v-tooltip>
 
                       <v-tooltip
-                        v-if="canAcceptSuggestion(cluster.suggestions[0])"
+                        v-if="canAcceptSuggestion(cluster.firstSuggestion)"
                       >
                         <template #activator="{ props: activatorProps }">
                           <v-btn
@@ -784,7 +791,7 @@ const loading = computed(() => (
                             icon
                             color="primary"
                             v-bind="activatorProps"
-                            @click="handleAcceptSuggestion(cluster.suggestions[0])"
+                            @click="handleAcceptSuggestion(cluster.firstSuggestion)"
                           >
                             <v-icon>
                               mdi-check
