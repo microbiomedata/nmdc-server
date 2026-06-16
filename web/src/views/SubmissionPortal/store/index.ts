@@ -582,19 +582,31 @@ export const useSubmissionStore = defineStore('submission', () => {
       () => api.createSubmissionSampleSet(
         submission.record!.id,
         {
-        name: sampleSetName,
-        templates: [],
-        status: SubmissionStatusEnum.InProgress.text,
-        multi_omics_form: multiOmicsFormDefault,
-        sample_environment_form: sampleEnvironmentFormDefault,
-        sender_shipping_info_form: senderShippingInfoFormDefault,
-        sample_data: sampleDataDefault,
+          name: sampleSetName,
+          templates: [],
+          status: SubmissionStatusEnum.InProgress.text,
+          multi_omics_form: multiOmicsFormDefault,
+          sample_environment_form: sampleEnvironmentFormDefault,
+          sender_shipping_info_form: senderShippingInfoFormDefault,
+          sample_data: sampleDataDefault,
        }
       )
     );
     hydrateSampleSet(response);
-    hydrateSubmission(submission.record); //update the sample set list with the new sample set
+    const updatedSubmission = await api.getSubmission(submission.record!.id);
+    hydrateSubmission(updatedSubmission);
     return response;
+  }
+
+  /**
+   * Delete a sample set from the server and update the state to reflect the deletion.
+   * 
+   * @param sampleSetId
+   */
+  async function deleteSampleSet(sampleSetId: string) {
+    await api.deleteSampleSet(sampleSetId);
+    const updatedSubmission = await api.getSubmission(submission.record!.id);
+    hydrateSubmission(updatedSubmission);
   }
 
   /**
@@ -1015,6 +1027,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     loadSubmission,
     createSubmission,
     createSubmissionSampleSet,
+    deleteSampleSet,
     saveSubmissionFormEdits,
     uploadSubmissionImage,
     deleteSubmissionImage,

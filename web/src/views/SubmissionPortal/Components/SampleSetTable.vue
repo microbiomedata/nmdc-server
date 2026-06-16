@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { stateRefs } from '@/store';
 import { DataTableHeader } from 'vuetify';
 import { useSubmissionStore } from '../store';
-import { listSubmissionSampleSets, getAllStatusTransitions, updateSubmissionSampleSetStatus, deleteSampleSet } from '../store/api';
+import { listSubmissionSampleSets, getAllStatusTransitions, updateSubmissionSampleSetStatus } from '../store/api';
 import { useRouter } from 'vue-router';
 import {
   SubmissionStatusEnum,
@@ -49,8 +49,6 @@ const router = useRouter();
 const store = useSubmissionStore();
 const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionSampleSetListItem | null>(null);
-const defaultSortBy = 'date_last_modified';
-const defaultSortOrder = 'desc';
 const itemsPerPage = 10;
 const currentUser = stateRefs.user;
 const sampleSetEditableState = ref<Record<string, boolean>>({});
@@ -77,14 +75,6 @@ watch(
   },
   { deep: true }
 );
-
-//const options = ref({
-//    page: 1,
-//    itemsPerPage,
-//    sortBy: [{ key: defaultSortBy, order: defaultSortOrder }],
-//    groupBy: {},
-//    search: null,
-//    });
 
 function getStatus( status: SubmissionStatusKey) {
   const color = status === 'Released' ? 'success' : 'default';
@@ -174,22 +164,11 @@ async function handleDelete(item: SubmissionSampleSetListItem | null) {
   if (!item) {
     return;
   }
-  await deleteSampleSet(item.id);
+  await store.deleteSampleSet(item.id);
   sampleSet.value = await listSubmissionSampleSets(store.submission.record!.id);
   deleteDialogSubmission.value = null;
   isDeleteDialogOpen.value = false;
 }
-
-//function applySortOptions() {
-//    const sortOrder = options.value.sortBy[0] ? options.value.sortBy[0].order : defaultSortOrder;
-//    const sortBy = options.value.sortBy[0] ? options.value.sortBy[0].key : defaultSortBy;
-//    //sampleSet.setSortOptions(sortBy, sortOrder);
-//}
-
-//function updateTableOptions(newOptions: any) {
-//  options.value = newOptions;
-//  applySortOptions();
-//}
 
 const statusUpdatingSubmissionId = ref<string | null>(null);
 async function handleStatusChange(item: SubmissionSampleSetListItem, newStatus: string) {
