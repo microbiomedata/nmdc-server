@@ -22,7 +22,7 @@ import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
-
+import SampleSetCreationForm from '@/views/SubmissionPortal/Components/SampleSetCreationForm.vue';
 import { useSubmissionStore } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
@@ -72,6 +72,12 @@ const router = createRouter({
           path: '',
           props: true,
           children: [
+            {
+              name: 'Create Sample Set',
+              path: ':id/sample_set_create',
+              component: SampleSetCreationForm,
+              meta: { requiresSubmissionLock: true },
+            },
             {
               name: 'Submission Summary',
               path: ':id/summary',
