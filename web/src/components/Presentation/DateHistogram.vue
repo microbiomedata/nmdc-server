@@ -115,13 +115,13 @@ watch(() => props.myConditions, () => {
           @on-brush-end="onBrushEnd"
         />
       </template>
-      <template #below>
+      <!-- <template #below>
         <div class="mx-4 d-flex">
           <v-spacer />
           <h4>Collection Date</h4>
           <v-spacer />
         </div>
-      </template>
+      </template> -->
     </ChartContainer>
     <div
       v-else-if="!loading && facetSummaryUnconditional"

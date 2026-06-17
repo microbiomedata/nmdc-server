@@ -169,7 +169,7 @@ function setBoundsFromMap(val: Condition[]) {
             <template #default="slotProps">
               <DateHistogram
                 v-bind="slotProps"
-                :height="240"
+                :height="360"
                 @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />
             </template>
@@ -187,10 +187,10 @@ function setBoundsFromMap(val: Condition[]) {
           <LoadingOverlay
             :loading="upSetLoading"
             :error="upSetError"
-            :height="240"
+            :height="360"
           />
           <ChartContainer
-            :height="240"
+            :height="331"
           >
             <template #default="{ width, height }">
               <UpSet
@@ -222,6 +222,7 @@ function setBoundsFromMap(val: Condition[]) {
 
 <style scoped>
 .upset-legend {
+  height: 29px;
   display: flex;
   flex-wrap: wrap;
   line-height: 0.9em;

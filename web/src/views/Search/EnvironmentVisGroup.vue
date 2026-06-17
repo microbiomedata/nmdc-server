@@ -33,7 +33,7 @@ export default defineComponent({
       <div
         class="pr-2 overflow-y-auto overflow-x-hidden"
         style="
-            height: 700px;
+            height: 360px;
             width: 100%;
             max-width: 100%;
           "
