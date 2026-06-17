@@ -89,17 +89,19 @@ const chartData = computed(() => {
           const excludedCount = facet.count - ((currentFacetSummary.find(
             (e) => e.facet === facet.facet,
           ) || {}).count || 0);
+          const matchColor = count > 0 ? (
+            ecosystems.find((e) => e.name === facet.facet)
+            || { color: theme.current.value.colors.visualization }
+          ).color : 'lightgray';
+          const noMatchColor = excludedCount > 0 ? 'lightgray' : 'transparent';
           return [
             fieldDisplayName(facet.facet),
             count,
             true,
-            count > 0 ? (
-              ecosystems.find((e) => e.name === facet.facet)
-              || { color: theme.current.value.colors.visualization }
-            ).color : 'lightgray',
+            `color: ${matchColor}; stroke-width: 0; stroke-color: transparent`,
             excludedCount,
             false,
-            excludedCount > 0 ? 'lightgray' : theme.current.value.colors.primary,
+            `color: ${noMatchColor}; stroke-width: 0; stroke-color: transparent`,
             count > 0 ? `${count}` : 'No match',
           ];
         },
@@ -136,7 +138,7 @@ const barChartOptions = computed(() => ({
     },
   },
   legend: { position: 'none' },
-  annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
+  annotations: { alwaysOutside: true, stem: { color: 'transparent' }, textStyle: { color: 'black' } },
   title: props.showTitle ? fieldDisplayName(props.field) : null,
   isStacked: true,
 }));

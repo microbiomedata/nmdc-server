@@ -121,8 +121,12 @@ const visTabs = ref(['data', 'analysis', 'environment']);
 const resultsTabs = ref(['studies', 'samples']);
 const activeVisTab = ref(route.query.view as string || visTabs.value[0]);
 const activeResultsTab = ref(route.query.results as string || resultsTabs.value[0]);
-const gatedOmicsVisConditions = useClockGate(
+const gatedDataVisConditions = useClockGate(
   computed(() => (activeVisTab.value === visTabs.value[0])),
+  stateRefs.conditions,
+);
+const gatedAnalysisVisConditions = useClockGate(
+  computed(() => (activeVisTab.value === visTabs.value[1])),
   stateRefs.conditions,
 );
 const gatedEnvironmentVisConditions = useClockGate(
@@ -206,13 +210,13 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
             >
               <v-window-item :value="visTabs[0]">
                 <BiosampleVisGroup
-                  :conditions="gatedOmicsVisConditions"
+                  :conditions="gatedDataVisConditions"
                   :vis-tab="activeVisTab"
                 />
               </v-window-item>
               <v-window-item :value="visTabs[1]">
                 <AnalysisVizGroup
-                  :conditions="gatedOmicsVisConditions"
+                  :conditions="gatedAnalysisVisConditions"
                   :vis-tab="activeVisTab"
                 />
               </v-window-item>
