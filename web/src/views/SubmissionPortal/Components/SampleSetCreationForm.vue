@@ -18,7 +18,6 @@ async function createNewSampleSet() {
   if (item === null) {
     return;
   }
-  console.log(item);
   router?.push({ name: 'Multiomics Form', params: { sampleSetId: item.id } });
 }
 
@@ -69,7 +68,7 @@ function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResul
         <v-spacer />
         <v-btn
           color="primary"
-          :disabled="!isFormValid || store.submission.requests.saving.loading"
+          :disabled="!isFormValid || store.sampleSet.requests.saving.loading"
           @click="createNewSampleSet()"
         >
           Start Sample Set

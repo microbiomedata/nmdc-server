@@ -65,6 +65,11 @@ const isCurrentUserAuthor = computed(() => {
         Yes
       </AttributeRow>
     </PageSection>
+  </div>
+  <PageSection
+    heading="Sample Sets"
+    subheading="TODO add explainer text"
+  >
     <v-card-text>
       <v-btn
         color="primary"
@@ -74,8 +79,6 @@ const isCurrentUserAuthor = computed(() => {
         Create Sample Set
       </v-btn>
     </v-card-text>
-  </div>
-  <PageSection>
     <SampleSetTable/>
   </PageSection>
 </template>
