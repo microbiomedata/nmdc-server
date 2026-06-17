@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   computed, Ref, ref,
+  watch,
 
 } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
@@ -28,11 +29,15 @@ import AnalysisVizGroup from './AnalysisVizGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
 // TODO: would we rather use the study description from the schema?
 // const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
 const studyDescription = 'Research-driven experimental datasets and standardized data collections.';
+
+const route = useRoute();
+const router = useRouter();
 
 /**
  * Study checkbox state logic
@@ -112,20 +117,26 @@ const studyResults = computed<StudySearchResult[]>(() => Object.values(study.dat
 
 const loggedInUser = computed(() => stateRefs.user.value !== null);
 
-const visTab = ref(0);
+const visTabs = ref(['data', 'analysis', 'environment']);
+const activeVisTab = ref(route.query.view as string || visTabs.value[0])
 const resultsTab = ref(0);
 const gatedOmicsVisConditions = useClockGate(
-  computed(() => (visTab.value === 0)),
+  computed(() => (activeVisTab.value === visTabs.value[0])),
   stateRefs.conditions,
 );
 const gatedEnvironmentVisConditions = useClockGate(
-  computed(() => (visTab.value === 1)),
+  computed(() => (activeVisTab.value === visTabs.value[2])),
   stateRefs.conditions,
 );
 const showChildren: Ref<any[]> = ref([]);
 function toggleChildren(value:StudySearchResult) {
   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
 }
+
+watch(activeVisTab, (newVisTab) => {
+  const { view, ...rest } = route.query;
+  router.replace({ query: { view: newVisTab, ...rest } })
+});
 </script>
 
 <template>
@@ -166,22 +177,22 @@ function toggleChildren(value:StudySearchResult) {
             variant="outlined"
           >
             <v-tabs
-              v-model="visTab"
+              v-model="activeVisTab"
               color="primary"
             >
-              <v-tab key="sampling">
+              <v-tab :value="visTabs[0]">
                 <v-icon class="mr-1">
                   mdi-map-marker-outline
                 </v-icon>
                 Data
               </v-tab>
-              <v-tab key="analysis">
+              <v-tab :value="visTabs[1]">
                 <v-icon class="mr-1">
                   mdi-chart-box-outline
                 </v-icon>
                 Analysis
               </v-tab>
-              <v-tab key="environments">
+              <v-tab :value="visTabs[2]">
                 <v-icon class="mr-1">
                   mdi-chart-sankey-variant
                 </v-icon>
@@ -190,21 +201,21 @@ function toggleChildren(value:StudySearchResult) {
             </v-tabs>
             <v-divider />
             <v-window
-              v-model="visTab"
+              v-model="activeVisTab"
             >
-              <v-window-item key="sampling">
+              <v-window-item :value="visTabs[0]">
                 <BiosampleVisGroup
                   :conditions="gatedOmicsVisConditions"
-                  :vis-tab="visTab"
+                  :vis-tab="activeVisTab"
                 />
               </v-window-item>
-              <v-window-item key="analysis">
+              <v-window-item :value="visTabs[1]">
                 <AnalysisVizGroup
                   :conditions="gatedOmicsVisConditions"
-                  :vis-tab="visTab"
+                  :vis-tab="activeVisTab"
                 />
               </v-window-item>
-              <v-window-item key="environments">
+              <v-window-item :value="visTabs[2]">
                 <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
               </v-window-item>
             </v-window>

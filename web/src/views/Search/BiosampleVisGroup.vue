@@ -44,7 +44,7 @@ const staticUpsetTooltips = {
 
 const props = withDefaults(defineProps<{
   conditions: Condition[];
-  visTab?: number | null;
+  visTab?: string | null;
 }>(), {
   visTab: null,
 });
