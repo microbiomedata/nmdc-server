@@ -118,8 +118,9 @@ const studyResults = computed<StudySearchResult[]>(() => Object.values(study.dat
 const loggedInUser = computed(() => stateRefs.user.value !== null);
 
 const visTabs = ref(['data', 'analysis', 'environment']);
-const activeVisTab = ref(route.query.view as string || visTabs.value[0])
-const resultsTab = ref(0);
+const resultsTabs = ref(['studies', 'samples']);
+const activeVisTab = ref(route.query.view as string || visTabs.value[0]);
+const activeResultsTab = ref(route.query.results as string || resultsTabs.value[0]);
 const gatedOmicsVisConditions = useClockGate(
   computed(() => (activeVisTab.value === visTabs.value[0])),
   stateRefs.conditions,
@@ -133,9 +134,9 @@ function toggleChildren(value:StudySearchResult) {
   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
 }
 
-watch(activeVisTab, (newVisTab) => {
-  const { view, ...rest } = route.query;
-  router.replace({ query: { view: newVisTab, ...rest } })
+watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
+  const { view, results, ...rest } = route.query;
+  router.replace({ query: { view: newVisTab, results: newResultsTab, ...rest } })
 });
 </script>
 
@@ -222,10 +223,10 @@ watch(activeVisTab, (newVisTab) => {
           </v-card>
           <v-card variant="outlined">
             <v-tabs
-              v-model="resultsTab"
+              v-model="activeResultsTab"
               color="primary"
             >
-              <v-tab key="studies">
+              <v-tab :value="resultsTabs[0]">
                 <div class="d-flex align-center ga-2">
                   <span>Studies ({{ study.data.results.count }})</span>
                   <v-tooltip location="top">
@@ -241,7 +242,7 @@ watch(activeVisTab, (newVisTab) => {
                   </v-tooltip>
                 </div>
               </v-tab>
-              <v-tab key="samples">
+              <v-tab :value="resultsTabs[1]">
                 <div class="d-flex align-center ga-2">
                   <span>Samples ({{ biosample.data.results.count }})</span>
                   <v-tooltip location="top">
@@ -270,9 +271,9 @@ watch(activeVisTab, (newVisTab) => {
             </v-tabs>
             <v-divider />
             <v-tabs-window
-              v-model="resultsTab"
+              v-model="activeResultsTab"
             >
-              <v-tabs-window-item key="studies">
+              <v-tabs-window-item :value="resultsTabs[0]">
                 <SearchResults
                   :count="study.data.results.count"
                   :icon="studyType.icon"
@@ -461,7 +462,7 @@ watch(activeVisTab, (newVisTab) => {
                   </template>
                 </SearchResults>
               </v-tabs-window-item>
-              <v-tabs-window-item key="samples">
+              <v-tabs-window-item :value="resultsTabs[1]">
                 <BiosampleSearchResults
                   :data-object-filter="dataObjectFilter"
                   :biosample-search="biosample"
