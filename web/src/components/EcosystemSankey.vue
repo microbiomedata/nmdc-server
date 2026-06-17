@@ -73,7 +73,7 @@ const sankeyOptions = computed(() => {
         width: 12,
         // Array needs to be of substantial length so the lines do not become too pale to see
         // Uses 'primary' and primary.darken2 alternatingly
-        colors: Array.from({ length: dataLength / 2 }, (_, i) => (i % 2 === 0 ? colors.primary : '#1c104e')),
+        colors: Array.from({ length: dataLength / 2 }, (_, i) => (i % 2 === 0 ? colors.visualization : colors.visualizationLight)),
       },
     },
   };

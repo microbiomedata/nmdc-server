@@ -147,7 +147,7 @@ emits: ['onBrushEnd'],
         .append('rect')
         .attr('class', 'bar')
         .attr('x', 1)
-        .attr('fill', theme.current.value.colors.primary)
+        .attr('fill', theme.current.value.colors.visualization)
         .attr('transform', (d) => 'translate('.concat(x(d.x0), ',', y(d.length), ')'))
         .attr('width', (d) => {
           const w = x(d.x1) - x(d.x0);

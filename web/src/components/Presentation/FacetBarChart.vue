@@ -95,7 +95,7 @@ const chartData = computed(() => {
             true,
             count > 0 ? (
               ecosystems.find((e) => e.name === facet.facet)
-              || { color: theme.current.value.colors.primary }
+              || { color: theme.current.value.colors.visualization }
             ).color : 'lightgray',
             excludedCount,
             false,
