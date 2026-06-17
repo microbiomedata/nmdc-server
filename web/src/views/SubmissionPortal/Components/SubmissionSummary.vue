@@ -76,11 +76,9 @@ const isCurrentUserAuthor = computed(() => {
         link
         class="w-100"
       >
-        <v-list-item-content>
-          <v-list-item-title class="text-body-1 font-weight-medium">
-            Study Information
-          </v-list-item-title>
-        </v-list-item-content>
+        <v-list-item-title class="text-body-1 font-weight-medium">
+          Study Information
+        </v-list-item-title>
         <template #append>
           <v-icon>mdi-chevron-right</v-icon>
         </template>

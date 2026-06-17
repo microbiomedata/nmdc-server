@@ -49,6 +49,9 @@ const router = useRouter();
 const store = useSubmissionStore();
 const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionSampleSetListItem | null>(null);
+const isStatusDialogOpen = ref(false);
+const statusDialogSubmission = ref<SubmissionSampleSetListItem | null>(null);
+const statusDialogNewStatus = ref<SubmissionStatusKey | null>(null);
 const currentUser = stateRefs.user;
 const sampleSetEditableState = ref<Record<string, boolean>>({});
 const isContributor = computed(() => {
@@ -169,9 +172,18 @@ async function handleDelete(item: SubmissionSampleSetListItem | null) {
   isDeleteDialogOpen.value = false;
 }
 
-const statusUpdatingSubmissionId = ref<string | null>(null);
-async function handleStatusChange(item: SubmissionSampleSetListItem, newStatus: string) {
-  statusUpdatingSubmissionId.value = item.id;
+function handleOpenStatusDialog(item: SubmissionSampleSetListItem | null) {
+  statusDialogSubmission.value = item;
+  statusDialogNewStatus.value = item?.status as SubmissionStatusKey || null;
+  if (statusDialogSubmission.value) {
+    isStatusDialogOpen.value = true;
+  }
+}
+
+async function handleStatusChange(item: SubmissionSampleSetListItem | null, newStatus: string | null) {
+  if (!item || !newStatus) {
+    return;
+  }
   try {
     const patch: SubmissionSampleSetStatusPatch = {
       status: newStatus as SubmissionStatusKey,
@@ -179,8 +191,9 @@ async function handleStatusChange(item: SubmissionSampleSetListItem, newStatus: 
     await updateSubmissionSampleSetStatus(item.id, patch);
     sampleSet.value = await listSubmissionSampleSets(store.submission.record!.id);
   } finally {
-    statusUpdatingSubmissionId.value = null;
+    statusDialogSubmission.value = null;
   }
+  isStatusDialogOpen.value = false;
 }
 
 </script>
@@ -202,19 +215,7 @@ async function handleStatusChange(item: SubmissionSampleSetListItem, newStatus: 
 
         <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
-              <v-select
-                v-if="currentUser?.is_admin || isReviewerForSubmission()"
-                :model-value="item.status"
-                :items="getFormattedStatusTransitions(item)"
-                :loading="statusUpdatingSubmissionId === item.id"
-                density="compact"
-                variant="underlined"
-                hide-details
-                :disabled="item.status === 'InProgress'"
-                @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
-              />
               <v-chip
-                v-else
                 :color="getStatus(item.status as SubmissionStatusKey).color"
               >
                 {{ getStatus(item.status as SubmissionStatusKey).text }}
@@ -263,6 +264,12 @@ async function handleStatusChange(item: SubmissionSampleSetListItem, newStatus: 
                 >
                   <v-list-item-title>Delete</v-list-item-title>
                 </v-list-item>
+                <v-list-item
+                  v-if="currentUser?.is_admin || isReviewerForSubmission()"
+                  @click="() => handleOpenStatusDialog(item)"
+                >
+                  <v-list-item-title>Set Status</v-list-item-title>
+                </v-list-item>
               </v-list>
             </v-menu>
           </div>
@@ -302,6 +309,44 @@ async function handleStatusChange(item: SubmissionSampleSetListItem, newStatus: 
           @click="handleDelete(deleteDialogSubmission)"
         >
           Delete
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog
+    v-model="isStatusDialogOpen"
+    :width="550"
+  >
+    <v-card>
+      <v-spacer />
+      <v-card-title v-if="statusDialogSubmission && statusDialogSubmission.name != ''" class="text-h5">
+        Set new status for "{{ statusDialogSubmission.name }}"
+      </v-card-title>
+      <v-card-text>
+        <v-select
+          v-if="statusDialogSubmission && statusDialogSubmission.name != ''"
+          :model-value="statusDialogNewStatus"
+          @update:model-value="(newValue) => statusDialogNewStatus = newValue"
+          :items="getFormattedStatusTransitions(statusDialogSubmission)"
+          density="compact"
+          variant="outlined"
+          hide-details
+          :disabled="statusDialogSubmission?.status === 'InProgress'"
+        />
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          class="ma-3"
+          @click="isStatusDialogOpen = false"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          @click="handleStatusChange(statusDialogSubmission, statusDialogNewStatus)"
+        >
+          Save
         </v-btn>
       </v-card-actions>
     </v-card>
