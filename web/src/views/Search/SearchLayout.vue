@@ -32,9 +32,7 @@ import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchRes
 import { useRoute, useRouter } from 'vue-router';
 
 const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
-// TODO: would we rather use the study description from the schema?
-// const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
-const studyDescription = 'Research-driven experimental datasets and standardized data collections.';
+const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
 
 const route = useRoute();
 const router = useRouter();
