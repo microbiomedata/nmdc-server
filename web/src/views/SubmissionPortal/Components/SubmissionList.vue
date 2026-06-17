@@ -69,14 +69,6 @@ async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<S
   return api.listSubmissions(params, isTestFilter.value, searchText.value);
 }
 
-// TODO: this will need to move to the sample set display component when available
-// function getStatus(item: { status: SubmissionStatusKey }) {
-//   const color = item.status === 'Released' ? 'success' : 'default';
-//   return {
-//     text: SubmissionStatusEnum[item.status]?.title || item.status,
-//     color,
-//   };
-// }
 
 async function resume(item: SubmissionMetadataSlim) {
   router?.push({ name: 'Submission Summary', params: { id: item.id } });
@@ -144,71 +136,6 @@ async function addReviewer() {
   isReviewerAssignmentDialogOpen.value = false;
 }
 
-// TODO: this will need to move to the sample set display component when available
-// get all status transitions from the api
-// const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
-// onMounted(async () => {
-//   allowedStatusTransitions.value = await api.getAllStatusTransitions();
-// });
-
-// function isReviewerForSubmission(item: SubmissionMetadataSlim): boolean {
-//   if (!currentUser.value?.orcid) {
-//     return false;
-//   }
-//   return item.reviewers.includes(currentUser.value.orcid);
-// }
-
-// TODO: this will need to move to the sample set display component when available
-// function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
-//   const excludeFromAll: SubmissionStatusKey[] = [
-//     'InProgress',
-//     'SubmittedPendingReview',
-//   ];
-//
-//   // Admins can see all statuses and select any that aren't user invoked
-//   if (dropdownType === 'admin') {
-//     return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
-//       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
-//       .map((key) => ({
-//         value: key,
-//         title: SubmissionStatusEnum[key].title,
-//       }));
-//   }
-//
-//   // Non-admins can only see and select allowed transitions
-//   const user_transitions = transitions[dropdownType] || {};
-//   const allowedStatusTransitions = user_transitions[currentStatus] || [];
-//
-//   // Include the current status so it can be displayed
-//   const statusesToShow = [...allowedStatusTransitions];
-//   if (!statusesToShow.includes(currentStatus)) {
-//     statusesToShow.push(currentStatus);
-//   }
-//
-//   // Return allowed transitions
-//   return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
-//     .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
-//     .map((key) => ({
-//       value: key,
-//       title: SubmissionStatusEnum[key].title,
-//     }));
-// }
-
-// get available transitions for an admin or a reviewer (depending on user) based on submission's current status
-// function getFormattedStatusTransitions(item: SubmissionMetadataSlim): StatusOption[] {
-//   if (!allowedStatusTransitions.value) {
-//     return [];
-//   }
-//   let dropdown_type: 'reviewer' | 'admin';
-//   if (currentUser.value?.is_admin) {
-//     dropdown_type = 'admin';
-//   } else if (isReviewerForSubmission(item)) {
-//     dropdown_type = 'reviewer';
-//   } else {
-//     return [];
-//   }
-//   return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
-// }
 </script>
 
 <template>

@@ -185,6 +185,11 @@ async function getSampleSet(sampleSetId: string) {
   return resp.data;
 }
 
+async function deleteSampleSet(sampleSetId: string) {
+  const resp = await client.delete(`metadata_submission/sample_set/${sampleSetId}`);
+  return resp.data;
+}
+
 export {
   addressToString,
   createSubmission,
@@ -206,4 +211,5 @@ export {
   addSubmissionRole,
   listSubmissionSampleSets,
   getSampleSet,
+  deleteSampleSet,
 };

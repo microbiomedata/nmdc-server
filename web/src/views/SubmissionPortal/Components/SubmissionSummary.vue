@@ -2,6 +2,7 @@
 import { useSubmissionStore } from '../store';
 import { computed } from 'vue';
 import { stateRefs } from '@/store';
+import SampleSetTable from './SampleSetTable.vue';
 
 const store = useSubmissionStore();
 
@@ -65,4 +66,19 @@ const isCurrentUserAuthor = computed(() => {
       </AttributeRow>
     </PageSection>
   </div>
+  <PageSection
+    heading="Sample Sets"
+    subheading="TODO add explainer text"
+  >
+    <v-card-text>
+      <v-btn
+        color="primary"
+        :to="{ name: 'Create Sample Set' }"
+      >
+        <v-icon>mdi-plus</v-icon>
+        Create Sample Set
+      </v-btn>
+    </v-card-text>
+    <SampleSetTable/>
+  </PageSection>
 </template>

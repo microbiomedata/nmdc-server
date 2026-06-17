@@ -570,6 +570,45 @@ export const useSubmissionStore = defineStore('submission', () => {
     return response;
   }
 
+   /**
+   * Create a new sample set on the server and populate the state with the response.
+   *
+   * The new sample set will be initialized with default values for the forms.
+   *
+   * @param sampleSetName
+   */
+  async function createSubmissionSampleSet(sampleSetName: string) {
+    const response = await sampleSet.requests.saving.request(
+      () => api.createSubmissionSampleSet(
+        submission.record!.id,
+        {
+          name: sampleSetName,
+          templates: [],
+          status: SubmissionStatusEnum.InProgress.text,
+          multi_omics_form: multiOmicsFormDefault,
+          sample_environment_form: sampleEnvironmentFormDefault,
+          sender_shipping_info_form: senderShippingInfoFormDefault,
+          sample_data: sampleDataDefault,
+       }
+      )
+    );
+    hydrateSampleSet(response);
+    const updatedSubmission = await api.getSubmission(submission.record!.id);
+    hydrateSubmission(updatedSubmission);
+    return response;
+  }
+
+  /**
+   * Delete a sample set from the server and update the state to reflect the deletion.
+   * 
+   * @param sampleSetId
+   */
+  async function deleteSampleSet(sampleSetId: string) {
+    await api.deleteSampleSet(sampleSetId);
+    const updatedSubmission = await api.getSubmission(submission.record!.id);
+    hydrateSubmission(updatedSubmission);
+  }
+
   /**
    * Save active edits to the submission forms by sending a PATCH request to the server.
    *
@@ -987,6 +1026,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     /* ACTIONS */
     loadSubmission,
     createSubmission,
+    createSubmissionSampleSet,
+    deleteSampleSet,
     saveSubmissionFormEdits,
     uploadSubmissionImage,
     deleteSubmissionImage,
