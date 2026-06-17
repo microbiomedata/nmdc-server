@@ -49,7 +49,6 @@ const router = useRouter();
 const store = useSubmissionStore();
 const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionSampleSetListItem | null>(null);
-const itemsPerPage = 10;
 const currentUser = stateRefs.user;
 const sampleSetEditableState = ref<Record<string, boolean>>({});
 const isContributor = computed(() => {
