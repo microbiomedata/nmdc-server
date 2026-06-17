@@ -24,6 +24,21 @@
   color: inherit;
 }
 
+a, .v-theme--light a {
+  color: rgb(var(--v-theme-link));
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+a:hover, .v-theme--light a:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+a:visited, .v-theme--light a:visited {
+  color: rgb(var(--v-theme-visited));
+}
+
 // Utilities
 .stack-sm {
   display: flex;

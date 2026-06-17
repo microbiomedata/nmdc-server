@@ -197,6 +197,7 @@ ConditionValue = Union[schemas.AnnotationValue, RangeValue, List[GoldTreeValue]]
 
 
 class BaseConditionSchema(BaseModel):
+    op: Any
     field: str
     value: ConditionValue
     table: Table
@@ -399,6 +400,24 @@ class BaseQuerySchema(BaseModel):
             "Table.pfam_function:id",
             "Table.go_function:id",
         ]
+        # When filtering on study_id, always automatically include its child studies in the search.
+        if condition.key in ["Table.study:id", "Table.study.study_id"] and condition.op in [
+            Operation.equal,
+            Operation.like,
+        ]:
+            child_studies = db.query(models.Study.id).filter(
+                models.Study.part_of.contains([condition.value])
+            )
+            child_conditions = [
+                SimpleConditionSchema(
+                    op="==",
+                    field=condition.field,
+                    value=study.id,
+                    table=condition.table,
+                )
+                for study in child_studies
+            ]
+            return [condition, *child_conditions]
         if condition.key in gene_search_keys and type(condition.value) is str:
             if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
                 prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]

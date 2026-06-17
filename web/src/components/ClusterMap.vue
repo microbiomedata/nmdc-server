@@ -49,11 +49,11 @@ Icon.Default.mergeOptions({
 const props = withDefaults(defineProps<{
   conditions?: Condition[];
   height?: number;
-  vistab?: number | null;
+  visTab?: number | null;
 }>(), {
   conditions: () => [],
   height: 360,
-  vistab: null,
+  visTab: null,
 });
 
 const emit = defineEmits<{
@@ -83,7 +83,7 @@ const mapCenter = computed(() => {
 });
 
 async function getMapData() {
-  if (props.vistab === 1) {
+  if (props.visTab === 1) {
     return;
   }
   const data = await request(() => api.getEnvironmentGeospatialAggregation(props.conditions));
