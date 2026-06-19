@@ -67,6 +67,25 @@ const isCurrentUserAuthor = computed(() => {
     </PageSection>
   </div>
   <PageSection
+    heading="Study Information"
+    subheading="Use this form to enter information about the research initiative as a whole and the people contributing to it. Each NMDC Submission corresponds to one research initiative."
+  >
+    <v-list class="pa-0 border rounded">
+      <v-list-item
+        :to="{ name: 'Study Form' }"
+        link
+        class="w-100"
+      >
+        <v-list-item-title class="text-body-1 font-weight-medium">
+          Study Information
+        </v-list-item-title>
+        <template #append>
+          <v-icon>mdi-chevron-right</v-icon>
+        </template>
+      </v-list-item>
+    </v-list>
+  </PageSection>
+  <PageSection
     heading="Sample Sets"
     subheading="TODO add explainer text"
   >
