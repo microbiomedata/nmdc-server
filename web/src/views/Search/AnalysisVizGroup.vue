@@ -1,34 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue';
-import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
+import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import UpSet from '@/components/Presentation/UpSet.vue';
-import ChartContainer from '@/components/Presentation/ChartContainer.vue';
+import { computed, ref, watchEffect } from 'vue';
 // TODO: replace with composition functions
-import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import BinnedSummaryWrapper from '@/components/Wrappers/BinnedSummaryWrapper.vue';
 // ENDTODO
 import HelpWrapper from '@/components/HelpWrapper.vue';
-import ClusterMap from '@/components/ClusterMap.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
-import {
-  toggleConditions, setUniqueCondition,
-} from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import { makeSetsFromBitmask } from '@/encoding';
+import {
+  setUniqueCondition
+} from '@/store';
 import useRequest from '@/use/useRequest';
 
-const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
-const helpMap = `
-  Shows the geographic locations (latitude and longitude) where samples were collected.
-  <ul>
-    <li>Click on a cluster to zoom in.</li>
-    <li>Click "Search this region" to filter results to the current map view.</li>
-  </ul>
-  <strong>Note:</strong> Samples collected at the poles may not appear on the map due to projection limits,
-  but they are included in other visualizations and the biosample table.
-`;
 const helpTimeline = 'Displays sample collections grouped by collection date. Click and drag on the timeline to filter by collection date. The selected region can be moved by dragging it from the center. The region can be resized by clicking and dragging at the edges. Click outside the region to clear it.';
 const helpUpset = 'This UpSet plot shows the number of samples with corresponding omic data associated. For example: a sample could have metagenomics, metatranscriptomics, and natural organic matter characterizations. You can select samples by clicking on the bar chart or counts to the right of the bar chart';
 
@@ -104,54 +91,10 @@ watchEffect(async () => {
   sampleFacetSummary.value = await sampleRequest.request(() => api.getFacetSummary('biosample', 'multiomics', props.conditions));
   studyFacetSummary.value = await studyRequest.request(() => api.getFacetSummary('study', 'multiomics', props.conditions));
 });
-
-function setBoundsFromMap(val: Condition[]) {
-  setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
-}
 </script>
 
 <template>
   <div>
-    <!-- <v-row>
-      <v-col :cols="5">
-        <HelpWrapper :text="helpBarchart">
-          <FacetSummaryWrapper
-            table="omics_processing"
-            field="omics_type"
-            :conditions="conditions"
-            use-all-conditions
-          >
-            <template #default="slotProps">
-              <FacetBarChart
-                v-bind="slotProps"
-                :height="360"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="120"
-                :right-margin="80"
-                @selected="toggleConditions($event.conditions)"
-              />
-            </template>
-          </FacetSummaryWrapper>
-        </HelpWrapper>
-      </v-col>
-      <v-col
-        class="pl-0"
-        :cols="7"
-      >
-        <HelpWrapper
-          :text="helpMap"
-          class="pa-1"
-        >
-          <ClusterMap
-            :conditions="conditions"
-            :height="360"
-            :vis-tab="visTab"
-            @selected="setBoundsFromMap($event)"
-          />
-        </HelpWrapper>
-      </v-col>
-    </v-row> -->
     <v-row class="mt-0">
       <v-col
         class="border-e"

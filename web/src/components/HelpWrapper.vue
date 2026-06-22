@@ -51,9 +51,9 @@ const close = () => { isFullscreen.value = false; };
           max-width="300px"
           :z-index="isFullscreen ? 2500 : undefined"
         >
-          <template #activator="{ props }">
+          <template #activator="{ props: tooltipProps }">
             <v-btn
-              v-bind="props"
+              v-bind="tooltipProps"
               icon="mdi-help-circle"
               size="large"
               variant="text"

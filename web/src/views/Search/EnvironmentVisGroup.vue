@@ -4,9 +4,11 @@ import HelpWrapper from '@/components/HelpWrapper.vue';
 import { toggleConditions } from '@/store';
 import { Condition } from '@/data/api';
 
+const helpSankey = 'This Sankey diagram shows samples by the hierarchical relationships between ecosystems, ecosystem categories, ecosystem types, ecosystem subtypes, and specific ecosystems. Click on a section to filter by that ecosystem.';
+
 defineProps<{
   conditions: Condition[];
-}>();
+}>(); 
 </script>
 
 <template>
@@ -14,7 +16,7 @@ defineProps<{
     <v-col :cols="12">
       <HelpWrapper
         height="360px"
-        help-text="this is cool"
+        :help-text="helpSankey"
         allow-fullscreen
       >
         <EcosystemSankey

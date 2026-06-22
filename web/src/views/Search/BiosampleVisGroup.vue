@@ -1,22 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue';
+import { ref, watchEffect } from 'vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
-import DateHistogram from '@/components/Presentation/DateHistogram.vue';
-import UpSet from '@/components/Presentation/UpSet.vue';
-import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 // TODO: replace with composition functions
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
-import BinnedSummaryWrapper from '@/components/Wrappers/BinnedSummaryWrapper.vue';
 // ENDTODO
 import HelpWrapper from '@/components/HelpWrapper.vue';
 import ClusterMap from '@/components/ClusterMap.vue';
-import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 import {
   toggleConditions, setUniqueCondition,
 } from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
-import { makeSetsFromBitmask } from '@/encoding';
 import useRequest from '@/use/useRequest';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
@@ -29,18 +23,6 @@ const helpMap = `
   <strong>Note:</strong> Samples collected at the poles may not appear on the map due to projection limits,
   but they are included in other visualizations and the biosample table.
 `;
-const helpTimeline = 'Displays sample collections grouped by collection date. Click and drag on the timeline to filter by collection date. The selected region can be moved by dragging it from the center. The region can be resized by clicking and dragging at the edges. Click outside the region to clear it.';
-const helpUpset = 'This UpSet plot shows the number of samples with corresponding omic data associated. For example: a sample could have metagenomics, metatranscriptomics, and natural organic matter characterizations. You can select samples by clicking on the bar chart or counts to the right of the bar chart';
-
-const staticUpsetTooltips = {
-  MG: 'Metagenomics',
-  MP: 'Metaproteomics',
-  MB: 'Metabolomics',
-  MT: 'Metatranscriptomics',
-  NOM: 'Natural Organic Matter',
-  LIP: 'Lipidomics',
-  AMP: 'Amplicon',
-};
 
 const props = withDefaults(defineProps<{
   conditions: Condition[];
@@ -53,52 +35,6 @@ const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
 const studyFacetSummary = ref<FacetSummaryResponse[] | null>(null);
 const sampleRequest = useRequest();
 const studyRequest = useRequest();
-const upSetLoading = computed(() => sampleRequest.loading.value || studyRequest.loading.value);
-const upSetError = computed(() => {
-  if (sampleRequest.error.value) {
-    return 'Could not retrieve sample summary values for UpSet plot';
-  } else if (studyRequest.error.value) {
-    return 'Could not retrieve study summary values for UpSet plot';
-  }
-  return null;
-});
-
-const upsetData = computed(() => {
-  const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
-  if (sampleFacetSummary.value) {
-    sampleFacetSummary.value.forEach(({ facet, count }) => {
-      if (parseInt(facet, 10) === 0) {
-        return;
-      }
-      multiomicsObj[facet] = {
-        counts: {
-          Samples: count,
-          Studies: 0,
-        },
-        sets: makeSetsFromBitmask(facet),
-      };
-    });
-  }
-  if (studyFacetSummary.value) {
-    studyFacetSummary.value.forEach(({ facet, count }) => {
-      if (parseInt(facet, 10) === 0) {
-        return;
-      }
-      if (!multiomicsObj[facet]) {
-        multiomicsObj[facet] = {
-          counts: {
-            Samples: 0,
-          },
-          sets: makeSetsFromBitmask(facet),
-        };
-      }
-      multiomicsObj[facet].counts.Studies = count;
-    });
-  }
-  return Object.keys(multiomicsObj)
-    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-    .map((k) => multiomicsObj[k]);
-});
 
 watchEffect(async () => {
   sampleFacetSummary.value = await sampleRequest.request(() => api.getFacetSummary('biosample', 'multiomics', props.conditions));
@@ -158,81 +94,5 @@ function setBoundsFromMap(val: Condition[]) {
         </HelpWrapper>
       </v-col>
     </v-row>
-    <!-- <v-row class="mt-0">
-      <v-col cols="6">
-        <TooltipCard
-          :text="helpTimeline"
-          class="py-2"
-        >
-          <BinnedSummaryWrapper
-            table="biosample"
-            field="collection_date"
-            :conditions="conditions"
-            use-all-conditions
-          >
-            <template #default="slotProps">
-              <DateHistogram
-                v-bind="slotProps"
-                :height="240"
-                @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
-              />
-            </template>
-          </BinnedSummaryWrapper>
-        </TooltipCard>
-      </v-col>
-      <v-col
-        class="pl-0"
-        cols="6"
-      >
-        <TooltipCard
-          :text="helpUpset"
-          class="py-0 d-flex flex-column justify-center fill-height"
-        >
-          <LoadingOverlay
-            :loading="upSetLoading"
-            :error="upSetError"
-            :height="240"
-          />
-          <ChartContainer
-            :height="240"
-          >
-            <template #default="{ width, height }">
-              <UpSet
-                v-bind="{
-                  width,
-                  height,
-                  data: upsetData,
-                  tooltips: staticUpsetTooltips,
-                  order: 'Samples',
-                }"
-                @select="setUniqueCondition(
-                  ['omics_type'], ['omics_processing'], $event.conditions)"
-              />
-            </template>
-          </ChartContainer>
-          <div class="mx-5 upset-legend">
-            <span
-              v-for="value, key in staticUpsetTooltips"
-              :key="key"
-            >
-              {{ key }}: {{ value }}
-            </span>
-          </div>
-        </TooltipCard>
-      </v-col>
-    </v-row> -->
   </div>
 </template>
-
-<style scoped>
-.upset-legend {
-  display: flex;
-  flex-wrap: wrap;
-  line-height: 0.9em;
-}
-.upset-legend > span {
-  font-size: 10px;
-  padding: 0 4px;
-  white-space: nowrap;
-}
-</style>
