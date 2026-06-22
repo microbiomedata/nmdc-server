@@ -158,7 +158,7 @@ function setBoundsFromMap(val: Condition[]) {
         cols="6"
       >
         <HelpWrapper
-          :text="helpTimeline"
+          :help-text="helpTimeline"
         >
           <BinnedSummaryWrapper
             table="biosample"
@@ -181,7 +181,7 @@ function setBoundsFromMap(val: Condition[]) {
         cols="6"
       >
         <HelpWrapper
-          :text="helpUpset"
+          :help-text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
           <LoadingOverlay

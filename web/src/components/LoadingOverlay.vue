@@ -3,7 +3,7 @@
 const props = withDefaults(defineProps<{
   error?: string | null;
   loading?: boolean;
-  height: number;
+  height: string | number;
 }>(), {
   error: null,
   loading: false,
@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<{
     :style="{
       position: 'absolute',
       zIndex: 2,
-      height: `${height}px`,
+      height: typeof height === 'string' ? height : `${height}px`,
       width: '100%',
       background: '#fff',
       opacity: 0.5,

@@ -1,49 +1,28 @@
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
 import EcosystemSankey from '@/components/EcosystemSankey.vue';
-
-import {
-  toggleConditions,
-} from '@/store';
+import HelpWrapper from '@/components/HelpWrapper.vue';
+import { toggleConditions } from '@/store';
 import { Condition } from '@/data/api';
 
-export default defineComponent({
-  components: {
-    EcosystemSankey,
-  },
-
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-  },
-
-  setup() {
-    return {
-      toggleConditions,
-    };
-  },
-});
+defineProps<{
+  conditions: Condition[];
+}>();
 </script>
 
 <template>
   <v-row>
     <v-col :cols="12">
-      <div
-        class="pr-2 overflow-y-auto overflow-x-hidden"
-        style="
-            height: 360px;
-            width: 100%;
-            max-width: 100%;
-          "
+      <HelpWrapper
+        height="360px"
+        help-text="this is cool"
+        allow-fullscreen
       >
         <EcosystemSankey
           :conditions="conditions"
-          style="width: 100%"
+          style="width: 100%; padding: 1rem"
           @selected="toggleConditions($event.conditions)"
         />
-      </div>
+      </HelpWrapper>
     </v-col>
   </v-row>
 </template>

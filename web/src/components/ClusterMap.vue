@@ -48,7 +48,7 @@ Icon.Default.mergeOptions({
 
 const props = withDefaults(defineProps<{
   conditions?: Condition[];
-  height?: number;
+  height?: string | number;
   visTab?: string | null;
 }>(), {
   conditions: () => [],
@@ -216,10 +216,17 @@ watch([toRef(props, 'conditions')], () => {
     getMapData();
   }
 });
+
+watch(() => props.height, () => {
+  setTimeout(() => {
+    mapRef.value?.leafletObject?.invalidateSize(true);
+    mapRef.value?.leafletObject?.fitBounds(mapCenter.value);
+  }, 500);
+});
 </script>
 
 <template>
-  <div style="position: relative">
+  <div style="position: relative; width: 100%;">
     <LoadingOverlay
       :loading="loading"
       :error="errorMessage"
@@ -239,26 +246,30 @@ watch([toRef(props, 'conditions')], () => {
     >
       Search this region
     </v-btn>
-    <l-map
-      ref="mapRef"
-      :max-bounds="[[[-85, -180], [85, 180]]]"
+    <div
       :style="{
-        height: `${height}px`,
+        position: 'relative',
+        height: typeof height === 'string' ? height : `${height}px`,
         width: '100%',
         zIndex: 1,
       }"
-      @ready="onMapReady"
-      @update:bounds="mapProps.bounds = $event"
     >
-      <l-tile-layer
-        :url="mapProps.url"
-        :attribution="mapProps.attribution"
-        :options="{
-          maxZoom: 22,
-          maxNativeZoom: 18,
-        }"
-      />
-    </l-map>
+      <l-map
+        ref="mapRef"
+        :max-bounds="[[[-85, -180], [85, 180]]]"      
+        @ready="onMapReady"
+        @update:bounds="mapProps.bounds = $event"
+      >
+        <l-tile-layer
+          :url="mapProps.url"
+          :attribution="mapProps.attribution"
+          :options="{
+            maxZoom: 22,
+            maxNativeZoom: 18,
+          }"
+        />
+      </l-map>
+    </div>
   </div>
 </template>
 

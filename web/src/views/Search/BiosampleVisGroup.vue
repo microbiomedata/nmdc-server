@@ -117,7 +117,7 @@ function setBoundsFromMap(val: Condition[]) {
         class="border-e"
         :cols="5"
       >
-        <HelpWrapper :text="helpBarchart">
+        <HelpWrapper :help-text="helpBarchart">
           <FacetSummaryWrapper
             table="omics_processing"
             field="omics_type"
@@ -143,14 +143,18 @@ function setBoundsFromMap(val: Condition[]) {
         :cols="7"
       >
         <HelpWrapper
-          :text="helpMap"
+          :help-text="helpMap"
+          :height="360"
+          allow-fullscreen
         >
-          <ClusterMap
-            :conditions="conditions"
-            :height="360"
-            :vis-tab="visTab"
-            @selected="setBoundsFromMap($event)"
-          />
+          <template #default="{ isFullscreen }">
+            <ClusterMap
+              :conditions="conditions"
+              :height="isFullscreen ? '90vh' : 360"
+              :vis-tab="visTab"
+              @selected="setBoundsFromMap($event)"
+            />
+          </template>
         </HelpWrapper>
       </v-col>
     </v-row>
