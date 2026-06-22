@@ -63,12 +63,6 @@ const sankeyOptions = computed(() => {
   return {
     // Make the chart height dependent on the number of nodes with a minimum of 500px
     height: Math.max(dataLength * 4, 500),
-    chartArea: {
-      width: '80%',   // Width of the data area (relative to SVG container)
-      height: '80%',  // Height of the data area
-      top: 50,     // Internal padding from the top
-      left: 50     // Internal padding from the left
-    },
     sankey: {
       link: {
         colorMode: 'source',
