@@ -231,7 +231,10 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
               <v-tab :value="resultsTabs[0]">
                 <div class="d-flex align-center ga-2">
                   <span>Studies ({{ study.data.results.count }})</span>
-                  <v-tooltip location="top">
+                  <v-tooltip
+                    location="top"
+                    max-width="300px"
+                  >
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
@@ -247,7 +250,10 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
               <v-tab :value="resultsTabs[1]">
                 <div class="d-flex align-center ga-2">
                   <span>Samples ({{ biosample.data.results.count }})</span>
-                  <v-tooltip location="top">
+                  <v-tooltip
+                    location="top"
+                    max-width="300px"
+                  >
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
