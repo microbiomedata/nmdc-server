@@ -1,6 +1,7 @@
 <script lang="ts">
 import {
   defineComponent, ref, watch, onMounted,
+  computed,
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
@@ -164,6 +165,9 @@ export default defineComponent({
     }
 
     const reviewerOrcid = ref('');
+    const invalidOrcid = computed(() => {
+      return !/(\d{4}-){3}\d{3}(\d|X)/.test(reviewerOrcid.value);
+    });
     function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
       isReviewerAssignmentDialogOpen.value = true;
       selectedSubmission.value = item;
@@ -176,6 +180,7 @@ export default defineComponent({
         }
         await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
       });
+
       isReviewerAssignmentDialogOpen.value = false;
     }
 
@@ -225,6 +230,7 @@ export default defineComponent({
       isReviewerAssignmentDialogOpen,
       isReviewerForSubmission,
       reviewerOrcid,
+      invalidOrcid,
       IconBar,
       IntroBlurb,
       TitleBanner,
@@ -537,6 +543,9 @@ export default defineComponent({
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
+                :rules="[
+                  v => !v || /(\d{4}-){3}\d{3}(\d|X)/.test(v) || 'ORCID iD must be in valid format (0000-0000-0000-0000)',
+                ]"
               />
             </v-col>
           </v-row>
@@ -556,6 +565,7 @@ export default defineComponent({
             color="primary"
             class="mt-2"
             :loading="assignReviewerRequest.loading.value"
+            :disabled="invalidOrcid"
             @click="() => addReviewer()"
           >
             Assign Reviewer
