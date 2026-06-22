@@ -39,6 +39,18 @@ a:visited, .v-theme--light a:visited {
   color: rgb(var(--v-theme-visited));
 }
 
+a.nav-link,
+a.nav-link:visited {
+  color: #707070;
+  opacity: 1;
+}
+
+.v-app-bar a:hover,
+a.nav-link:hover {
+  color: rgb(var(--v-theme-primary));
+  text-decoration: none;
+}
+
 // Utilities
 .stack-sm {
   display: flex;
