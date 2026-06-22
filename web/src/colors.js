@@ -7,6 +7,7 @@ const orangeLight = '#EEA359';
 const orangeLighter = '#EEC295';
 const green = colors.lightGreen.darken2;
 const blue = '#00AAE7';
+const blueLight = '#5CD3FF';
 const blueDark = '#0087B8';
 const blueDarker = '#004B66';
 const purple = '#4F3B80';
@@ -29,8 +30,8 @@ export default {
   accent: orange,
   link: purple,
   visited: purpleLight,
-  visualization: orangeLight,
-  visualizationLight: orangeLighter,
+  visualization: blue,
+  visualizationLight: blueLight,
   aquatic: blue,
   terrestrial: green,
   hostAssociated: red,
