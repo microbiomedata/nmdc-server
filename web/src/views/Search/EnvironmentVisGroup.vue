@@ -21,7 +21,10 @@ defineProps<{
       >
         <EcosystemSankey
           :conditions="conditions"
-          style="width: 100%; padding: 1rem"
+          :style="{
+            width: '100%',
+            padding: '1rem',
+          }"
           @selected="toggleConditions($event.conditions)"
         />
       </HelpWrapper>

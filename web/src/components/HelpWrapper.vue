@@ -23,7 +23,10 @@ const toggle = () => {
   isFullscreen.value = !isFullscreen.value;
   window.dispatchEvent(new Event('resize'));
 };
-const close = () => { isFullscreen.value = false; };
+const close = () => {
+  isFullscreen.value = false;
+  window.dispatchEvent(new Event('resize'));
+};
 </script>
 
 <template>
