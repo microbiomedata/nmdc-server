@@ -187,13 +187,13 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
                 <v-icon class="mr-1">
                   mdi-map-marker-outline
                 </v-icon>
-                Data
+                Omics & Map
               </v-tab>
               <v-tab :value="visTabs[1]">
                 <v-icon class="mr-1">
                   mdi-chart-box-outline
                 </v-icon>
-                Analysis
+                Timeline & Multi-omics
               </v-tab>
               <v-tab :value="visTabs[2]">
                 <v-icon class="mr-1">
