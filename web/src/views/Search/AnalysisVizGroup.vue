@@ -101,6 +101,7 @@ watchEffect(async () => {
         cols="6"
       >
         <HelpWrapper
+          :height="360"
           :help-text="helpTimeline"
         >
           <BinnedSummaryWrapper
@@ -124,6 +125,7 @@ watchEffect(async () => {
         cols="6"
       >
         <HelpWrapper
+          :height="360"
           :help-text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >

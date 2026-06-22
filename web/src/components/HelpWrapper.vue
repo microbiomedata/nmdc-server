@@ -41,7 +41,7 @@ const close = () => { isFullscreen.value = false; };
     to="body"
     :disabled="!isFullscreen"
   >
-    <v-card :class="['fullscreen-container', { 'fullscreen-container--fullscreen': isFullscreen }]">
+    <v-card :class="['fullscreen-container elevation-0', { 'fullscreen-container--fullscreen': isFullscreen }]">
       <div class="fullscreen-toolbar">
         <v-tooltip
           v-if="helpText"

@@ -41,6 +41,10 @@ export default defineComponent({
       type: Array,
       required: true,
     },
+    xAxisLabel: {
+      type: String,
+      required: true,
+    },
   },
 emits: ['onBrushEnd'],
 
@@ -51,7 +55,7 @@ emits: ['onBrushEnd'],
     const margin = {
       top: 20,
       right: 30,
-      bottom: 30,
+      bottom: 70,
       left: 30,
     };
     const drawn = ref(false);
@@ -195,6 +199,16 @@ emits: ['onBrushEnd'],
         .append('g')
         .attr('transform', 'translate(0,'.concat(height + 10, ')'))
         .call(axisBottom(x));
+      
+      // add the x Axis label
+      svg
+        .append('text')
+        .attr('x', width / 2)
+        .attr('y', height + 50)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '1rem')
+        .attr('font-weight', 'bold')
+        .text(props.xAxisLabel);
 
       svg.select('path').remove();
 
@@ -222,6 +236,10 @@ emits: ['onBrushEnd'],
 </template>
 
 <style scoped>
+svg {
+  display: block;
+}
+
 .bar {
   color: purple;
 }
