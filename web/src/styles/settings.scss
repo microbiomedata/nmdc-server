@@ -24,31 +24,22 @@
   color: inherit;
 }
 
-a, .v-theme--light a {
+a:not(.v-btn, .v-list-item),
+.v-theme--light a:not(.v-btn, .v-list-item) {
   color: rgb(var(--v-theme-link));
   text-decoration: none;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-a:hover, .v-theme--light a:hover {
+a:hover:not(.v-btn, .v-list-item),
+.v-theme--light a:hover:not(.v-btn, .v-list-item) {
   text-decoration: underline;
   opacity: 0.85;
 }
 
-a:visited, .v-theme--light a:visited {
+a:visited:not(.v-btn, .v-list-item),
+.v-theme--light a:visited:not(.v-btn, .v-list-item) {
   color: rgb(var(--v-theme-visited));
-}
-
-a.nav-link,
-a.nav-link:visited {
-  color: #707070;
-  opacity: 1;
-}
-
-.v-app-bar a:hover,
-a.nav-link:hover {
-  color: rgb(var(--v-theme-primary));
-  text-decoration: none;
 }
 
 // Utilities
