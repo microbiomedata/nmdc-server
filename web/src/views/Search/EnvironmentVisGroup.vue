@@ -5,7 +5,7 @@ import { toggleConditions } from '@/store';
 import { Condition } from '@/data/api';
 import { VISUALIZATION_HEIGHT } from '@/views/Search/types';
 
-const helpSankey = 'This Sankey diagram shows samples by their ecosystem. There is a hierarchical relationship between ecosystems, ecosystem categories, ecosystem types, ecosystem subtypes, and specific ecosystems. Click on a section to filter by that ecosystem.';
+const helpSankey = 'This Sankey diagram shows samples by their ecosystem. There is a hierarchical relationship between ecosystem categories, ecosystem types, ecosystem subtypes, and specific ecosystems. Click on a section to filter by that ecosystem.';
 
 defineProps<{
   conditions: Condition[];

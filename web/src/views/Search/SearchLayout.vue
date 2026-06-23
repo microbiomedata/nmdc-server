@@ -207,7 +207,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
               <v-window-item :value="VisualizationTabs.DataTypes">
                 <DataTypesVisGroup
                   :conditions="gatedDataVisConditions"
-                  :vis-tab="activeVisTab"
+                  :active-vis-tab="activeVisTab"
                 />
               </v-window-item>
               <v-window-item :value="VisualizationTabs.Timeline">
