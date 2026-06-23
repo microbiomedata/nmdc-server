@@ -64,12 +64,14 @@ const dialog = computed({
 });
 
 /**
- * Updates the user's email address to be the one in the form, trimmed of leading/trailing whitespace.
+ * Updates the user's email address to be the one in the form (trimmed), if the latter is valid.
  */
 const updateEmail = async () => {
   const trimmedEmailAddr = submitterEmail.value.trim();
-  await updateUser(trimmedEmailAddr);
-  dialog.value = false;
+  if (validateEmailAddr(trimmedEmailAddr)) {
+    await updateUser(trimmedEmailAddr);
+    dialog.value = false;
+  }
 };
 </script>
 
