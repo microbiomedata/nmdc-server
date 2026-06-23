@@ -46,6 +46,15 @@ const updateUser = async (value:string) => {
   user.value = await updateUserRequest.request(() => api.updateUser(user.value!.id, update));
 };
 
+/**
+ * Returns `true` if the specified string resembles an email address.
+ * 
+ * Note: This basic check still accepts things like ` u s e r @ example . com `.
+ *
+ * Reference: https://en.wikipedia.org/wiki/Email_address#Validation_and_verification
+ */
+const validateEmailAddr = (s: string) => /.+@.+\..+/.test(s);
+
 const submitterEmail = ref(user.value?.email ?? '');
 
 // dialog is bound to the modal to determine whether to display or not
@@ -54,10 +63,15 @@ const dialog = computed({
   set: (v: boolean) => emit('update:value', v),
 });
 
+/**
+ * Updates the user's email address to be the one in the form (trimmed), if the latter is valid.
+ */
 const updateEmail = async () => {
-  const email = submitterEmail.value?.trim();
-  await updateUser(email);
-  dialog.value = false;
+  const trimmedEmailAddr = submitterEmail.value.trim();
+  if (validateEmailAddr(trimmedEmailAddr)) {
+    await updateUser(trimmedEmailAddr);
+    dialog.value = false;
+  }
 };
 </script>
 
@@ -68,18 +82,19 @@ const updateEmail = async () => {
     max-width="600"
   >
     <v-card title="Update Email Address">
-      <v-card-text>
-        We were unable to obtain your email address from ORCID. Please provide your email address below to continue.
-      </v-card-text>
-      <v-card-text>
-        <v-form
-          ref="formRef"
-          class="my-6"
-        >
+      <v-form
+        ref="formRef"
+        class="my-6"
+        @submit.prevent="updateEmail"
+      >
+        <v-card-text>
+          We were unable to obtain your email address from ORCID. Please provide your email address below to continue.
+        </v-card-text>
+        <v-card-text>
           <v-text-field
             v-model="submitterEmail"
             :rules="requiredRules('Email is required', [
-              v => /.+@.+\..+/.test(v) || 'Email must be valid',
+              v => validateEmailAddr(v.trim()) || 'Email must be valid',
             ])"
             validate-on-blur
             label="User Email *"
@@ -89,27 +104,27 @@ const updateEmail = async () => {
             dense
             class="my-2"
           />
-        </v-form>
-        <v-alert
-          v-if="updateUserRequest.error.value"
-          type="error"
-          class="mt-4"
-        >
-          Something went wrong while updating your email address. Please try again, and if the problem persists, contact us for assistance.
-        </v-alert>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer class="text-center">
-          <v-btn
-            color="primary"
-            :disabled="!formRef?.isValid || updateUserRequest.loading.value"
-            :loading="updateUserRequest.loading.value"
-            @click="updateEmail"
+          <v-alert
+            v-if="updateUserRequest.error.value"
+            type="error"
+            class="mt-4"
           >
-            Save
-          </v-btn>
-        </v-spacer>
-      </v-card-actions>
+            Something went wrong while updating your email address. Please try again, and if the problem persists, contact us for assistance.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer class="text-center">
+            <v-btn
+              color="primary"
+              :disabled="!formRef?.isValid || updateUserRequest.loading.value"
+              :loading="updateUserRequest.loading.value"
+              type="submit"
+            >
+              Save
+            </v-btn>
+          </v-spacer>
+        </v-card-actions>
+      </v-form>
     </v-card>
   </v-dialog>
 </template>
