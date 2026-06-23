@@ -51,7 +51,7 @@ const updateUser = async (value:string) => {
  * 
  * Note: This basic check still accepts things like ` u s e r @ example . com `.
  *
- * Docs: https://en.wikipedia.org/wiki/Email_address#Validation_and_verification
+ * Reference: https://en.wikipedia.org/wiki/Email_address#Validation_and_verification
  */
 const validateEmailAddr = (s: string) => /.+@.+\..+/.test(s);
 
