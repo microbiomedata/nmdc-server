@@ -30,65 +30,67 @@ const close = () => {
 </script>
 
 <template>
-  <Teleport
-    v-if="allowFullscreen"
-    to="body"
-  >
-    <div
-      class="fullscreen-backdrop"
-      :class="{ 'fullscreen-backdrop--visible': isFullscreen }"
-      @click="close"
-    />
-  </Teleport>
-  <Teleport
-    to="body"
-    :disabled="!isFullscreen"
-  >
-    <v-card :class="['fullscreen-container elevation-0', { 'fullscreen-container--fullscreen': isFullscreen }]">
-      <div class="fullscreen-toolbar">
-        <v-tooltip
-          v-if="helpText"
-          location="left"
-          offset="20"
-          min-width="300px"
-          max-width="300px"
-          :z-index="isFullscreen ? 2500 : undefined"
-        >
-          <template #activator="{ props: tooltipProps }">
-            <v-btn
-              v-bind="tooltipProps"
-              icon="mdi-help-circle"
-              size="large"
-              variant="text"
-              color="grey-darken-1"
-              density="compact"
-            />
-          </template>
-          <span v-html="helpText" />
-        </v-tooltip>
-        <v-btn
-          v-if="allowFullscreen"
-          :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
-          size="x-large"
-          variant="text"
-          density="compact"
-          :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-          @click="toggle"
-        />
-      </div>
+  <div>
+    <Teleport
+      v-if="allowFullscreen"
+      to="body"
+    >
       <div
-        class="fullscreen-scroll-area"
-        :style="{ 
-          height: isFullscreen ? '90vh' : heightString,
-        }"
-      >
-        <slot 
-          :is-fullscreen="isFullscreen"
-          :toggle="toggle"
-        />
-      </div>
-    </v-card>
-  </Teleport>
+        class="fullscreen-backdrop"
+        :class="{ 'fullscreen-backdrop--visible': isFullscreen }"
+        @click="close"
+      />
+    </Teleport>
+    <Teleport
+      to="body"
+      :disabled="!isFullscreen"
+    >
+      <v-card :class="['fullscreen-container elevation-0', { 'fullscreen-container--fullscreen': isFullscreen }]">
+        <div class="fullscreen-toolbar">
+          <v-tooltip
+            v-if="helpText"
+            location="left"
+            offset="20"
+            min-width="300px"
+            max-width="300px"
+            :z-index="isFullscreen ? 2500 : undefined"
+          >
+            <template #activator="{ props: tooltipProps }">
+              <v-btn
+                v-bind="tooltipProps"
+                icon="mdi-help-circle"
+                size="large"
+                variant="text"
+                color="grey-darken-1"
+                density="compact"
+              />
+            </template>
+            <span v-html="helpText" />
+          </v-tooltip>
+          <v-btn
+            v-if="allowFullscreen"
+            :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
+            size="x-large"
+            variant="text"
+            density="compact"
+            :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+            @click="toggle"
+          />
+        </div>
+        <div
+          class="fullscreen-scroll-area"
+          :style="{ 
+            height: isFullscreen ? '90vh' : heightString,
+          }"
+        >
+          <slot 
+            :is-fullscreen="isFullscreen"
+            :toggle="toggle"
+          />
+        </div>
+      </v-card>
+    </Teleport>
+  </div>
 </template>
 
 <style scoped>
