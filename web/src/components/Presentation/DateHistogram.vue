@@ -111,16 +111,9 @@ watch(() => props.myConditions, () => {
       <template #default="{ width }">
         <TimeHistogram
           ref="histogram"
-          v-bind="{ width, height, selectedData: facetSummary, totalData: facetSummaryUnconditional, range: range || [] }"
+          v-bind="{ width, height, selectedData: facetSummary, totalData: facetSummaryUnconditional, range: range || [], xAxisLabel: 'Collection Date' }"
           @on-brush-end="onBrushEnd"
         />
-      </template>
-      <template #below>
-        <div class="mx-4 d-flex">
-          <v-spacer />
-          <h4>Collection Date</h4>
-          <v-spacer />
-        </div>
       </template>
     </ChartContainer>
     <div
@@ -128,7 +121,9 @@ watch(() => props.myConditions, () => {
       class="d-flex align-center justify-center"
       :style="{ height: `${height}px` }"
     >
-      <p class="text-grey">No results for this search</p>
+      <p class="text-grey">
+        No results for this search
+      </p>
     </div>
   </div>
 </template>

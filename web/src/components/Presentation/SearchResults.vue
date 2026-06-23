@@ -28,6 +28,31 @@ const rows = ref(props.itemsPerPage);
 
 <template>
   <div>
+    <div
+      v-if="!disablePagination && count > 0"
+      class="d-flex pt-2 align-end justify-center"
+    >
+      <v-pagination
+        :model-value="page"
+        :length="Math.ceil(count / rows)"
+        :total-visible="7"
+        active-color="primary"
+        size="default"
+        @update:model-value="emit('set-page', $event)"
+      />
+      <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
+           positioned it doesn't count towards the `auto` width -->
+      <v-select
+        v-model="rows"
+        :items="[5, 10, 15, 20]"
+        label="Items per page"
+        class="ml-4 mb-1 flex-grow-0"
+        :style="{ 'flex-basis': '6rem' }"
+        hide-details
+        variant="plain"
+        @update:model-value="emit('set-items-per-page', $event)"
+      />
+    </div>
     <v-list>
       <template
         v-for="(result, resultIndex) in results"
@@ -96,7 +121,7 @@ const rows = ref(props.itemsPerPage);
     </v-list>
     <div
       v-if="!disablePagination && count > 0"
-      class="d-flex pt-2 pb-0 align-end justify-center"
+      class="d-flex pb-2 align-end justify-center"
     >
       <v-pagination
         :model-value="page"

@@ -26,6 +26,7 @@ export default createVuetify({
           info: colors.info,
           link: colors.link,
           visited: colors.visited,
+          visualization: colors.visualization,
         },
       },
     },

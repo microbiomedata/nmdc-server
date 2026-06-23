@@ -1,34 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue';
-import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
+import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import UpSet from '@/components/Presentation/UpSet.vue';
-import ChartContainer from '@/components/Presentation/ChartContainer.vue';
+import { computed, ref, watchEffect } from 'vue';
 // TODO: replace with composition functions
-import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import BinnedSummaryWrapper from '@/components/Wrappers/BinnedSummaryWrapper.vue';
 // ENDTODO
-import TooltipCard from '@/components/TooltipCard.vue';
-import ClusterMap from '@/components/ClusterMap.vue';
+import HelpWrapper from '@/components/HelpWrapper.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
-import {
-  toggleConditions, setUniqueCondition,
-} from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import { makeSetsFromBitmask } from '@/encoding';
+import {
+  setUniqueCondition
+} from '@/store';
 import useRequest from '@/use/useRequest';
+import { VISUALIZATION_HEIGHT } from '@/views/Search/types';
 
-const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
-const helpMap = `
-  Shows the geographic locations (latitude and longitude) where samples were collected.
-  <ul>
-    <li>Click on a cluster to zoom in.</li>
-    <li>Click "Search this region" to filter results to the current map view.</li>
-  </ul>
-  <strong>Note:</strong> Samples collected at the poles may not appear on the map due to projection limits,
-  but they are included in other visualizations and the biosample table.
-`;
 const helpTimeline = 'Displays sample collections grouped by collection date. Click and drag on the timeline to filter by collection date. The selected region can be moved by dragging it from the center. The region can be resized by clicking and dragging at the edges. Click outside the region to clear it.';
 const helpUpset = 'This UpSet plot shows the number of samples with corresponding omic data associated. For example: a sample could have metagenomics, metatranscriptomics, and natural organic matter characterizations. You can select samples by clicking on the bar chart or counts to the right of the bar chart';
 
@@ -42,12 +30,9 @@ const staticUpsetTooltips = {
   AMP: 'Amplicon',
 };
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   conditions: Condition[];
-  visTab?: number | null;
-}>(), {
-  visTab: null,
-});
+}>();
 
 const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
 const studyFacetSummary = ref<FacetSummaryResponse[] | null>(null);
@@ -104,59 +89,18 @@ watchEffect(async () => {
   sampleFacetSummary.value = await sampleRequest.request(() => api.getFacetSummary('biosample', 'multiomics', props.conditions));
   studyFacetSummary.value = await studyRequest.request(() => api.getFacetSummary('study', 'multiomics', props.conditions));
 });
-
-function setBoundsFromMap(val: Condition[]) {
-  setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
-}
 </script>
 
 <template>
   <div>
-    <v-row>
-      <v-col :cols="5">
-        <TooltipCard :text="helpBarchart">
-          <FacetSummaryWrapper
-            table="omics_processing"
-            field="omics_type"
-            :conditions="conditions"
-            use-all-conditions
-          >
-            <template #default="slotProps">
-              <FacetBarChart
-                v-bind="slotProps"
-                :height="360"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="120"
-                :right-margin="80"
-                @selected="toggleConditions($event.conditions)"
-              />
-            </template>
-          </FacetSummaryWrapper>
-        </TooltipCard>
-      </v-col>
-      <v-col
-        class="pl-0"
-        :cols="7"
-      >
-        <TooltipCard
-          :text="helpMap"
-          class="pa-1"
-        >
-          <ClusterMap
-            :conditions="conditions"
-            :height="360"
-            :vis-tab="visTab"
-            @selected="setBoundsFromMap($event)"
-          />
-        </TooltipCard>
-      </v-col>
-    </v-row>
     <v-row class="mt-0">
-      <v-col cols="6">
-        <TooltipCard
-          :text="helpTimeline"
-          class="py-2"
+      <v-col
+        class="border-e"
+        cols="6"
+      >
+        <HelpWrapper
+          :height="VISUALIZATION_HEIGHT"
+          :help-text="helpTimeline"
         >
           <BinnedSummaryWrapper
             table="biosample"
@@ -167,28 +111,29 @@ function setBoundsFromMap(val: Condition[]) {
             <template #default="slotProps">
               <DateHistogram
                 v-bind="slotProps"
-                :height="240"
+                :height="VISUALIZATION_HEIGHT"
                 @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />
             </template>
           </BinnedSummaryWrapper>
-        </TooltipCard>
+        </HelpWrapper>
       </v-col>
       <v-col
         class="pl-0"
         cols="6"
       >
-        <TooltipCard
-          :text="helpUpset"
+        <HelpWrapper
+          :height="VISUALIZATION_HEIGHT"
+          :help-text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
           <LoadingOverlay
             :loading="upSetLoading"
             :error="upSetError"
-            :height="240"
+            :height="VISUALIZATION_HEIGHT"
           />
           <ChartContainer
-            :height="240"
+            :height="331"
           >
             <template #default="{ width, height }">
               <UpSet
@@ -212,7 +157,7 @@ function setBoundsFromMap(val: Condition[]) {
               {{ key }}: {{ value }}
             </span>
           </div>
-        </TooltipCard>
+        </HelpWrapper>
       </v-col>
     </v-row>
   </div>
@@ -220,6 +165,7 @@ function setBoundsFromMap(val: Condition[]) {
 
 <style scoped>
 .upset-legend {
+  height: 29px;
   display: flex;
   flex-wrap: wrap;
   line-height: 0.9em;

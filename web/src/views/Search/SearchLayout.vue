@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   computed, Ref, ref,
+  watch,
 
 } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
@@ -23,15 +24,19 @@ import AppBanner from '@/components/AppBanner.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
 import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
-import BiosampleVisGroup from './BiosampleVisGroup.vue';
+import DataTypesVisGroup from './DataTypesVisGroup.vue';
+import TimelineVisGroup from './TimelineVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ResultsTabs, VisualizationTabs } from '@/views/Search/types.ts';
 
 const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
-// TODO: would we rather use the study description from the schema?
-// const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
-const studyDescription = 'Research-driven experimental datasets and standardized data collections.';
+const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
+
+const route = useRoute();
+const router = useRouter();
 
 /**
  * Study checkbox state logic
@@ -110,21 +115,29 @@ const studyResults = computed<StudySearchResult[]>(() => Object.values(study.dat
   })));
 
 const loggedInUser = computed(() => stateRefs.user.value !== null);
-
-const visTab = ref(0);
-const resultsTab = ref(0);
-const gatedOmicsVisConditions = useClockGate(
-  computed(() => (visTab.value === 0)),
+const activeVisTab = ref(route.query.view as string || VisualizationTabs.DataTypes);
+const activeResultsTab = ref(route.query.results as string || ResultsTabs.Studies);
+const gatedDataVisConditions = useClockGate(
+  computed(() => (activeVisTab.value === VisualizationTabs.DataTypes)),
+  stateRefs.conditions,
+);
+const gatedAnalysisVisConditions = useClockGate(
+  computed(() => (activeVisTab.value === VisualizationTabs.Timeline)),
   stateRefs.conditions,
 );
 const gatedEnvironmentVisConditions = useClockGate(
-  computed(() => (visTab.value === 1)),
+  computed(() => (activeVisTab.value === VisualizationTabs.Environment)),
   stateRefs.conditions,
 );
 const showChildren: Ref<any[]> = ref([]);
 function toggleChildren(value:StudySearchResult) {
   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
 }
+
+watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
+  const { view, results, ...rest } = route.query;
+  router.replace({ query: { view: newVisTab, results: newResultsTab, ...rest } })
+});
 </script>
 
 <template>
@@ -142,51 +155,83 @@ function toggleChildren(value:StudySearchResult) {
     <AppBanner />
     <v-container
       fluid
-      class="py-0"
+      class="py-3"
     >
       <v-row>
         <v-col>
-          <v-row class="align-center">
-            <v-col>
-              <v-tabs
-                v-model="visTab"
-                color="primary"
+          <div class="d-flex align-center mb-3">
+            <div class="font-weight-bold text-title-2 text-primary flex-grow-1">
+              <span v-if="biosample.loading.value">
+                Loading results...
+              </span>
+              <span
+                v-else
+                class="d-flex align-center"
               >
-                <v-tab key="omics">
-                  Data Type
-                </v-tab>
-                <v-tab key="environments">
-                  Environment
-                </v-tab>
-              </v-tabs>
-            </v-col>
-            <v-col class="d-flex justify-end flex-grow-0 flex-shrink-0">
-              <search-help-menu />
-            </v-col>
-          </v-row>
-          <v-window
-            v-model="visTab"
-            class="my-3"
+                <span>Found {{ biosample.data.results.count }} samples</span>
+              </span>
+            </div>
+            <SearchHelpMenu />
+          </div>
+          <v-card
+            class="mb-3" 
+            variant="outlined"
           >
-            <v-window-item key="omics">
-              <BiosampleVisGroup
-                :conditions="gatedOmicsVisConditions"
-                :vis-tab="visTab"
-              />
-            </v-window-item>
-            <v-window-item key="environments">
-              <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
-            </v-window-item>
-          </v-window>
-          <v-card variant="outlined">
             <v-tabs
-              v-model="resultsTab"
+              v-model="activeVisTab"
               color="primary"
             >
-              <v-tab key="studies">
+              <v-tab :value="VisualizationTabs.DataTypes">
+                <v-icon class="mr-1">
+                  mdi-map-marker-outline
+                </v-icon>
+                Data Types & Map
+              </v-tab>
+              <v-tab :value="VisualizationTabs.Timeline">
+                <v-icon class="mr-1">
+                  mdi-chart-box-outline
+                </v-icon>
+                Timeline & Multi-omics
+              </v-tab>
+              <v-tab :value="VisualizationTabs.Environment">
+                <v-icon class="mr-1">
+                  mdi-chart-sankey-variant
+                </v-icon>
+                Environment
+              </v-tab>
+            </v-tabs>
+            <v-divider />
+            <v-window
+              v-model="activeVisTab"
+            >
+              <v-window-item :value="VisualizationTabs.DataTypes">
+                <DataTypesVisGroup
+                  :conditions="gatedDataVisConditions"
+                  :active-vis-tab="activeVisTab"
+                />
+              </v-window-item>
+              <v-window-item :value="VisualizationTabs.Timeline">
+                <TimelineVisGroup
+                  :conditions="gatedAnalysisVisConditions"
+                />
+              </v-window-item>
+              <v-window-item :value="VisualizationTabs.Environment">
+                <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
+              </v-window-item>
+            </v-window>
+          </v-card>
+          <v-card variant="outlined">
+            <v-tabs
+              v-model="activeResultsTab"
+              color="primary"
+            >
+              <v-tab :value="ResultsTabs.Studies">
                 <div class="d-flex align-center ga-2">
                   <span>Studies ({{ study.data.results.count }})</span>
-                  <v-tooltip location="top">
+                  <v-tooltip
+                    location="top"
+                    max-width="300px"
+                  >
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
@@ -199,10 +244,13 @@ function toggleChildren(value:StudySearchResult) {
                   </v-tooltip>
                 </div>
               </v-tab>
-              <v-tab key="samples">
+              <v-tab :value="ResultsTabs.Samples">
                 <div class="d-flex align-center ga-2">
                   <span>Samples ({{ biosample.data.results.count }})</span>
-                  <v-tooltip location="top">
+                  <v-tooltip
+                    location="top"
+                    max-width="300px"
+                  >
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
@@ -228,9 +276,9 @@ function toggleChildren(value:StudySearchResult) {
             </v-tabs>
             <v-divider />
             <v-tabs-window
-              v-model="resultsTab"
+              v-model="activeResultsTab"
             >
-              <v-tabs-window-item key="studies">
+              <v-tabs-window-item :value="ResultsTabs.Studies">
                 <SearchResults
                   :count="study.data.results.count"
                   :icon="studyType.icon"
@@ -419,7 +467,7 @@ function toggleChildren(value:StudySearchResult) {
                   </template>
                 </SearchResults>
               </v-tabs-window-item>
-              <v-tabs-window-item key="samples">
+              <v-tabs-window-item :value="ResultsTabs.Samples">
                 <BiosampleSearchResults
                   :data-object-filter="dataObjectFilter"
                   :biosample-search="biosample"
