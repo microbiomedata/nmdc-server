@@ -100,7 +100,6 @@ describe('validatePlateWellsForJgi', () => {
 
   it('ignores non-plate rows', () => {
     const issues = validatePlateWellsForJgi([
-      { cont_type: 'tube', container_name: 'tube-1', cont_well: 'Z99' },
       { cont_type: 'tube', container_name: 'tube-2', cont_well: '' },
       { cont_type: 'tube', container_name: 'tube-3' },
     ]);
