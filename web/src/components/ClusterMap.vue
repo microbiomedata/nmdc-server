@@ -27,6 +27,7 @@ import shadowurl from 'leaflet/dist/images/marker-shadow.png';
 import { api, Condition, EnvironmentGeospatialEntity } from '@/data/api';
 import useRequest from '@/use/useRequest';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
+import { VisualizationTabs } from '@/views/Search/types';
 
 /**
  * LEAFLET icon missing hack fix
@@ -83,7 +84,7 @@ const mapCenter = computed(() => {
 });
 
 async function getMapData() {
-  if (props.visTab !== 'data') {
+  if (props.visTab !== VisualizationTabs.DataTypes) {
     return;
   }
   const data = await request(() => api.getEnvironmentGeospatialAggregation(props.conditions));

@@ -30,6 +30,7 @@ import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
 import { useRoute, useRouter } from 'vue-router';
+import { ResultsTabs, VisualizationTabs } from '@/views/Search/types.ts';
 
 const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
 const studyDescription = NmdcSchema.classes[types.study.schemaName].description;
@@ -114,21 +115,18 @@ const studyResults = computed<StudySearchResult[]>(() => Object.values(study.dat
   })));
 
 const loggedInUser = computed(() => stateRefs.user.value !== null);
-
-const visTabs = ref(['data', 'analysis', 'environment']);
-const resultsTabs = ref(['studies', 'samples']);
-const activeVisTab = ref(route.query.view as string || visTabs.value[0]);
-const activeResultsTab = ref(route.query.results as string || resultsTabs.value[0]);
+const activeVisTab = ref(route.query.view as string || VisualizationTabs.DataTypes);
+const activeResultsTab = ref(route.query.results as string || ResultsTabs.Studies);
 const gatedDataVisConditions = useClockGate(
-  computed(() => (activeVisTab.value === visTabs.value[0])),
+  computed(() => (activeVisTab.value === VisualizationTabs.DataTypes)),
   stateRefs.conditions,
 );
 const gatedAnalysisVisConditions = useClockGate(
-  computed(() => (activeVisTab.value === visTabs.value[1])),
+  computed(() => (activeVisTab.value === VisualizationTabs.Timeline)),
   stateRefs.conditions,
 );
 const gatedEnvironmentVisConditions = useClockGate(
-  computed(() => (activeVisTab.value === visTabs.value[2])),
+  computed(() => (activeVisTab.value === VisualizationTabs.Environment)),
   stateRefs.conditions,
 );
 const showChildren: Ref<any[]> = ref([]);
@@ -183,19 +181,19 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
               v-model="activeVisTab"
               color="primary"
             >
-              <v-tab :value="visTabs[0]">
+              <v-tab :value="VisualizationTabs.DataTypes">
                 <v-icon class="mr-1">
                   mdi-map-marker-outline
                 </v-icon>
-                Omics & Map
+                Data Types & Map
               </v-tab>
-              <v-tab :value="visTabs[1]">
+              <v-tab :value="VisualizationTabs.Timeline">
                 <v-icon class="mr-1">
                   mdi-chart-box-outline
                 </v-icon>
                 Timeline & Multi-omics
               </v-tab>
-              <v-tab :value="visTabs[2]">
+              <v-tab :value="VisualizationTabs.Environment">
                 <v-icon class="mr-1">
                   mdi-chart-sankey-variant
                 </v-icon>
@@ -206,19 +204,19 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
             <v-window
               v-model="activeVisTab"
             >
-              <v-window-item :value="visTabs[0]">
+              <v-window-item :value="VisualizationTabs.DataTypes">
                 <BiosampleVisGroup
                   :conditions="gatedDataVisConditions"
                   :vis-tab="activeVisTab"
                 />
               </v-window-item>
-              <v-window-item :value="visTabs[1]">
+              <v-window-item :value="VisualizationTabs.Timeline">
                 <AnalysisVizGroup
                   :conditions="gatedAnalysisVisConditions"
                   :vis-tab="activeVisTab"
                 />
               </v-window-item>
-              <v-window-item :value="visTabs[2]">
+              <v-window-item :value="VisualizationTabs.Environment">
                 <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
               </v-window-item>
             </v-window>
@@ -228,7 +226,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
               v-model="activeResultsTab"
               color="primary"
             >
-              <v-tab :value="resultsTabs[0]">
+              <v-tab :value="ResultsTabs.Studies">
                 <div class="d-flex align-center ga-2">
                   <span>Studies ({{ study.data.results.count }})</span>
                   <v-tooltip
@@ -247,7 +245,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
                   </v-tooltip>
                 </div>
               </v-tab>
-              <v-tab :value="resultsTabs[1]">
+              <v-tab :value="ResultsTabs.Samples">
                 <div class="d-flex align-center ga-2">
                   <span>Samples ({{ biosample.data.results.count }})</span>
                   <v-tooltip
@@ -281,7 +279,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
             <v-tabs-window
               v-model="activeResultsTab"
             >
-              <v-tabs-window-item :value="resultsTabs[0]">
+              <v-tabs-window-item :value="ResultsTabs.Studies">
                 <SearchResults
                   :count="study.data.results.count"
                   :icon="studyType.icon"
@@ -470,7 +468,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
                   </template>
                 </SearchResults>
               </v-tabs-window-item>
-              <v-tabs-window-item :value="resultsTabs[1]">
+              <v-tabs-window-item :value="ResultsTabs.Samples">
                 <BiosampleSearchResults
                   :data-object-filter="dataObjectFilter"
                   :biosample-search="biosample"
