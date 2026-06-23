@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { VISUALIZATION_HEIGHT } from '@/views/Search/types';
 import { ref } from 'vue';
 
 /**
@@ -13,7 +14,7 @@ const props = withDefaults(defineProps<{
   /** Text to show in the help tooltip */
   helpText?: string | null;
 }>(), {
-  height: '360px',
+  height: VISUALIZATION_HEIGHT,
   helpText: null,
 });
 

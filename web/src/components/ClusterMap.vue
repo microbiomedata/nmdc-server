@@ -27,7 +27,7 @@ import shadowurl from 'leaflet/dist/images/marker-shadow.png';
 import { api, Condition, EnvironmentGeospatialEntity } from '@/data/api';
 import useRequest from '@/use/useRequest';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
-import { VisualizationTabs } from '@/views/Search/types';
+import { VISUALIZATION_HEIGHT, VisualizationTabs } from '@/views/Search/types';
 
 /**
  * LEAFLET icon missing hack fix
@@ -54,7 +54,7 @@ const props = withDefaults(defineProps<{
   activeVisTab?: string | null;
 }>(), {
   conditions: () => [],
-  height: 360,
+  height: VISUALIZATION_HEIGHT,
   activeVisTab: null,
 });
 

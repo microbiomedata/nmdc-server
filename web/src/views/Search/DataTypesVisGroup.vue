@@ -12,6 +12,7 @@ import {
 } from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import useRequest from '@/use/useRequest';
+import { VISUALIZATION_HEIGHT } from '@/views/Search/types';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
 const helpMap = `
@@ -64,7 +65,7 @@ function setBoundsFromMap(val: Condition[]) {
             <template #default="slotProps">
               <FacetBarChart
                 v-bind="slotProps"
-                :height="360"
+                :height="VISUALIZATION_HEIGHT"
                 :show-title="false"
                 :show-baseline="false"
                 :left-margin="120"
@@ -81,13 +82,13 @@ function setBoundsFromMap(val: Condition[]) {
       >
         <HelpWrapper
           :help-text="helpMap"
-          :height="360"
+          :height="VISUALIZATION_HEIGHT"
           allow-fullscreen
         >
           <template #default="{ isFullscreen }">
             <ClusterMap
               :conditions="conditions"
-              :height="isFullscreen ? '90vh' : 360"
+              :height="isFullscreen ? '90vh' : VISUALIZATION_HEIGHT"
               :active-vis-tab="activeVisTab"
               @selected="setBoundsFromMap($event)"
             />

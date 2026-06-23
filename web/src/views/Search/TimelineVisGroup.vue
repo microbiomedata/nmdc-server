@@ -15,6 +15,7 @@ import {
   setUniqueCondition
 } from '@/store';
 import useRequest from '@/use/useRequest';
+import { VISUALIZATION_HEIGHT } from '@/views/Search/types';
 
 const helpTimeline = 'Displays sample collections grouped by collection date. Click and drag on the timeline to filter by collection date. The selected region can be moved by dragging it from the center. The region can be resized by clicking and dragging at the edges. Click outside the region to clear it.';
 const helpUpset = 'This UpSet plot shows the number of samples with corresponding omic data associated. For example: a sample could have metagenomics, metatranscriptomics, and natural organic matter characterizations. You can select samples by clicking on the bar chart or counts to the right of the bar chart';
@@ -98,7 +99,7 @@ watchEffect(async () => {
         cols="6"
       >
         <HelpWrapper
-          :height="360"
+          :height="VISUALIZATION_HEIGHT"
           :help-text="helpTimeline"
         >
           <BinnedSummaryWrapper
@@ -110,7 +111,7 @@ watchEffect(async () => {
             <template #default="slotProps">
               <DateHistogram
                 v-bind="slotProps"
-                :height="360"
+                :height="VISUALIZATION_HEIGHT"
                 @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />
             </template>
@@ -122,14 +123,14 @@ watchEffect(async () => {
         cols="6"
       >
         <HelpWrapper
-          :height="360"
+          :height="VISUALIZATION_HEIGHT"
           :help-text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
           <LoadingOverlay
             :loading="upSetLoading"
             :error="upSetError"
-            :height="360"
+            :height="VISUALIZATION_HEIGHT"
           />
           <ChartContainer
             :height="331"
