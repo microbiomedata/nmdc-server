@@ -106,7 +106,7 @@ export default defineComponent({
       if (_study.omics_processing_counts !== null) {
         const counts: Record<string, number> = {};
         _study.omics_processing_counts.forEach(({type, count}) => {
-          if (type.toLowerCase() !== 'lipidomics' && count > 0) {
+          if (count > 0) {
             counts[type] = count;
           }
         });
