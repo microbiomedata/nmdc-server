@@ -220,7 +220,9 @@ watch([toRef(props, 'conditions')], () => {
 watch(() => props.height, () => {
   setTimeout(() => {
     mapRef.value?.leafletObject?.invalidateSize(true);
-    mapRef.value?.leafletObject?.fitBounds(mapCenter.value);
+    if (mapData.value.length > 0 && mapCenter.value) {
+      mapRef.value?.leafletObject?.fitBounds(mapCenter.value);
+    }
   }, 500);
 });
 </script>
