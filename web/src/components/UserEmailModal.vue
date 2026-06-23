@@ -49,7 +49,7 @@ const updateUser = async (value:string) => {
 /**
  * Returns `true` if the specified string resembles an email address.
  * 
- * Note: This basic checks still accepts things like ` h e l l o @ example . com `.
+ * Note: This basic check still accepts things like ` u s e r @ example . com `.
  *
  * Docs: https://en.wikipedia.org/wiki/Email_address#Validation_and_verification
  */
