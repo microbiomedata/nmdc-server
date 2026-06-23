@@ -1981,7 +1981,7 @@ wheels = [
 
 [[package]]
 name = "nmdc-metadata-suggestor-ai-tool"
-version = "1.1.2"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "curl-cffi" },
@@ -1994,9 +1994,9 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/13/ca/9bab3f48085e836359ee960d6ef2e2589058e7cd1c9a1b054ef31fa81719/nmdc_metadata_suggestor_ai_tool-1.1.2.tar.gz", hash = "sha256:42d47ab327c3c2ef8497ad72e8e9c2523dcf420fe7dbcbdee96da3e9a2825874", size = 82496, upload-time = "2026-04-29T15:15:01.333Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/43/3c176e92d0cd414f503a1a61f539d1953f6271d55ce298a30ff844a37bdd/nmdc_metadata_suggestor_ai_tool-1.2.0.tar.gz", hash = "sha256:77979409b8247280e5be5e8466aa6e4ad8add132daf1517639b09f1d2dbbd808", size = 105344, upload-time = "2026-05-06T20:02:21.858Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/bf/ff98cedd78443bae9ed9860075ea43c729fe14694f722e52c0e210b0dd21/nmdc_metadata_suggestor_ai_tool-1.1.2-py3-none-any.whl", hash = "sha256:3bfaacb30e4239e67d91fbbf412d61a19ddc9feeee7ffd11a7167e2d628b61d0", size = 66690, upload-time = "2026-04-29T15:14:59.792Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/88/5ff7d9d45d5dd1d90cbf828cd405542902f4d3744d8cb89d46d38427b997/nmdc_metadata_suggestor_ai_tool-1.2.0-py3-none-any.whl", hash = "sha256:693c28bcc4573af94f499492cf83bd01eb95706497949e386b0b45e71d6a68a2", size = 68482, upload-time = "2026-05-06T20:02:20.463Z" },
 ]
 
 [[package]]
@@ -2099,7 +2099,7 @@ requires-dist = [
     { name = "linkml-runtime" },
     { name = "nmdc-api-utilities" },
     { name = "nmdc-geoloc-tools" },
-    { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.1.2" },
+    { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.2.0" },
     { name = "nmdc-schema", specifier = "==11.20.2" },
     { name = "nmdc-submission-schema", specifier = "==11.20.1" },
     { name = "pint" },
