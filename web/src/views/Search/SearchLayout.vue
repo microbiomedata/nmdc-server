@@ -24,8 +24,8 @@ import AppBanner from '@/components/AppBanner.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
 import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
-import BiosampleVisGroup from './BiosampleVisGroup.vue';
-import AnalysisVizGroup from './AnalysisVizGroup.vue';
+import DataTypesVisGroup from './DataTypesVisGroup.vue';
+import TimelineVisGroup from './TimelineVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
@@ -205,15 +205,14 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
               v-model="activeVisTab"
             >
               <v-window-item :value="VisualizationTabs.DataTypes">
-                <BiosampleVisGroup
+                <DataTypesVisGroup
                   :conditions="gatedDataVisConditions"
                   :vis-tab="activeVisTab"
                 />
               </v-window-item>
               <v-window-item :value="VisualizationTabs.Timeline">
-                <AnalysisVizGroup
+                <TimelineVisGroup
                   :conditions="gatedAnalysisVisConditions"
-                  :vis-tab="activeVisTab"
                 />
               </v-window-item>
               <v-window-item :value="VisualizationTabs.Environment">

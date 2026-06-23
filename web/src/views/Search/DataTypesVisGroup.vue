@@ -26,9 +26,10 @@ const helpMap = `
 
 const props = withDefaults(defineProps<{
   conditions: Condition[];
-  visTab?: string | null;
+  /** The name of the currently active visualization tab */
+  activeVisTab?: string | null;
 }>(), {
-  visTab: null,
+  activeVisTab: null,
 });
 
 const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
@@ -87,7 +88,7 @@ function setBoundsFromMap(val: Condition[]) {
             <ClusterMap
               :conditions="conditions"
               :height="isFullscreen ? '90vh' : 360"
-              :vis-tab="visTab"
+              :active-vis-tab="activeVisTab"
               @selected="setBoundsFromMap($event)"
             />
           </template>

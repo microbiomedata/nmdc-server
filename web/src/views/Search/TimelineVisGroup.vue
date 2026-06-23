@@ -29,12 +29,9 @@ const staticUpsetTooltips = {
   AMP: 'Amplicon',
 };
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   conditions: Condition[];
-  visTab?: string | null;
-}>(), {
-  visTab: null,
-});
+}>();
 
 const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
 const studyFacetSummary = ref<FacetSummaryResponse[] | null>(null);
