@@ -47,9 +47,11 @@ const updateUser = async (value:string) => {
 };
 
 /**
- * Returns `true` if the specified string resembles an email address (per a basic check).
+ * Returns `true` if the specified string resembles an email address.
+ * 
+ * Note: This basic checks still accepts things like ` h e l l o @ example . com `.
  *
- * Docs: https://en.wikipedia.org/wiki/Email_address#Validation_and_verification 
+ * Docs: https://en.wikipedia.org/wiki/Email_address#Validation_and_verification
  */
 const validateEmailAddr = (s: string) => /.+@.+\..+/.test(s);
 
@@ -62,14 +64,12 @@ const dialog = computed({
 });
 
 /**
- * Updates the user's email address to be the trimmed, submitted one if the latter is valid.
+ * Updates the user's email address to be the one in the form, trimmed of leading/trailing whitespace.
  */
 const updateEmail = async () => {
-  const email = submitterEmail.value?.trim();
-  if (validateEmailAddr(email)) {
-    await updateUser(email);
-    dialog.value = false;
-  }
+  const trimmedEmailAddr = submitterEmail.value.trim();
+  await updateUser(trimmedEmailAddr);
+  dialog.value = false;
 };
 </script>
 
@@ -92,7 +92,7 @@ const updateEmail = async () => {
           <v-text-field
             v-model="submitterEmail"
             :rules="requiredRules('Email is required', [
-              v => validateEmailAddr(v) || 'Email must be valid',
+              v => validateEmailAddr(v.trim()) || 'Email must be valid',
             ])"
             validate-on-blur
             label="User Email *"
