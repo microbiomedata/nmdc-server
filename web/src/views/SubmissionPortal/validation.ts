@@ -63,9 +63,9 @@ export function validatePlateWellsForJgi(data: DataHarmonizerData): ValidationIs
     const contWell = getTrimmedString(row.cont_well);
 
     if (contType !== 'plate') {
-      // When the container type is not "plate", only verify that the well ID is not provided then skip the rest of
-      // the validation logic which is based on the assumption that the container type is "plate".
-      if (validWellSet.has(contWell)) {
+      // When the container type is not "plate", only verify that a well ID is not provided, then skip the rest of the
+      // validation logic which assumes the container type is "plate".
+      if (contWell !== '') {
         issues.push({
           row: rowIndex,
           slot: CONT_WELL_SLOT,

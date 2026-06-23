@@ -25,15 +25,17 @@ describe('validatePlateWellsForJgi', () => {
     ]);
   });
 
-  it ('flags rows with a well ID and cont_type other than "plate"', () => {
+  it('flags rows with a well ID and cont_type other than "plate"', () => {
     const issues = validatePlateWellsForJgi([
       { cont_type: 'tube', container_name: 'tube-1', cont_well: 'B1' },
       { cont_type: 'tube', container_name: 'tube-2', cont_well: 'C1' },
+      { cont_type: 'tube', container_name: 'tube-3', cont_well: 'Z99' },
     ]);
 
     expect(issues).toEqual([
       { row: 0, slot: 'cont_well', message: 'Well ID should only be provided if container type is "plate"' },
       { row: 1, slot: 'cont_well', message: 'Well ID should only be provided if container type is "plate"' },
+      { row: 2, slot: 'cont_well', message: 'Well ID should only be provided if container type is "plate"' },
     ]);
   });
 
