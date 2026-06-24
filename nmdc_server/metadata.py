@@ -115,10 +115,11 @@ class SampleMetadataSuggester:
             if interface_data_section_name
             else None
         )
+        print(f"{interface_tab}")
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(),
             llm_client,
-            # interface_name=interface_tab  # TODO - uncomment after suggestor 1.2.1 release
+            interface_name=interface_tab
         )
 
         suggestions: List[MetadataSuggestion] = []
