@@ -7,7 +7,6 @@ import {
   fetchSuggestionsFromSampleRows,
   removeMetadataSuggestions,
   metadataSuggestions,
-  suggestionMode,
   suggestionType,
   fetchSuggestionsFromSampleRowsRequest,
   fetchSuggestionsFromStudyInfoRequest,
@@ -15,7 +14,6 @@ import {
 import {
   CellData,
   MetadataSuggestion,
-  SuggestionsMode,
   SuggestionFill,
   SuggestionType,
 } from '@/views/SubmissionPortal/types';

@@ -199,12 +199,6 @@ export enum SuggestionType {
   REPLACEMENTS = 'Replacements Only',
 }
 
-export enum SuggestionsMode {
-  LIVE = 'Live',
-  ON_DEMAND = 'On Demand',
-  OFF = 'Off',
-}
-
 export enum SuggestionFill {
   BY_COLUMN = 'By Column',
   BY_ROW = 'By Row',

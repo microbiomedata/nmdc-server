@@ -30,7 +30,6 @@ import {
   SubmissionEditorRole,
   SubmissionPage,
   SubmissionStatusKey,
-  SuggestionsMode,
   SuggestionFill,
   SuggestionType,
   UneditableReason,
@@ -688,7 +687,6 @@ const sampleDataDefault = {
 };
 const sampleData = reactive(clone(sampleDataDefault));
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
-const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionFill = ref(SuggestionFill.BY_ROW);
 const suggestionType = ref(SuggestionType.ALL);
 
@@ -1071,7 +1069,6 @@ export {
   primaryStudyImageUrl,
   piImageUrl,
   metadataSuggestions,
-  suggestionMode,
   suggestionFill,
   suggestionType,
   SubmissionStatusEnum,

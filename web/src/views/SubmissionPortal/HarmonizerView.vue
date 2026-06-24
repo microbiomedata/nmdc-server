@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
-import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
+import { clamp, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
@@ -19,7 +19,6 @@ import {
   JGI_MG_LR,
   JGI_MT,
   SubmissionEditorRole,
-  SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
@@ -44,7 +43,6 @@ import {
   setTabValidated,
   status,
   submit,
-  suggestionMode,
   templateList,
   sampleEnvironmentForm,
   multiOmicsForm,
@@ -82,8 +80,6 @@ const ColorKey = {
 
 const HELP_SIDEBAR_WIDTH = 320;
 const TABS_HEIGHT = 48;
-
-const SUGGESTION_REQUEST_DELAY = 3000;
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
@@ -217,21 +213,6 @@ const saveRecord = () => incrementalSaveRecord(props.id);
       isSaveSuccessMessageVisible.value = true;
       startHideSuccessMessageTimer();
     });
-
-let changeBatch: any[] = [];
-const debouncedSuggestionRequest = debounce(async () => {
-  const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-  await fetchSuggestionsFromSampleRows(props.id, activeTemplate.value?.schemaClass!, changedRowData);
-  changeBatch = [];
-}, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
-
-watch(suggestionMode, () => {
-  // If live suggestions are disabled, clear the queue and cancel the timer
-  if (suggestionMode.value !== SuggestionsMode.LIVE) {
-    changeBatch = [];
-    debouncedSuggestionRequest.cancel();
-  }
-});
 
 function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
   const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
@@ -380,17 +361,6 @@ const syncAndMergeTabsForRemovedRows = () => {
 };
 
 const onDataChange = async (changes: any[], source: string | null) => {
-  // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
-  // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
-  // Skip 'accept_suggestion' changes — those cells are already handled and triggering a re-fetch would clear all
-  // other pending suggestions for the same row.
-  if (suggestionMode.value === SuggestionsMode.LIVE && isEditable.value && source !== 'accept_suggestion') {
-    // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
-    // where either the previous value or updated value (or both) are non-empty.
-    const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
-    changeBatch.push(...nonEmptyChanges);
-    debouncedSuggestionRequest();
-  }
   // If any changes touched the sample name or analysis/data type columns on an environment
   // tab, we need to synch those changes to non-active tabs
   const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
