@@ -111,7 +111,6 @@ class SampleMetadataSuggester:
         )
         # collect samples from the submission
         samples = submission.metadata_submission.sampleData.data.get(interface_data_section_name, None) if interface_data_section_name else None
-
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(),
             llm_client,
@@ -141,17 +140,22 @@ class SampleMetadataSuggester:
             )
         
             for metadata_field in env_triad_pipeline_output.metadata_fields:
+                row = samples[int(metadata_field.id)]
+                current_value = row.get(metadata_field.field_name)
+                suggestion_type = (
+                    MetadataSuggestionType.REPLACE if current_value else MetadataSuggestionType.ADD
+                )
                 suggestions.append(
                     MetadataSuggestion(
-                        # TODO - add loop to detect add or replace for env triad value suggestions
-                        type=MetadataSuggestionType.ATTENTION,
+                        type=suggestion_type,
                         row=metadata_field.id,
                         slot=metadata_field.field_name,
+                        value=metadata_field.value,
                         source=metadata_field.reason,
+                        current_value=current_value,
                         is_ai_generated=True,
                     )
                 )
-
         return suggestions
 
     def get_suggestions(

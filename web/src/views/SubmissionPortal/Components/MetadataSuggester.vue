@@ -257,8 +257,10 @@ function acceptSuggestions(suggestions: MetadataSuggestion[]) {
     cellData.push({ row, col, text: value });
   });
 
-  // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
-  props.harmonizerApi.setCellData(cellData);
+  // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once.
+  // Pass 'accept_suggestion' as the source so that the live-suggestion re-fetch is NOT triggered for these
+  // programmatic changes — otherwise all pending suggestions for the affected row(s) would be cleared.
+  props.harmonizerApi.setCellData(cellData, 'accept_suggestion');
 
   removeMetadataSuggestions(props.submissionId, props.schemaClassName, suggestions);
 }

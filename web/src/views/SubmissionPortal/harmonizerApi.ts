@@ -266,26 +266,57 @@ export default class HarmonizerApi {
     return results;
   }
 
-  highlight(row?: number, col?: number) {
-    const borders = this.dh.hot.getPlugin('customBorders');
-    nextTick(() => borders.clearBorders());
-    if (row !== undefined && col !== undefined) {
-      nextTick(() => borders.setBorders([[row, col, row, col]], {
+highlight(row?: number, col?: number) {
+  const borders = this.dh.hot.getPlugin('customBorders');
+  nextTick(() => borders.clearBorders());
+  
+  if (row !== undefined && col !== undefined) {
+    const hot = this.dh.hot;
+    const totalRows = hot.countRows();
+    const totalCols = hot.countCols();
+    
+    // Create border definitions for the entire row and column
+    const cellsToHighlight: number[][] = [];
+    
+    // Add all cells in the row
+    for (let c = 0; c < totalCols; c++) {
+      cellsToHighlight.push([row, c, row, c]);
+    }
+    
+    // Add all cells in the column
+    for (let r = 0; r < totalRows; r++) {
+      cellsToHighlight.push([r, col, r, col]);
+    }
+    
+    nextTick(() => {
+      // Apply a background to row and column
+      borders.setBorders(cellsToHighlight, {
+        left: { hide: false, width: 1, color: '#E1BEE7' },
+        right: { hide: false, width: 1, color: '#E1BEE7' },
+        top: { hide: false, width: 1, color: '#E1BEE7' },
+        bottom: { hide: false, width: 1, color: '#E1BEE7' },
+      });
+      
+      // Highlight the target cell itself with a stronger border
+      borders.setBorders([[row, col, row, col]], {
         left: { hide: false, width: 2, color: 'magenta' },
         right: { hide: false, width: 2, color: 'magenta' },
         top: { hide: false, width: 2, color: 'magenta' },
         bottom: { hide: false, width: 2, color: 'magenta' },
-      }));
-    }
+      });
+      
+      hot.render();
+    });
   }
+}
 
   getCellData(row: number, col: number): CellData {
     const text = this.dh.hot.getDataAtCell(row, col);
     return { row, col, text };
   }
 
-  setCellData(data: CellData[]) {
-    this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]));
+  setCellData(data: CellData[], source?: string) {
+    this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]), source);
   }
 
   /**

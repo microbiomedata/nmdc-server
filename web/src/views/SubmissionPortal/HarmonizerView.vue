@@ -379,10 +379,12 @@ const syncAndMergeTabsForRemovedRows = () => {
   });
 };
 
-const onDataChange = async (changes: any[]) => {
+const onDataChange = async (changes: any[], source: string | null) => {
   // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
   // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
-  if (suggestionMode.value === SuggestionsMode.LIVE && isEditable.value) {
+  // Skip 'accept_suggestion' changes — those cells are already handled and triggering a re-fetch would clear all
+  // other pending suggestions for the same row.
+  if (suggestionMode.value === SuggestionsMode.LIVE && isEditable.value && source !== 'accept_suggestion') {
     // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
     // where either the previous value or updated value (or both) are non-empty.
     const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
