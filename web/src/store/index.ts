@@ -48,8 +48,9 @@ function setConditions(conditions: Condition[], push = false) {
       && a.op === b.op
       && a.table === b.table);
   if (router) {
+    const { conditions, q, ...rest } = router.currentRoute.value.query;
     // @ts-ignore
-    router[push ? 'push' : 'replace']({ query: { conditions: state.conditions }, name: 'Search' }).catch(noop);
+    router[push ? 'push' : 'replace']({ query: { ...rest, conditions: state.conditions }, name: 'Search' }).catch(noop);
   }
 }
 

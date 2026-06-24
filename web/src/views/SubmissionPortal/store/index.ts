@@ -585,6 +585,7 @@ watch(() => multiOmicsForm.ship, (newVal) => {
 /**
  * Environmental Package Step
  */
+const HARMONIZER_KEYS = Object.keys(HARMONIZER_TEMPLATES) as (keyof typeof HARMONIZER_TEMPLATES)[];
 const sampleEnvironmentFormDefault = {
   validation: null as null | string[],
   packageName: [] as (keyof typeof HARMONIZER_TEMPLATES)[],
@@ -672,7 +673,12 @@ const templateList = computed<string[]>((prevTemplates) => {
       }
     }
   }
-  const newTemplates = Array.from(templates);
+  const newTemplates = Array.from(templates)
+    .sort((a, b) => {
+      const aIndex = HARMONIZER_KEYS.indexOf(a);
+      const bIndex = HARMONIZER_KEYS.indexOf(b);
+      return aIndex - bIndex;
+    });
   if (prevTemplates !== undefined && isEqual(prevTemplates, newTemplates)) {
     return prevTemplates;
   }

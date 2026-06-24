@@ -25,6 +25,8 @@ export interface HarmonizerTemplateInfo {
   // This value comes from annotations in the schema. It will be populated once the schema is loaded.
   excelWorksheetName?: string,
 }
+// Holds a mapping between template names stored in Postgres and various related pieces of information about them.
+// Note: the key order determines the order in which tabs are shown on the Sample Metadata screen.
 export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
   air: {
     displayName: 'air',
