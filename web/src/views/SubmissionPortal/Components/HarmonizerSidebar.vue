@@ -122,7 +122,9 @@ const handleImport = (file: File) => {
               v-bind="tabActivatorProps"
               style="overflow: visible;"
             >
-              <v-icon size="x-large">{{ tab.icon }}</v-icon>
+              <v-icon size="x-large">
+                {{ tab.icon }}
+              </v-icon>
               <span
                 v-if="tabIndex === SUGGESTER_TAB_INDEX && showBadge"
                 class="suggester-dot"

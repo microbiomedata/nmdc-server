@@ -26,7 +26,6 @@ import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
-  fetchSuggestionsFromSampleRows,
   fetchSuggestionsFromStudyInfo,
   getSubmissionUneditableReason,
   hasChanged,
@@ -53,7 +52,6 @@ import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/views/SubmissionPortal/colors.ts';
 import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
-import { textSpanOverlap } from 'typescript';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -360,7 +358,7 @@ const syncAndMergeTabsForRemovedRows = () => {
   });
 };
 
-const onDataChange = async (changes: any[], source: string | null) => {
+const onDataChange = async (changes: any[], _source: string | null) => {
   // If any changes touched the sample name or analysis/data type columns on an environment
   // tab, we need to synch those changes to non-active tabs
   const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');

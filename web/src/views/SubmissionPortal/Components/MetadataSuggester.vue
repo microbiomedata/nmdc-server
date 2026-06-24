@@ -89,8 +89,6 @@ const pendingSuggestions = computed(() => (
       })
 ));
 
-const hasSuggestions = computed(() => pendingSuggestions.value.length > 0);
-
 const filteredSuggestions = computed(() => {
   let suggestions = pendingSuggestions.value;
   if (displayFilter.value === SuggestionFill.BY_ROW) {
@@ -270,7 +268,7 @@ async function handleStartSuggestion() {
   suggestionStarted.value = true;
 }
 
-async function handleSuggestForSelectedRows() {
+async function _handleSuggestForSelectedRows() {
   onDemandSuggestionsLoading.value = true;
   const selectedRanges = props.harmonizerApi.getSelectedCells();
   // selectedRanges is an array of arrays, representing all (possibly discontinuous) ranges of selected cells. Each
@@ -378,13 +376,13 @@ const loading = computed(() => (
             </v-btn>
           </v-col>
         </v-row>
-          <v-row v-if="!suggestionStarted">
-            <v-col>
-              <p class="text-body-2 text-medium-emphasis mb-1">
-                Click <strong>Suggest Metadata</strong> to get suggestions for metadata values based on the content of the submission summary and any metadata you've already entered. Suggestions can be accepted or rejected, and will be hidden if rejected, but can be reset if you change your mind. You can re-run suggestions at any time as you add/edit your data.
-              </p>
-            </v-col>
-          </v-row>
+        <v-row v-if="!suggestionStarted">
+          <v-col>
+            <p class="text-body-2 text-medium-emphasis mb-1">
+              Click <strong>Suggest Metadata</strong> to get suggestions for metadata values based on the content of the submission summary and any metadata you've already entered. Suggestions can be accepted or rejected, and will be hidden if rejected, but can be reset if you change your mind. You can re-run suggestions at any time as you add/edit your data.
+            </p>
+          </v-col>
+        </v-row>
 
         <v-row v-if="suggestionStarted">
           <v-col cols="6">
@@ -458,8 +456,17 @@ const loading = computed(() => (
                     v-if="cluster.firstSuggestion.is_ai_generated"
                     class="d-flex justify-space-between align-center mb-1 text-blue-darken-4 font-weight-medium"
                   >
-                    <div class=""d-flex align-baseline>
-                      <v-icon size="x-small" class="mr-1">mdi-creation</v-icon>
+                    <div
+                      class=""
+                      d-flex
+                      align-baseline
+                    >
+                      <v-icon
+                        size="x-small"
+                        class="mr-1"
+                      >
+                        mdi-creation
+                      </v-icon>
                       AI Suggested
                     </div>
                     <v-tooltip max-width="500px">
@@ -552,7 +559,9 @@ const loading = computed(() => (
                       @mouseleave="handleSuggestionLeave()"
                     >
                       <div class="flex-grow-1 mr-2">
-                        <div class="text-body-2 font-weight-medium">Row {{ s.row! + 1 }}</div>
+                        <div class="text-body-2 font-weight-medium">
+                          Row {{ s.row! + 1 }}
+                        </div>
                       </div>
                       <div class="d-flex align-center">
                         <v-tooltip>
@@ -566,7 +575,9 @@ const loading = computed(() => (
                               v-bind="activatorProps"
                               @click="handleJumpToCell(s)"
                             >
-                              <v-icon size="small">mdi-target</v-icon>
+                              <v-icon size="small">
+                                mdi-target
+                              </v-icon>
                             </v-btn>
                           </template>
                           <span>Jump to cell</span>
@@ -582,7 +593,9 @@ const loading = computed(() => (
                               v-bind="activatorProps"
                               @click="handleRejectSuggestion(s)"
                             >
-                              <v-icon size="small">mdi-close</v-icon>
+                              <v-icon size="small">
+                                mdi-close
+                              </v-icon>
                             </v-btn>
                           </template>
                           <span>Reject row {{ s.row! + 1 }}</span>
@@ -598,7 +611,9 @@ const loading = computed(() => (
                               v-bind="activatorProps"
                               @click="handleAcceptSuggestion(s)"
                             >
-                              <v-icon size="small">mdi-check</v-icon>
+                              <v-icon size="small">
+                                mdi-check
+                              </v-icon>
                             </v-btn>
                           </template>
                           <span>Accept row {{ s.row! + 1 }}</span>
