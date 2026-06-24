@@ -2000,7 +2000,11 @@ def suggest_meta_from_study(
 
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
 
-    suggestions = suggester.get_suggestions_from_study_information(interface_tab=interface_tab, interface_data_section_name=interface_data_section_name, submission=submission)
+    suggestions = suggester.get_suggestions_from_study_information(
+        interface_tab=interface_tab,
+        interface_data_section_name=interface_data_section_name,
+        submission=submission,
+    )
     return suggestions
 
 

@@ -4,9 +4,9 @@ from functools import lru_cache
 from typing import Dict, List, Optional
 
 import nmdc_geoloc_tools
+from nmdc_metadata_suggestor_ai_tool.env_triad_recommendation import get_env_triad_recommendation
 from nmdc_metadata_suggestor_ai_tool.llm_client import LLMClient
 from nmdc_metadata_suggestor_ai_tool.recommendation_pipeline import run_recommendation_pipeline
-from nmdc_metadata_suggestor_ai_tool.env_triad_recommendation import get_env_triad_recommendation
 
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
@@ -89,7 +89,7 @@ class SampleMetadataSuggester:
 
     def get_suggestions_from_study_information(
         self,
-        interface_tab : str,
+        interface_tab: str,
         interface_data_section_name: Optional[str],
         submission: SubmissionMetadataSchema,
     ) -> List[MetadataSuggestion]:
@@ -110,7 +110,11 @@ class SampleMetadataSuggester:
             access_provider="gcp", credentials_file=settings.llm_service_account_credentials_file
         )
         # collect samples from the submission
-        samples = submission.metadata_submission.sampleData.data.get(interface_data_section_name, None) if interface_data_section_name else None
+        samples = (
+            submission.metadata_submission.sampleData.data.get(interface_data_section_name, None)
+            if interface_data_section_name
+            else None
+        )
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(),
             llm_client,
@@ -129,16 +133,16 @@ class SampleMetadataSuggester:
                     is_ai_generated=True,
                 )
             )
-        
-        # env triad suggestions 
+
+        # env triad suggestions
         if samples:
             env_triad_pipeline_output = get_env_triad_recommendation(
                 samples=samples,
                 submission_object=submission.model_dump(),
                 llm_client=llm_client,
-                interface_names=[interface_tab]
+                interface_names=[interface_tab],
             )
-        
+
             for metadata_field in env_triad_pipeline_output.metadata_fields:
                 row = samples[int(metadata_field.id)]
                 current_value = row.get(metadata_field.field_name)
