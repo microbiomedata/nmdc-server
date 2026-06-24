@@ -48,94 +48,8 @@ interface MetadataSuggesterProps {
 const displayFilter = ref<string | null>(null);
 const suggestionStarted = ref(false);
 
-const filterOptions = [
-  { label: 'By Row', value: 'by_row' },
-  { label: 'By Column', value: 'by_column' },
-];
-
-const allMockSuggestions: MetadataSuggestion[] = [
-  {
-    type: 'replace', 
-    row: 0,
-    slot: 'elev',
-    value: '278.3',
-    current_value: '325',
-    is_ai_generated: false,
-    source: null,
-  },
-  {
-    type: 'add',
-    row: 1,
-    slot: 'depth',
-    value: '0.15',
-    current_value: null,
-    is_ai_generated: false,
-    source: null,
-  },
-  {
-    type: 'add', 
-    row: 1,
-    slot: 'env_broad_scale',
-    value: 'temperate woodland biome [ENVO:01000221]',
-    current_value: null,
-    is_ai_generated: true,
-    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
-  },
-  {
-    type: 'add', 
-    row: 2,
-    slot: 'env_broad_scale',
-    value: 'temperate woodland biome [ENVO:01000221]',
-    current_value: null,
-    is_ai_generated: true,
-    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
-  },
-  {
-    type: 'add', 
-    row: 3,
-    slot: 'env_broad_scale',
-    value: 'temperate woodland biome [ENVO:01000221]',
-    current_value: null,
-    is_ai_generated: true,
-    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
-  },
-  {
-    type: 'add', 
-    row: 6,
-    slot: 'env_broad_scale',
-    value: 'temperate woodland biome [ENVO:01000221]',
-    current_value: null,
-    is_ai_generated: true,
-    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
-  },
-  {
-    type: 'add', 
-    row: 0,
-    slot: 'env_broad_scale',
-    value: 'temperate woodland biome [ENVO:01000221]',
-    current_value: null,
-    is_ai_generated: true,
-    source: 'Based on the study description and geolocation data, these samples were collected from a temperate woodland region. This is the recommended broad scale environment classification for this context.',
-  },
-  {
-    type: 'attention',
-    row: null,
-    slot: 'ecosystem',
-    value: 'Environmental',
-    current_value: 'null',
-    is_ai_generated: true,
-    source: "Based on the study description, samples were collected from an environmental ecosystem. 'Environmental' is the recommended broad ecosystem classification for this context.",
-  },
-  {
-    type: 'add',
-    row: null,
-    slot: 'env_broad_scale',
-    value: 'temperate woodland biome [ENVO:01000221]',
-    current_value: null,
-    is_ai_generated: true,
-    source: "Based on the study description, samples were collected from a temperate woodland biome. This is the recommended broad scale environment classification for this context.",
-  },
-];
+const filterOptions = Object.values(SuggestionFill).map((v) => ({ label: v, value: v }));
+const suggestionTypeOptions = Object.values(SuggestionType).map((v) => ({ label: v, value: v }));
 
 function getSuggestionKey(suggestion: MetadataSuggestion) {
   return `${suggestion.row}__${suggestion.slot}__${suggestion.value}`;
@@ -178,13 +92,18 @@ const pendingSuggestions = computed(() => (
 const hasSuggestions = computed(() => pendingSuggestions.value.length > 0);
 
 const filteredSuggestions = computed(() => {
-  if (displayFilter.value === 'by_row') {
-    return pendingSuggestions.value.filter((s) => s.row !== null);
+  let suggestions = pendingSuggestions.value;
+  if (displayFilter.value === SuggestionFill.BY_ROW) {
+    suggestions = suggestions.filter((s) => s.row !== null);
+  } else if (displayFilter.value === SuggestionFill.BY_COLUMN) {
+    suggestions = suggestions.filter((s) => s.row === null);
   }
-  if (displayFilter.value === 'by_column') {
-    return pendingSuggestions.value.filter((s) => s.row === null);
+  if (suggestionType.value === SuggestionType.ADDITIONS) {
+    suggestions = suggestions.filter((s) => s.type === 'add');
+  } else if (suggestionType.value === SuggestionType.REPLACEMENTS) {
+    suggestions = suggestions.filter((s) => s.type === 'replace');
   }
-  return pendingSuggestions.value;
+  return suggestions;
 });
 
 interface SuggestionCluster {
@@ -468,7 +387,7 @@ const loading = computed(() => (
           </v-row>
 
         <v-row v-if="suggestionStarted">
-          <v-col>
+          <v-col cols="6">
             <v-select
               v-model="displayFilter"
               :items="filterOptions"
@@ -477,6 +396,17 @@ const loading = computed(() => (
               label="Group by"
               hide-details
               clearable
+              persistent-placeholder
+            />
+          </v-col>
+          <v-col cols="6">
+            <v-select
+              v-model="suggestionType"
+              :items="suggestionTypeOptions"
+              item-title="label"
+              item-value="value"
+              label="Suggestion Type"
+              hide-details
             />
           </v-col>
         </v-row>
