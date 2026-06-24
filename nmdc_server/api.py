@@ -1855,11 +1855,11 @@ async def generate_signed_upload_url(
 
 
 @router.post(
-    "/metadata_submission/{id}/finalize",
+    "/metadata_submission/{submission_id}/finalize",
     response_model=schemas.SubmissionFinalizeResponse,
 )
 async def finalize_submission(
-    id: str,
+    submission_id: str,
     body: schemas.SubmissionFinalizeRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -1869,7 +1869,6 @@ async def finalize_submission(
     The following operations are performed as part of finalization:
         - making images public
         - setting the NMDC study ID
-        - changing the submission status to "Released"
 
     This operation is only allowed for admin users. It is intended to be called as part of the
     process of translating submission data into nmdc-schema compatible data.
@@ -1881,12 +1880,10 @@ async def finalize_submission(
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
-    submission = get_submission_for_user(db, id, user)
+    submission = get_submission_for_user(db, submission_id, user)
 
-    # Update the NMDC study ID and sample set statuses
+    # Update the NMDC study ID
     submission.nmdc_study_id = body.study_id
-    for sample_set in submission.sample_sets:
-        sample_set.status = SubmissionStatusEnum.Released.text
     db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
@@ -1897,7 +1894,7 @@ async def finalize_submission(
             image.name,
             from_bucket=BucketName.SUBMISSION_IMAGES,
             to_bucket=BucketName.PUBLIC_IMAGES,
-            new_name=image.name.replace(id, body.study_id),
+            new_name=image.name.replace(submission_id, body.study_id),
         )
         return public_object.public_url
 
