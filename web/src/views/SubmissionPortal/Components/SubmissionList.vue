@@ -1,10 +1,11 @@
 <script lang="ts">
 import {
   defineComponent, ref, watch, onMounted,
-  computed,
+  useTemplateRef,
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
+import { VTextField } from 'vuetify/components';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
   SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
@@ -26,6 +27,7 @@ import {
   StatusOption,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
+import { validateOrcid } from '../utils.ts';
 import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
@@ -165,9 +167,7 @@ export default defineComponent({
     }
 
     const reviewerOrcid = ref('');
-    const invalidOrcid = computed(() => {
-      return !/(\d{4}-){3}\d{3}(\d|X)/.test(reviewerOrcid.value);
-    });
+    const orcidTextFieldRef = useTemplateRef<InstanceType<typeof VTextField>>('orcidTextField');
     function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
       isReviewerAssignmentDialogOpen.value = true;
       selectedSubmission.value = item;
@@ -230,7 +230,8 @@ export default defineComponent({
       isReviewerAssignmentDialogOpen,
       isReviewerForSubmission,
       reviewerOrcid,
-      invalidOrcid,
+      orcidTextFieldRef,
+      validateOrcid,
       IconBar,
       IntroBlurb,
       TitleBanner,
@@ -539,13 +540,12 @@ export default defineComponent({
             </legend>
             <v-col cols="4">
               <v-text-field
+                ref="orcidTextField"
                 v-model="reviewerOrcid"
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
-                :rules="[
-                  v => !v || /(\d{4}-){3}\d{3}(\d|X)/.test(v) || 'ORCID iD must be in valid format (0000-0000-0000-0000)',
-                ]"
+                :rules="[validateOrcid]"
               />
             </v-col>
           </v-row>
@@ -565,7 +565,7 @@ export default defineComponent({
             color="primary"
             class="mt-2"
             :loading="assignReviewerRequest.loading.value"
-            :disabled="invalidOrcid"
+            :disabled="orcidTextFieldRef?.isValid === false || !reviewerOrcid"
             @click="() => addReviewer()"
           >
             Assign Reviewer
