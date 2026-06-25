@@ -60,11 +60,21 @@ export function validatePlateWellsForJgi(data: DataHarmonizerData): ValidationIs
 
   data.forEach((row, rowIndex) => {
     const contType = getTrimmedString(row.cont_type);
+    const contWell = getTrimmedString(row.cont_well);
+
     if (contType !== 'plate') {
+      // When the container type is not "plate", only verify that a well ID is not provided, then skip the rest of the
+      // validation logic which assumes the container type is "plate".
+      if (contWell !== '') {
+        issues.push({
+          row: rowIndex,
+          slot: CONT_WELL_SLOT,
+          message: 'Well ID should only be provided if container type is "plate"',
+        });
+      }
       return;
     }
 
-    const contWell = getTrimmedString(row.cont_well);
     if (contWell === '') {
       issues.push({ row: rowIndex, slot: CONT_WELL_SLOT, message: 'Plate position is required if container type is "plate"' });
       return;
