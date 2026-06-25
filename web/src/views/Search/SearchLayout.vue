@@ -144,14 +144,12 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
     return;
   }
   if (newVisTab !== oldVisTab) {
-    console.log('Active visualization tab changed from', oldVisTab, 'to', newVisTab);
     event('tab_selected', {
       tab_group: 'visualizations',
       tab_name: newVisTab,
     });
   }
   if (newResultsTab !== oldResultsTab) {
-    console.log('Active results tab changed from', oldResultsTab, 'to', newResultsTab);
     event('tab_selected', {
       tab_group: 'results',
       tab_name: newResultsTab,
