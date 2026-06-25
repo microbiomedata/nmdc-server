@@ -5,6 +5,7 @@ import {
 
 } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import { event } from 'vue-gtag';
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
@@ -134,10 +135,27 @@ function toggleChildren(value:StudySearchResult) {
   showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
 }
 
-watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab]) => {
+watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab, oldResultsTab]) => {
   const { view, results, ...rest } = route.query;
-  router.replace({ query: { view: newVisTab, results: newResultsTab, ...rest } })
-});
+  router.replace({ query: { view: newVisTab, results: newResultsTab, ...rest } });
+  // Do nothing if Google Analytics is not available. This is expected in development mode.
+  // TODO: Consider making this check reusable because it should be used any time we track GA events.
+  if (import.meta.env.DEV) {
+    return;
+  }
+  if (newVisTab !== oldVisTab) {
+    event('tab_selected', {
+      tab_group: 'visualizations',
+      tab_name: newVisTab,
+    });
+  }
+  if (newResultsTab !== oldResultsTab) {
+    event('tab_selected', {
+      tab_group: 'results',
+      tab_name: newResultsTab,
+    });
+  }
+}, { immediate: true });
 </script>
 
 <template>
