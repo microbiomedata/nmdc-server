@@ -138,26 +138,56 @@ const router = createRouter({
   parseQuery,
   stringifyQuery,
 });
+
+function getRouteParamString(param: unknown): string | undefined {
+  if (Array.isArray(param)) {
+    return param[0];
+  }
+  return typeof param === 'string' ? param : undefined;
+}
+
+async function ensureSubmissionLoaded(submissionId: string, store: ReturnType<typeof useSubmissionStore>) {
+  if (store.submission.record?.id === submissionId) {
+    return true;
+  }
+  await store.loadSubmission(submissionId);
+  return store.submission.record?.id === submissionId;
+}
+
 router.beforeEach(async (to, from) => {
-  const { lockSubmission, unlockSubmission, saveFormEdits } = useSubmissionStore();
+  const store = useSubmissionStore();
+  const fromSubmissionId = getRouteParamString(from.params.id);
+  const toSubmissionId = getRouteParamString(to.params.id);
+
   try {
-    if (from.meta.requiresSubmissionLock && 'id' in from.params) {
-      const id = from.params.id as string;
+    if (from.meta.requiresSubmissionLock && fromSubmissionId) {
       // We are navigating away from a submission edit screen, so save the progress
-      await saveFormEdits();
-      if (!to.meta.requiresSubmissionLock) {
-        // We are navigating to a screen that does not require a lock, so unlock
-        await unlockSubmission(id);
+      await store.saveFormEdits();
+      if (!to.meta.requiresSubmissionLock || toSubmissionId !== fromSubmissionId) {
+        // We are navigating to a screen that does not require this lock, so unlock
+        if (store.submission.record?.id === fromSubmissionId) {
+          await store.unlockSubmission(fromSubmissionId);
+        }
       }
-    } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
-      const id = to.params.id as string;
+    }
+    if (
+      to.meta.requiresSubmissionLock
+      && toSubmissionId
+      && (!from.meta.requiresSubmissionLock || fromSubmissionId !== toSubmissionId)
+    ) {
       // We are navigating to a submission edit screen, so lock the record
-      await lockSubmission(id);
+      const submissionLoaded = await ensureSubmissionLoaded(toSubmissionId, store);
+      if (submissionLoaded) {
+        await store.lockSubmission(toSubmissionId);
+      } else {
+        console.warn(`Unable to lock submission ${toSubmissionId} because it could not be loaded`);
+      }
     }
   } catch (e) {
     // If an error occurs during locking/unlocking, log it but allow navigation
     console.error('Error during navigation guard:', e);
   }
+  return true;
 });
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {

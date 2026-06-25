@@ -23,7 +23,9 @@ const store = useSubmissionStore();
 
 watch(() => id, (nextId) => {
   if (nextId !== undefined) {
-    void store.loadSubmission(nextId);
+    if (store.submission.record?.id !== nextId) {
+      void store.loadSubmission(nextId);
+    }
   } else {
     store.submission.requests.loading.reset();
   }
@@ -31,7 +33,9 @@ watch(() => id, (nextId) => {
 
 watch(() => sampleSetId, (nextSampleSetId) => {
   if (nextSampleSetId !== undefined) {
-    void store.loadSampleSet(nextSampleSetId);
+    if (store.sampleSet.record?.id !== nextSampleSetId) {
+      void store.loadSampleSet(nextSampleSetId);
+    }
   } else {
     store.sampleSet.requests.loading.reset();
   }
@@ -43,8 +47,13 @@ const sampleSetLoading = computed(() => store.sampleSet.requests.loading.loading
 const submissionReady = computed(() => (
   id === undefined || store.submission.record?.id === id
 ));
+const sampleSetReady = computed(() => (
+  sampleSetId === undefined || store.sampleSet.record?.id === sampleSetId
+));
+const routeReady = computed(() => submissionReady.value && sampleSetReady.value);
 
 const submissionError = computed(() => store.submission.requests.loading.error);
+const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
 
 const color = 'primary';
 const density = 'comfortable';
@@ -142,7 +151,17 @@ provide(AppBannerHeightKey, appBannerHeight);
             </v-alert>
           </v-container>
         </div>
-        <router-view v-else-if="submissionReady" />
+        <div v-else-if="sampleSetError">
+          <v-container>
+            <v-alert type="error">
+              <div class="text-h6">
+                Error loading sample set {{ sampleSetId }}
+              </div>
+              {{ sampleSetError }}
+            </v-alert>
+          </v-container>
+        </div>
+        <router-view v-else-if="routeReady" />
       </div>
     </v-main>
   </v-defaults-provider>
