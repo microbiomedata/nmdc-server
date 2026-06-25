@@ -545,7 +545,8 @@ export default defineComponent({
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
-                :rules="[validateOrcid]"
+                :rules="[(v) => !!v || 'An ORCiD ID is required', 
+                validateOrcid]"
               />
             </v-col>
           </v-row>
