@@ -47,13 +47,7 @@ const sampleSetLoading = computed(() => store.sampleSet.requests.loading.loading
 const submissionReady = computed(() => (
   id === undefined || store.submission.record?.id === id
 ));
-const sampleSetReady = computed(() => (
-  sampleSetId === undefined || store.sampleSet.record?.id === sampleSetId
-));
-const routeReady = computed(() => submissionReady.value && sampleSetReady.value);
-
 const submissionError = computed(() => store.submission.requests.loading.error);
-const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
 
 const color = 'primary';
 const density = 'comfortable';
@@ -151,17 +145,7 @@ provide(AppBannerHeightKey, appBannerHeight);
             </v-alert>
           </v-container>
         </div>
-        <div v-else-if="sampleSetError">
-          <v-container>
-            <v-alert type="error">
-              <div class="text-h6">
-                Error loading sample set {{ sampleSetId }}
-              </div>
-              {{ sampleSetError }}
-            </v-alert>
-          </v-container>
-        </div>
-        <router-view v-else-if="routeReady" />
+        <router-view v-else-if="submissionReady" />
       </div>
     </v-main>
   </v-defaults-provider>

@@ -27,9 +27,7 @@ import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
-import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
-import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/views/SubmissionPortal/colors.ts';
 import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
 import { useSubmissionStore } from './store';
@@ -827,12 +825,9 @@ onMounted(async () => {
 // Get app banner height provided by SubmissionView. This will be used to correctly size
 // the DataHarmonizer container, which needs a fixed height.
 const appBannerHeight = inject(AppBannerHeightKey);
-const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
 </script>
 
 <template>
-  <SaveErrorSnackbar />
-  <SubmissionNavigationSidebar />
   <div
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
@@ -842,17 +837,7 @@ const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
       in-sample-set-context
     />
     <v-alert
-      v-if="sampleSetError"
-      class="ma-8 flex-grow-0 overflow-visible"
-      type="error"
-    >
-      <div class="text-h6">
-        Error loading sample set
-      </div>
-      {{ sampleSetError }}
-    </v-alert>
-    <v-alert
-      v-else-if="!hasValidSampleEnvironmentSelection"
+      v-if="!hasValidSampleEnvironmentSelection"
       class="ma-8 flex-grow-0 overflow-visible"
       title="Incomplete Sample Environment Selection"
       text="You must complete the Sample Environment form before entering sample metadata."

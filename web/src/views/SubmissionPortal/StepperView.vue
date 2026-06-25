@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import { unlockSubmission } from './store/api';
@@ -18,16 +19,20 @@ useEventListener('beforeunload', () => {
 })
 
 const store = useSubmissionStore();
+const route = useRoute();
 const sampleSetLoading = computed(() => store.sampleSet.requests.loading.loading);
 const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
+const useFullWidthLayout = computed(() => route.meta.fullWidth === true);
 </script>
 
 <template>
+  <!-- Common elements that are always shown -->
   <SaveErrorSnackbar />
-  <SubmissionNavigationSidebar class="mx-0" />
-  <v-container>
+  <SubmissionNavigationSidebar />
+
+  <!-- If the sample set failed to load, show an error message in a v-container -->
+  <v-container v-if="sampleSetError">
     <v-alert
-      v-if="sampleSetError"
       type="error"
     >
       <div class="text-h6">
@@ -35,6 +40,14 @@ const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
       </div>
       {{ sampleSetError }}
     </v-alert>
-    <router-view v-else-if="!sampleSetLoading" />
+  </v-container>
+
+  <!-- Unless a sample set is loading, render the router view directly if the route
+       requested a full-width layout, otherwise wrap it in a v-container -->
+  <router-view
+    v-else-if="!sampleSetLoading && useFullWidthLayout"
+  />
+  <v-container v-else-if="!useFullWidthLayout">
+    <router-view v-if="!sampleSetLoading" />
   </v-container>
 </template>
