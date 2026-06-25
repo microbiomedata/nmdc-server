@@ -11,6 +11,7 @@ import {
   primaryStudyImageUrl,
   studyForm,
 } from '../store';
+import { validateOrcid } from '../utils.ts';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -142,6 +143,7 @@ export default defineComponent({
       primaryStudyImageUrl,
       piImageUrl,
       revalidate,
+      validateOrcid,
     };
   },
 });
@@ -242,9 +244,7 @@ export default defineComponent({
           <v-text-field
             v-model="studyForm.piOrcid"
             label="ORCID iD"
-            :rules="[
-              v => !v || /(\d{4}-){3}\d{3}(\d|X)/.test(v) || 'ORCID iD must be in valid format (0000-0000-0000-0000)',
-            ]"
+            :rules="[validateOrcid]"
             :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
             variant="outlined"
             :hint="Definitions.piOrcid"
