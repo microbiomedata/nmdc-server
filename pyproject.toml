@@ -25,7 +25,7 @@ dependencies = [
     "nmdc-geoloc-tools",
     "nmdc-metadata-suggestor-ai-tool==1.2.0",
     "nmdc-schema==11.21.0",
-    "nmdc-submission-schema==11.20.1",
+    "nmdc-submission-schema==11.20.2",
     "nmdc_api_utilities",
     "pint",
     "pydantic",
