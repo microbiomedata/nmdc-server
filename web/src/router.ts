@@ -70,7 +70,9 @@ const router = createRouter({
         {
           component: StepperView,
           path: '',
-          props: true,
+          props: (route) => ({
+            id: getRouteParamString(route.params.id) ?? null,
+          }),
           children: [
             {
               name: 'Create Sample Set',
