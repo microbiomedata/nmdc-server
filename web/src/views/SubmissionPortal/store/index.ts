@@ -10,6 +10,8 @@ import {
   DATA_MT_INTERLEAVED,
   EMSL,
   HARMONIZER_TEMPLATES,
+  JGI_ISOLATE_GENOME,
+  JGI_ISOLATE_TRANSCRIPTOME,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
@@ -40,6 +42,8 @@ const EDITABLE_SAMPLE_SET_STATUSES = [
   SubmissionStatusEnum.InProgress.text,
   SubmissionStatusEnum.UpdatesRequired.text,
 ];
+
+const HARMONIZER_KEYS = Object.keys(HARMONIZER_TEMPLATES);
 
 /* FORM DEFAULTS */
 const studyFormDefault: StudyForm = {
@@ -283,10 +287,23 @@ export const useSubmissionStore = defineStore('submission', () => {
             // Data types? Metatranscriptome
             templates.add(JGI_MT);
           }
+          if (multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi')) {
+            // Data types? Isolate Genome
+            templates.add(JGI_ISOLATE_GENOME);
+          }
+          if (multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')) {
+            // Data types? Isolate Transcriptome
+            templates.add(JGI_ISOLATE_TRANSCRIPTOME);
+          }
         }
       }
     }
-    const newTemplates = Array.from(templates);
+    const newTemplates = Array.from(templates)
+      .sort((a, b) => {
+        const aIndex = HARMONIZER_KEYS.indexOf(a);
+        const bIndex = HARMONIZER_KEYS.indexOf(b);
+        return aIndex - bIndex;
+      });
     if (prevTemplates !== undefined && isEqual(prevTemplates, newTemplates)) {
       return prevTemplates;
     }
@@ -392,6 +409,30 @@ export const useSubmissionStore = defineStore('submission', () => {
     // lipidome was removed
     if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
       sampleSet.forms.multiOmicsForm.lipProtocols = null;
+    }
+    // isolate genome was added, the isolate environment template is automatically added as well.
+    if (newValue.includes('isolate-genome') && !oldValue.includes('isolate-genome')) {
+      if (!sampleSet.forms.sampleEnvironmentForm.packageName.includes('isolate')) {
+        sampleSet.forms.sampleEnvironmentForm.packageName.push('isolate');
+      }
+    }
+    // isolate transcriptome was added, the isolate environment template is automatically added as well.
+    if (newValue.includes('isolate-transcriptome') && !oldValue.includes('isolate-transcriptome')) {
+      if (!sampleSet.forms.sampleEnvironmentForm.packageName.includes('isolate')) {
+        sampleSet.forms.sampleEnvironmentForm.packageName.push('isolate');
+      }
+    }
+    // JGI isolate genome was added, the isolate environment template is automatically added as well.
+    if (newValue.includes('isolate-genome-jgi') && !oldValue.includes('isolate-genome-jgi')) {
+      if (!sampleSet.forms.sampleEnvironmentForm.packageName.includes('isolate')) {
+        sampleSet.forms.sampleEnvironmentForm.packageName.push('isolate');
+      }
+    }
+    // JGI isolate transcriptome was added, the isolate environment template is automatically added as well.
+    if (newValue.includes('isolate-transcriptome-jgi') && !oldValue.includes('isolate-transcriptome-jgi')) {
+      if (!sampleSet.forms.sampleEnvironmentForm.packageName.includes('isolate')) {
+        sampleSet.forms.sampleEnvironmentForm.packageName.push('isolate');
+      }
     }
   });
 
@@ -600,7 +641,7 @@ export const useSubmissionStore = defineStore('submission', () => {
 
   /**
    * Delete a sample set from the server and update the state to reflect the deletion.
-   * 
+   *
    * @param sampleSetId
    */
   async function deleteSampleSet(sampleSetId: string) {

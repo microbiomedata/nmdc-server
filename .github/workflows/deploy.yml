@@ -123,7 +123,16 @@ jobs:
 
   # Use the Rancher API to redeploy the specified deployments,
   # causing them to use the newly-pushed container images.
+  #
+  # Note: 🚫 This job is intentionally disabled via `if: ${{ false }}`.
+  #          It may be removed entirely in a future commit.
+  #
+  # Note: This `redeploy` job is the Spin counterpart to the subsequently-added `restart-dev-deployments` job below.
+  #       TODO: Standardize the jobs' names, if we keep this `redeploy` job long term.
+  #
   redeploy:
+    if: ${{ false }}
+
     needs: build
 
     runs-on: ubuntu-latest

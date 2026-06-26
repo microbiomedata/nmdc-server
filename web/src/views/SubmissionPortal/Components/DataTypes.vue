@@ -278,6 +278,20 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome')"
         data-type="lipProtocols"
       />
+
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Isolate Genome"
+        value="isolate-genome"
+        hide-details
+      />
+
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Isolate Transcriptome"
+        value="isolate-transcriptome"
+        hide-details
+      />
     </div>
   </div>
 </template>

@@ -15,6 +15,8 @@ import {
   EMSL,
   HARMONIZER_TEMPLATES,
   HarmonizerTemplateInfo,
+  JGI_ISOLATE_GENOME,
+  JGI_ISOLATE_TRANSCRIPTOME,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
@@ -311,6 +313,12 @@ function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: Template
   }
   if (templateKey === JGI_MT) {
     return row_types.includes('metatranscriptomics');
+  }
+  if (templateKey === JGI_ISOLATE_GENOME) {
+    return row_types.includes('isolate genome sequencing')
+  }
+  if (templateKey === JGI_ISOLATE_TRANSCRIPTOME) {
+    return row_types.includes('isolate transcriptome sequencing')
   }
   if (templateKey === DATA_MG) {
     return row_types.includes('metagenomics');

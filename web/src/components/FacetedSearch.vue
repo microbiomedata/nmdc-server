@@ -124,7 +124,7 @@ watch(() => filterText, (newVal) => {
 </script>
 
 <template>
-  <div>
+  <div class="pt-3">
     <v-tooltip
       v-model="showSearchHelp"
       location="bottom"

@@ -5,6 +5,7 @@
  */
 import { createVuetify } from 'vuetify';
 import '@mdi/font/css/materialdesignicons.css';
+// @ts-ignore
 import 'vuetify/styles';
 // @ts-ignore
 import colors from '@/colors';
@@ -22,6 +23,10 @@ export default createVuetify({
           accent: colors.accent,
           success: colors.success,
           error: colors.error,
+          info: colors.info,
+          link: colors.link,
+          visited: colors.visited,
+          visualization: colors.visualization,
         },
       },
     },

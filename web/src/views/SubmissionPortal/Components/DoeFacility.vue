@@ -191,6 +191,20 @@ export default defineComponent({
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Isolate Genome"
+        value="isolate-genome-jgi"
+        :disabled="templateHasData('jgi_isolate_genome') || undefined"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Isolate Transcriptome"
+        value="isolate-transcriptome-jgi"
+        :disabled="templateHasData('jgi_isolate_transcriptome') || undefined"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-jgi"
         disabled

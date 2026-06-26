@@ -11,6 +11,8 @@ export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
 export const JGI_MT = 'jgi_mt';
+export const JGI_ISOLATE_GENOME = 'jgi_isolate_genome';
+export const JGI_ISOLATE_TRANSCRIPTOME = 'jgi_isolate_transcriptome';
 export const DATA_MG = 'data_mg';
 export const DATA_MG_INTERLEAVED = 'data_mg_interleaved';
 export const DATA_MT = 'data_mt';
@@ -22,6 +24,8 @@ export interface HarmonizerTemplateInfo {
   sampleDataSlot: string,
   status: 'published' | 'mixin' | 'disabled',
 }
+// Holds a mapping between template names stored in Postgres and various related pieces of information about them.
+// Note: the key order determines the order in which tabs are shown on the Sample Metadata screen.
 export const HARMONIZER_TEMPLATES = {
   air: {
     displayName: 'air',
@@ -89,6 +93,12 @@ export const HARMONIZER_TEMPLATES = {
     sampleDataSlot: 'water_data',
     status: 'published',
   },
+  isolate: {
+    displayName: 'isolate',
+    schemaClass: 'IsolateInterface',
+    sampleDataSlot: 'isolate_data',
+    status: 'published',
+  },
   [EMSL]: {
     displayName: 'EMSL',
     schemaClass: 'EmslInterface',
@@ -111,6 +121,18 @@ export const HARMONIZER_TEMPLATES = {
     displayName: 'JGI MT',
     schemaClass: 'JgiMtInterface',
     sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
+  },
+  [JGI_ISOLATE_GENOME]: {
+    displayName: 'Isolate Genome',
+    schemaClass: 'JgiIsolateGenomeInterface',
+    sampleDataSlot: 'jgi_isolate_genome_data',
+    status: 'mixin',
+  },
+  [JGI_ISOLATE_TRANSCRIPTOME]: {
+    displayName: 'Isolate Transcriptome',
+    schemaClass: 'JgiIsolateTranscriptomeInterface',
+    sampleDataSlot: 'jgi_isolate_transcriptome_data',
     status: 'mixin',
   },
   [DATA_MG]: {
@@ -244,9 +266,10 @@ export interface Protocols {
 
 export type OmicsProcessingType =
   // non-doe types
-  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' | 'isolate-genome' | 'isolate-transcriptome' |
   // doe facility associated types
-  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' |
+  'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi' | 'isolate-genome-jgi' | 'isolate-transcriptome-jgi';
 
 export interface MultiOmicsForm extends ValidatedForm {
   award: string | null;

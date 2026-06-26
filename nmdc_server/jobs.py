@@ -136,6 +136,7 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
                 merge_download_artifact(ingest_db, prod_db.query(models.SubmissionImagesObject))
                 merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
                 merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
+                merge_download_artifact(ingest_db, prod_db.query(models.SubmissionSampleSet))
 
     logger.info("Ingest finished successfully")
 

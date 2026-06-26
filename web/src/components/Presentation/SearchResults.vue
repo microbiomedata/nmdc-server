@@ -1,71 +1,44 @@
-<script lang="ts">
-import { defineComponent, PropType, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 
-import { BaseSearchResult } from '@/data/api';
+import { BiosampleSearchResult, StudySearchResult } from '@/data/api';
 
-export default defineComponent({
-  props: {
-    page: {
-      type: Number,
-      required: true,
-    },
-    itemsPerPage: {
-      type: Number,
-      required: true,
-    },
-    count: {
-      type: Number,
-      required: true,
-    },
-    titleKey: {
-      type: String,
-      default: 'name',
-    },
-    subtitleKey: {
-      type: String,
-      default: 'description',
-    },
-    results: {
-      type: Array as PropType<BaseSearchResult[]>,
-      default: () => [],
-    },
-    icon: {
-      type: String,
-      default: 'mdi-book',
-    },
-    disableNavigateOnClick: {
-      type: Boolean,
-      default: false,
-    },
-    disablePagination: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['set-page', 'set-items-per-page', 'selected'],
-  setup(props) {
-    const rows = ref(props.itemsPerPage);
-    return {
-      rows,
-    };
-  },
+interface Props {
+  page: number;
+  itemsPerPage: number;
+  count: number;
+  results?: StudySearchResult[] | BiosampleSearchResult[];
+  icon?: string;
+  disablePagination?: boolean;
+}
 
+const props = withDefaults(defineProps<Props>(), {
+  results: () => [] as StudySearchResult[] | BiosampleSearchResult[],
+  icon: 'mdi-book-outline',
+  disablePagination: false,
 });
 
+const emit = defineEmits<{
+  'set-page': [page: number];
+  'set-items-per-page': [itemsPerPage: number];
+}>();
+
+const rows = ref(props.itemsPerPage);
 </script>
 
 <template>
   <div>
     <div
       v-if="!disablePagination && count > 0"
-      class="d-flex pt-2 pb-0 align-end justify-center"
+      class="d-flex pt-2 align-end justify-center"
     >
       <v-pagination
         :model-value="page"
         :length="Math.ceil(count / rows)"
         :total-visible="7"
         active-color="primary"
-        @update:model-value="$emit('set-page', $event)"
+        size="default"
+        @update:model-value="emit('set-page', $event)"
       />
       <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
            positioned it doesn't count towards the `auto` width -->
@@ -77,13 +50,10 @@ export default defineComponent({
         :style="{ 'flex-basis': '6rem' }"
         hide-details
         variant="plain"
-        @update:model-value="$emit('set-items-per-page', $event)"
+        @update:model-value="emit('set-items-per-page', $event)"
       />
     </div>
-    <v-list
-      density="compact"
-      class="rounded-b"
-    >
+    <v-list>
       <template
         v-for="(result, resultIndex) in results"
         :key="result.id"
@@ -91,63 +61,87 @@ export default defineComponent({
         <v-divider
           v-if="resultIndex > 0"
         />
-
-        <v-list-item
-          :ripple="!disableNavigateOnClick"
-          :active="false"
-          :link="!disableNavigateOnClick"
-          v-on="{
-            click: disableNavigateOnClick
-              ? () => {}
-              : () => $emit('selected', result.id),
+        <SearchResultItem
+          v-bind="{
+            result,
+            icon,
           }"
         >
-          <template #prepend>
+          <template
+            v-if="$slots['action-left']"
+            #action-left="slotProps"
+          >
             <slot
-              name="action"
-              v-bind="{ result }"
+              name="action-left"
+              v-bind="slotProps"
             />
-            <v-icon>
-              {{
-                result.children && Array.isArray(result.children) && result.children.length > 0 && result.study_category === 'research_study'
-                  ? 'mdi-book-multiple-outline'
-                  : icon
-              }}
-            </v-icon>
           </template>
-
-          <v-list-item-title>
-            <div class="d-flex align-center">
-              <div class="text-subtitle-2">
-                {{ result[titleKey] }}
-              </div>
-              <slot
-                name="child-list"
-                v-bind="{ result}"
-              />
-            </div>
-          </v-list-item-title>
-          <v-list-item-subtitle>
+          <template
+            v-if="$slots['item-title']"
+            #item-title="slotProps"
+          >
             <slot
-              name="subtitle"
-              v-bind="{ result }"
-            >
-              {{ result[subtitleKey] || 'No description' }}
-            </slot>
-          </v-list-item-subtitle>
-          <slot
-            name="item-content"
-            v-bind="{ result }"
-          />
-
-          <template #append>
+              name="item-title"
+              v-bind="slotProps"
+            />
+          </template>
+          <template
+            v-if="$slots['item-subtitle']"
+            #item-subtitle="slotProps"
+          >
+            <slot
+              name="item-subtitle"
+              v-bind="slotProps"
+            />
+          </template>
+          <template
+            v-if="$slots['item-content']"
+            #item-content="slotProps"
+          >
+            <slot
+              name="item-content"
+              v-bind="slotProps"
+            />
+          </template>
+          <template
+            v-if="$slots['action-right']"
+            #action-right="slotProps"
+          >
             <slot
               name="action-right"
-              v-bind="{ result }"
+              v-bind="slotProps"
             />
           </template>
-        </v-list-item>
+        </SearchResultItem>
+        <slot
+          name="item-children"
+          v-bind="{ result }"
+        />
       </template>
     </v-list>
+    <div
+      v-if="!disablePagination && count > 0"
+      class="d-flex pb-2 align-end justify-center"
+    >
+      <v-pagination
+        :model-value="page"
+        :length="Math.ceil(count / rows)"
+        :total-visible="7"
+        active-color="primary"
+        @update:model-value="emit('set-page', $event)"
+      />
+      <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
+           positioned it doesn't count towards the `auto` width -->
+      <v-select
+        v-model="rows"
+        :items="[5, 10, 15, 20]"
+        label="Items per page"
+        class="ml-4 mb-1 flex-grow-0"
+        :style="{ 'flex-basis': '6rem' }"
+        hide-details
+        variant="plain"
+        @update:model-value="emit('set-items-per-page', $event)"
+      />
+    </div>
   </div>
 </template>

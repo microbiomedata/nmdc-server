@@ -3,6 +3,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'
 import { computed, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
+import { validateOrcid } from '../utils.ts';
 import { PermissionTitle, SubmissionEditorRole } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -218,9 +219,7 @@ function handleSave() {
           <v-text-field
             v-model="studyForm.piOrcid"
             label="ORCID iD"
-            :rules="[
-              v => !v || /(\d{4}-){3}\d{3}(\d|X)/.test(v) || 'ORCID iD must be in valid format (0000-0000-0000-0000)',
-            ]"
+            :rules="[validateOrcid]"
             :disabled="!isOwner || currentUserOrcid === studyForm.piOrcid || undefined"
             variant="outlined"
             :hint="Definitions.piOrcid"

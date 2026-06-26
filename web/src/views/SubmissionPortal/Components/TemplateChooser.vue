@@ -17,6 +17,26 @@ const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
 const templateListDisplayNames = computed(() => store.templateList
   .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
   .join(' + '));
+
+const checkboxDisabledReason = computed<Record<string, string | null>>(() => {
+  const notes = {} as Record<TemplateName, string | null>;
+  Object.keys(HARMONIZER_TEMPLATES).forEach((key) => {
+    const templateName = key as TemplateName;
+    if (templateHasData(templateName)) {
+      notes[templateName] = 'This template cannot be deselected because there is data present in the Sample Metadata tab for this template.';
+    } else if (templateName === 'isolate' && (
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-genome') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')
+    )) {
+      notes[templateName] = 'This template cannot be deselected because an isolate omics processing type is selected on the Multi-omics Data page.';
+    } else {
+      notes[templateName] = null;
+    }
+  });
+  return notes;
+});
 </script>
 
 <template>
@@ -39,7 +59,8 @@ const templateListDisplayNames = computed(() => store.templateList
           target="_blank"
           rel="noopener noreferrer"
         >MIxS Extension</a>
-        for your samples.
+        for your samples. If isolation was performed, select the "isolate" option. If isolates were obtained from a
+        provider, select only the "isolate" option.
       </template>
     </PageTitle>
     <SubmissionForm
@@ -53,15 +74,24 @@ const templateListDisplayNames = computed(() => store.templateList
       >
         <template #default>
           <fieldset class="border-0">
-            <v-checkbox
+            <template
               v-for="option in templates.filter((v) => v[1].status === 'published')"
               :key="option[0]"
-              v-model="sampleEnvironmentForm.packageName"
-              hide-details
-              :disabled="templateHasData(option[0] as TemplateName) || formRef?.isDisabled"
-              :label="HARMONIZER_TEMPLATES[option[0] as TemplateName]?.displayName"
-              :value="option[0]"
-            />
+            >
+              <v-checkbox
+                v-model="sampleEnvironmentForm.packageName"
+                hide-details
+                :disabled="formRef?.isDisabled || checkboxDisabledReason[option[0]] !== null"
+                :label="HARMONIZER_TEMPLATES[option[0] as TemplateName]?.displayName"
+                :value="option[0]"
+              />
+              <div
+                v-if="checkboxDisabledReason[option[0]]"
+                class="ml-8 text-caption"
+              >
+                {{ checkboxDisabledReason[option[0]] }}
+              </div>
+            </template>
           </fieldset>
         </template>
       </v-input>

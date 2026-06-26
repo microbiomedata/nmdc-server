@@ -132,7 +132,22 @@ export default class HarmonizerApi {
   }
 
   _getFieldSettings() {
-    const fieldSettings: any = {};
+    const fieldSettings: any = {
+      isolate_ribosomal_seq: {
+        getColumn: (_: any, col: {[key: string]: any}) => {
+          const newCol = { ...col };
+          newCol.width = 180;
+          return newCol;
+        }
+      },
+      isolate_second_ribosomal_seq: {
+        getColumn: (_: any, col: {[key: string]: any}) => {
+          const newCol = { ...col };
+          newCol.width = 180;
+          return newCol;
+        }
+      },
+    };
     const fieldNames = Object.keys(GOLD_FIELDS);
     for (let i = 0; i < fieldNames.length; i += 1) {
       const field = fieldNames[i] as keyof typeof GOLD_FIELDS;

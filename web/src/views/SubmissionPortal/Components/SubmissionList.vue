@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
+import { VTextField } from 'vuetify/components';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -16,6 +17,7 @@ import {
   SubmissionMetadataSlim,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
+import { validateOrcid } from '../utils.ts';
 import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
@@ -121,7 +123,8 @@ async function handleDelete(item: SubmissionMetadataSlim | null) {
 }
 
 const reviewerOrcid = ref('');
-function openReviewerDialog(item: SubmissionMetadataSlim | null) {
+const orcidTextFieldRef = useTemplateRef<InstanceType<typeof VTextField>>('orcidTextField');
+    function openReviewerDialog(item: SubmissionMetadataSlim | null) {
   isReviewerAssignmentDialogOpen.value = true;
   selectedSubmission.value = item;
 }
@@ -365,10 +368,13 @@ async function addReviewer() {
             </legend>
             <v-col cols="4">
               <v-text-field
+                ref="orcidTextField"
                 v-model="reviewerOrcid"
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
+                :rules="[(v) => !!v || 'An ORCID iD is required',
+                validateOrcid]"
               />
             </v-col>
           </v-row>
@@ -388,6 +394,7 @@ async function addReviewer() {
             color="primary"
             class="mt-2"
             :loading="assignReviewerRequest.loading.value"
+            :disabled="orcidTextFieldRef?.isValid === false || !reviewerOrcid"
             @click="() => addReviewer()"
           >
             Assign Reviewer
