@@ -24,7 +24,6 @@ const Definitions = {
   dataDoiProvider: 'The authority, or organization, that created and provided the DOI.',
   dataDoiValue: 'A type of DOI that resolves to generated data.',
   unknownDoi: 'If selected you will not have to enter the required Award DOIs and you will be contacted by an NMDC team member after you have submitted your data.',
-  sampleSetName: 'A Sample Set Name is required. These names should be unique to each sample set.',
 };
 
 export default Definitions;

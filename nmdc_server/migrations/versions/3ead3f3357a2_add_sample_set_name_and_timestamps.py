@@ -59,16 +59,15 @@ def upgrade():
         )
     )
 
-    # Backfill the new columns for existing sample sets. The name is generated based on the
-    # creation date of the associated submission. The created and date_last_modified values are
-    # copied from the associated submission.
+    # Backfill the new columns for existing sample sets. The created and
+    # date_last_modified values are copied from the associated submission.
     for sample_set in sample_sets:
         created = sample_set.created
         connection.execute(
             submission_sample_set.update()
             .where(submission_sample_set.c.id == sample_set.id)
             .values(
-                name=f"Sample Set {created.date().isoformat()}",
+                name="Sample Set 1",
                 created=created,
                 date_last_modified=sample_set.date_last_modified,
             )
