@@ -10,7 +10,7 @@ RUN apt-get update
 RUN apt-get install -y postgresql-client-15 git libpq-dev libc6-dev gcc
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.15 /uv /uvx /bin/
 
 # Configure global uv options
 ENV UV_PYTHON_DOWNLOADS=0
