@@ -2,9 +2,12 @@
 import { useSubmissionStore } from '../store';
 import { computed } from 'vue';
 import { stateRefs } from '@/store';
+import { useRouter } from 'vue-router';
 import SampleSetTable from './SampleSetTable.vue';
 
+const router = useRouter();
 const store = useSubmissionStore();
+const { createSubmissionSampleSet } = store;
 
 const author = computed(() => store.submission.record?.author);
 const createdDate = computed(
@@ -18,6 +21,16 @@ const modifiedDate = computed(
 const isCurrentUserAuthor = computed(() => {
   return stateRefs.user.value && stateRefs.user.value.orcid === author.value?.orcid;
 });
+
+async function createNewSampleSet() {
+  const sampleSetName = store.submission.record?.sample_sets.length ? `Sample Set ${store.submission.record.sample_sets.length + 1}` : 'Sample Set 1';
+  const item = await createSubmissionSampleSet(sampleSetName);
+  if (item === null) {
+    return;
+  }
+  router?.push({ name: 'Multiomics Form', params: { sampleSetId: item.id } });
+}
+
 </script>
 
 <template>
@@ -92,7 +105,7 @@ const isCurrentUserAuthor = computed(() => {
     <v-card-text>
       <v-btn
         color="primary"
-        :to="{ name: 'Create Sample Set' }"
+        @click="createNewSampleSet"
       >
         <v-icon>mdi-plus</v-icon>
         Create Sample Set
