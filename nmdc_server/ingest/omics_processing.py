@@ -243,27 +243,46 @@ def load_omics_processing(  # noqa: C901
 
 def load_amplicon_data(obj, input_ids, mongodb):
     """
-    Load amplicon-specific fields for omics processing records.
+    Load amplicon-specific fields onto an omics processing (data generation) record.
+
+    ``target_gene`` and ``target_subfragment`` are both optional slots asserted only on
+    ``LibraryPreparation`` in the NMDC schema, and are independent of one another. They are
+    read from the LibraryPreparation that produced one of this data generation's inputs.
+
+    Following the convention of load_omics_processing, this mutates `obj` in place rather
+    than returning a value.
 
     Args:
-        obj: The omics processing object to populate with amplicon data
-        input_ids: List of input IDs to search for material processing data
+        obj: The data generation record to populate with amplicon data (mutated in place)
+        input_ids: List of input IDs to search for the producing LibraryPreparation
         mongodb: MongoDB database connection
     """
+    # `obj` is the destination data generation record being populated; `amplicon_lib_prep`
+    # (below) is the source LibraryPreparation the target_gene/target_subfragment are read from.
+    obj["target_gene"] = None
+    obj["target_subfragment"] = None
+
     for input_id in input_ids:
-        material_processing_set = mongodb["material_processing_set"].find_one(
+        amplicon_lib_prep = mongodb["material_processing_set"].find_one(
             {"has_output": {"$in": [input_id]}}
         )
-        if material_processing_set and "target_gene" in material_processing_set:
-            obj["target_gene"] = material_processing_set["target_gene"]
-            target_subfragment = material_processing_set["target_subfragment"]
+        if not amplicon_lib_prep:
+            continue
+
+        target_gene = amplicon_lib_prep.get("target_gene")
+        if target_gene is not None:
+            obj["target_gene"] = target_gene
+
+        target_subfragment = amplicon_lib_prep.get("target_subfragment")
+        if target_subfragment is not None:
             if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
                 obj["target_subfragment"] = target_subfragment["has_raw_value"]
             else:
                 obj["target_subfragment"] = target_subfragment
-        else:
-            obj["target_gene"] = None
-            obj["target_subfragment"] = None
+
+        # Stop once we've found the LibraryPreparation carrying the target_gene.
+        if obj["target_gene"] is not None:
+            break
 
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
