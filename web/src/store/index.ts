@@ -9,6 +9,7 @@ import {
 import { User } from '@/types';
 import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
 import { Router } from 'vue-router';
+import { routeHasConditions } from '@/store/route';
 
 let router: Router | null = null;
 const state = reactive({
@@ -85,11 +86,6 @@ function restoreState() {
   }
 }
 
-function routeHasConditions(currentRoute: Router['currentRoute']['value']) {
-  const { conditions } = currentRoute.query;
-  return Array.isArray(conditions) ? conditions.length > 0 : !!conditions;
-}
-
 // @ts-ignore
 window.restoreState = restoreState;
 
@@ -133,8 +129,12 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
       // Login normally
       // @ts-ignore
       state.conditions = router.currentRoute.value.query.conditions || [];
-      if (state.user && !routeHasConditions(router.currentRoute.value)) {
-        restoreState();
+      if (state.user) {
+        if (routeHasConditions(router.currentRoute.value)) {
+          clearQueryState();
+        } else {
+          restoreState();
+        }
       }
       break;
   }
@@ -234,5 +234,4 @@ export {
   setUniqueCondition,
   setConditions,
   toggleConditions,
-  routeHasConditions,
 };
