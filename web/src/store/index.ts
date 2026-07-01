@@ -31,7 +31,7 @@ const unreactive = {
  */
 function persistState() {
   /* If the user is browsing anonymously, stash their state in case they log in */
-  if (!state.user) {
+  if (!state.user && router && router.currentRoute.value.name === 'Search') {
     setQueryState({
       conditions: state.conditions,
       bulkDownloadSelected: state.bulkDownloadSelected,
@@ -115,7 +115,6 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
     state.bannerTitle = appSettings.portal_banner_title;
     state.bannerMessage = appSettings.portal_banner_message;
   } catch (exception) {
-     
     console.error(exception);
   }
   router = _router;
