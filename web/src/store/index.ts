@@ -85,6 +85,11 @@ function restoreState() {
   }
 }
 
+function routeHasConditions(currentRoute: Router['currentRoute']['value']) {
+  const { conditions } = currentRoute.query;
+  return Array.isArray(conditions) ? conditions.length > 0 : !!conditions;
+}
+
 // @ts-ignore
 window.restoreState = restoreState;
 
@@ -128,7 +133,7 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
       // Login normally
       // @ts-ignore
       state.conditions = router.currentRoute.value.query.conditions || [];
-      if (state.user) {
+      if (state.user && !routeHasConditions(router.currentRoute.value)) {
         restoreState();
       }
       break;
@@ -229,4 +234,5 @@ export {
   setUniqueCondition,
   setConditions,
   toggleConditions,
+  routeHasConditions,
 };
