@@ -573,3 +573,8 @@ function handleSave() {
     </div>
   </div>
 </template>
+<style lang="scss">
+.v-input--disabled, .v-field--disabled {
+    pointer-events: initial;
+}
+</style>
