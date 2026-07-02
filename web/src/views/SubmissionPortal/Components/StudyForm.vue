@@ -180,7 +180,6 @@ export default defineComponent({
             v-model="studyForm.description"
             label="Study Description"
             :hint="Definitions.studyDescription"
-            :class="{ 'readonly-as-disabled': formRef?.isDisabled }"
             persistent-hint
             variant="outlined"
           >
