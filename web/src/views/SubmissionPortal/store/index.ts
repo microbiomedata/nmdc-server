@@ -165,6 +165,7 @@ type SampleSetStoreState = {
 type UiState = {
   suggestionMode: SuggestionsMode
   suggestionType: SuggestionType
+  pendingImageUploads: Set<SubmissionImageType>
 }
 
 /* STATE-FREE HELPERS */
@@ -209,6 +210,7 @@ export const useSubmissionStore = defineStore('submission', () => {
   const ui = reactive<UiState>({
     suggestionMode: SuggestionsMode.LIVE,
     suggestionType: SuggestionType.ALL,
+    pendingImageUploads: new Set(),
   });
 
   /* GETTERS */
@@ -309,6 +311,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     }
     return newTemplates;
   });
+  const hasPendingImageUploads = computed(() => ui.pendingImageUploads.size > 0);
 
   /* WATCHERS */
   // When "Have data already been generated for your study?" changes, reset the answers to dependent questions
@@ -749,6 +752,17 @@ export const useSubmissionStore = defineStore('submission', () => {
     submission.record = await api.deleteSubmissionImage(submissionId, imageType);
   }
 
+   /**
+   * If a file is selected for upload then we add it to the list of pending uploads
+   */
+  function setImageUploadPending(image: SubmissionImageType, isPending: boolean) {
+    if (isPending) {
+      ui.pendingImageUploads.add(image);
+    } else {
+      ui.pendingImageUploads.delete(image);
+    }
+  }
+
   /**
    * Request the edit lock on the submission.
    *
@@ -1063,6 +1077,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     submissionIsDirty,
     sampleSetIsDirty,
     templateList,
+    hasPendingImageUploads,
 
     /* ACTIONS */
     loadSubmission,
@@ -1072,6 +1087,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     saveSubmissionFormEdits,
     uploadSubmissionImage,
     deleteSubmissionImage,
+    setImageUploadPending,
     lockSubmission,
     unlockSubmission,
     getUneditableReason,
