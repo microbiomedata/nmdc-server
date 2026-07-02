@@ -750,27 +750,6 @@ const loading = computed(() => (
                 </v-card-text>
               </v-card>
             </div>
-            <!-- <div 
-              v-if="hasSuggestions"
-              class="d-flex justify-end mt-1"
-            >
-              <v-btn 
-                size="small"
-                variant="text"
-                color="grey"
-                @click="handleRejectAllSuggestions"
-              >
-                Reject all
-              </v-btn>
-              <v-btn
-                size="small"
-                variant="text"
-                color="primary"
-                @click="handleAcceptAllSuggestions"
-              >
-                Accept all
-              </v-btn>
-            </div>  -->
           </v-col>
         </v-row>
 
