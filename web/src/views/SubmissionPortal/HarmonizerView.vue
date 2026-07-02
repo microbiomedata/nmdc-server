@@ -1077,7 +1077,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :harmonizer-template="activeTemplate!"
             :metadata-editing-allowed="isEditable"
             :show-suggester-badge="showSuggesterBadge"
-            :fetch-study-info-suggestions="fetchSuggestionsFromStudyDetails"
+            @fetch-study-info-suggestions="fetchSuggestionsFromStudyDetails"
             @import-xlsx="openFile"
             @export-xlsx="downloadSamples"
             @clear-suggester-badge="showSuggesterBadge = false"

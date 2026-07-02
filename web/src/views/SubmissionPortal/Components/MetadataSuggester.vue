@@ -39,10 +39,6 @@ interface MetadataSuggesterProps {
    * The schema class name for the active template.
    */
   schemaClassName: string;
-  /**
-   * Callback to fetch suggestions from the study info forms.
-   */
-  fetchStudyInfoSuggestions?: () => Promise<any>;
 }
 
 const displayFilter = ref<string | null>(null);
@@ -56,6 +52,9 @@ function getSuggestionKey(suggestion: MetadataSuggestion) {
 }
 
 const props = defineProps<MetadataSuggesterProps>();
+const emit = defineEmits<{
+  'fetch-study-info-suggestions': [];
+}>();
 
 const rejectedSuggestions = ref([] as string[]);
 const onDemandSuggestionsLoading = ref(false);
@@ -261,10 +260,8 @@ function handleRejectAllSuggestions() {
  *
  * Fetches suggestions from study info, then marks suggestion as started.
  */
-async function handleStartSuggestion() {
-  if (props.fetchStudyInfoSuggestions) {
-    await props.fetchStudyInfoSuggestions();
-  }
+function handleStartSuggestion() {
+  emit('fetch-study-info-suggestions');
   suggestionStarted.value = true;
 }
 
