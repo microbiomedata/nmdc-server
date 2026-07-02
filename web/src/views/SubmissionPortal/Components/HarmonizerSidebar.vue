@@ -10,7 +10,6 @@ import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExpor
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
 import MetadataSuggester from '@/views/SubmissionPortal/Components/MetadataSuggester.vue';
 import { ColumnHelpInfo, HarmonizerTemplateInfo } from '@/views/SubmissionPortal/types';
-import { sampleData } from '../store';
 
 interface HarmonizerSidebarProps {
   /**
@@ -37,34 +36,31 @@ interface HarmonizerSidebarProps {
    * Callback to fetch suggestions from the study info forms.
    */
   fetchStudyInfoSuggestions?: () => Promise<any>;
+  /**
+   * Whether to show the badge on the Metadata Suggester tab icon.
+   */
+  showSuggesterBadge?: boolean;
 }
 
 withDefaults(defineProps<HarmonizerSidebarProps>(), {
   columnHelp: null,
   metadataEditingAllowed: false,
+  showSuggesterBadge: false,
 });
 
 const emit = defineEmits<{
   'export-xlsx': [];
   'import-xlsx': [file: File];
+  'clear-suggester-badge': [];
 }>();
 
 const tabModel = ref(0);
 const SUGGESTER_TAB_INDEX = 1;
-const showBadge = ref(false);
-
-// Show badge on page load/reload if the submission already has sample data
-watch(() => sampleData.data, (newData: Record<string, any[]>) => {
-  const hasData = Object.values(newData).some(rows => rows.length > 0);
-  if (hasData && tabModel.value !== SUGGESTER_TAB_INDEX) {
-    showBadge.value = true;
-  }
-}, { immediate: true });
 
 // Clear badge when suggester tab is selected
 watch(tabModel, (newTab: number) => {
   if (newTab === SUGGESTER_TAB_INDEX) {
-    showBadge.value = false;
+    emit('clear-suggester-badge');
   }
 });
 
@@ -119,7 +115,7 @@ const handleImport = (file: File) => {
                 {{ tab.icon }}
               </v-icon>
               <span
-                v-if="tabIndex === SUGGESTER_TAB_INDEX && showBadge"
+                v-if="tabIndex === SUGGESTER_TAB_INDEX && showSuggesterBadge"
                 class="suggester-dot"
               />
             </v-tab>
