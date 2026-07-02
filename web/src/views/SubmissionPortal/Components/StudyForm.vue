@@ -180,8 +180,6 @@ export default defineComponent({
             v-model="studyForm.description"
             label="Study Description"
             :hint="Definitions.studyDescription"
-            :readonly="formRef?.isDisabled"
-            :disabled="false"
             :class="{ 'readonly-as-disabled': formRef?.isDisabled }"
             persistent-hint
             variant="outlined"
@@ -611,13 +609,8 @@ export default defineComponent({
     </div>
   </div>
 </template>
-<style scoped>
-.readonly-as-disabled :deep(.v-field),
-.readonly-as-disabled :deep(.v-input__details) {
-  opacity: var(--v-disabled-opacity, 0.6);
-}
-
-.readonly-as-disabled :deep(textarea) {
-  cursor: default;
+<style lang="scss">
+.v-input--disabled, .v-field--disabled {
+    pointer-events: initial;
 }
 </style>
