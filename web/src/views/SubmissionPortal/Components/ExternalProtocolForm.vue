@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { defineProps, computed, ref } from 'vue';
-import { multiOmicsForm, checkDoiFormat } from '../store';
+import { computed, ref, watch } from 'vue';
+import { checkDoiFormat } from '@/views/SubmissionPortal/utils.ts';
+import type { Protocols } from '@/views/SubmissionPortal/types';
+import { useSubmissionStore } from '../store';
+
+const store = useSubmissionStore();
 
 type DataType =
   'mpProtocols' |
@@ -132,7 +136,31 @@ const props = defineProps<{
   dataType: DataType,
 }>();
 
+function createEmptyProtocols(): Protocols {
+  return {
+    sampleProtocol: {
+      name: '',
+      description: '',
+      doi: '',
+      url: '',
+      sharedData: false,
+      sharedDataName: '',
+    },
+    acquisitionProtocol: {
+      doi: '',
+      url: '',
+      name: '',
+      description: '',
+    },
+    dataProtocol: {
+      doi: '',
+      url: '',
+    },
+  };
+}
+
 const protocolNames = computed(() => {
+  const multiOmicsForm = store.sampleSet.forms.multiOmicsForm;
   const names = new Set<string>();
   if (multiOmicsForm.mpProtocols?.sampleProtocol.name) {
     names.add(multiOmicsForm.mpProtocols.sampleProtocol.name);
@@ -191,33 +219,22 @@ const protocolNames = computed(() => {
   return Array.from(names);
 });
 
-const existingProtocols = computed(() => multiOmicsForm[props.dataType]);
+const existingProtocols = computed(() => store.sampleSet.forms.multiOmicsForm[props.dataType]);
 
-const currentProtocol = ref({
-  sampleProtocol: {
-    name: existingProtocols.value?.sampleProtocol.name || '',
-    description: existingProtocols.value?.sampleProtocol.description || '',
-    doi: existingProtocols.value?.sampleProtocol.doi || '',
-    url: existingProtocols.value?.sampleProtocol.url || '',
-    sharedData: existingProtocols.value?.sampleProtocol.sharedData || false,
-    sharedDataName: existingProtocols.value?.sampleProtocol.sharedDataName || '',
-  },
-  acquisitionProtocol: {
-    doi: existingProtocols.value?.acquisitionProtocol.doi || '',
-    url: existingProtocols.value?.acquisitionProtocol.url || '',
-    name: existingProtocols.value?.acquisitionProtocol.name || '',
-    description: existingProtocols.value?.acquisitionProtocol.description || '',
-  },
-  dataProtocol: {
-    doi: existingProtocols.value?.dataProtocol.doi || '',
-    url: existingProtocols.value?.dataProtocol.url || '',
-  },
-});
+watch(existingProtocols, (protocols) => {
+  if (protocols === null) {
+    store.sampleSet.forms.multiOmicsForm[props.dataType] = createEmptyProtocols();
+  }
+}, { immediate: true });
+
+const currentProtocol = computed(() => (
+  store.sampleSet.forms.multiOmicsForm[props.dataType] ?? createEmptyProtocols()
+));
 const showSamplePrepExampleDialog = ref(false);
 const showDataAcquisitionExampleDialog = ref(false);
 
 function updateMultiOmicsForm() {
-  multiOmicsForm[props.dataType] = currentProtocol.value;
+  store.sampleSet.forms.multiOmicsForm[props.dataType] = currentProtocol.value;
 }
 
 const doiValueRules = () => (

@@ -7,6 +7,11 @@ export function formatShippingDate (date: string | Date | null | undefined): str
   return moment(date).format('YYYY-MM-DD');
 }
 
+export function checkDoiFormat(v: string): string | boolean {
+  return /^(?:doi:)?10.\d{2,9}\/.*$/.test(v) || 'DOI must be in the format "10.xxxx/xxxxx"';
+}
+
+
 export function validateOrcid(orcid: string): string | boolean {
   if (!orcid) {
     return true;

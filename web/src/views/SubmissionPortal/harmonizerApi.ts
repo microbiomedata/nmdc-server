@@ -5,9 +5,9 @@ import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from '@microbiomedata/data-harmonizer';
 import {
   CellData,
-  HARMONIZER_TEMPLATES,
-  MetadataSuggestionRequest,
   ColumnHelpInfo,
+  HarmonizerTemplateInfo,
+  MetadataSuggestionRequest,
 } from '@/views/SubmissionPortal/types';
 import {
   type DataHarmonizerData,
@@ -73,20 +73,6 @@ export default class HarmonizerApi {
   async init(r: HTMLElement, schema: any, templateName: string | undefined, goldEcosystemTree: any) {
     this.schema = schema;
     this.goldEcosystemTree = goldEcosystemTree;
-
-    // Attempt to find each template's underlying schema class, pull the excel_worksheet_name annotation from it
-    // and add it to the template object.
-    Object.values(HARMONIZER_TEMPLATES).forEach((template) => {
-      if (!template.schemaClass) {
-        return;
-      }
-      const classDefinition = schema.classes[template.schemaClass];
-      if (!classDefinition) {
-        return;
-      }
-
-      template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
-    });
 
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
@@ -589,6 +575,18 @@ export default class HarmonizerApi {
         return [key, unflattenedValue];
       }),
     ));
+  }
+
+  getExcelWorksheetName(template: HarmonizerTemplateInfo) {
+    if (!template.schemaClass) {
+      return;
+    }
+    const classDefinition = this.schema.classes[template.schemaClass];
+    if (!classDefinition) {
+      return;
+    }
+
+    return classDefinition.annotations?.excel_worksheet_name?.value || template.displayName;
   }
 
   static flattenArrayValues(tableData: Record<string, any>[]) {

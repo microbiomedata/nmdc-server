@@ -4,29 +4,17 @@
  */
 import { computed, ref, watchEffect } from 'vue';
 import {
-  fetchSuggestionsFromSampleRows,
-  removeMetadataSuggestions,
-  metadataSuggestions,
-  suggestionMode,
-  suggestionType,
-  fetchSuggestionsFromSampleRowsRequest,
-  fetchSuggestionsFromStudyInfoRequest,
-} from '@/views/SubmissionPortal/store';
-import {
   CellData,
   MetadataSuggestion,
   SuggestionsMode,
   SuggestionType,
 } from '@/views/SubmissionPortal/types';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
-import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
+import { getRejectedSuggestions, setPendingSuggestions, setRejectedSuggestions } from '@/store/localStorage';
 import { AI_SUGGESTION_BG } from '@/views/SubmissionPortal/colors.ts';
+import { useSubmissionStore } from '../store';
 
 interface MetadataSuggesterProps {
-  /**
-   * The submission ID.
-   */
-  submissionId: string;
   /**
    * Whether the suggester UI is displayed or not. If false, the component will display a message indicating that
    * the user does not have permission to edit the metadata.
@@ -41,6 +29,9 @@ interface MetadataSuggesterProps {
    */
   schemaClassName: string;
 }
+
+const store = useSubmissionStore();
+const { loadSuggestionsFromSampleRows } = store;
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
 const suggestionTypeOptions = Object.values(SuggestionType);
@@ -57,12 +48,16 @@ const onDemandSuggestionsLoading = ref(false);
 // When the route or schema class name changes (because of changing the active template tab), update the rejected
 // suggestions list from local storage.
 watchEffect(() => {
-  rejectedSuggestions.value = getRejectedSuggestions(props.submissionId, props.schemaClassName);
+  if (store.sampleSet.record === null) {
+    rejectedSuggestions.value = [];
+    return;
+  }
+  rejectedSuggestions.value = getRejectedSuggestions(store.sampleSet.record.id, props.schemaClassName);
 });
 
 // Suggestions that have been neither accepted nor rejected.
 const pendingSuggestions = computed(() => (
-    metadataSuggestions.value
+    store.sampleSet.suggestions
       .filter((suggestion) => {
         const key = getSuggestionKey(suggestion);
         return !rejectedSuggestions.value.includes(key);
@@ -86,6 +81,24 @@ const pendingSuggestions = computed(() => (
 const hasSuggestions = computed(() => pendingSuggestions.value.length > 0);
 
 /**
+ * Remove the given metadata suggestions from the list of pending suggestions. Then sync the pending suggestions with
+ * local storage.
+ *
+ * @param schemaClassName
+ * @param suggestions
+ */
+function removeMetadataSuggestions(schemaClassName: string, suggestions: MetadataSuggestion[]) {
+  if (store.sampleSet.record === null) {
+    return;
+  }
+  store.sampleSet.suggestions = store.sampleSet.suggestions.filter(
+    (suggestion) => !suggestions.includes(suggestion),
+  );
+
+  setPendingSuggestions(store.sampleSet.record.id, schemaClassName, store.sampleSet.suggestions);
+}
+
+/**
  * Accepts the given suggestions by setting the cell data via the Harmonizer API and removing the suggestions from
  * the store.
  * @param suggestions
@@ -104,7 +117,7 @@ function acceptSuggestions(suggestions: MetadataSuggestion[]) {
   // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
   props.harmonizerApi.setCellData(cellData);
 
-  removeMetadataSuggestions(props.submissionId, props.schemaClassName, suggestions);
+  removeMetadataSuggestions(props.schemaClassName, suggestions);
 }
 
 /**
@@ -112,11 +125,14 @@ function acceptSuggestions(suggestions: MetadataSuggestion[]) {
  * @param suggestions
  */
 function rejectSuggestions(suggestions: MetadataSuggestion[]) {
+  if (store.sampleSet.record === null) {
+    return;
+  }
   suggestions.forEach((suggestion) => {
     const key = getSuggestionKey(suggestion);
     rejectedSuggestions.value.push(key);
   });
-  setRejectedSuggestions(props.submissionId, props.schemaClassName, rejectedSuggestions.value);
+  setRejectedSuggestions(store.sampleSet.record.id, props.schemaClassName, rejectedSuggestions.value);
 }
 
 /**
@@ -193,7 +209,7 @@ async function handleSuggestForSelectedRows() {
   }, [] as number[]);
   const changedRowData = props.harmonizerApi.getDataByRows(rows);
   try {
-    await fetchSuggestionsFromSampleRows(props.submissionId, props.schemaClassName, changedRowData);
+    await loadSuggestionsFromSampleRows(props.schemaClassName, changedRowData);
   } finally {
     onDemandSuggestionsLoading.value = false;
   }
@@ -203,8 +219,11 @@ async function handleSuggestForSelectedRows() {
  * Handle resetting the rejected suggestions list.
  */
 function handleResetRejectedSuggestions() {
+  if (store.sampleSet.record === null) {
+    return;
+  }
   rejectedSuggestions.value = [];
-  setRejectedSuggestions(props.submissionId, props.schemaClassName, rejectedSuggestions.value);
+  setRejectedSuggestions(store.sampleSet.record.id, props.schemaClassName, rejectedSuggestions.value);
 }
 
 /**
@@ -214,17 +233,13 @@ function handleResetRejectedSuggestions() {
 function getSlotTitle(slot: string) {
   return props.harmonizerApi.slotInfo.get(slot)?.title ?? slot;
 }
-
-const loading = computed(() => (
-  fetchSuggestionsFromSampleRowsRequest.loading.value || fetchSuggestionsFromStudyInfoRequest.loading.value
-));
 </script>
 
 <template>
   <v-card
     elevation="0"
     tile
-    :loading="loading"
+    :loading="store.sampleSet.requests.loadingSuggestions.loading"
   >
     <template #loader="{ isActive }">
       <v-progress-linear
@@ -270,7 +285,7 @@ const loading = computed(() => (
         <v-row dense>
           <v-col cols="6">
             <v-select
-              v-model="suggestionMode"
+              v-model="store.ui.suggestionMode"
               :items="suggestionModeOptions"
               hide-details
               label="Suggestion Mode"
@@ -278,7 +293,7 @@ const loading = computed(() => (
           </v-col>
           <v-col cols="6">
             <v-select
-              v-model="suggestionType"
+              v-model="store.ui.suggestionType"
               :items="suggestionTypeOptions"
               hide-details
               label="Suggestion Type"
@@ -286,7 +301,7 @@ const loading = computed(() => (
           </v-col>
         </v-row>
 
-        <v-row v-if="suggestionMode === SuggestionsMode.ON_DEMAND">
+        <v-row v-if="store.ui.suggestionMode === SuggestionsMode.ON_DEMAND">
           <v-col>
             <v-btn
               color="primary"

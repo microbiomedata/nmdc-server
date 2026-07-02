@@ -1,19 +1,36 @@
 <script setup lang="ts">
-import {
-  author,
-  createdDate,
-  isTestSubmission,
-  modifiedDate,
-  statusDisplay,
-  submissionPages,
-} from '../store';
+import { useSubmissionStore } from '../store';
 import { computed } from 'vue';
 import { stateRefs } from '@/store';
+import { useRouter } from 'vue-router';
+import SampleSetTable from './SampleSetTable.vue';
+
+const router = useRouter();
+const store = useSubmissionStore();
+const { createSubmissionSampleSet } = store;
+
+const author = computed(() => store.submission.record?.author);
+const createdDate = computed(
+  () => store.submission.record?.created ? new Date(store.submission.record.created + 'Z') : null
+);
+const modifiedDate = computed(
+  () => store.submission.record?.date_last_modified ? new Date(store.submission.record.date_last_modified + 'Z') : null
+);
 
 // Check if the current logged-in user is also the author of the submission
 const isCurrentUserAuthor = computed(() => {
   return stateRefs.user.value && stateRefs.user.value.orcid === author.value?.orcid;
 });
+
+async function createNewSampleSet() {
+  const sampleSetName = store.submission.record?.sample_sets.length ? `Sample Set ${store.submission.record.sample_sets.length + 1}` : 'Sample Set 1';
+  const item = await createSubmissionSampleSet(sampleSetName);
+  if (item === null) {
+    return;
+  }
+  router?.push({ name: 'Multiomics Form', params: { sampleSetId: item.id } });
+}
+
 </script>
 
 <template>
@@ -54,37 +71,46 @@ const isCurrentUserAuthor = computed(() => {
       <AttributeRow label="Last Modified">
         {{ modifiedDate?.toLocaleString() }}
       </AttributeRow>
-      <AttributeRow label="Status">
-        {{ statusDisplay }}
-      </AttributeRow>
       <AttributeRow
-        v-if="isTestSubmission"
+        v-if="store.submission.record?.is_test_submission"
         label="Is Test Submission?"
       >
         Yes
       </AttributeRow>
     </PageSection>
-
-    <PageSection>
-      <v-list class="pa-0 border rounded">
-        <template
-          v-for="(page, index) in submissionPages"
-          :key="page.title"
-        >
-          <v-divider v-if="index > 0" />
-          <v-list-item
-            :to="page.link"
-            link
-            :title="page.title"
-          >
-            <template #append>
-              <v-icon>
-                mdi-chevron-right
-              </v-icon>
-            </template>
-          </v-list-item>
-        </template>
-      </v-list>
-    </PageSection>
   </div>
+  <PageSection
+    heading="Study Information"
+    subheading="Use this form to enter information about the research initiative as a whole and the people contributing to it. Each NMDC Submission corresponds to one research initiative."
+  >
+    <v-list class="pa-0 border rounded">
+      <v-list-item
+        :to="{ name: 'Study Form' }"
+        link
+        class="w-100"
+      >
+        <v-list-item-title class="text-body-1 font-weight-medium">
+          Study Information
+        </v-list-item-title>
+        <template #append>
+          <v-icon>mdi-chevron-right</v-icon>
+        </template>
+      </v-list-item>
+    </v-list>
+  </PageSection>
+  <PageSection
+    heading="Sample Sets"
+    subheading="TODO add explainer text"
+  >
+    <v-card-text>
+      <v-btn
+        color="primary"
+        @click="createNewSampleSet"
+      >
+        <v-icon>mdi-plus</v-icon>
+        Create Sample Set
+      </v-btn>
+    </v-card-text>
+    <SampleSetTable/>
+  </PageSection>
 </template>
