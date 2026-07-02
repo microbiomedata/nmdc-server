@@ -13,6 +13,8 @@ import {
   type DataHarmonizerData,
   validatePlateWellsForJgi,
 } from '@/views/SubmissionPortal/validation';
+// @ts-ignore
+import colors from '@/colors';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -306,10 +308,10 @@ highlight(row?: number, col?: number) {
     nextTick(() => {
       // Apply a background to row and column
       borders.setBorders(cellsToHighlight, {
-        left: { hide: false, width: 1, color: '#E1BEE7' },
-        right: { hide: false, width: 1, color: '#E1BEE7' },
-        top: { hide: false, width: 1, color: '#E1BEE7' },
-        bottom: { hide: false, width: 1, color: '#E1BEE7' },
+        left: { hide: false, width: 1, color: colors.purpleLightest },
+        right: { hide: false, width: 1, color: colors.purpleLightest },
+        top: { hide: false, width: 1, color: colors.purpleLightest },
+        bottom: { hide: false, width: 1, color: colors.purpleLightest },
       });
       
       // Highlight the target cell itself with a stronger border
