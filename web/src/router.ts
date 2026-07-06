@@ -19,12 +19,10 @@ import StudyForm from '@/views/SubmissionPortal/Components/StudyForm.vue';
 import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
 import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
 import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
-import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
-
-import { incrementalSaveRecord, lockRecord, unlockRecord } from '@/views/SubmissionPortal/store';
+import { useSubmissionStore } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -71,7 +69,9 @@ const router = createRouter({
         {
           component: StepperView,
           path: '',
-          props: true,
+          props: (route) => ({
+            id: getRouteParamString(route.params.id) ?? null,
+          }),
           children: [
             {
               name: 'Submission Summary',
@@ -86,30 +86,24 @@ const router = createRouter({
             },
             {
               name: 'Multiomics Form',
-              path: ':id/multiomics',
+              path: ':id/sample_set/:sampleSetId/multiomics',
               component: MultiOmicsDataForm,
               meta: { requiresSubmissionLock: true },
             },
             {
               name: 'Sample Environment',
               component: TemplateChooser,
-              path: ':id/templates',
+              path: ':id/sample_set/:sampleSetId/templates',
               meta: { requiresSubmissionLock: true },
             },
             {
-              name: 'Validate And Submit',
-              component: ValidateSubmit,
-              path: ':id/submit',
-              meta: { requiresSubmissionLock: true },
+              name: 'Submission Sample Editor',
+              component: HarmonizerView,
+              path: ':id/sample_set/:sampleSetId/samples',
+              props: true,
+              meta: { requiresSubmissionLock: true, fullWidth: true },
             },
           ],
-        },
-        {
-          name: 'Submission Sample Editor',
-          component: HarmonizerView,
-          path: ':id/samples',
-          props: true,
-          meta: { requiresSubmissionLock: true },
         },
       ],
     },
@@ -142,25 +136,56 @@ const router = createRouter({
   parseQuery,
   stringifyQuery,
 });
+
+function getRouteParamString(param: unknown): string | undefined {
+  if (Array.isArray(param)) {
+    return param[0];
+  }
+  return typeof param === 'string' ? param : undefined;
+}
+
+async function ensureSubmissionLoaded(submissionId: string, store: ReturnType<typeof useSubmissionStore>) {
+  if (store.submission.record?.id === submissionId) {
+    return true;
+  }
+  await store.loadSubmission(submissionId);
+  return store.submission.record?.id === submissionId;
+}
+
 router.beforeEach(async (to, from) => {
+  const store = useSubmissionStore();
+  const fromSubmissionId = getRouteParamString(from.params.id);
+  const toSubmissionId = getRouteParamString(to.params.id);
+
   try {
-    if (from.meta.requiresSubmissionLock && 'id' in from.params) {
-      const id = from.params.id as string;
+    if (from.meta.requiresSubmissionLock && fromSubmissionId) {
       // We are navigating away from a submission edit screen, so save the progress
-      await incrementalSaveRecord(id);
-      if (!to.meta.requiresSubmissionLock) {
-        // We are navigating to a screen that does not require a lock, so unlock
-        await unlockRecord(id);
+      await store.saveFormEdits();
+      if (!to.meta.requiresSubmissionLock || toSubmissionId !== fromSubmissionId) {
+        // We are navigating to a screen that does not require this lock, so unlock
+        if (store.submission.record?.id === fromSubmissionId) {
+          await store.unlockSubmission(fromSubmissionId);
+        }
       }
-    } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
-      const id = to.params.id as string;
+    }
+    if (
+      to.meta.requiresSubmissionLock
+      && toSubmissionId
+      && (!from.meta.requiresSubmissionLock || fromSubmissionId !== toSubmissionId)
+    ) {
       // We are navigating to a submission edit screen, so lock the record
-      await lockRecord(id);
+      const submissionLoaded = await ensureSubmissionLoaded(toSubmissionId, store);
+      if (submissionLoaded) {
+        await store.lockSubmission(toSubmissionId);
+      } else {
+        console.warn(`Unable to lock submission ${toSubmissionId} because it could not be loaded`);
+      }
     }
   } catch (e) {
     // If an error occurs during locking/unlocking, log it but allow navigation
     console.error('Error during navigation guard:', e);
   }
+  return true;
 });
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {

@@ -2,9 +2,6 @@ import { client, SearchParams } from '@/data/api';
 import {
   AllowedStatusTransitions,
   LockOperationResult,
-  MetadataSubmission,
-  MetadataSubmissionRecord,
-  MetadataSubmissionRecordSlim,
   MetadataSuggestion,
   MetadataSuggestionRequest,
   NmdcAddress,
@@ -12,6 +9,15 @@ import {
   SignedUploadUrlRequest,
   SignedUrl,
   SubmissionImageType,
+  SubmissionMetadata,
+  SubmissionMetadataCreate,
+  SubmissionMetadataPatch,
+  SubmissionMetadataSlim,
+  SubmissionSampleSet,
+  SubmissionSampleSetCreate,
+  SubmissionSampleSetListItem,
+  SubmissionSampleSetPatch,
+  SubmissionSampleSetStatusPatch,
   SuggestionType,
   UploadCompleteRequest,
 } from '@/views/SubmissionPortal/types';
@@ -30,30 +36,31 @@ function addressToString(address: NmdcAddress): string {
   return result;
 }
 
-async function createRecord(record: MetadataSubmission, isTestSubmission: boolean) {
+async function createSubmission(submission: SubmissionMetadataCreate) {
   const resp = await client.post<
-    MetadataSubmissionRecord,
-    Partial<MetadataSubmissionRecord>
-  >('metadata_submission', {
-    metadata_submission: record,
-    source_client: 'submission_portal',
-    is_test_submission: isTestSubmission,
-  });
+    SubmissionMetadata,
+    SubmissionMetadataCreate
+  >('metadata_submission', submission);
   return resp.data;
 }
 
-async function updateRecord(id: string, record: Partial<MetadataSubmission>, permissions?: Record<string, string>) {
-  const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
-    metadata_submission: record,
-    permissions,
-  });
+async function updateSubmission(id: string, submission: SubmissionMetadataPatch) {
+  const resp = await client.patch<SubmissionMetadata>(`metadata_submission/${id}`, submission);
   return resp.data;
 }
 
-async function updateSubmissionStatus(submission_id: string, newStatus: string) {
-  const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/status`, {
-    status: newStatus,
-  });
+async function createSubmissionSampleSet(submissionId: string, sampleSet: SubmissionSampleSetCreate) {
+  const resp = await client.post<SubmissionSampleSet>(`metadata_submission/${submissionId}/sample_set`, sampleSet);
+  return resp.data;
+}
+
+async function updateSubmissionSampleSet(sampleSetId: string, sampleSet: SubmissionSampleSetPatch) {
+  const resp = await client.patch<SubmissionSampleSet>(`metadata_submission/sample_set/${sampleSetId}`, sampleSet);
+  return resp.data;
+}
+
+async function updateSubmissionSampleSetStatus(sampleSetId: string, body: SubmissionSampleSetStatusPatch) {
+  const resp = await client.patch<SubmissionSampleSet>(`metadata_submission/sample_set/${sampleSetId}/status`, body);
   return resp.data;
 }
 
@@ -68,14 +75,14 @@ async function getAllStatusTransitions() {
 }
 
 async function addSubmissionRole(submission_id: string, orcid: string, role: string) {
-  const resp = await client.post<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/role`, {
+  const resp = await client.post<SubmissionMetadata>(`metadata_submission/${submission_id}/role`, {
     orcid,
     role,
   });
   return resp.data;
 }
 
-async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null, searchText: string) {
+async function listSubmissions(searchParams: SearchParams, isTestFilter: boolean | null, searchText: string) {
   const params: Record<string, any> = {
     limit: searchParams.limit,
     offset: searchParams.offset,
@@ -88,21 +95,16 @@ async function listRecords(searchParams: SearchParams, isTestFilter: boolean | n
   if (searchText !== '') {
     params.search_text = searchText;
   }
-  const resp = await client.get<PaginatedResponse<MetadataSubmissionRecordSlim>>(
+  const resp = await client.get<PaginatedResponse<SubmissionMetadataSlim>>(
     'metadata_submission/slim',
     { params },
   );
   return resp.data;
 }
 
-async function getRecord(id: string) {
-  const resp = await client.get<MetadataSubmissionRecord>(`metadata_submission/${id}`);
+async function getSubmission(id: string) {
+  const resp = await client.get<SubmissionMetadata>(`metadata_submission/${id}`);
   return resp.data;
-}
-
-async function getSubmissionStatus(id: string) {
-  const resp = await client.get<{ status: string }>(`metadata_submission/${id}/status`);
-  return resp.data.status;
 }
 
 async function lockSubmission(id: string) {
@@ -159,12 +161,9 @@ async function setSubmissionImage(
   file: File,
   blobName: string,
   imageType?: SubmissionImageType,
-): Promise<MetadataSubmissionRecord> {
-  let endpoint = `metadata_submission/${submissionId}/image`;
-  if (imageType) {
-    endpoint += `/${imageType}`;
-  }
-  const resp = await client.post<MetadataSubmissionRecord>(endpoint, {
+): Promise<SubmissionMetadata> {
+  const endpoint = `metadata_submission/${submissionId}/image/${imageType ?? 'study_images'}`;
+  const resp = await client.post<SubmissionMetadata>(endpoint, {
     object_name: blobName,
     file_size: file.size,
     content_type: file.type,
@@ -172,20 +171,39 @@ async function setSubmissionImage(
   return resp.data;
 }
 
-async function deleteSubmissionImage(submissionId: string, imageType: SubmissionImageType, imageName?: string): Promise<void> {
+async function deleteSubmissionImage(submissionId: string, imageType: SubmissionImageType, imageName?: string) {
   let endpoint = `metadata_submission/${submissionId}/image/${imageType}`;
   if (imageName) {
     endpoint += `?image_name=${imageName}`;
   }
-  await client.delete<MetadataSubmissionRecord>(endpoint);
+  const resp = await client.delete<SubmissionMetadata>(endpoint);
+  return resp.data;
+}
+
+async function listSubmissionSampleSets(submissionId: string) {
+  const resp = await client.get<SubmissionSampleSetListItem[]>(`metadata_submission/${submissionId}/sample_set`);
+  return resp.data;
+}
+
+async function getSampleSet(sampleSetId: string) {
+  const resp = await client.get<SubmissionSampleSet>(`metadata_submission/sample_set/${sampleSetId}`);
+  return resp.data;
+}
+
+async function deleteSampleSet(sampleSetId: string) {
+  const resp = await client.delete(`metadata_submission/sample_set/${sampleSetId}`);
+  return resp.data;
 }
 
 export {
   addressToString,
-  createRecord,
-  getRecord,
-  listRecords,
-  updateRecord,
+  createSubmission,
+  getSubmission,
+  listSubmissions,
+  updateSubmission,
+  createSubmissionSampleSet,
+  updateSubmissionSampleSet,
+  updateSubmissionSampleSetStatus,
   lockSubmission,
   unlockSubmission,
   deleteSubmission,
@@ -195,7 +213,8 @@ export {
   getAllStatusTransitions,
   setSubmissionImage,
   deleteSubmissionImage,
-  updateSubmissionStatus,
   addSubmissionRole,
-  getSubmissionStatus,
+  listSubmissionSampleSets,
+  getSampleSet,
+  deleteSampleSet,
 };

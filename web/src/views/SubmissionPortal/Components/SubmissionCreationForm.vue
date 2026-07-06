@@ -1,47 +1,37 @@
-<script lang="ts">
-import { defineComponent, ref, } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import Definitions from '@/definitions';
-import { generateRecord, } from '../store';
 import { useRouter } from 'vue-router';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
+import { useSubmissionStore } from '../store';
 
-export default defineComponent({
-  components: {
-    PageTitle,
-  },
-  setup() {
-    const isTestSubmission = ref(null as boolean | null);
-    const piEmail = ref('');
-    const studyName = ref('');
-    const router = useRouter();
-    const isFormValid = ref(false);
+const store = useSubmissionStore();
+const { createSubmission } = store;
 
-    async function createNewSubmission() {
-      if (isTestSubmission.value != null) {
-        const item = await generateRecord(isTestSubmission.value, studyName.value, piEmail.value);
-        router?.push({name: 'Submission Summary', params: {id: item.id}});
-      }
-    }
+const isTestSubmission = ref(null as boolean | null);
+const piEmail = ref('');
+const studyName = ref('');
+const router = useRouter();
+const isFormValid = ref(false);
 
-    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
-      return [
-        (v: string) => !!v || msg,
-        ...otherRules,
-      ];
-    }
+async function createNewSubmission() {
+  if (isTestSubmission.value === null) {
+    return;
+  }
+  const item = await createSubmission(studyName.value, piEmail.value, isTestSubmission.value);
+  if (item === null) {
+    return;
+  }
+  router?.push({name: 'Submission Summary', params: {id: item.id}});
+}
 
-    return {
-      requiredRules,
-      createNewSubmission,
-      piEmail,
-      studyName,
-      isTestSubmission,
-      Definitions,
-      isFormValid,
-    };
-  },
-});
+function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
+  return [
+    (v: string) => !!v || msg,
+    ...otherRules,
+  ];
+}
 </script>
 
 <template>
@@ -110,7 +100,7 @@ export default defineComponent({
           depressed
           :to="{ name: 'Submission Home' }"
         >
-          <v-icon class="pl-1">
+          <v-icon class="pr-1">
             mdi-arrow-left-circle
           </v-icon>
           Go to Submission List
@@ -118,7 +108,7 @@ export default defineComponent({
         <v-spacer />
         <v-btn
           color="primary"
-          :disabled="!isFormValid"
+          :disabled="!isFormValid || store.submission.requests.saving.loading"
           @click="createNewSubmission()"
         >
           Start Submission

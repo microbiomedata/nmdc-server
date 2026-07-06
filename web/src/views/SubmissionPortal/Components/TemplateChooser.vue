@@ -1,58 +1,51 @@
-<script lang="ts">
-import { computed, defineComponent, useTemplateRef } from 'vue';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
-import {
-  multiOmicsForm,
-  sampleEnvironmentForm,
-  templateHasData,
-  templateList,
-} from '../store';
+<script setup lang="ts">
+import { computed, useTemplateRef } from 'vue';
+import { HARMONIZER_TEMPLATES, TemplateName } from '@/views/SubmissionPortal/types';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import SubmissionUneditableBanner from '@/views/SubmissionPortal/Components/SubmissionUneditableBanner.vue';
+import { useSubmissionStore } from '../store';
 
-export default defineComponent({
-  components: { SubmissionForm, SubmissionDocsLink, PageTitle },
-  setup() {
-    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
-    const templateListDisplayNames = computed(() => templateList.value
-      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
-      .join(' + '));
+const store = useSubmissionStore();
+const { templateHasData } = store;
+const sampleEnvironmentForm = computed(() => store.sampleSet.forms.sampleEnvironmentForm);
 
-    const checkboxDisabledReason = computed<Record<string, string | null>>(() => {
-      const notes: Record<string, string | null> = {};
-      Object.entries(HARMONIZER_TEMPLATES).forEach(([key, template]) => {
-        if (templateHasData(template.sampleDataSlot)) {
-          notes[key] = 'This template cannot be deselected because there is data present in the Sample Metadata tab for this template.';
-        } else if (key === 'isolate' && (
-          multiOmicsForm.omicsProcessingTypes.includes('isolate-genome') ||
-          multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome') ||
-          multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi') ||
-          multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')
-        )) {
-          notes[key] = 'This template cannot be deselected because an isolate omics processing type is selected on the Multi-omics Data page.';
-        } else {
-          notes[key] = null;
-        }
-      });
-      return notes;
-    });
+const templates = Object.entries(HARMONIZER_TEMPLATES);
 
-    return {
-      checkboxDisabledReason,
-      sampleEnvironmentForm,
-      formRef,
-      HARMONIZER_TEMPLATES,
-      templates: Object.entries(HARMONIZER_TEMPLATES),
-      templateListDisplayNames,
-      templateHasData,
-    };
-  },
+const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
+const templateListDisplayNames = computed(() => store.templateList
+  .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
+  .join(' + '));
+
+const checkboxDisabledReason = computed<Record<string, string | null>>(() => {
+  const notes = {} as Record<TemplateName, string | null>;
+  Object.keys(HARMONIZER_TEMPLATES).forEach((key) => {
+    const templateName = key as TemplateName;
+    if (templateHasData(templateName)) {
+      notes[templateName] = 'This template cannot be deselected because there is data present in the Sample Metadata tab for this template.';
+    } else if (templateName === 'isolate' && (
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-genome') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')
+    )) {
+      notes[templateName] = 'This template cannot be deselected because an isolate omics processing type is selected on the Multi-omics Data page.';
+    } else {
+      notes[templateName] = null;
+    }
+  });
+  return notes;
 });
 </script>
 
 <template>
   <div>
+    <SubmissionUneditableBanner
+      :allowed-roles="['owner', 'editor']"
+      in-sample-set-context
+      edge-to-edge
+    />
     <PageTitle
       title="Sample Environment"
     >
@@ -71,6 +64,7 @@ export default defineComponent({
       </template>
     </PageTitle>
     <SubmissionForm
+      in-sample-set-context
       @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >
       <v-input
@@ -88,7 +82,7 @@ export default defineComponent({
                 v-model="sampleEnvironmentForm.packageName"
                 hide-details
                 :disabled="formRef?.isDisabled || checkboxDisabledReason[option[0]] !== null"
-                :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
+                :label="HARMONIZER_TEMPLATES[option[0] as TemplateName]?.displayName"
                 :value="option[0]"
               />
               <div
@@ -104,7 +98,7 @@ export default defineComponent({
     </SubmissionForm>
     <template v-if="formRef && !formRef.isDisabled">
       <v-alert
-        v-if="!templateHasData('all')"
+        v-if="!templateHasData('ANY')"
         color="grey lighten-2"
         class="my-3"
       >

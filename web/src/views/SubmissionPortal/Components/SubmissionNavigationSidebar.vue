@@ -1,14 +1,70 @@
-<script lang="ts">
-import { defineComponent, } from 'vue';
-import { studyName, submissionPages } from '../store';
+<script setup lang="ts">
+import { useSubmissionStore } from '../store';
+import { computed } from 'vue';
+import { SubmissionPage } from '@/views/SubmissionPortal/types.ts';
+import SubmissionNavigationSidebarItem from './SubmissionNavigationSidebarItem.vue';
 
-export default defineComponent({
-  setup() {
-    return {
-      submissionPages,
-      studyName,
-    };
-  },
+const store = useSubmissionStore();
+
+type SubmissionNavigationSection = {
+  key: string;
+  title: string;
+  pages: SubmissionPage[];
+};
+
+const sections = computed<SubmissionNavigationSection[]>(() => {
+  const submissionPages: SubmissionPage[] = [
+    {
+      title: 'Submission Summary',
+      link: { name: 'Submission Summary' },
+      validationMessages: null,
+    },
+    {
+      title: 'Study Information',
+      link: { name: 'Study Form' },
+      validationMessages: store.submission.record?.study_form.validation ?? null,
+    },
+  ];
+
+  const sampleSetSections = (store.submission.record?.sample_sets ?? []).map((sampleSet) => ({
+    key: sampleSet.id,
+    title: sampleSet.name,
+    pages: [
+      {
+        title: 'Multi-omics Data',
+        link: {
+          name: 'Multiomics Form',
+          params: { sampleSetId: sampleSet.id },
+        },
+        validationMessages: sampleSet.navigation_validation.multi_omics_data,
+      },
+      {
+        title: 'Sample Environment',
+        link: {
+          name: 'Sample Environment',
+          params: { sampleSetId: sampleSet.id },
+        },
+        validationMessages: sampleSet.navigation_validation.sample_environment,
+      },
+      {
+        title: 'Sample Metadata',
+        link: {
+          name: 'Submission Sample Editor',
+          params: { sampleSetId: sampleSet.id },
+        },
+        validationMessages: sampleSet.navigation_validation.sample_metadata,
+      },
+    ],
+  }));
+
+  return [
+    {
+      key: 'submission',
+      title: '',
+      pages: submissionPages,
+    },
+    ...sampleSetSections,
+  ];
 });
 </script>
 
@@ -27,7 +83,7 @@ export default defineComponent({
           ]"
         />
         <div class="study-name">
-          <span v-if="studyName">{{ studyName }}</span>
+          <span v-if="store.studyName">{{ store.studyName }}</span>
           <span
             v-else
             class="text-disabled font-italic"
@@ -38,44 +94,28 @@ export default defineComponent({
       </template>
     </v-list-item>
 
-    <v-divider />
-
     <v-list
       dense
       nav
     >
-      <v-list-item
-        :to="{ name: 'Submission Summary' }"
-        link
-        title="Submission Summary"
-      />
-      <v-list-item
-        v-for="page in submissionPages"
-        :key="page.title"
-        :to="page.link"
-        link
-        :title="page.title"
+      <template
+        v-for="section in sections"
+        :key="section.key"
       >
-        <template
-          v-if="Array.isArray(page.validationMessages)"
-          #append
-        >
-          <v-badge
-            v-if="page.validationMessages?.length != 0"
-            inline
-            color="red"
-            :content="page.validationMessages?.length"
-            :title="page.validationMessages.join('\n')"
-          />
-          <v-icon
-            v-else
-            style="margin-right: 2px"
-            color="green"
-          >
-            mdi-check-circle-outline
-          </v-icon>
-        </template>
-      </v-list-item>
+        <v-divider />
+        <SubmissionNavigationSidebarItem
+          v-if="section.title"
+          :title="section.title"
+          :validation-messages="null"
+        />
+        <SubmissionNavigationSidebarItem
+          v-for="page in section.pages"
+          :key="`${section.key}-${page.title}`"
+          :title="page.title"
+          :link="page.link"
+          :validation-messages="page.validationMessages"
+        />
+      </template>
     </v-list>
   </v-navigation-drawer>
 </template>

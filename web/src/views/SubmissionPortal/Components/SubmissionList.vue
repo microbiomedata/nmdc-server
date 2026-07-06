@@ -1,13 +1,9 @@
-<script lang="ts">
-import {
-  defineComponent, ref, watch, onMounted,
-} from 'vue';
+<script setup lang="ts">
+import { ref, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
+import { VTextField } from 'vuetify/components';
 import usePaginatedResults from '@/use/usePaginatedResults';
-import {
-  SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
-} from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
@@ -15,16 +11,13 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
+import { addSubmissionRole, deleteSubmission } from '../store/api';
 import {
-  HARMONIZER_TEMPLATES,
-  AllowedStatusTransitions,
-  MetadataSubmissionRecord,
-  MetadataSubmissionRecordSlim,
   PaginatedResponse,
-  StatusOption,
+  SubmissionMetadataSlim,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
+import { validateOrcid } from '../utils.ts';
 import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
@@ -36,17 +29,6 @@ const headers: DataTableHeader[] = [
   {
     title: 'Author',
     value: 'author.name',
-    sortable: true,
-  },
-  {
-    title: 'Template',
-    value: 'templates',
-    sortable: true,
-  },
-  {
-    title: 'Status',
-    value: 'status',
-    width: '200px',
     sortable: true,
   },
   {
@@ -62,193 +44,101 @@ const headers: DataTableHeader[] = [
   },
 ];
 
-export default defineComponent({
-  components: {
-    IconBar, IntroBlurb, OrcidId, TitleBanner, ContactCard,
-  },
-  setup() {
-    const router = useRouter();
-    const itemsPerPage = 10;
-    const defaultSortBy = 'date_last_modified';
-    const defaultSortOrder = 'desc';
-    const options = ref({
-      page: 1,
-      itemsPerPage,
-      sortBy: [{ key: defaultSortBy, order: defaultSortOrder }],
-      groupBy: {},
-      search: null,
-    });
-    const isDeleteDialogOpen = ref(false);
-    const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
-    const isReviewerAssignmentDialogOpen = ref(false);
-    const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
-    const currentUser = stateRefs.user;
-    const isTestFilter = ref(null);
-    const testFilterValues = [
-      { text: 'Show all submissions', val: null },
-      { text: 'Show only test submissions', val: true },
-      { text: 'Hide test submissions', val: false }];
-    const searchText = ref('');
-
-    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
-      return api.listRecords(params, isTestFilter.value,searchText.value);
-    }
-
-    function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === 'Released' ? 'success' : 'default';
-      return {
-        text: SubmissionStatusEnum[item.status]?.title || item.status,
-        color,
-      };
-    }
-
-    async function resume(item: MetadataSubmissionRecord) {
-      router?.push({ name: 'Submission Summary', params: { id: item.id } });
-    }
-
-    const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
-
-    function applySortOptions() {
-      const sortOrder = options.value.sortBy[0] ? options.value.sortBy[0].order : defaultSortOrder;
-      const sortBy = options.value.sortBy[0] ? options.value.sortBy[0].key : defaultSortBy;
-      submission.setSortOptions(sortBy, sortOrder);
-    }
-
-    applySortOptions();
-    const assignReviewerRequest = useRequest();
-
-    const statusUpdatingSubmissionId = ref<string | null>(null);
-    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      statusUpdatingSubmissionId.value = item.id;
-      try {
-        await updateSubmissionStatus(item.id, newStatus);
-        await submission.refetch();
-      } finally {
-        statusUpdatingSubmissionId.value = null;
-      }
-    }
-
-    function updateTableOptions(newOptions: any) {
-      options.value = newOptions;
-      submission.setPage(options.value.page);
-      applySortOptions();
-    }
-
-    watch(isTestFilter, () => {
-      options.value.page = 1;
-      submission.setPage(options.value.page);
-      applySortOptions();
-    }, { deep: true });
-
-    watch(searchText, () => {
-      options.value.page = 1;
-      submission.setPage(options.value.page);
-      applySortOptions();
-    });
-
-    function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
-      deleteDialogSubmission.value = item;
-      if (deleteDialogSubmission.value) {
-        isDeleteDialogOpen.value = true;
-      }
-    }
-
-    async function handleDelete(item: MetadataSubmissionRecordSlim | null) {
-      if (!item) {
-        return;
-      }
-      await deleteSubmission(item.id);
-      submission.refetch();
-      deleteDialogSubmission.value = null;
-      isDeleteDialogOpen.value = false;
-    }
-
-    const reviewerOrcid = ref('');
-    function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
-      isReviewerAssignmentDialogOpen.value = true;
-      selectedSubmission.value = item;
-    }
-
-    async function addReviewer() {
-      await assignReviewerRequest.request(async () => {
-        if (!selectedSubmission.value) {
-          return;
-        }
-        await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
-      });
-      isReviewerAssignmentDialogOpen.value = false;
-    }
-
-    // get all status transitions from the api
-    const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
-    onMounted(async () => {
-      allowedStatusTransitions.value = await api.getAllStatusTransitions();
-    });
-
-    function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
-      if (!currentUser.value?.orcid) {
-        return false;
-      }
-      return item.reviewers.includes(currentUser.value.orcid);
-    }
-
-    function isAnyContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
-      if (!currentUser.value?.orcid) {
-        return false;
-      }
-      return item.contributors.includes(currentUser.value.orcid);
-    }
-
-    // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
-    function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
-      if (!allowedStatusTransitions.value) {
-        return [];
-      }
-      let dropdown_type: 'reviewer' | 'admin';
-      if (currentUser.value?.is_admin) {
-        dropdown_type = 'admin';
-      } else if (isReviewerForSubmission(item)) {
-        dropdown_type = 'reviewer';
-      } else {
-        return [];
-      }
-      return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
-    }
-
-    return {
-      HARMONIZER_TEMPLATES,
-      isDeleteDialogOpen,
-      isTestFilter,
-      deleteDialogSubmission,
-      currentUser,
-      assignReviewerRequest,
-      isReviewerAssignmentDialogOpen,
-      isReviewerForSubmission,
-      reviewerOrcid,
-      IconBar,
-      IntroBlurb,
-      TitleBanner,
-      editableByStatus,
-      getStatus,
-      resume,
-      addReviewer,
-      handleDelete,
-      handleOpenDeleteDialog,
-      openReviewerDialog,
-      headers,
-      options,
-      submission,
-      testFilterValues,
-      statusUpdatingSubmissionId,
-      getFormattedStatusTransitions,
-      handleStatusChange,
-      SubmissionStatusEnum,
-      isAnyContributorForSubmission,
-      updateTableOptions,
-      searchText,
-    };
-  },
+const router = useRouter();
+const itemsPerPage = 10;
+const defaultSortBy = 'date_last_modified';
+const defaultSortOrder = 'desc';
+const options = ref({
+  page: 1,
+  itemsPerPage,
+  sortBy: [{ key: defaultSortBy, order: defaultSortOrder }],
+  groupBy: {},
+  search: null,
 });
+const isDeleteDialogOpen = ref(false);
+const deleteDialogSubmission = ref<SubmissionMetadataSlim | null>(null);
+const isReviewerAssignmentDialogOpen = ref(false);
+const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
+const currentUser = stateRefs.user;
+const isTestFilter = ref(null);
+const testFilterValues = [
+  { text: 'Show all submissions', val: null },
+  { text: 'Show only test submissions', val: true },
+  { text: 'Hide test submissions', val: false }];
+const searchText = ref('');
+
+async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<SubmissionMetadataSlim>> {
+  return api.listSubmissions(params, isTestFilter.value, searchText.value);
+}
+
+
+async function resume(item: SubmissionMetadataSlim) {
+  router?.push({ name: 'Submission Summary', params: { id: item.id } });
+}
+
+const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+
+function applySortOptions() {
+  const sortOrder = options.value.sortBy[0] ? options.value.sortBy[0].order : defaultSortOrder;
+  const sortBy = options.value.sortBy[0] ? options.value.sortBy[0].key : defaultSortBy;
+  submission.setSortOptions(sortBy, sortOrder);
+}
+
+applySortOptions();
+const assignReviewerRequest = useRequest();
+
+function updateTableOptions(newOptions: any) {
+  options.value = newOptions;
+  submission.setPage(options.value.page);
+  applySortOptions();
+}
+
+watch(isTestFilter, () => {
+  options.value.page = 1;
+  submission.setPage(options.value.page);
+  applySortOptions();
+}, { deep: true });
+
+watch(searchText, () => {
+  options.value.page = 1;
+  submission.setPage(options.value.page);
+  applySortOptions();
+});
+
+function handleOpenDeleteDialog(item: SubmissionMetadataSlim | null) {
+  deleteDialogSubmission.value = item;
+  if (deleteDialogSubmission.value) {
+    isDeleteDialogOpen.value = true;
+  }
+}
+
+async function handleDelete(item: SubmissionMetadataSlim | null) {
+  if (!item) {
+    return;
+  }
+  await deleteSubmission(item.id);
+  submission.refetch();
+  deleteDialogSubmission.value = null;
+  isDeleteDialogOpen.value = false;
+}
+
+const reviewerOrcid = ref('');
+const orcidTextFieldRef = useTemplateRef<InstanceType<typeof VTextField>>('orcidTextField');
+    function openReviewerDialog(item: SubmissionMetadataSlim | null) {
+  isReviewerAssignmentDialogOpen.value = true;
+  selectedSubmission.value = item;
+}
+
+async function addReviewer() {
+  await assignReviewerRequest.request(async () => {
+    if (!selectedSubmission.value) {
+      return;
+    }
+    await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
+  });
+  isReviewerAssignmentDialogOpen.value = false;
+}
+
 </script>
 
 <template>
@@ -372,59 +262,8 @@ export default defineComponent({
                 :authenticated="true"
               />
             </template>
-            <template #[`item.templates`]="{ item }">
-              {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
-            </template>
             <template #[`item.date_last_modified`]="{ item }">
               {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
-            </template>
-            <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
-              <div class="d-flex align-center ga-1">
-                <v-tooltip
-                  v-if="currentUser?.is_admin || (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser!.orcid)))"
-                  location="bottom"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      class="ml-1"
-                      color="grey"
-                      v-bind="props"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                  <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
-                </v-tooltip>
-                <span>
-                  {{ column.title }}
-                </span>
-                <v-icon
-                  class="v-data-table-header__sort-icon"
-                  :icon="getSortIcon(column)"
-                  @click="toggleSort(column)"
-                />
-              </div>
-            </template>
-            <template #[`item.status`]="{ item }">
-              <div class="d-flex align-center">
-                <v-select
-                  v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
-                  :model-value="item.status"
-                  :items="getFormattedStatusTransitions(item)"
-                  :loading="statusUpdatingSubmissionId === item.id"
-                  density="compact"
-                  variant="underlined"
-                  hide-details
-                  :disabled="item.status === 'InProgress'"
-                  @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
-                />
-                <v-chip
-                  v-else
-                  :color="getStatus(item as MetadataSubmissionRecord).color"
-                >
-                  {{ getStatus(item as MetadataSubmissionRecord).text }}
-                </v-chip>
-              </div>
             </template>
             <template #[`item.action`]="{ item }">
               <div class="d-flex align-center">
@@ -432,16 +271,12 @@ export default defineComponent({
                 <v-btn
                   size="small"
                   color="primary"
-                  @click="() => resume(item as MetadataSubmissionRecord)"
+                  @click="() => resume(item)"
                 >
-                  <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
-                    Resume
-                    <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
-                  </span>
-                  <span v-else>
-                    <v-icon class="pl-1">mdi-eye</v-icon>
-                    View
-                  </span>
+                  Resume
+                  <v-icon class="pl-1">
+                    mdi-arrow-right-circle
+                  </v-icon>
                 </v-btn>
                 <v-menu
                   offset-x
@@ -533,10 +368,13 @@ export default defineComponent({
             </legend>
             <v-col cols="4">
               <v-text-field
+                ref="orcidTextField"
                 v-model="reviewerOrcid"
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
+                :rules="[(v) => !!v || 'An ORCID iD is required',
+                validateOrcid]"
               />
             </v-col>
           </v-row>
@@ -556,6 +394,7 @@ export default defineComponent({
             color="primary"
             class="mt-2"
             :loading="assignReviewerRequest.loading.value"
+            :disabled="orcidTextFieldRef?.isValid === false || !reviewerOrcid"
             @click="() => addReviewer()"
           >
             Assign Reviewer
