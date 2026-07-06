@@ -1012,10 +1012,9 @@ export const useSubmissionStore = defineStore('submission', () => {
     if (sampleSet.record === null) {
       throw new Error('No sample set loaded');
     }
-    const submissionId = submission.record.id;
     const sampleSetId = sampleSet.record.id;
     return sampleSet.requests.loadingSuggestions.request(async () => {
-      const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId, activeSchemaClassName, activeSampleDataSlot);
+      const suggestions = await api.getMetadataSuggestionsFromStudyDetails(sampleSetId, activeSchemaClassName, activeSampleDataSlot);
       for (const schemaClassName of allSchemaClassNames) {
         const suggestionsForClass = getPendingSuggestions(sampleSetId, schemaClassName);
         suggestions.forEach((suggestion) => {

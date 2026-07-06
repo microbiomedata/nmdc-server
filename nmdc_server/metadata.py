@@ -14,6 +14,7 @@ from nmdc_server.schemas_submission import (
     MetadataSuggestion,
     MetadataSuggestionType,
     SubmissionMetadataSchema,
+    SubmissionSampleSet,
 )
 
 logger = get_logger(__name__)
@@ -92,6 +93,7 @@ class SampleMetadataSuggester:
         interface_tab: str,
         interface_data_section_name: Optional[str],
         submission: SubmissionMetadataSchema,
+        sample_set: SubmissionSampleSet,
     ) -> List[MetadataSuggestion]:
         """
         Get suggestions based on study-level information from a submission
@@ -109,9 +111,9 @@ class SampleMetadataSuggester:
         llm_client = LLMClient(
             access_provider="gcp", credentials_file=settings.llm_service_account_credentials_file
         )
-        # collect samples from the submission
+        # collect samples from the sample set
         samples = (
-            submission.metadata_submission.sampleData.data.get(interface_data_section_name, None)
+            sample_set.sample_data.data.get(interface_data_section_name, None)
             if interface_data_section_name
             else None
         )
