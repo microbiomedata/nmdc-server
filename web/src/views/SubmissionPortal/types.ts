@@ -203,8 +203,7 @@ export enum SuggestionType {
 
 export enum SuggestionFill {
   BY_COLUMN = 'By Column',
-  BY_ROW = 'By Row',
-  BY_SAMPLE_TYPE = 'By Sample Type',
+  BY_ROW = 'By Row'
 }
 
 export interface CellData {
