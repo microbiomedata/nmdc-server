@@ -144,6 +144,9 @@ class SampleMetadataSuggester:
             for metadata_field in env_triad_pipeline_output.metadata_fields:
                 row = samples[int(metadata_field.id)]
                 current_value = row.get(metadata_field.field_name)
+                # filter out suggestions that are the same as the current value
+                if metadata_field.value == current_value:
+                    continue
                 suggestion_type = (
                     MetadataSuggestionType.REPLACE if current_value else MetadataSuggestionType.ADD
                 )
