@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from pydantic import field_validator, model_validator
 from pydantic.v1 import validator
@@ -184,8 +184,17 @@ def load_omics_processing(  # noqa: C901
 
     # Get amplicon specific fields
     if obj["omics_type"] == "Amplicon":
-        material_processing_set = mongodb["material_processing_set"]
-        load_amplicon_data(obj, input_ids, material_processing_set)
+
+        def find_material_processing_having_id_in_output(id_: str) -> Optional[dict]:
+            """
+            Helper function that returns the first `material_processing_set` document, if any,
+            whose `has_output` field contains the specified ID.
+            """
+            material_processing_set = mongodb["material_processing_set"]
+            material_processing = material_processing_set.find_one({"has_output": id_})
+            return material_processing
+
+        load_amplicon_data(obj, input_ids, find_material_processing_having_id_in_output)
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -242,7 +251,11 @@ def load_omics_processing(  # noqa: C901
     db.add(omics_processing)
 
 
-def load_amplicon_data(obj, input_ids, material_processing_set):
+def load_amplicon_data(
+    obj,
+    input_ids,
+    find_material_processing_having_id_in_output: Callable[[str], Optional[dict]],
+):
     """
     Load amplicon-specific fields onto an omics processing (data generation) record.
 
@@ -259,7 +272,10 @@ def load_amplicon_data(obj, input_ids, material_processing_set):
     Args:
         obj: The data generation record to populate with amplicon data (mutated in place)
         input_ids: List of input IDs to search for the producing LibraryPreparation
-        material_processing_set: A reference to the `material_processing_set` Mongo collection
+        find_material_processing_having_id_in_output: A callback function that returns the first
+                                                      `material_processing_set` document, if any,
+                                                      whose `has_output` field contains the
+                                                      specified ID.
     """
     obj["target_gene"] = None
     obj["target_subfragment"] = None
@@ -267,9 +283,7 @@ def load_amplicon_data(obj, input_ids, material_processing_set):
     for input_id in input_ids:
         # `obj` is the destination data generation record being populated; `amplicon_lib_prep`
         # is the source LibraryPreparation the target_gene/target_subfragment are read from.
-        amplicon_lib_prep = material_processing_set.find_one(
-            {"has_output": {"$in": [input_id]}}
-        )
+        amplicon_lib_prep = find_material_processing_having_id_in_output(input_id)
         if not amplicon_lib_prep or "target_gene" not in amplicon_lib_prep:
             continue
 
