@@ -184,7 +184,8 @@ def load_omics_processing(  # noqa: C901
 
     # Get amplicon specific fields
     if obj["omics_type"] == "Amplicon":
-        load_amplicon_data(obj, input_ids, mongodb)
+        material_processing_set = mongodb["material_processing_set"]
+        load_amplicon_data(obj, input_ids, material_processing_set)
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -241,7 +242,7 @@ def load_omics_processing(  # noqa: C901
     db.add(omics_processing)
 
 
-def load_amplicon_data(obj, input_ids, mongodb):
+def load_amplicon_data(obj, input_ids, material_processing_set):
     """
     Load amplicon-specific fields onto an omics processing (data generation) record.
 
@@ -258,7 +259,7 @@ def load_amplicon_data(obj, input_ids, mongodb):
     Args:
         obj: The data generation record to populate with amplicon data (mutated in place)
         input_ids: List of input IDs to search for the producing LibraryPreparation
-        mongodb: MongoDB database connection
+        material_processing_set: A reference to the `material_processing_set` Mongo collection
     """
     obj["target_gene"] = None
     obj["target_subfragment"] = None
@@ -266,7 +267,7 @@ def load_amplicon_data(obj, input_ids, mongodb):
     for input_id in input_ids:
         # `obj` is the destination data generation record being populated; `amplicon_lib_prep`
         # is the source LibraryPreparation the target_gene/target_subfragment are read from.
-        amplicon_lib_prep = mongodb["material_processing_set"].find_one(
+        amplicon_lib_prep = material_processing_set.find_one(
             {"has_output": {"$in": [input_id]}}
         )
         if not amplicon_lib_prep or "target_gene" not in amplicon_lib_prep:
