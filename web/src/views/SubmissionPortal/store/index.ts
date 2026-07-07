@@ -165,7 +165,7 @@ type SampleSetStoreState = {
 }
 
 type UiState = {
-  suggestionFill: SuggestionFill
+  suggestionFill: SuggestionFill | null
   suggestionType: SuggestionType
 }
 
@@ -209,7 +209,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     },
   });
   const ui = reactive<UiState>({
-    suggestionFill: SuggestionFill.BY_ROW,
+    suggestionFill: null,
     suggestionType: SuggestionType.ALL,
   });
 

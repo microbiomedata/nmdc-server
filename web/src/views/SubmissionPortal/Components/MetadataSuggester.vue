@@ -108,9 +108,9 @@ interface SuggestionCluster {
 const groupedFilteredSuggestions = computed<SuggestionCluster[]>(() => {
   const groups = new Map<string, MetadataSuggestion[]>();
   filteredSuggestions.value.forEach((s) => {
-    // When no group-by filter is selected, each suggestion stands alone.
-    // When a filter is selected, group row-level suggestions by slot+value (column-level always stand alone).
-    const key = (!store.ui.suggestionFill || s.row === null) ? getSuggestionKey(s) : `${s.slot}__${s.value}`;
+    // Group row-level suggestions by slot+value so identical suggestions across multiple rows collapse into one card.
+    // Column-level suggestions (row === null) always stand alone.
+    const key = s.row === null ? getSuggestionKey(s) : `${s.slot}__${s.value}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(s);
   });
