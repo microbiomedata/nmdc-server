@@ -113,9 +113,7 @@ class SampleMetadataSuggester:
         )
         # collect samples from the sample set
         samples = (
-            sample_set.sample_data.data.get(sample_data_slot, None)
-            if sample_data_slot
-            else None
+            sample_set.sample_data.data.get(sample_data_slot, None) if sample_data_slot else None
         )
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(), llm_client, interface_name=interface_tab
