@@ -276,6 +276,38 @@ def load_amplicon_data(
                                                       `material_processing_set` document, if any,
                                                       whose `has_output` field contains the
                                                       specified ID.
+
+    Doctests (these can be run via `$ python -m doctest nmdc_server/ingest/omics_processing.py`):
+
+    1. No input IDs:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, [], lambda id_: None)
+    >>> obj
+    {'target_gene': None, 'target_subfragment': None}
+
+    2. No matching `material_processing_set` documents:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: None)
+    >>> obj
+    {'target_gene': None, 'target_subfragment': None}
+
+    3. A matching `material_processing_set` document exists:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": "MySubfragment"})
+    >>> obj
+    {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
+
+    4. The `target_subfragment` value is a dictionary:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": {"has_raw_value": "MySubfragment"}})
+    >>> obj
+    {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
+
+    5. The `material_processing_set` document lacks a `target_subfragment` field:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene"})
+    >>> obj
+    {'target_gene': 'MyGene', 'target_subfragment': None}
     """
     obj["target_gene"] = None
     obj["target_subfragment"] = None
