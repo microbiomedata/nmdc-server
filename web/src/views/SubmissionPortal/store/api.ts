@@ -136,11 +136,11 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
   return resp.data;
 }
 
-async function getMetadataSuggestionsFromStudyDetails(sampleSetId: string, activeInterfaceTab: string, activeInterfaceDataSectionName: string) {
+async function getMetadataSuggestionsFromStudyDetails(sampleSetId: string, activeInterfaceTab: string, activeSampleDataSlot: string) {
   const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/sample_set/${sampleSetId}/study-suggest`, null, {
     params: {
       interface_tab: activeInterfaceTab,
-      interface_data_section_name: activeInterfaceDataSectionName,
+      sample_data_slot: activeSampleDataSlot,
     },
   });
   return resp.data;

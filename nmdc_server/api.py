@@ -2209,7 +2209,7 @@ def delete_submission_sample_set(
 def suggest_meta_from_study(
     sample_set_id: str,
     interface_tab: str,
-    interface_data_section_name: str,
+    sample_data_slot: str,
     db: Session = Depends(get_db),
     suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
     user: models.User = Depends(get_current_user),
@@ -2235,7 +2235,7 @@ def suggest_meta_from_study(
 
     suggestions = suggester.get_suggestions_from_study_information(
         interface_tab=interface_tab,
-        interface_data_section_name=interface_data_section_name,
+        sample_data_slot=sample_data_slot,
         submission=submission,
         sample_set=sample_set,
     )

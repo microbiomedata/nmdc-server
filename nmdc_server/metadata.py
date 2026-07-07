@@ -91,7 +91,7 @@ class SampleMetadataSuggester:
     def get_suggestions_from_study_information(
         self,
         interface_tab: str,
-        interface_data_section_name: Optional[str],
+        sample_data_slot: Optional[str],
         submission: SubmissionMetadataSchema,
         sample_set: SubmissionSampleSet,
     ) -> List[MetadataSuggestion]:
@@ -99,7 +99,7 @@ class SampleMetadataSuggester:
         Get suggestions based on study-level information from a submission
         Parameters:
             - interface_tab: The name of the interface tab for which to generate suggestions
-            - interface_data_section_name: The name of the data section within the submission object which to generate suggestions. This is optional because some suggestors may only need the interface tab level information.
+            - sample_data_slot: The name of the data section within the submission object which to generate suggestions. This is optional because some suggestors may only need the interface tab level information.
             - submission: The full submission metadata, which may provide additional context for generating suggestions.
         """
         if not settings.llm_service_account_credentials_file:
@@ -113,8 +113,8 @@ class SampleMetadataSuggester:
         )
         # collect samples from the sample set
         samples = (
-            sample_set.sample_data.data.get(interface_data_section_name, None)
-            if interface_data_section_name
+            sample_set.sample_data.data.get(sample_data_slot, None)
+            if sample_data_slot
             else None
         )
         recommendation_pipeline_output = run_recommendation_pipeline(
