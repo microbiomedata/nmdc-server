@@ -18,8 +18,9 @@ const emit = defineEmits<{
 }>();
 
 const store = useSubmissionStore();
-const leaveDialog = ref(false);
-const pendingNext = ref<(() => void) | null>(null);
+const leaveDialogOpen = ref(false);
+let leaveDialogPromise: Promise<boolean> | null = null;
+let leaveDialogResolve: ((value: boolean) => void) | null = null;
 
 const formRef = useTemplateRef('formRef');
 const isDisabled = computed(() => store.getUneditableReason(allowedRoles, inSampleSetContext) !== undefined);
@@ -54,23 +55,38 @@ onMounted(() => {
   void validate();
 });
 
-onBeforeRouteLeave((to, from, next) => {
-  if (store.hasPendingImageUploads) {
-    leaveDialog.value = true;
-    pendingNext.value = next;
-  } else {
-    next();
+function confirmLeave() {
+  if (leaveDialogPromise) {
+    return leaveDialogPromise;
   }
+  leaveDialogOpen.value = true;
+
+  leaveDialogPromise = new Promise<boolean>((resolve) => {
+    // Stash the resolve function for use in handleLeaveDialog
+    leaveDialogResolve = resolve;
+  }).finally(() => {
+    // Tidy up whenever the promise settles
+    leaveDialogOpen.value = false;
+    leaveDialogPromise = null;
+    leaveDialogResolve = null;
+  });
+  return leaveDialogPromise;
+}
+
+onBeforeRouteLeave(async () => {
+  if (!store.hasPendingImageUploads) {
+    // No pending uploads, allow navigation
+    return true;
+  }
+  // There are pending uploads, show dialog and proceed based on user choice
+  return await confirmLeave();
 });
 
 function handleLeaveDialog(leave: boolean) {
-  leaveDialog.value = false;
-  if (leave) {
-    pendingNext.value?.();
-    pendingNext.value = null;
-  } else {
-    pendingNext.value = null;
+  if (leaveDialogResolve === null) {
+    return;
   }
+  leaveDialogResolve(leave);
 }
 
 defineExpose({
@@ -88,19 +104,15 @@ defineExpose({
     <slot />
   </v-form>
   <v-dialog
-    v-model="leaveDialog"
+    v-model="leaveDialogOpen"
     persistent
     max-width="500"
   >
-    <v-card>
-      <v-card-title class="text-h5">
-        Unsaved Image
-      </v-card-title>
-      <v-card-text>
-        You have an image selected that hasn't been uploaded yet. If you leave now, it will be lost.
-      </v-card-text>
+    <v-card
+      title="Unsaved Image"
+      text="You have an image selected that hasn't been uploaded yet. If you leave now, it will be lost."
+    >
       <v-card-actions>
-        <v-spacer></v-spacer>
         <v-btn
           color="grey"
           text
