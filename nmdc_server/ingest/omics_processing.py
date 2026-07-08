@@ -280,12 +280,7 @@ def load_amplicon_data(
                                                       whose `has_output` field contains the
                                                       specified ID.
 
-    The doctests below cover the four combinations of ``target_gene`` and
-    ``target_subfragment`` being present or absent, plus edge cases. Run them via
-    `$ python -m doctest nmdc_server/ingest/omics_processing.py`; the Mongo lookup is
-    stubbed with a `lambda` (or a dict's `.get`) mapping an input ID to a LibraryPreparation.
-    A found LibraryPreparation is always non-empty, so the "neither present" case is a
-    document that simply lacks both slots:
+    Doctests (these can be run via `$ python -m doctest nmdc_server/ingest/omics_processing.py`):
 
     1. Neither ``target_gene`` nor ``target_subfragment`` present:
     >>> obj = {}
