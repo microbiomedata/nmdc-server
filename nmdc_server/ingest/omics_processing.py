@@ -257,14 +257,17 @@ def load_amplicon_data(
     find_material_processing_having_id_in_output: Callable[[str], Optional[dict]],
 ):
     """
-    Load amplicon-specific fields onto an omics processing (data generation) record.
+    Load amplicon-specific fields onto a data generation record.
 
-    ``target_gene`` and ``target_subfragment`` are both optional slots asserted only on
-    ``LibraryPreparation`` in the NMDC schema. Both are read from a *single* source
-    LibraryPreparation -- the first one in the input chain that declares a ``target_gene``
-    -- rather than being combined across records: a ``target_subfragment`` describes a
-    region of its ``target_gene``, so the two are only meaningful together. A record whose
-    chosen LibraryPreparation has no ``target_subfragment`` correctly leaves it null.
+    Here, "data generation" is the modern NMDC term for what the surrounding ingest code
+    still calls an "omics processing" record; they refer to the same thing.
+
+    ``target_gene`` and ``target_subfragment`` are optional, independent slots on
+    ``LibraryPreparation``: either, both, or neither may be present. Each is read
+    independently from the first LibraryPreparation in this data generation's input chain
+    that declares it, so a ``target_subfragment`` is captured even when its source
+    LibraryPreparation omits ``target_gene`` (and vice versa). All inputs are scanned, so a
+    value on any of them is picked up.
 
     Following the convention of load_omics_processing, this mutates `obj` in place rather
     than returning a value.
@@ -277,57 +280,92 @@ def load_amplicon_data(
                                                       whose `has_output` field contains the
                                                       specified ID.
 
-    Doctests (these can be run via `$ python -m doctest nmdc_server/ingest/omics_processing.py`):
+    The doctests below cover the four combinations of ``target_gene`` and
+    ``target_subfragment`` being present or absent, plus edge cases. Run them via
+    `$ python -m doctest nmdc_server/ingest/omics_processing.py` or under pytest (see
+    tests/test_ingest_omics_processing.py); the Mongo lookup is stubbed with a `lambda`
+    (or a dict's `.get`) mapping an input ID to a LibraryPreparation. A found
+    LibraryPreparation is always non-empty, so the "neither present" case is a document
+    that simply lacks both slots:
 
-    1. No input IDs:
+    1. Neither ``target_gene`` nor ``target_subfragment`` present:
     >>> obj = {}
-    >>> load_amplicon_data(obj, [], lambda id_: None)
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"id": "nmdc:libprep-1"})
     >>> obj
     {'target_gene': None, 'target_subfragment': None}
 
-    2. No matching `material_processing_set` documents:
+    2. Only ``target_subfragment`` present:
     >>> obj = {}
-    >>> load_amplicon_data(obj, ["input_a"], lambda id_: None)
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_subfragment": "MySubfragment"})
     >>> obj
-    {'target_gene': None, 'target_subfragment': None}
+    {'target_gene': None, 'target_subfragment': 'MySubfragment'}
 
-    3. A matching `material_processing_set` document exists:
+    3. Only ``target_gene`` present:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene"})
+    >>> obj
+    {'target_gene': 'MyGene', 'target_subfragment': None}
+
+    4. Both ``target_gene`` and ``target_subfragment`` present:
     >>> obj = {}
     >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": "MySubfragment"})
     >>> obj
     {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
 
-    4. The `target_subfragment` value is a dictionary:
+    5. Both present, with ``target_subfragment`` as a ``TextValue`` dict (``has_raw_value`` used):
     >>> obj = {}
     >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": {"has_raw_value": "MySubfragment"}})
     >>> obj
     {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
 
-    5. The `material_processing_set` document lacks a `target_subfragment` field:
+    6. Only ``target_subfragment`` present, as a ``TextValue`` dict:
     >>> obj = {}
-    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene"})
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_subfragment": {"has_raw_value": "MySubfragment"}})
     >>> obj
-    {'target_gene': 'MyGene', 'target_subfragment': None}
+    {'target_gene': None, 'target_subfragment': 'MySubfragment'}
+
+    7. No LibraryPreparation is found for any input (callback returns None):
+    >>> obj = {}
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: None)
+    >>> obj
+    {'target_gene': None, 'target_subfragment': None}
+
+    8. No input IDs at all:
+    >>> obj = {}
+    >>> load_amplicon_data(obj, [], lambda id_: None)
+    >>> obj
+    {'target_gene': None, 'target_subfragment': None}
+
+    9. Multiple inputs whose LibraryPreparations each carry only one field; both are collected:
+    >>> obj = {}
+    >>> lib_preps = {"input_a": {"target_gene": "MyGene"}, "input_b": {"target_subfragment": "MySubfragment"}}
+    >>> load_amplicon_data(obj, ["input_a", "input_b"], lib_preps.get)
+    >>> obj
+    {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
     """
     obj["target_gene"] = None
     obj["target_subfragment"] = None
 
     for input_id in input_ids:
         # `obj` is the destination data generation record being populated; `amplicon_lib_prep`
-        # is the source LibraryPreparation the target_gene/target_subfragment are read from.
+        # is a source LibraryPreparation the target_gene/target_subfragment are read from.
         amplicon_lib_prep = find_material_processing_having_id_in_output(input_id)
-        if not amplicon_lib_prep or "target_gene" not in amplicon_lib_prep:
+        if not amplicon_lib_prep:
             continue
 
-        # Take both fields from this single LibraryPreparation so the subfragment always
-        # corresponds to the gene it describes.
-        obj["target_gene"] = amplicon_lib_prep["target_gene"]
-        target_subfragment = amplicon_lib_prep.get("target_subfragment")
-        if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
-            obj["target_subfragment"] = target_subfragment["has_raw_value"]
-        else:
-            obj["target_subfragment"] = target_subfragment
-        break
+        # target_gene and target_subfragment are independent optional slots, so capture each
+        # separately the first time an input's LibraryPreparation declares it.
+        if obj["target_gene"] is None:
+            obj["target_gene"] = amplicon_lib_prep.get("target_gene")
+
+        if obj["target_subfragment"] is None:
+            target_subfragment = amplicon_lib_prep.get("target_subfragment")
+            # target_subfragment's schema range is TextValue, which ingests either as a plain
+            # string or as a `{"has_raw_value": ...}` dict; normalize both to the raw string.
+            if isinstance(target_subfragment, dict):
+                obj["target_subfragment"] = target_subfragment.get("has_raw_value")
+            else:
+                obj["target_subfragment"] = target_subfragment
 
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
