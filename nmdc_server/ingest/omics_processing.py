@@ -290,7 +290,7 @@ def load_amplicon_data(
 
     2. Only ``target_subfragment`` present:
     >>> obj = {}
-    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_subfragment": "MySubfragment"})
+    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_subfragment": {"has_raw_value": "MySubfragment"}})
     >>> obj
     {'target_gene': None, 'target_subfragment': 'MySubfragment'}
 
@@ -302,37 +302,25 @@ def load_amplicon_data(
 
     4. Both ``target_gene`` and ``target_subfragment`` present:
     >>> obj = {}
-    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": "MySubfragment"})
-    >>> obj
-    {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
-
-    5. Both present, with ``target_subfragment`` as a ``TextValue`` dict (``has_raw_value`` used):
-    >>> obj = {}
     >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": {"has_raw_value": "MySubfragment"}})
     >>> obj
     {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
 
-    6. Only ``target_subfragment`` present, as a ``TextValue`` dict:
-    >>> obj = {}
-    >>> load_amplicon_data(obj, ["input_a"], lambda id_: {"target_subfragment": {"has_raw_value": "MySubfragment"}})
-    >>> obj
-    {'target_gene': None, 'target_subfragment': 'MySubfragment'}
-
-    7. No LibraryPreparation is found for any input (callback returns None):
+    5. No LibraryPreparation is found for any input (callback returns None):
     >>> obj = {}
     >>> load_amplicon_data(obj, ["input_a"], lambda id_: None)
     >>> obj
     {'target_gene': None, 'target_subfragment': None}
 
-    8. No input IDs at all:
+    6. No input IDs at all:
     >>> obj = {}
     >>> load_amplicon_data(obj, [], lambda id_: None)
     >>> obj
     {'target_gene': None, 'target_subfragment': None}
 
-    9. Multiple inputs whose LibraryPreparations each carry only one field; both are collected:
+    7. Multiple inputs whose LibraryPreparations each carry only one field; both are collected:
     >>> obj = {}
-    >>> lib_preps = {"input_a": {"target_gene": "MyGene"}, "input_b": {"target_subfragment": "MySubfragment"}}
+    >>> lib_preps = {"input_a": {"target_gene": "MyGene"}, "input_b": {"target_subfragment": {"has_raw_value": "MySubfragment"}}}
     >>> load_amplicon_data(obj, ["input_a", "input_b"], lib_preps.get)
     >>> obj
     {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
@@ -353,13 +341,11 @@ def load_amplicon_data(
             obj["target_gene"] = amplicon_lib_prep.get("target_gene")
 
         if obj["target_subfragment"] is None:
+            # target_subfragment's schema range is TextValue, so a present value is a
+            # `{"has_raw_value": ...}` dict; store its raw value (absent -> left as None).
             target_subfragment = amplicon_lib_prep.get("target_subfragment")
-            # target_subfragment's schema range is TextValue, which ingests either as a plain
-            # string or as a `{"has_raw_value": ...}` dict; normalize both to the raw string.
             if isinstance(target_subfragment, dict):
                 obj["target_subfragment"] = target_subfragment.get("has_raw_value")
-            else:
-                obj["target_subfragment"] = target_subfragment
 
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
