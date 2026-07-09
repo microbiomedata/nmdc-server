@@ -20,7 +20,7 @@ export default defineComponent({
   setup(props) {
     const headers: DataTableHeader[] = [
       { title: 'Type', value: 'type' },
-      { title: 'INSDC Expirement Identifiers', value: 'insdc_experiment_identifiers' },
+      { title: 'INSDC Experiment Identifiers', value: 'insdc_experiment_identifiers' },
       { title: 'Target Gene', value: 'target_gene' },
       { title: 'Target Subfragment', value: 'target_subfragment' },
     ];
