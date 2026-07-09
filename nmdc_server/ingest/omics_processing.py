@@ -333,24 +333,32 @@ def load_amplicon_data(
     >>> dgen
     {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
     """
+
     data_generation["target_gene"] = None
     data_generation["target_subfragment"] = None
 
     for input_id in input_ids:
-        # `data_generation` is the data generation record being populated; `amplicon_lib_prep`
-        # is a source LibraryPreparation the target_gene/target_subfragment are read from.
+        # If the `target_gene` and `target_subfragment` fields of the `DataGeneration` both already
+        # contain values other than `None`, stop iterating. This avoids unnecessary Mongo queries.
+        if (
+            data_generation["target_gene"] is not None
+            and data_generation["target_subfragment"] is not None
+        ):
+            break
+
+        # Find a (amplicon) LibraryPreparation document that produced this input.
         amplicon_lib_prep = find_library_preparation_having_id_in_output(input_id)
         if not amplicon_lib_prep:
             continue
 
-        # target_gene and target_subfragment are independent optional slots, so capture each
-        # separately the first time an input's LibraryPreparation declares it.
+        # If the `target_gene` field of the `DataGeneration` is still `None`, use the `target_gene`
+        # value from the LibraryPrepation we found earlier.
         if data_generation["target_gene"] is None:
             data_generation["target_gene"] = amplicon_lib_prep.get("target_gene")
 
+        # If the `target_subfragment` field of the `DataGeneration` is still `None`, use the
+        # `target_subfragment.has_raw_value` value from the LibraryPrepation we found earlier.
         if data_generation["target_subfragment"] is None:
-            # target_subfragment's schema range is TextValue, so a present value is a
-            # `{"has_raw_value": ...}` dict; store its raw value (absent -> left as None).
             target_subfragment = amplicon_lib_prep.get("target_subfragment")
             if isinstance(target_subfragment, dict):
                 data_generation["target_subfragment"] = target_subfragment.get("has_raw_value")
