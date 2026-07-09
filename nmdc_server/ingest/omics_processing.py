@@ -185,16 +185,20 @@ def load_omics_processing(  # noqa: C901
     # Get amplicon specific fields
     if obj["omics_type"] == "Amplicon":
 
-        def find_material_processing_having_id_in_output(id_: str) -> Optional[dict]:
+        def find_library_preparation_having_id_in_output(id_: str) -> Optional[dict]:
             """
-            Helper function that returns the first `material_processing_set` document, if any,
-            whose `has_output` field contains the specified ID.
+            Helper function that returns the first `LibraryPreparation` document residing in the
+            `material_processing_set` Mongo collection, whose `has_output` field contains the
+            specified ID. If no such document exists, this function returns `None`.
             """
             material_processing_set = mongodb["material_processing_set"]
-            material_processing = material_processing_set.find_one({"has_output": id_})
+            material_processing = material_processing_set.find_one({
+                "has_output": id_,
+                "type": "nmdc:LibraryPreparation",
+            })
             return material_processing
 
-        load_amplicon_data(obj, input_ids, find_material_processing_having_id_in_output)
+        load_amplicon_data(obj, input_ids, find_library_preparation_having_id_in_output)
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -254,7 +258,7 @@ def load_omics_processing(  # noqa: C901
 def load_amplicon_data(
     obj,
     input_ids,
-    find_material_processing_having_id_in_output: Callable[[str], Optional[dict]],
+    find_library_preparation_having_id_in_output: Callable[[str], Optional[dict]],
 ):
     """
     Load amplicon-specific fields onto a data generation record.
@@ -275,10 +279,9 @@ def load_amplicon_data(
     Args:
         obj: The data generation record to populate with amplicon data (mutated in place)
         input_ids: List of input IDs to search for the producing LibraryPreparation
-        find_material_processing_having_id_in_output: A callback function that returns the first
-                                                      `material_processing_set` document, if any,
-                                                      whose `has_output` field contains the
-                                                      specified ID.
+        find_library_preparation_having_id_in_output: A callback function that returns the first
+                                                      `LibraryPreparation` document whose
+                                                      `has_output` field contains the specified ID.
 
     Doctests (these can be run via `$ python -m doctest nmdc_server/ingest/omics_processing.py`):
 
@@ -331,7 +334,7 @@ def load_amplicon_data(
     for input_id in input_ids:
         # `obj` is the destination data generation record being populated; `amplicon_lib_prep`
         # is a source LibraryPreparation the target_gene/target_subfragment are read from.
-        amplicon_lib_prep = find_material_processing_having_id_in_output(input_id)
+        amplicon_lib_prep = find_library_preparation_having_id_in_output(input_id)
         if not amplicon_lib_prep:
             continue
 
