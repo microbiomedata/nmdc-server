@@ -2,8 +2,10 @@
 import {
   computed,
   defineComponent,
+  onUnmounted,
   PropType,
   ref,
+  watch,
 } from 'vue';
 // WARNING: The useForm composable is not part of the Vuetify public API yet
 //          https://github.com/vuetifyjs/vuetify/issues/19315
@@ -75,12 +77,22 @@ export default defineComponent({
       return props.imageUrl;
     });
 
+    // add selected but not yet uploaded to the list of pending uploads
+    watch(fileRef, (file) => {
+      store.setImageUploadPending(props.imageType, !!file);
+    })
+
+    onUnmounted(() => {
+      store.setImageUploadPending(props.imageType, false);
+    });
+
     const { request: uploadRequest, loading: uploading, error: uploadError } = useRequest();
     const handleUpload = () => uploadRequest(async () => {
       if (!fileRef.value) {
         return;
       }
       await store.uploadSubmissionImage(fileRef.value, props.imageType);
+      fileRef.value = null;
     });
 
     const { request: deleteRequest, loading: deleting, error: deleteError } = useRequest();
