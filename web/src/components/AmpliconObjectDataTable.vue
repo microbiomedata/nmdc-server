@@ -25,9 +25,13 @@ export default defineComponent({
       { title: 'Target Subfragment', value: 'target_subfragment' },
     ];
 
-    const items = computed(() => {
-      return props.omicsProcessing[0]?.annotations ? [props.omicsProcessing[0].annotations] : [];
-    });
+    // Derive the table rows from the `omicsProcessing` props (an array).
+    const items = computed(() => props.omicsProcessing.map((op) => ({
+      type: op.annotations.type,
+      insdc_experiment_identifiers: op.annotations.insdc_experiment_identifiers,
+      target_gene: op.annotations.target_gene,
+      target_subfragment: op.annotations.target_subfragment,
+    })));
 
     return {
       headers,
