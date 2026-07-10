@@ -55,16 +55,17 @@ export default defineComponent({
     /**
      * Returns a URL ready for use as the value of the `href` attribute of a link element.
      * 
-     * Note: If `insdcExperimentIdentifier` is `null`, we set the URL to "#" so that the link is a
-     *       valid HTML element, although clicking on it doesn't take the user anywhere. However,
+     * Note: If `insdcExperimentIdentifier` isn't a string, we set the URL to "#" so the link is a
+     *       valid HTML element, but clicking on it doesn't take the user anywhere. Note that, the
      *       the way we use this function today, we don't even _render_ the link in that situation.
      */
     const makeInsdcHref = (insdcExperimentIdentifier: string | null): string => {
+      let url = "#";
       if (typeof insdcExperimentIdentifier === "string") {
-        return new URL(insdcExperimentIdentifier, BioprojectLinkBase).toString();
-      } else {
-        return "#";
+        const urlSafeInsdcExperimentIdentifier = encodeURIComponent(insdcExperimentIdentifier); // e.g. "insdc:foo" -> "insdc%3Afoo"
+        url = BioprojectLinkBase.concat(urlSafeInsdcExperimentIdentifier); // e.g. "https://bioregistry.io/insdc%3Afoo"
       }
+      return url;
     };
 
     return {
