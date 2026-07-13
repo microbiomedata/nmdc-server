@@ -89,14 +89,6 @@ function selectStudyAndOmics(studyId: string, omicsType: string) {
   setConditions([...stateRefs.conditions.value, ...conditions]);
 }
 
-/**
- * SearchLayout-level settings
- */
-const disableBulkDownload = ref(true);
-api.getAppSettings().then((appSettings) => {
-  disableBulkDownload.value = appSettings.disable_bulk_download;
-});
-
 const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter, 10);
 const studyType = types.study;
 const studySummaryData = useFacetSummaryData({
@@ -282,8 +274,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
                 </div>
               </v-tab>
               <v-spacer />
-              <div 
-                v-if="!disableBulkDownload"
+              <div
                 class="d-flex align-center mr-4"
               >
                 <BulkDownload

@@ -906,7 +906,8 @@ async function updateUser(id: string, body: User) {
 interface PortalSettings {
   portal_banner_title: string | null;
   portal_banner_message: string | null;
-  disable_bulk_download: boolean;
+  disable_bulk_data_product_download: boolean;
+  disable_individual_data_product_download: boolean;
 }
 
 async function getAppSettings(): Promise<PortalSettings> {
