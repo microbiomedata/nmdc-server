@@ -179,7 +179,14 @@ class Settings(BaseSettings):
     print_sql: bool = False
 
     # App settings related to UI behavior
-    disable_bulk_download: str = ""
+    # TODO: add settings for:
+    # - disable_bulk_metadata_download
+    # - disable_individual_metadata_download
+    disable_bulk_data_product_download: str = "yes"
+    """Disable bulk data product download feature in the UI if this is set to a non-empty string."""
+    disable_individual_data_product_download: str = "yes"
+    """Disable individual data product download feature (and HTML preview modals) in the UI if this is set to a non-empty string."""
+    
     portal_banner_title: Optional[str] = None
     portal_banner_message: Optional[str] = None
 
