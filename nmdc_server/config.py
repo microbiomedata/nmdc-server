@@ -182,11 +182,15 @@ class Settings(BaseSettings):
     # TODO: add settings for:
     # - disable_bulk_metadata_download
     # - disable_individual_metadata_download
-    disable_bulk_data_product_download: str = "yes"
-    """Disable bulk data product download feature in the UI if this is set to a non-empty string."""
-    disable_individual_data_product_download: str = "yes"
-    """Disable individual data product download feature (and HTML preview modals) in the UI if this is set to a non-empty string."""
-    
+    disable_bulk_data_product_download: bool = False
+    """Whether you want to disable the bulk download of data products."""
+    disable_individual_data_product_download: bool = False
+
+    """
+    Whether you want to disable the non-bulk download (i.e. individual download) of data products.
+    This will also disable the HTML previews (e.g. Krona plots) that rely on those data products.
+    """
+
     portal_banner_title: Optional[str] = None
     portal_banner_message: Optional[str] = None
 
