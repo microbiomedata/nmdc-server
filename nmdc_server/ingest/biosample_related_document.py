@@ -207,7 +207,10 @@ def load_studies(
         # Keep track of this newly-created `BiosampleRelatedDocument` row for future reference.
         # Note: These look-up tables will come in handy when we traverse study ancestry chains below.
         rows_by_study_id[base_study_id] = biosample_related_document
-        parent_study_ids_by_base_study_id[base_study_id] = study_document.get("part_of", [])
+        parent_study_ids = study_document.get("part_of", None)
+        if parent_study_ids is None:  # true if `part_of` was either missing or contained `None`
+            parent_study_ids = []
+        parent_study_ids_by_base_study_id[base_study_id] = parent_study_ids
 
     # For each study that has any parent studies, ensure the `downstream_neighbor_ids` column of
     # each of those parent study rows contains the `id` of that study (i.e. their child). As a
