@@ -198,7 +198,7 @@ def load_studies(
         biosample_ids = biosample_ids_by_associated_study_id.get(base_study_id, [])
         biosample_related_document.downstream_neighbor_ids = dedupe(biosample_ids)
 
-        # While we have the opportunity, also store those biosample `id`s in the `biosample_id`s
+        # While we have the opportunity, also store those biosample `id`s in the `biosample_ids`
         # column; given that the later step of traversing the schema will only go _downstream_
         # (not upstream) of biosamples (whereas studies are _upstream_ of biosamples).
         biosample_related_document.biosample_ids = dedupe(biosample_ids)
@@ -220,15 +220,15 @@ def load_studies(
             if base_study_id not in row.downstream_neighbor_ids:
                 row.downstream_neighbor_ids.append(base_study_id)
 
-    # For each study row, propagate its `biosample_id`s to each of its ancestor study rows, all the
-    # way up the ancestry chain; preserving any `biosample_id`s those ancestor study rows already
+    # For each study row, propagate its `biosample_ids` to each of its ancestor study rows, all the
+    # way up the ancestry chain; preserving any biosample `id`s those ancestor study rows already
     # contain (e.g. those propagated up from other descendant studies).
     for base_study_id in rows_by_study_id.keys():
 
-        # Get the `biosample_id`s of this study (i.e. the "base" study).
+        # Get the `biosample_ids` of this study (i.e. the "base" study).
         biosample_ids = biosample_ids_by_associated_study_id.get(base_study_id, [])
 
-        # Propagate those `biosample_id`s to all studies in this study's ancestry chain.
+        # Propagate those biosample IDs to all studies in this study's ancestry chain.
         _propagate_biosample_ids_to_ancestor_study_rows(
             base_study_id=base_study_id,
             biosample_ids=biosample_ids,
