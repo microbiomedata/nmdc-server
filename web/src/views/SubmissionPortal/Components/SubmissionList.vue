@@ -58,6 +58,7 @@ const options = ref({
 const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionMetadataSlim | null>(null);
 const isReviewerAssignmentDialogOpen = ref(false);
+const reviewerAssignmentSnackbarOpen = ref(false);
 const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
 const currentUser = stateRefs.user;
 const isTestFilter = ref(null);
@@ -124,7 +125,8 @@ async function handleDelete(item: SubmissionMetadataSlim | null) {
 
 const reviewerOrcid = ref('');
 const orcidTextFieldRef = useTemplateRef<InstanceType<typeof VTextField>>('orcidTextField');
-    function openReviewerDialog(item: SubmissionMetadataSlim | null) {
+
+function openReviewerDialog(item: SubmissionMetadataSlim | null) {
   isReviewerAssignmentDialogOpen.value = true;
   selectedSubmission.value = item;
 }
@@ -136,6 +138,8 @@ async function addReviewer() {
     }
     await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
   });
+  reviewerAssignmentSnackbarOpen.value = true;
+  reviewerOrcid.value = '';
   isReviewerAssignmentDialogOpen.value = false;
 }
 
@@ -378,6 +382,33 @@ async function addReviewer() {
               />
             </v-col>
           </v-row>
+          <v-card
+            v-if="selectedSubmission?.reviewers?.length"
+            class="mt-4"
+            variant="outlined"
+          >
+            <v-card-title class="text-subtitle-1 pb-2">
+              Current reviewers
+            </v-card-title>
+            <v-card-text class="pt-0">
+              <div class="d-flex flex-wrap ga-2">
+                <v-chip
+                  v-for="reviewer in selectedSubmission?.reviewers"
+                  :key="reviewer"
+                  color="primary"
+                  variant="outlined"
+                >
+                  {{ reviewer }}
+                </v-chip>
+              </div>
+            </v-card-text>
+          </v-card>
+          <div
+            v-else
+            class="mt-4 text-body-2 text-medium-emphasis"
+          >
+            No reviewers have been added yet.
+          </div>
         </v-card-text>
         <v-card-actions
           class="pt-0"
@@ -402,5 +433,19 @@ async function addReviewer() {
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-snackbar
+      v-model="reviewerAssignmentSnackbarOpen"
+      location="bottom"
+      :color="assignReviewerRequest.error.value ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ assignReviewerRequest.error.value ? 'Something went wrong assigning a reviewer.' : 'Reviewer added successfully.' }}
+      <template #actions>
+        <v-btn
+          icon="mdi-close"
+          @click="reviewerAssignmentSnackbarOpen = false"
+        />
+      </template>
+    </v-snackbar>
   </div>
 </template>
