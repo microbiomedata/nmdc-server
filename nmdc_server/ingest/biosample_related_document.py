@@ -169,17 +169,46 @@ def load_studies(
             if base_study_id not in row.downstream_neighbor_ids:
                 row.downstream_neighbor_ids.append(base_study_id)
 
-    # For each study row, propagate its `biosample_id`s to each of its ancestor study rows;
-    # preserving any `biosample_id`s those ancestor study rows already contain (e.g. those
-    # propagated up from other descendant studies).
-    for base_study_id in rows_by_study_id.keys():
+    # For each study row, propagate its `biosample_id`s to each of its ancestor study rows, all the
+    # way up the ancestry chain; preserving any `biosample_id`s those ancestor study rows already
+    # contain (e.g. those propagated up from other descendant studies).
+    for base_study_id in rows_by_study_id:
+
+        # The the `biosample_id`s of this study (i.e. the "base" study).
         biosample_ids = biosample_ids_by_associated_study_id.get(base_study_id, [])
-        parent_study_ids = parent_study_ids_by_base_study_id[base_study_id]
-        for parent_study_id in parent_study_ids:
-            row = rows_by_study_id[parent_study_id]
+
+        # Initialize a list of the `id`s of the ancestor studies we intend to visit.
+        # Note: We make a _copy_ of the list, since we may add to it as we iterate
+        #       (e.g. if any of these parent studies, themselves, has parent studies).
+        unvisited_ancestor_study_ids = parent_study_ids_by_base_study_id[base_study_id].copy()
+
+        # Initialize a set of studies we have visited for this "base" study. This set will grow
+        # as we iterate.
+        visited_study_ids = set([base_study_id])
+
+        while len(unvisited_ancestor_study_ids) > 0:
+            ancestor_study_id = unvisited_ancestor_study_ids.pop()  # removes it from the list
+
+            # If we've already visited this ancestor study (e.g. multiple studies here have it as
+            # a parent), abort this iteration.
+            if ancestor_study_id in visited_study_ids:
+                continue
+            visited_study_ids.add(ancestor_study_id)
+
+            # Get the `BiosampleRelatedDocument` row for this ancestor study.
+            row = rows_by_study_id[ancestor_study_id]
+
+            # Ensure the biosamples of the "base" study appear in the `biosample_ids` column of
+            # this ancestor study.
             for id_ in biosample_ids:
                 if id_ not in row.biosample_ids:
                     row.biosample_ids.append(id_)
+
+            # If this ancestor study, itself, has any parent studies and we haven't already visited
+            # them while processing this "base" study; add them to the list of ones to visit.
+            for ancestor_parent_study_id in parent_study_ids_by_base_study_id[ancestor_study_id]:
+                if ancestor_parent_study_id not in visited_study_ids:
+                    unvisited_ancestor_study_ids.append(ancestor_parent_study_id)
 
     # Add all the `BiosampleRelatedDocument` rows to the session.
     for row in rows_by_study_id.values():
