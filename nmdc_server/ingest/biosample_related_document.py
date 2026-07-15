@@ -178,12 +178,11 @@ def load_studies(
     they, too, are biosample-related documents (albeit, further than a single "hop" away).
     """
 
-    study_documents = list(study_set.find({}, projection_omitting_oid))
     rows_by_study_id: dict[str, BiosampleRelatedDocument] = {}
     parent_study_ids_by_base_study_id: dict[str, list[str]] = {}
 
     # Initialize a `BiosampleRelatedDocument` row for each study.
-    for study_document in study_documents:
+    for study_document in study_set.find({}, projection_omitting_oid):
         base_study_id = study_document["id"]
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.id = base_study_id
