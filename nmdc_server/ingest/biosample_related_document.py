@@ -133,7 +133,7 @@ def load_studies(
     rows_by_study_id: dict[str, BiosampleRelatedDocument] = {}
     parent_study_ids_by_base_study_id: dict[str, list[str]] = {}
 
-    # Initialize a `BiosampleRelatedDocument` row for each study study.
+    # Initialize a `BiosampleRelatedDocument` row for each study.
     for study_document in study_documents:
         base_study_id = study_document["id"]
         biosample_related_document = BiosampleRelatedDocument()
@@ -141,7 +141,7 @@ def load_studies(
         biosample_related_document.high_level_type = "nmdc:Study"
         biosample_related_document.document = study_document
 
-        # Identify downstream neighbors (i.e. all biosamples that identify this study as an
+        # Identify downstream neighbors (i.e. all biosamples that identify this study as
         # one of their `associated_studies`).
         #
         # Note: Instead of querying the `biosample_set` MongoDB collection here,
@@ -174,7 +174,7 @@ def load_studies(
     # contain (e.g. those propagated up from other descendant studies).
     for base_study_id in rows_by_study_id:
 
-        # The the `biosample_id`s of this study (i.e. the "base" study).
+        # Get the `biosample_id`s of this study (i.e. the "base" study).
         biosample_ids = biosample_ids_by_associated_study_id.get(base_study_id, [])
 
         # Initialize a list of the `id`s of the ancestor studies we intend to visit.
