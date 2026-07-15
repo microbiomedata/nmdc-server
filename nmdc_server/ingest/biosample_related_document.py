@@ -123,7 +123,18 @@ def load_studies(
     that represents that document.
 
     Also identifies the biosample(s) associated with each study, since it's so readily accessible.
+
+    Finally, accounts for the fact that a study can be `part_of` other studies (recursively), and we
+    want each of those ancestor studies, too, to have its own `BiosampleRelatedDocument` row; since
+    they are biosample-related documents (albeit, further than a single "hop" away).
     """
+
+    # Note: We opted not to use the SQLAlchemy session as a "cache" of `BiosampleRelatedDocument`
+    #       instances created within this invocation of the function. That is after reading:
+    #       https://docs.sqlalchemy.org/en/21/orm/session_basics.html#is-the-session-a-cache
+    #       Instead, we maintain our own list of instances (or "rows") here, and add them to the
+    #       session at the very end of the function.
+    rows: List[BiosampleRelatedDocument] = []
 
     for study_document in study_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -152,7 +163,44 @@ def load_studies(
         )
         biosample_related_document.biosample_ids = dedupe(biosample_related_document.biosample_ids)
 
-        db.add(biosample_related_document)
+        rows.append(biosample_related_document)
+
+        # TODO: Do this recursively until either the parent study is not `part_of` any studies or
+        #       all of the studies in its ancestry are ones we already processed for this base study.
+        #
+        # Identify each study that is upstream of the current one. Do this by checking the latter's
+        # `part_of` field, following the chain recursively. For each study along the chain, ensure
+        # it is represented by a `BiosampleRelatedDocument` row whose `biosample_ids` column includes
+        # all of the same biosample `id`s that were related to the directly-biosample-related study.
+        if "part_of" in study_document:
+            parent_study_ids = study_document.get("part_of", [])
+            for parent_study_id in parent_study_ids:
+                # If a `BiosampleRelatedDocument` row exists for this study, get a reference to it.
+                parent_study_row = None
+                for row in rows:
+                    if row.id == parent_study_id:
+                        parent_study_row = row
+                        break
+                # If we weren't able to get a reference to it (i.e. it doesn't exist), create one.
+                if parent_study_row is None:
+                    parent_study_document = study_set.find_one(
+                        {"id": parent_study_id}, projection_omitting_oid,
+                    )
+                    parent_study_row = BiosampleRelatedDocument()
+                    parent_study_row.id = parent_study_document["id"]
+                    parent_study_row.biosample_ids = []  # we'll populate this below
+                    parent_study_row.high_level_type = "nmdc:Study"
+                    parent_study_row.document = parent_study_document
+                # Ensure that the parent study row's `biosample_ids` column includes (at least)
+                # all of the biosample `id`s that related to the directly-biosample-related study.
+                for biosample_id in biosample_related_document.biosample_ids:
+                    if biosample_id not in parent_study_row.biosample_ids:
+                        parent_study_row.biosample_ids.append(biosample_id)
+                # TODO: Do the same thing for any parent studies of _these_ parent studies.
+
+    # Add all the `BiosampleRelatedDocument` rows to the session.
+    for row in rows:
+        db.add(row)
 
 
 def load_data_generations(
