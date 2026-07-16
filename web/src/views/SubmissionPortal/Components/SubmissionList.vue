@@ -141,6 +141,7 @@ async function addReviewer() {
   isReviewerAssignmentSnackbarOpen.value = true;
   reviewerOrcid.value = '';
   isReviewerAssignmentDialogOpen.value = false;
+  submission.refetch();
 }
 
 </script>
