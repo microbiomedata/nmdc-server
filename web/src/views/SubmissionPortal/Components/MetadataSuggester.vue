@@ -458,10 +458,10 @@ function getSlotTitle(slot: string) {
                 </span>
               </template>
               <template #item="{ item, props: itemProps }">
-                <v-divider v-if="item.raw.type === 'divider'" />
+                <v-divider v-if="'type' in item.raw && item.raw.type === 'divider'" />
                 <v-tooltip
-                  v-else-if="item.raw.tooltip"
-                  :text="item.raw.tooltip"
+                  v-else-if="'tooltip' in item.raw && item.raw.tooltip"
+                  :text="(item.raw as { tooltip: string }).tooltip"
                   location="right"
                   max-width="260"
                   open-delay="300"
