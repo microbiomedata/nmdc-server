@@ -18,7 +18,6 @@ import {
   SubmissionSampleSetListItem,
   SubmissionSampleSetPatch,
   SubmissionSampleSetStatusPatch,
-  SuggestionType,
   UploadCompleteRequest,
 } from '@/views/SubmissionPortal/types';
 
@@ -122,17 +121,11 @@ async function deleteSubmission(id: string) {
   return resp.data;
 }
 
-async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: SuggestionType) {
-  let endpoint = 'metadata_submission/suggest';
-  if (type === SuggestionType.ADDITIONS) {
-    endpoint += '?types=add';
-  } else if (type === SuggestionType.REPLACEMENTS) {
-    endpoint += '?types=replace';
-  }
+async function getMetadataSuggestions(data: MetadataSuggestionRequest[]) {
   const resp = await client.post<
     MetadataSuggestion[],
     MetadataSuggestionRequest[]
-  >(endpoint, data);
+  >('metadata_submission/suggest', data);
   return resp.data;
 }
 

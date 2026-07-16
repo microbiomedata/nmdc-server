@@ -35,8 +35,40 @@ const { loadSuggestionsFromSampleRows } = store;
 
 const suggestionStarted = ref(false);
 
-const filterOptions = Object.values(SuggestionFill).map((v) => ({ label: v, value: v }));
-const suggestionTypeOptions = Object.values(SuggestionType).map((v) => ({ label: v, value: v }));
+const scopeOptions = [
+  { label: 'Suggest Fields', value: SuggestionFill.FIELD_SUGGESTION, tooltip: 'Highlights metadata fields that may be relevant to your submission, without suggesting specific values.' },
+  { label: 'Suggest Values', value: SuggestionFill.VALUE_SUGGESTION, tooltip: 'Suggests specific values to fill into individual cells.' },
+];
+const suggestionTypeOptions = [
+  { label: SuggestionType.ADDITIONS, value: SuggestionType.ADDITIONS, tooltip: 'Suggestions for empty cells only — no existing values will be overwritten.' },
+  { label: SuggestionType.REPLACEMENTS, value: SuggestionType.REPLACEMENTS, tooltip: 'Suggestions that would replace an existing cell value with a new one.' },
+];
+
+const allFilterOptions = [
+  ...suggestionTypeOptions,
+  { type: 'divider' },
+  ...scopeOptions,
+];
+
+const filterSelectionLabel = computed(() => {
+  const fillsAll = store.ui.suggestionFills.size === 0 || store.ui.suggestionFills.size === scopeOptions.length;
+  const typesAll = store.ui.suggestionTypes.size === 0 || store.ui.suggestionTypes.size === suggestionTypeOptions.length;
+  if (fillsAll && typesAll) return 'All';
+  const parts = [
+    ...(typesAll ? [] : Array.from(store.ui.suggestionTypes).map((t) => suggestionTypeOptions.find((o) => o.value === t)?.label)),
+    ...(fillsAll ? [] : Array.from(store.ui.suggestionFills).map((f) => scopeOptions.find((o) => o.value === f)?.label)),
+  ].filter(Boolean);
+  return parts.join(', ');
+});
+
+function onFilterUpdate(values: string[]) {
+  store.ui.suggestionFills = new Set(
+    values.filter((v): v is SuggestionFill => Object.values(SuggestionFill).includes(v as SuggestionFill)),
+  );
+  store.ui.suggestionTypes = new Set(
+    values.filter((v): v is SuggestionType => Object.values(SuggestionType).includes(v as SuggestionType)),
+  );
+}
 
 function getSuggestionKey(suggestion: MetadataSuggestion) {
   return `${suggestion.row}__${suggestion.slot}__${suggestion.value}`;
@@ -85,15 +117,24 @@ const pendingSuggestions = computed(() => (
 
 const filteredSuggestions = computed(() => {
   let suggestions = pendingSuggestions.value;
-  if (store.ui.suggestionFill === SuggestionFill.BY_ROW) {
-    suggestions = suggestions.filter((s) => s.row !== null);
-  } else if (store.ui.suggestionFill === SuggestionFill.BY_COLUMN) {
-    suggestions = suggestions.filter((s) => s.row === null);
+  // Scope filter: FIELD_SUGGESTION = slot suggestions (row === null), VALUE_SUGGESTION = value suggestions (row !== null)
+  // Empty set means no filter applied (show all)
+  const fills = store.ui.suggestionFills;
+  if (fills.size > 0 && (!fills.has(SuggestionFill.FIELD_SUGGESTION) || !fills.has(SuggestionFill.VALUE_SUGGESTION))) {
+    if (fills.has(SuggestionFill.VALUE_SUGGESTION)) {
+      suggestions = suggestions.filter((s) => s.row !== null);
+    } else {
+      suggestions = suggestions.filter((s) => s.row === null);
+    }
   }
-  if (store.ui.suggestionType === SuggestionType.ADDITIONS) {
-    suggestions = suggestions.filter((s) => s.type === 'add');
-  } else if (store.ui.suggestionType === SuggestionType.REPLACEMENTS) {
-    suggestions = suggestions.filter((s) => s.type === 'replace');
+  // Type filter — empty set means no filter applied (show all)
+  const types = store.ui.suggestionTypes;
+  if (types.size > 0 && (!types.has(SuggestionType.ADDITIONS) || !types.has(SuggestionType.REPLACEMENTS))) {
+    if (types.has(SuggestionType.ADDITIONS)) {
+      suggestions = suggestions.filter((s) => s.type === 'add');
+    } else {
+      suggestions = suggestions.filter((s) => s.type === 'replace');
+    }
   }
   return suggestions;
 });
@@ -398,27 +439,39 @@ function getSlotTitle(slot: string) {
         </v-row>
 
         <v-row v-if="suggestionStarted">
-          <v-col cols="6">
+          <v-col>
             <v-select
-              v-model="store.ui.suggestionFill"
-              :items="filterOptions"
+              :model-value="[...Array.from(store.ui.suggestionFills), ...Array.from(store.ui.suggestionTypes)]"
+              :items="allFilterOptions"
               item-title="label"
               item-value="value"
-              label="Group by"
+              label="Filter"
               hide-details
               clearable
               persistent-placeholder
-            />
-          </v-col>
-          <v-col cols="6">
-            <v-select
-              v-model="store.ui.suggestionType"
-              :items="suggestionTypeOptions"
-              item-title="label"
-              item-value="value"
-              label="Suggestion Type"
-              hide-details
-            />
+              multiple
+              @update:model-value="onFilterUpdate"
+            >
+              <template #selection="{ index }">
+                <span v-if="index === 0">
+                  {{ filterSelectionLabel }}
+                </span>
+              </template>
+              <template #item="{ item, props: itemProps }">
+                <v-divider v-if="item.raw.type === 'divider'" />
+                <v-tooltip
+                  v-else-if="item.raw.tooltip"
+                  :text="item.raw.tooltip"
+                  location="right"
+                  max-width="260"
+                  open-delay="300"
+                >
+                  <template #activator="{ props: tooltipProps }">
+                    <v-list-item v-bind="{ ...itemProps, ...tooltipProps }" />
+                  </template>
+                </v-tooltip>
+              </template>
+            </v-select>
           </v-col>
         </v-row>
 

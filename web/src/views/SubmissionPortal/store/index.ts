@@ -165,8 +165,8 @@ type SampleSetStoreState = {
 }
 
 type UiState = {
-  suggestionFill: SuggestionFill | null
-  suggestionType: SuggestionType
+  suggestionFills: Set<SuggestionFill>
+  suggestionTypes: Set<SuggestionType>
 }
 
 /* STATE-FREE HELPERS */
@@ -209,8 +209,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     },
   });
   const ui = reactive<UiState>({
-    suggestionFill: null,
-    suggestionType: SuggestionType.ALL,
+    suggestionFills: new Set(Object.values(SuggestionFill)),
+    suggestionTypes: new Set([SuggestionType.ADDITIONS, SuggestionType.REPLACEMENTS]),
   });
 
   /* GETTERS */
@@ -974,7 +974,7 @@ export const useSubmissionStore = defineStore('submission', () => {
         const batch = batches[i] || [];
 
 
-        const suggestions = await api.getMetadataSuggestions(batch, ui.suggestionType);
+        const suggestions = await api.getMetadataSuggestions(batch);
 
         // Drop all the existing suggestions for the rows in this batch
         batch.forEach((request) => {
