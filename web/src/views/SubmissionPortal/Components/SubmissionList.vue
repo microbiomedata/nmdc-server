@@ -58,7 +58,7 @@ const options = ref({
 const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionMetadataSlim | null>(null);
 const isReviewerAssignmentDialogOpen = ref(false);
-const reviewerAssignmentSnackbarOpen = ref(false);
+const isReviewerAssignmentSnackbarOpen = ref(false);
 const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
 const currentUser = stateRefs.user;
 const isTestFilter = ref(null);
@@ -138,7 +138,7 @@ async function addReviewer() {
     }
     await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
   });
-  reviewerAssignmentSnackbarOpen.value = true;
+  isReviewerAssignmentSnackbarOpen.value = true;
   reviewerOrcid.value = '';
   isReviewerAssignmentDialogOpen.value = false;
 }
@@ -434,7 +434,7 @@ async function addReviewer() {
       </v-card>
     </v-dialog>
     <v-snackbar
-      v-model="reviewerAssignmentSnackbarOpen"
+      v-model="isReviewerAssignmentSnackbarOpen"
       location="bottom"
       :color="assignReviewerRequest.error.value ? 'error' : 'success'"
       timeout="3000"
@@ -443,7 +443,7 @@ async function addReviewer() {
       <template #actions>
         <v-btn
           icon="mdi-close"
-          @click="reviewerAssignmentSnackbarOpen = false"
+          @click="isReviewerAssignmentSnackbarOpen = false"
         />
       </template>
     </v-snackbar>
