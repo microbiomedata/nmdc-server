@@ -179,7 +179,18 @@ class Settings(BaseSettings):
     print_sql: bool = False
 
     # App settings related to UI behavior
-    disable_bulk_download: str = ""
+    # TODO: add settings for:
+    # - disable_bulk_metadata_download
+    # - disable_individual_metadata_download
+    disable_bulk_data_product_download: bool = False
+    """Whether you want to disable the bulk download of data products."""
+    disable_individual_data_product_download: bool = False
+
+    """
+    Whether you want to disable the non-bulk download (i.e. individual download) of data products.
+    This will also disable the HTML previews (e.g. Krona plots) that rely on those data products.
+    """
+
     portal_banner_title: Optional[str] = None
     portal_banner_message: Optional[str] = None
 

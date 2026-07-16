@@ -33,6 +33,7 @@ import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/v
 import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
 import { useSubmissionStore } from './store';
 import { storeToRefs } from 'pinia';
+import { getHarmonizerTemplateData, getHarmonizerTemplateForTab } from './harmonizerTabs';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -120,15 +121,11 @@ watch(() => store.sampleSet.forms.sampleData.data, (newData: Record<string, any[
 //   }
 // });
 
-const activeTemplateKey = ref<TemplateName | null>(templateList.value[0] || null);
-const activeTemplate = ref<HarmonizerTemplateInfo | null>(activeTemplateKey.value === null ? null : HARMONIZER_TEMPLATES[activeTemplateKey.value]);
 const activeTabIndex = ref(0);
-const activeTemplateData = computed(() => {
-  if (!activeTemplate.value?.sampleDataSlot) {
-    return [];
-  }
-  return store.sampleSet.forms.sampleData.data[activeTemplate.value.sampleDataSlot] || [];
-});
+const activeTemplateState = computed(() => getHarmonizerTemplateForTab(templateList.value, activeTabIndex.value));
+const activeTemplateKey = computed(() => activeTemplateState.value.key);
+const activeTemplate = computed(() => activeTemplateState.value.template);
+const activeTemplateData = computed(() => getHarmonizerTemplateData(store.sampleSet.forms.sampleData.data, activeTemplate.value));
 const hasValidSampleEnvironmentSelection = computed(
   () => isEqual(store.sampleSet.forms.sampleEnvironmentForm.validation, [])
 );
@@ -227,21 +224,25 @@ function isSampleSetValid(): boolean {
   return true;
 }
 
-watch(activeTemplate, () => {
+/**
+ * Load a template's stored rows and validation state into the Data Harmonizer table.
+ */
+function loadTemplateData(templateKey: TemplateName, template: HarmonizerTemplateInfo) {
   // WARNING: It's important to do the column settings update /before/ data. Otherwise,
   // columns will not be rendered with the correct width.
   harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
 
   // If the environment tab selected is a mixin it should be readonly
   const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'mixin');
-  if (environmentList.includes(activeTemplateKey.value!)) {
+  const templateData = getHarmonizerTemplateData(store.sampleSet.forms.sampleData.data, template);
+  if (environmentList.includes(templateKey)) {
     harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
-    harmonizerApi.setMaxRows(activeTemplateData.value.length);
+    harmonizerApi.setMaxRows(templateData.length);
   }
-  harmonizerApi.loadData(activeTemplateData.value);
-  harmonizerApi.setInvalidCells(store.sampleSet.forms.sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
+  harmonizerApi.loadData(templateData);
+  harmonizerApi.setInvalidCells(store.sampleSet.forms.sampleData.validation?.invalidCells[templateKey] || {});
   harmonizerApi.changeVisibility(columnVisibility.value);
-});
+}
 
 const validationErrors = computed(() => {
   const remapped: ValidationErrors = {};
@@ -524,7 +525,18 @@ function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number,
   return duplicateErrors;
 }
 
-async function validate() {
+/**
+ * Validate the Data Harmonizer table currently loaded for the provided template.
+ */
+async function validateTemplate(
+  templateKey: TemplateName | null,
+  template: HarmonizerTemplateInfo | null,
+  { focusInvalidCell = true } = {},
+) {
+  if (!templateKey || !template) {
+    return;
+  }
+
   const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
 
   // Check if the spreadsheet is empty
@@ -532,19 +544,19 @@ async function validate() {
   // Update invalid cells if empty
   if (isEmpty) {
     harmonizerApi.setInvalidCells({});
-    setTabInvalidCells(activeTemplateKey.value!, {});
-    setTabValidated(activeTemplateKey.value!, false);
+    setTabInvalidCells(templateKey, {});
+    setTabValidated(templateKey, false);
     emptySheetSnackbar.value = true;
     saveRecord(); // This is a background save that we intentionally don't wait for
     return;
   }
 
-  mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
+  mergeSampleData(template.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
 
   // Add cross-tab duplicate sample name validation
   const crossTabDuplicates = validateDuplicateSampleNamesAcrossTabs();
-  const crossTabDuplicatesForCurrentTab = crossTabDuplicates[activeTemplateKey.value!] || {};
+  const crossTabDuplicatesForCurrentTab = crossTabDuplicates[templateKey] || {};
 
   // Merge the cross-tab duplicate errors into the current tab's validation result
   Object.entries(crossTabDuplicatesForCurrentTab).forEach(([rowStr, colErrors]) => {
@@ -560,14 +572,21 @@ async function validate() {
     sidebarOpen.value = true;
   }
 
-  setTabInvalidCells(activeTemplateKey.value!, result);
-  setTabValidated(activeTemplateKey.value!, valid);
+  setTabInvalidCells(templateKey, result);
+  setTabValidated(templateKey, valid);
   saveRecord(); // This is a background save that we intentionally don't wait for
 
-  if (valid === false) {
+  if (valid === false && focusInvalidCell) {
     errorClick(0);
   }
   validationSuccessSnackbar.value = Object.values(store.sampleSet.forms.sampleData.validation?.tabsValidated || {}).every((value) => value);
+}
+
+/**
+ * Validate the active template represented by the selected tab.
+ */
+async function validate() {
+  await validateTemplate(activeTemplateKey.value, activeTemplate.value);
 }
 
 const submissionState = computed(() => {
@@ -615,8 +634,8 @@ watch(columnVisibility, () => {
   harmonizerApi.changeVisibility(columnVisibility.value);
 });
 
-watch(activeTabIndex, (newIndex) => {
-  changeTemplate(newIndex);
+watch(activeTabIndex, (newIndex, oldIndex) => {
+  changeTemplate(newIndex, oldIndex);
 });
 
 const selectedHelpDict = computed(() => {
@@ -746,12 +765,17 @@ function addHooks() {
   });
 }
 
-async function changeTemplate(index: number) {
+/**
+ * Persist and validate the previously loaded template, then switch Data Harmonizer to the newly selected tab.
+ */
+async function changeTemplate(index: number, previousIndex: number) {
   if (!harmonizerApi.ready.value) {
     return;
   }
 
-  await validate();
+  const previousTemplateKey = templateList.value[previousIndex] || null;
+  const previousTemplate = previousTemplateKey ? HARMONIZER_TEMPLATES[previousTemplateKey] : null;
+  await validateTemplate(previousTemplateKey, previousTemplate, { focusInvalidCell: false });
 
   const nextTemplateKey = templateList.value[index];
   const nextTemplate = nextTemplateKey ? HARMONIZER_TEMPLATES[nextTemplateKey] : null;
@@ -763,9 +787,8 @@ async function changeTemplate(index: number) {
     // When changing templates we may need to populate the common columns
     // from the environment tabs
     synchronizeTabData(nextTemplateKey);
-    activeTemplateKey.value = nextTemplateKey;
-    activeTemplate.value = nextTemplate;
     harmonizerApi.useTemplate(nextTemplate.schemaClass);
+    loadTemplateData(nextTemplateKey, nextTemplate);
     addHooks();
   }
 }
@@ -799,8 +822,9 @@ onMounted(async () => {
     await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
     await nextTick();
     // Load data and invalid cells for the active tab
-    harmonizerApi.loadData(activeTemplateData.value);
-    harmonizerApi.setInvalidCells(store.sampleSet.forms.sampleData.validation?.invalidCells[activeTemplateKey.value!] || {});
+    if (activeTemplateKey.value && activeTemplate.value) {
+      loadTemplateData(activeTemplateKey.value, activeTemplate.value);
+    }
     // If the tab has no validation state from the server, mark it as unvalidated
     if (!store.sampleSet.forms.sampleData.validation || !has(store.sampleSet.forms.sampleData.validation.tabsValidated, activeTemplateKey.value!)) {
       setTabValidated(activeTemplateKey.value!, false);

@@ -51,6 +51,55 @@ def invert_dict_of_lists(dict_of_lists: dict[str, List[str]]) -> dict[str, List[
     return inverted_dict
 
 
+def _propagate_biosample_ids_to_ancestor_study_rows(
+    base_study_id: str,
+    biosample_ids: list[str],
+    rows_by_study_id: dict[str, BiosampleRelatedDocument],
+    parent_study_ids_by_base_study_id: dict[str, list[str]],
+) -> None:
+    """
+    Helper function that ensures that the `biosample_ids` column of each ancestor study (row)
+    of the specified base study includes each of the specified biosample IDs.
+
+    Note: The only reason we define this at the top-level of the module instead of within the
+          `load_studies` function that invokes it is that, when we defined it within the latter,
+          the linter said the resulting `load_studies` function was too complex.
+          Docs: https://www.flake8rules.com/rules/C901.html
+    """
+
+    # Initialize a list of the `id`s of the ancestor studies we intend to visit.
+    # Note: We make a _copy_ of the list, since we may add to it as we iterate
+    #       (e.g. if any of these parent studies, themselves, has parent studies).
+    unvisited_ancestor_study_ids = parent_study_ids_by_base_study_id[base_study_id].copy()
+
+    # Initialize a set of studies we have visited (so far) for this "base" study.
+    visited_study_ids = set([base_study_id])
+
+    while len(unvisited_ancestor_study_ids) > 0:
+        ancestor_study_id = unvisited_ancestor_study_ids.pop()  # removes it from the list
+
+        # If we've already visited this ancestor study (e.g. multiple studies here have it as
+        # a parent), abort this iteration.
+        if ancestor_study_id in visited_study_ids:
+            continue
+        visited_study_ids.add(ancestor_study_id)
+
+        # Get the `BiosampleRelatedDocument` row for this ancestor study.
+        row = rows_by_study_id[ancestor_study_id]
+
+        # Ensure the biosamples of the "base" study appear in the `biosample_ids` column of
+        # this ancestor study.
+        for biosample_id in biosample_ids:
+            if biosample_id not in row.biosample_ids:
+                row.biosample_ids.append(biosample_id)
+
+        # If this ancestor study, itself, has any parent studies and we haven't already visited
+        # them while processing this "base" study; add them to the list of ones to visit.
+        for ancestor_parent_study_id in parent_study_ids_by_base_study_id[ancestor_study_id]:
+            if ancestor_parent_study_id not in visited_study_ids:
+                unvisited_ancestor_study_ids.append(ancestor_parent_study_id)
+
+
 def load_biosamples(
     db: Session,
     biosample_set: Collection,
@@ -123,36 +172,73 @@ def load_studies(
     that represents that document.
 
     Also identifies the biosample(s) associated with each study, since it's so readily accessible.
+
+    Finally, accounts for the fact that a study can be `part_of` other studies (recursively), and we
+    want each of those ancestor studies, too, to have its own `BiosampleRelatedDocument` row; since
+    they, too, are biosample-related documents (albeit, further than a single "hop" away).
     """
 
+    rows_by_study_id: dict[str, BiosampleRelatedDocument] = {}
+    parent_study_ids_by_base_study_id: dict[str, list[str]] = {}
+
+    # Initialize a `BiosampleRelatedDocument` row for each study.
     for study_document in study_set.find({}, projection_omitting_oid):
+        base_study_id = study_document["id"]
         biosample_related_document = BiosampleRelatedDocument()
-        biosample_related_document.id = study_document["id"]
-        biosample_related_document.biosample_ids = []
+        biosample_related_document.id = base_study_id
         biosample_related_document.high_level_type = "nmdc:Study"
         biosample_related_document.document = study_document
 
-        # Identify downstream neighbors.
+        # Identify downstream neighbors (i.e. all biosamples that identify this study as
+        # one of their `associated_studies`).
         #
         # Note: Instead of querying the `biosample_set` MongoDB collection here,
-        #       we take advantage of the look-up tables passed in.
+        #       we take advantage of the look-up table passed in.
         #
-        biosample_related_document.downstream_neighbor_ids = []
-        if study_document["id"] in biosample_ids_by_associated_study_id:
-            biosample_ids = biosample_ids_by_associated_study_id[study_document["id"]]
-            biosample_related_document.downstream_neighbor_ids.extend(biosample_ids)
+        biosample_ids = biosample_ids_by_associated_study_id.get(base_study_id, [])
+        biosample_related_document.downstream_neighbor_ids = dedupe(biosample_ids)
 
-            # Also store the biosamples' `id`s as related biosample `id`s; given that our
-            # later step of traversing the schema will only go _downstream_ (not upstream)
-            # of biosamples (whereas studies are _upstream_ of biosamples).
-            biosample_related_document.biosample_ids.extend(biosample_ids)
+        # While we have the opportunity, also store those biosample `id`s in the `biosample_ids`
+        # column; given that the later step of traversing the schema will only go _downstream_
+        # (not upstream) of biosamples (whereas studies are _upstream_ of biosamples).
+        biosample_related_document.biosample_ids = dedupe(biosample_ids)
 
-        biosample_related_document.downstream_neighbor_ids = dedupe(
-            biosample_related_document.downstream_neighbor_ids
+        # Keep track of this newly-created `BiosampleRelatedDocument` row for future reference.
+        # Note: These look-up tables will come in handy when we traverse study ancestry chains below.
+        rows_by_study_id[base_study_id] = biosample_related_document
+        parent_study_ids = study_document.get("part_of", None)
+        if parent_study_ids is None:  # true if `part_of` was either missing or contained `None`
+            parent_study_ids = []
+        parent_study_ids_by_base_study_id[base_study_id] = parent_study_ids
+
+    # For each study that has any parent studies, ensure the `downstream_neighbor_ids` column of
+    # each of those parent study rows contains the `id` of that study (i.e. their child). As a
+    # reminder, we are only dealing with direct parents here, not more distant ancestors.
+    for base_study_id, parent_study_ids in parent_study_ids_by_base_study_id.items():
+        for parent_study_id in parent_study_ids:
+            row = rows_by_study_id[parent_study_id]
+            if base_study_id not in row.downstream_neighbor_ids:
+                row.downstream_neighbor_ids.append(base_study_id)
+
+    # For each study row, propagate its `biosample_ids` to each of its ancestor study rows, all the
+    # way up the ancestry chain; preserving any biosample `id`s those ancestor study rows already
+    # contain (e.g. those propagated up from other descendant studies).
+    for base_study_id in rows_by_study_id.keys():
+
+        # Get the `biosample_ids` of this study (i.e. the "base" study).
+        biosample_ids = biosample_ids_by_associated_study_id.get(base_study_id, [])
+
+        # Propagate those biosample IDs to all studies in this study's ancestry chain.
+        _propagate_biosample_ids_to_ancestor_study_rows(
+            base_study_id=base_study_id,
+            biosample_ids=biosample_ids,
+            rows_by_study_id=rows_by_study_id,
+            parent_study_ids_by_base_study_id=parent_study_ids_by_base_study_id,
         )
-        biosample_related_document.biosample_ids = dedupe(biosample_related_document.biosample_ids)
 
-        db.add(biosample_related_document)
+    # Add all the `BiosampleRelatedDocument` rows to the session.
+    for row in rows_by_study_id.values():
+        db.add(row)
 
 
 def load_data_generations(

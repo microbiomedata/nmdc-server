@@ -91,7 +91,8 @@ def get_health(
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
     return {
-        "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
+        "disable_bulk_data_product_download": settings.disable_bulk_data_product_download,
+        "disable_individual_data_product_download": settings.disable_individual_data_product_download,
         "portal_banner_message": settings.portal_banner_message,
         "portal_banner_title": settings.portal_banner_title,
     }
