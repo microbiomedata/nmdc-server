@@ -90,6 +90,7 @@ def test_create_submission(db: Session, client: TestClient, logged_in_user):
     assert body["study_form"]["studyName"] == study_name
     assert body["study_form"]["piEmail"] == pi_email
     assert body["author_orcid"] == logged_in_user.orcid
+    assert body["permission_level"] == SubmissionEditorRole.owner.value
 
     # Verify there is a new SubmissionMetadata record in the database
     submission_id = body["id"]

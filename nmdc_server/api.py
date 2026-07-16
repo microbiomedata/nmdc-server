@@ -1775,7 +1775,11 @@ async def submit_metadata(
     db.add(owner_role)
     db.commit()
     crud.try_get_submission_lock(db, submission.id, user.id)
-    return submission
+    submission_metadata_schema = schemas_submission.SubmissionMetadataSchema.model_validate(
+        submission
+    )
+    submission_metadata_schema.permission_level = models.SubmissionEditorRole.owner.value
+    return submission_metadata_schema
 
 
 @router.post(
