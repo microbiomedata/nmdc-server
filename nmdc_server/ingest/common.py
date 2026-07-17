@@ -4,7 +4,10 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Set, Union
 
+import requests
+from fastapi import status
 from pydantic import BaseModel
+from requests.adapters import HTTPAdapter, Retry
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import Session
 
@@ -26,6 +29,33 @@ EXCLUDED_FIELDS = {
     "igsn_biosample_identifiers",
     "img_identifiers",
 }
+
+
+def make_requests_session() -> requests.Session:
+    """
+    Returns a `requests.Session` configured to retry HTTP requests up to 10 times.
+    Docs: https://docs.python-requests.org/en/latest/user/advanced/#example-automatic-retries
+    """
+    retry_strategy = Retry(
+        total=10,
+        backoff_factor=1,
+        allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
+        status_forcelist=[
+            status.HTTP_502_BAD_GATEWAY,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            status.HTTP_504_GATEWAY_TIMEOUT,
+            status.HTTP_429_TOO_MANY_REQUESTS,
+        ],
+    )
+    http_adapter = HTTPAdapter(max_retries=retry_strategy)
+    requests_session = requests.Session()
+    requests_session.mount("http://", http_adapter)
+    requests_session.mount("https://", http_adapter)
+    return requests_session
+
+
+# Make a `requests.Session` the ingester can use to submit HTTP requests, with automatic retries.
+requests_session = make_requests_session()
 
 
 class ETLReport:

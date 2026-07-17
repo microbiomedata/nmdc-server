@@ -2,10 +2,10 @@ import csv
 from pathlib import Path
 from typing import Dict, List, Union
 
-import requests
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from nmdc_server.ingest.common import requests_session
 from nmdc_server.ingest.errors import errors
 from nmdc_server.models import (
     CogTermText,
@@ -180,9 +180,9 @@ def get_search_records():
             ingest_tree(child, hierarchy)
 
     for url in [MODULE_URL, ORTHOLOGY_URL]:
-        req = requests.get(url)
-        req.raise_for_status()
-        ingest_tree(req.json(), "ko")
+        resp = requests_session.get(url)
+        resp.raise_for_status()
+        ingest_tree(resp.json(), "ko")
 
     for file, keys in delimeted_files.items():
         for key_set in keys:
@@ -268,7 +268,7 @@ def ingest_go_search_records(db: Session) -> None:
     hierarchy could be done as follow-up work.
     """
     db.execute(text(f"truncate table {GoTermText.__tablename__}"))
-    resp = requests.get(GO_URL)
+    resp = requests_session.get(GO_URL)
     resp.raise_for_status()
     data = resp.json()
     nodes = data["graphs"][0]["nodes"]
