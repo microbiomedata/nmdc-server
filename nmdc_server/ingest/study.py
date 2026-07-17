@@ -1,14 +1,13 @@
 import re
 from typing import List, Optional
 
-import requests
 from pydantic import model_validator
 from pydantic.v1 import validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.crud import create_study, get_doi
-from nmdc_server.ingest.common import ETLReport, extract_extras, extract_value
+from nmdc_server.ingest.common import ETLReport, extract_extras, extract_value, requests_session
 from nmdc_server.ingest.doi import upsert_doi
 from nmdc_server.logger import get_logger
 from nmdc_server.models import PrincipalInvestigator
@@ -25,7 +24,7 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
     image_data = None
     if url:
         try:
-            r = requests.get(url)
+            r = requests_session.get(url)
             r.raise_for_status()
         except Exception as e:
             logger.error(f"Failed to download image for {name} from {url} : {e}")
@@ -54,7 +53,7 @@ def transform_doi(doi: str) -> str:
 
 def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     if image_urls:
-        r = requests.get(image_urls[0]["url"])
+        r = requests_session.get(image_urls[0]["url"])
         if r.ok:
             return r.content
     return None
