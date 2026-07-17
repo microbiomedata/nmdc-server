@@ -40,7 +40,6 @@ dependencies = [
     "sqlparse",
     "starlette",
     "traitlets",
-    "urllib3",
 ]
 
 [dependency-groups]

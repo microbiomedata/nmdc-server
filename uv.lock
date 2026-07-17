@@ -2058,7 +2058,6 @@ dependencies = [
     { name = "sqlparse" },
     { name = "starlette" },
     { name = "traitlets" },
-    { name = "urllib3" },
 ]
 
 [package.dev-dependencies]
@@ -2115,7 +2114,6 @@ requires-dist = [
     { name = "sqlparse" },
     { name = "starlette" },
     { name = "traitlets" },
-    { name = "urllib3" },
 ]
 
 [package.metadata.requires-dev]
