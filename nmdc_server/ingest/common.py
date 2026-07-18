@@ -67,7 +67,14 @@ class ETLReport:
         self.num_loaded: int = 0
 
     def __str__(self) -> str:
-        """Get a single-line representation of the ETL report."""
+        """
+        Get a single-line representation of the ETL report.
+
+        >>> etl_report = ETLReport()
+        >>> str(etl_report)
+        'Things: extracted 0, loaded 0.'
+        """
+
         return (
             f"{self.plural_subject}: "
             f"extracted {self.num_extracted}, "
@@ -75,9 +82,25 @@ class ETLReport:
         )
 
     def get_bullets(self) -> List[str]:
-        """Get a list of bullet points representing the ETL report."""
+        """
+        Get a list of bullet points representing the ETL report.
+
+        >>> etl_report = ETLReport()
+        >>> etl_report.get_bullets()[0]
+        '• Things: extracted and loaded `0`'
+        >>> etl_report.num_extracted += 1
+        >>> etl_report.get_bullets()[0]
+        '• Things: extracted `1`, loaded `0` ⚠️'
+        """
+
+        # Build a concise body if the numbers are the same; otherwise, build a verbose body.
+        if self.num_extracted == self.num_loaded:
+            body = f"extracted and loaded `{self.num_loaded}`"
+        else:
+            body = f"extracted `{self.num_extracted}`, loaded `{self.num_loaded}` ⚠️"
+
         return [
-            f"• {self.plural_subject}: extracted `{self.num_extracted}`, loaded `{self.num_loaded}`",
+            f"• {self.plural_subject}: {body}",
         ]
 
 
