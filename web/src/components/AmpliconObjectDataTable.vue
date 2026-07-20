@@ -80,20 +80,22 @@ export default defineComponent({
 
 </script>
 <template>
-  <v-data-table
-    :headers="headers"
-    :items="items"
-  >
-    <!-- eslint-disable-next-line -->
-    <template #item.insdc_experiment_identifiers="{ item }">
-      <a
-        v-if="typeof getFirstInsdcExperimentIdentifier(item) === 'string'"
-        :href="makeInsdcHref(getFirstInsdcExperimentIdentifier(item))"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ getFirstInsdcExperimentIdentifier(item) }}
-      </a>
-    </template>
-  </v-data-table>
+  <v-card variant="outlined">
+    <v-data-table
+      :headers="headers"
+      :items="items"
+    >
+      <!-- eslint-disable-next-line -->
+      <template #item.insdc_experiment_identifiers="{ item }">
+        <a
+          v-if="typeof getFirstInsdcExperimentIdentifier(item) === 'string'"
+          :href="makeInsdcHref(getFirstInsdcExperimentIdentifier(item))"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ getFirstInsdcExperimentIdentifier(item) }}
+        </a>
+      </template>
+    </v-data-table>
+  </v-card>
 </template>

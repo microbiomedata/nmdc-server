@@ -4,7 +4,10 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Set, Union
 
+import requests
+from fastapi import status
 from pydantic import BaseModel
+from requests.adapters import HTTPAdapter, Retry
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import Session
 
@@ -28,6 +31,33 @@ EXCLUDED_FIELDS = {
 }
 
 
+def make_requests_session() -> requests.Session:
+    """
+    Returns a `requests.Session` configured to retry HTTP requests up to 10 times.
+    Docs: https://docs.python-requests.org/en/latest/user/advanced/#example-automatic-retries
+    """
+    retry_strategy = Retry(
+        total=10,
+        backoff_factor=1,
+        allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
+        status_forcelist=[
+            status.HTTP_502_BAD_GATEWAY,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            status.HTTP_504_GATEWAY_TIMEOUT,
+            status.HTTP_429_TOO_MANY_REQUESTS,
+        ],
+    )
+    http_adapter = HTTPAdapter(max_retries=retry_strategy)
+    requests_session = requests.Session()
+    requests_session.mount("http://", http_adapter)
+    requests_session.mount("https://", http_adapter)
+    return requests_session
+
+
+# Make a `requests.Session` the ingester can use to submit HTTP requests, with automatic retries.
+requests_session = make_requests_session()
+
+
 class ETLReport:
     """A report about the ETL process."""
 
@@ -37,7 +67,14 @@ class ETLReport:
         self.num_loaded: int = 0
 
     def __str__(self) -> str:
-        """Get a single-line representation of the ETL report."""
+        """
+        Get a single-line representation of the ETL report.
+
+        >>> etl_report = ETLReport()
+        >>> str(etl_report)
+        'Things: extracted 0, loaded 0.'
+        """
+
         return (
             f"{self.plural_subject}: "
             f"extracted {self.num_extracted}, "
@@ -45,9 +82,25 @@ class ETLReport:
         )
 
     def get_bullets(self) -> List[str]:
-        """Get a list of bullet points representing the ETL report."""
+        """
+        Get a list of bullet points representing the ETL report.
+
+        >>> etl_report = ETLReport()
+        >>> etl_report.get_bullets()[0]
+        '• Things: extracted and loaded `0`'
+        >>> etl_report.num_extracted += 1
+        >>> etl_report.get_bullets()[0]
+        '• Things: extracted `1`, loaded `0` ⚠️'
+        """
+
+        # Build a concise body if the numbers are the same; otherwise, build a verbose body.
+        if self.num_extracted == self.num_loaded:
+            body = f"extracted and loaded `{self.num_loaded}`"
+        else:
+            body = f"extracted `{self.num_extracted}`, loaded `{self.num_loaded}` ⚠️"
+
         return [
-            f"• {self.plural_subject}: extracted `{self.num_extracted}`, loaded `{self.num_loaded}`",
+            f"• {self.plural_subject}: {body}",
         ]
 
 

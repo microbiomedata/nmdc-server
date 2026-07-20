@@ -236,7 +236,11 @@ export default class HarmonizerApi {
     if (!this.ready.value) {
       return;
     }
-    await this.dh.loadDataObjects(data);
+    // Handsontable's comments plugin gets confused if the initial data is an empty array because it doesn't know how
+    // many columns there are. To work around that, we load a single empty object if the data is empty, which
+    // DataHarmonizer will expand into a single row with the correct number of columns. All cells of that row will be
+    // empty, so it doesn't change what the user sees, but it allows the comments plugin to work correctly.
+    await this.dh.loadDataObjects(data.length === 0 ? [{}] : data);
     await this.dh.hot.render();
     this.refreshState();
   }
