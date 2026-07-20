@@ -2,7 +2,7 @@
 /**
  * The tabbed Data Harmonizer sidebar.
  */
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
@@ -32,19 +32,35 @@ interface HarmonizerSidebarProps {
    * The Harmonizer API instance.
    */
   harmonizerApi: HarmonizerApi;
+  /**
+   * Whether to show the badge on the Metadata Suggester tab icon.
+   */
+  showSuggesterBadge?: boolean;
 }
 
 withDefaults(defineProps<HarmonizerSidebarProps>(), {
   columnHelp: null,
   metadataEditingAllowed: false,
+  showSuggesterBadge: false,
 });
 
 const emit = defineEmits<{
-  'export-xlsx': []
+  'export-xlsx': [];
   'import-xlsx': [file: File];
+  'clear-suggester-badge': [];
+  'fetch-study-info-suggestions': [];
 }>();
 
 const tabModel = ref(0);
+const SUGGESTER_TAB_INDEX = 1;
+
+// Clear badge when suggester tab is selected
+watch(tabModel, (newTab: number) => {
+  if (newTab === SUGGESTER_TAB_INDEX) {
+    emit('clear-suggester-badge');
+  }
+});
+
 const TABS = [
   {
     icon: 'mdi-information-outline',
@@ -82,16 +98,23 @@ const handleImport = (file: File) => {
         grow
       >
         <v-tooltip
-          v-for="tab in TABS"
+          v-for="(tab, tabIndex) in TABS"
           :key="tab.label"
           open-delay="600"
           location="top"
         >
-          <template #activator="{ props }">
+          <template #activator="{ props: tabActivatorProps }">
             <v-tab
-              v-bind="props"
+              v-bind="tabActivatorProps"
+              style="overflow: visible;"
             >
-              <v-icon size="x-large">{{ tab.icon }}</v-icon>
+              <v-icon size="x-large">
+                {{ tab.icon }}
+              </v-icon>
+              <span
+                v-if="tabIndex === SUGGESTER_TAB_INDEX && showSuggesterBadge"
+                class="suggester-dot"
+              />
             </v-tab>
           </template>
           <span>{{ tab.label }}</span>
@@ -117,6 +140,7 @@ const handleImport = (file: File) => {
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
           :schema-class-name="harmonizerTemplate.schemaClass || ''"
+          @fetch-study-info-suggestions="emit('fetch-study-info-suggestions')"
         />
       </v-window-item>
       <v-window-item>
@@ -145,5 +169,21 @@ const handleImport = (file: File) => {
   .v-tab {
     min-width: 10px;
   }
+}
+
+.tab-with-badge {
+  overflow: visible !important;
+  position: relative
+}
+
+.suggester-dot {
+  position: absolute;
+  top: 9px;
+  right: 18px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff5330;
+  border-radius: 50%;
+  pointer-events: none;
 }
 </style>

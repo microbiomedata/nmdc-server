@@ -214,14 +214,14 @@ async function handleStatusChange(item: SubmissionSampleSetListItem | null, newS
         </template>
 
         <template #[`item.status`]="{ item }">
-            <div class="d-flex align-center">
-              <v-chip
-                :color="getStatus(item.status as SubmissionStatusKey).color"
-              >
-                {{ getStatus(item.status as SubmissionStatusKey).text }}
-              </v-chip>
-            </div>
-          </template>
+          <div class="d-flex align-center">
+            <v-chip
+              :color="getStatus(item.status as SubmissionStatusKey).color"
+            >
+              {{ getStatus(item.status as SubmissionStatusKey).text }}
+            </v-chip>
+          </div>
+        </template>
 
         <template #[`item.date_last_modified`]="{ item }">
           {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
@@ -319,19 +319,22 @@ async function handleStatusChange(item: SubmissionSampleSetListItem | null, newS
   >
     <v-card>
       <v-spacer />
-      <v-card-title v-if="statusDialogSubmission && statusDialogSubmission.name != ''" class="text-h5">
+      <v-card-title
+        v-if="statusDialogSubmission && statusDialogSubmission.name != ''"
+        class="text-h5"
+      >
         Set new status for "{{ statusDialogSubmission.name }}"
       </v-card-title>
       <v-card-text>
         <v-select
           v-if="statusDialogSubmission && statusDialogSubmission.name != ''"
           :model-value="statusDialogNewStatus"
-          @update:model-value="(newValue) => statusDialogNewStatus = newValue"
           :items="getFormattedStatusTransitions(statusDialogSubmission)"
           density="compact"
           variant="outlined"
           hide-details
           :disabled="statusDialogSubmission?.status === 'InProgress'"
+          @update:model-value="(newValue) => statusDialogNewStatus = newValue"
         />
       </v-card-text>
       <v-card-actions>

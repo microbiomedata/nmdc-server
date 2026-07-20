@@ -12,6 +12,7 @@ const blueDark = '#0087B8';
 const blueDarker = '#004B66';
 const purple = '#4F3B80';
 const purpleLight = '#7D6FA1';
+const purpleLightest = colors.purple.lighten4;
 
 export default {
   red,
@@ -23,6 +24,7 @@ export default {
   blueDark,
   blueDarker,
   purple,
+  purpleLightest,
   grey: colors.grey,
   primary: purple,
   secondary: red,

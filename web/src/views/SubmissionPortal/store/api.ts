@@ -18,7 +18,6 @@ import {
   SubmissionSampleSetListItem,
   SubmissionSampleSetPatch,
   SubmissionSampleSetStatusPatch,
-  SuggestionType,
   UploadCompleteRequest,
 } from '@/views/SubmissionPortal/types';
 
@@ -122,22 +121,21 @@ async function deleteSubmission(id: string) {
   return resp.data;
 }
 
-async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: SuggestionType) {
-  let endpoint = 'metadata_submission/suggest';
-  if (type === SuggestionType.ADDITIONS) {
-    endpoint += '?types=add';
-  } else if (type === SuggestionType.REPLACEMENTS) {
-    endpoint += '?types=replace';
-  }
+async function getMetadataSuggestions(data: MetadataSuggestionRequest[]) {
   const resp = await client.post<
     MetadataSuggestion[],
     MetadataSuggestionRequest[]
-  >(endpoint, data);
+  >('metadata_submission/suggest', data);
   return resp.data;
 }
 
-async function getMetadataSuggestionsFromStudyDetails(submissionId: string) {
-  const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/${submissionId}/study-suggest`);
+async function getMetadataSuggestionsFromStudyDetails(sampleSetId: string, activeInterfaceTab: string, activeSampleDataSlot: string) {
+  const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/sample_set/${sampleSetId}/study-suggest`, null, {
+    params: {
+      interface_tab: activeInterfaceTab,
+      sample_data_slot: activeSampleDataSlot,
+    },
+  });
   return resp.data;
 }
 

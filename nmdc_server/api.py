@@ -1783,31 +1783,6 @@ async def submit_metadata(
 
 
 @router.post(
-    "/metadata_submission/{id}/study-suggest",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-)
-def suggest_meta_from_study(
-    id: str,
-    db: Session = Depends(get_db),
-    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
-    user: models.User = Depends(get_current_user),
-) -> List[schemas_submission.MetadataSuggestion]:
-    submission_model = get_submission_for_user(
-        db,
-        id,
-        user,
-        allowed_roles=[
-            SubmissionEditorRole.owner,
-            SubmissionEditorRole.editor,
-            SubmissionEditorRole.metadata_contributor,
-        ],
-    )
-    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    return suggester.get_suggestions_from_study_information(submission)
-
-
-@router.post(
     "/metadata_submission/suggest",
     tags=["metadata_submission"],
     responses=login_required_responses,
@@ -2229,6 +2204,47 @@ def delete_submission_sample_set(
     db.delete(sample_set)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/metadata_submission/sample_set/{sample_set_id}/study-suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+def suggest_meta_from_study(
+    sample_set_id: str,
+    interface_tab: str,
+    sample_data_slot: str,
+    db: Session = Depends(get_db),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    sample_set_model = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set_model is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    submission_model = sample_set_model.submission_metadata
+    crud.raise_for_insufficient_submission_role(
+        db,
+        submission_model,
+        user,
+        allowed_roles=[
+            SubmissionEditorRole.owner,
+            SubmissionEditorRole.editor,
+            SubmissionEditorRole.metadata_contributor,
+        ],
+    )
+
+    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
+    sample_set = schemas_submission.SubmissionSampleSet.model_validate(sample_set_model)
+
+    suggestions = suggester.get_suggestions_from_study_information(
+        interface_tab=interface_tab,
+        sample_data_slot=sample_data_slot,
+        submission=submission,
+        sample_set=sample_set,
+    )
+    return suggestions
 
 
 @router.get(

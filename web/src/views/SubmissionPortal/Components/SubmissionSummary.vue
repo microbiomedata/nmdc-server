@@ -111,6 +111,6 @@ async function createNewSampleSet() {
         Create Sample Set
       </v-btn>
     </v-card-text>
-    <SampleSetTable/>
+    <SampleSetTable />
   </PageSection>
 </template>

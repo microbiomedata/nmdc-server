@@ -379,7 +379,7 @@ async function addReviewer() {
                 label="ORCiD"
                 variant="outlined"
                 :rules="[(v) => !!v || 'An ORCID iD is required',
-                validateOrcid]"
+                         validateOrcid]"
               />
             </v-col>
           </v-row>

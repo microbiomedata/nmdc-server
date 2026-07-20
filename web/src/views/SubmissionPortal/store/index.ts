@@ -15,7 +15,8 @@ import {
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
-  MetadataSuggestion, MetadataSuggestionRequest,
+  MetadataSuggestion,
+  MetadataSuggestionRequest,
   MultiOmicsForm,
   SampleData,
   SampleEnvironmentForm,
@@ -26,8 +27,9 @@ import {
   SubmissionMetadata,
   SubmissionMetadataPatch,
   SubmissionSampleSet,
-  SubmissionSampleSetPatch, SubmissionStatusEnum,
-  SuggestionsMode,
+  SubmissionSampleSetPatch,
+  SubmissionStatusEnum,
+  SuggestionFill,
   SuggestionType,
   TemplateName,
   UneditableReason,
@@ -163,8 +165,8 @@ type SampleSetStoreState = {
 }
 
 type UiState = {
-  suggestionMode: SuggestionsMode
-  suggestionType: SuggestionType
+  suggestionFills: Set<SuggestionFill>
+  suggestionTypes: Set<SuggestionType>
   pendingImageUploads: Set<SubmissionImageType>
 }
 
@@ -208,8 +210,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     },
   });
   const ui = reactive<UiState>({
-    suggestionMode: SuggestionsMode.LIVE,
-    suggestionType: SuggestionType.ALL,
+    suggestionFills: new Set(Object.values(SuggestionFill)),
+    suggestionTypes: new Set([SuggestionType.ADDITIONS, SuggestionType.REPLACEMENTS]),
     pendingImageUploads: new Set(),
   });
 
@@ -986,7 +988,7 @@ export const useSubmissionStore = defineStore('submission', () => {
         const batch = batches[i] || [];
 
 
-        const suggestions = await api.getMetadataSuggestions(batch, ui.suggestionType);
+        const suggestions = await api.getMetadataSuggestions(batch);
 
         // Drop all the existing suggestions for the rows in this batch
         batch.forEach((request) => {
@@ -1014,19 +1016,19 @@ export const useSubmissionStore = defineStore('submission', () => {
    *
    * @param allSchemaClassNames
    * @param activeSchemaClassName
+   * @param activeSampleDataSlot
    * @param harmonizerApi
    */
-  async function loadSuggestionsFromStudyInfo(allSchemaClassNames: string[], activeSchemaClassName: string, harmonizerApi: HarmonizerApi) {
+  async function loadSuggestionsFromStudyInfo(allSchemaClassNames: string[], activeSchemaClassName: string, activeSampleDataSlot: string, harmonizerApi: HarmonizerApi) {
     if (submission.record === null) {
       throw new Error('No submission loaded');
     }
     if (sampleSet.record === null) {
       throw new Error('No sample set loaded');
     }
-    const submissionId = submission.record.id;
     const sampleSetId = sampleSet.record.id;
     return sampleSet.requests.loadingSuggestions.request(async () => {
-      const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId);
+      const suggestions = await api.getMetadataSuggestionsFromStudyDetails(sampleSetId, activeSchemaClassName, activeSampleDataSlot);
       for (const schemaClassName of allSchemaClassNames) {
         const suggestionsForClass = getPendingSuggestions(sampleSetId, schemaClassName);
         suggestions.forEach((suggestion) => {

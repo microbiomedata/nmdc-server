@@ -179,15 +179,13 @@ export enum AwardTypes {
 }
 
 export enum SuggestionType {
-  ALL = 'All Types',
-  ADDITIONS = 'Additions Only',
-  REPLACEMENTS = 'Replacements Only',
+  ADDITIONS = 'Additions',
+  REPLACEMENTS = 'Replacements',
 }
 
-export enum SuggestionsMode {
-  LIVE = 'Live',
-  ON_DEMAND = 'On Demand',
-  OFF = 'Off',
+export enum SuggestionFill {
+  FIELD_SUGGESTION = 'Suggest Fields',
+  VALUE_SUGGESTION = 'Suggest Values'
 }
 
 export interface CellData {

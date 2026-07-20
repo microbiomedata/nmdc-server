@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, ref, toRef, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
-import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
+import { clamp, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
@@ -21,7 +21,6 @@ import {
   JGI_MG_LR,
   JGI_MT,
   SubmissionEditorRole,
-  SuggestionsMode,
   TemplateName,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
@@ -62,8 +61,6 @@ const ColorKey = {
 const HELP_SIDEBAR_WIDTH = 320;
 const TABS_HEIGHT = 48;
 
-const SUGGESTION_REQUEST_DELAY = 3000;
-
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
 const SAMP_NAME = 'samp_name';
@@ -95,13 +92,11 @@ defineProps<{
 
 const store = useSubmissionStore();
 const {
-  loadSuggestionsFromSampleRows,
   loadSuggestionsFromStudyInfo,
   saveSampleSetFormEdits,
   submitSampleSet
 } = store;
 const { templateList, isOwner } = storeToRefs(store);
-const suggestionMode = toRef(store.ui, 'suggestionMode');
 
 const harmonizerApi = new HarmonizerApi();
 const jumpToModel = ref();
@@ -109,6 +104,22 @@ const highlightedValidationError = ref(0);
 const validationActiveCategory = ref('All Errors');
 const columnVisibility = ref('all');
 const sidebarOpen = ref(true);
+const showSuggesterBadge = ref(false);
+
+// show badge on load if submission already has sample data
+watch(() => store.sampleSet.forms.sampleData.data, (newData: Record<string, any[]>) => {
+  const hasData = Object.values(newData).some((rows) => rows.length > 0);
+  if (hasData) {
+    showSuggesterBadge.value = true;
+  }
+}, { immediate: true});
+
+// show badge on each cell edit
+// watch (hasChanged, (newVal: number, oldVal: number) => {
+//   if (newVal > oldVal) {
+//     showSuggesterBadge.value = true;
+//   }
+// });
 
 const activeTabIndex = ref(0);
 const activeTemplateState = computed(() => getHarmonizerTemplateForTab(templateList.value, activeTabIndex.value));
@@ -276,21 +287,6 @@ watch(() => store.sampleSet.requests.saving.count, () => {
   startHideSuccessMessageTimer();
 });
 
-let changeBatch: any[] = [];
-const debouncedSuggestionRequest = debounce(async () => {
-  const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-  await loadSuggestionsFromSampleRows(activeTemplate.value?.schemaClass!, changedRowData);
-  changeBatch = [];
-}, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
-
-watch(suggestionMode, () => {
-  // If live suggestions are disabled, clear the queue and cancel the timer
-  if (suggestionMode.value !== SuggestionsMode.LIVE) {
-    changeBatch = [];
-    debouncedSuggestionRequest.cancel();
-  }
-});
-
 function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: TemplateName) {
   const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
   if (environmentKeys.includes(templateKey)) {
@@ -437,16 +433,7 @@ const syncAndMergeTabsForRemovedRows = () => {
   });
 };
 
-const onDataChange = async (changes: any[]) => {
-  // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
-  // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
-  if (suggestionMode.value === SuggestionsMode.LIVE && isEditable.value) {
-    // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
-    // where either the previous value or updated value (or both) are non-empty.
-    const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
-    changeBatch.push(...nonEmptyChanges);
-    debouncedSuggestionRequest();
-  }
+const onDataChange = async (changes: any[], _source: string | null) => {
   // If any changes touched the sample name or analysis/data type columns on an environment
   // tab, we need to synch those changes to non-active tabs
   const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
@@ -807,13 +794,13 @@ async function changeTemplate(index: number, previousIndex: number) {
 }
 
 async function fetchSuggestionsFromStudyDetails() {
-  if (!activeTemplate.value?.schemaClass) {
+  if (!activeTemplate.value?.schemaClass || !activeTemplate.value?.sampleDataSlot) {
     return [];
   }
   const allSchemaClassNames = store.sampleSet.forms.sampleEnvironmentForm.packageName
     .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
-    .filter((c) => c !== undefined);
-  return loadSuggestionsFromStudyInfo(allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
+    .filter((c): c is string => c !== undefined);
+  return loadSuggestionsFromStudyInfo(allSchemaClassNames, activeTemplate.value.schemaClass, activeTemplate.value.sampleDataSlot, harmonizerApi);
 }
 
 watch(isEditable, (canEdit) => {
@@ -846,8 +833,6 @@ onMounted(async () => {
     if (isEditable.value) {
       // Revive any stashed suggestions (in localstorage) for the active template
       store.sampleSet.suggestions = getPendingSuggestions(store.sampleSet.record!.id, activeTemplate.value?.schemaClass!);
-      // Fetch suggestions generated by study-level forms
-      void fetchSuggestionsFromStudyDetails();
     } else {
       harmonizerApi.setTableReadOnly();
     }
@@ -1173,6 +1158,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
           <v-icon v-else>
             mdi-menu-open
           </v-icon>
+          <span
+            v-if="!sidebarOpen && showSuggesterBadge"
+            style="position: absolute; top: 9px; right: 16px; width: 10px; height: 10px; background-color: #ff5330; border-radius: 50%; pointer-events: none;"
+          />
         </v-btn>
 
         <v-navigation-drawer
@@ -1189,8 +1178,11 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
             :metadata-editing-allowed="isEditable"
+            :show-suggester-badge="showSuggesterBadge"
+            @fetch-study-info-suggestions="fetchSuggestionsFromStudyDetails"
             @import-xlsx="openFile"
             @export-xlsx="downloadSamples"
+            @clear-suggester-badge="showSuggesterBadge = false"
           />
         </v-navigation-drawer>
       </v-layout>
