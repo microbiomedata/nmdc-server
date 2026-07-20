@@ -100,17 +100,19 @@ async function createNewSampleSet() {
   </PageSection>
   <PageSection
     heading="Sample Sets"
-    subheading="TODO add explainer text"
+    :subheading="
+      'Create a sample set to provide sample and data metadata. Sample sets are a collection of samples associated ' +
+        'with the study. The sets can be based on any common factor, the time they\'re collected, or when data will ' +
+        'be generated at the same time. For example, a set of samples being sent to JGI/EMSL at the same time.'
+    "
   >
-    <v-card-text>
-      <v-btn
-        color="primary"
-        @click="createNewSampleSet"
-      >
-        <v-icon>mdi-plus</v-icon>
-        Create Sample Set
-      </v-btn>
-    </v-card-text>
+    <v-btn
+      color="primary"
+      @click="createNewSampleSet"
+    >
+      <v-icon>mdi-plus</v-icon>
+      Create Sample Set
+    </v-btn>
     <SampleSetTable />
   </PageSection>
 </template>
