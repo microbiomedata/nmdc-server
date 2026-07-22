@@ -71,9 +71,6 @@ const chartData = computed(() => {
       { label: 'Match', role: 'data' },
       { role: 'scope' },
       { role: 'style' },
-      { label: 'No Match', role: 'data' },
-      { role: 'scope' },
-      { role: 'style' },
       { role: 'annotation' },
     ]
   ];
@@ -83,28 +80,20 @@ const chartData = computed(() => {
   if (currentFacetSummary && props.facetSummaryUnconditional) {
     data = [
       ...data,
-      ...props.facetSummaryUnconditional.map(
-        (facet) => {
-          const count = (currentFacetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
-          const excludedCount = facet.count - ((currentFacetSummary.find(
-            (e) => e.facet === facet.facet,
-          ) || {}).count || 0);
-          return [
-            fieldDisplayName(facet.facet),
-            count,
-            true,
-            count > 0 ? (
-              ecosystems.find((e) => e.name === facet.facet)
-              || { color: theme.current.value.colors.visualization }
-            ).color : 'lightgray',
-            excludedCount,
-            false,
-            excludedCount > 0 ? 'lightgray' : theme.current.value.colors.visualization,
-            count > 0 ? `${count}` : 'No match',
-          ];
-        },
-      ),
-    ]
+      ...props.facetSummaryUnconditional.map((facet) => {
+        const count = (currentFacetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
+        return [
+          fieldDisplayName(facet.facet),
+          count,
+          true,
+          count > 0 ? (
+            ecosystems.find((e) => e.name === facet.facet)
+            || { color: theme.current.value.colors.visualization }
+          ).color : 'lightgray',
+          count > 0 ? `${count}` : '',
+        ];
+      }),
+    ];
   }
   return data;
 });
@@ -138,7 +127,7 @@ const barChartOptions = computed(() => ({
   legend: { position: 'none' },
   annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
   title: props.showTitle ? fieldDisplayName(props.field) : null,
-  isStacked: true,
+  isStacked: false,
 }));
 </script>
 
