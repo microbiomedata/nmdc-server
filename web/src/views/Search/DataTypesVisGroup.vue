@@ -21,7 +21,7 @@ const helpMap = `
     <li>Click on a cluster to zoom in.</li>
     <li>Click "Search this region" to filter results to the current map view.</li>
   </ul>
-  <strong>Note:</strong> Samples collected at the poles may not appear on the map due to projection limits,
+  <strong>Note:</strong> Samples collected at the poles may not appear on the map due to projection limits and samples with no latitude/longitude information will not be shown,
   but they are included in other visualizations and the biosample table.
 `;
 
