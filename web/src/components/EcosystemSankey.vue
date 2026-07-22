@@ -8,6 +8,7 @@ import { api, type Condition } from '@/data/api';
 import { makeTree } from '@/util';
 import useRequest from '@/use/useRequest';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
+import { GoogleChartWrapper, GoogleVizEvents } from 'vue-google-charts/dist/types';
 
 export interface EcosystemSankeyProps {
   conditions?: Condition[];
@@ -24,6 +25,7 @@ const emit = defineEmits(['selected']);
 const { loading, error, request } = useRequest();
 const errorMessage = computed(() => error.value ? 'Could not retrieve ecosystem data' : null);
 const chartRef = ref();
+const chartHeight = ref(500);
 
 const onChartReady = (chart: any) => {
   chartRef.value = chart;
@@ -55,14 +57,23 @@ const chartEvents = {
       }],
     });
   },
-};
+  addListener: (chart: GoogleChartWrapper) => {
+    chartRef.value = chart;
+  },
+  removeListener: () => {
+    chartRef.value = null;
+  },
+  removeAllListeners: () => {
+    chartRef.value = null;
+  },
+} as GoogleVizEvents;
 
 const sankeyOptions = computed(() => {
   // Guard against undefined sankeyData (async computed property)
   const dataLength = sankeyData.value?.length || 0;
   return {
     // Make the chart height dependent on the number of nodes with a minimum of 500px
-    height: Math.max(dataLength * 4, 500),
+    height: Math.max(dataLength * 4, chartHeight.value),
     sankey: {
       link: {
         colorMode: 'source',
@@ -105,9 +116,10 @@ watchEffect(async () => {
     <LoadingOverlay
       :loading="loading"
       :error="errorMessage"
-      :height="500"
+      :height="chartHeight"
     />
     <GChart
+      v-if="sankeyData && sankeyData.length > 1"
       ref="chart"
       :settings="{
         packages: ['sankey'],
@@ -115,8 +127,17 @@ watchEffect(async () => {
       type="Sankey"
       :data="sankeyData"
       :options="sankeyOptions"
-      :events="chartEvents as any"
+      :events="chartEvents"
       @ready="onChartReady"
     />
+    <div
+      v-else-if="!loading && (!sankeyData || sankeyData.length === 1)"
+      class="d-flex align-center justify-center"
+      :style="{ height: `${chartHeight}px` }"
+    >
+      <p class="text-grey">
+        No results or no ecosystem data for this search
+      </p>
+    </div>
   </div>
 </template>
