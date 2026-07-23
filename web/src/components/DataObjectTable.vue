@@ -310,14 +310,31 @@ function toggleCollapseWorkflow(item: any) {
                 {{ stateRefs.collapsedWorkflows.value[item.omics_data.id] ? 'mdi-chevron-right' : 'mdi-chevron-down' }}
               </v-icon>
               <span class="ml-4">
-                <b>Workflow Activity:</b> {{ item.group_name }}
-                <span
+                <div class="d-flex ga-2 flex-row align-center">
+                  <div class="d-flex ga-1 flex-row align-center">
+                    <span class="font-weight-bold">
+                      Workflow Execution:
+                    </span>
+                    <span>
+                      {{ item.group_name }}
+                    </span>
+                  </div>
+                  <v-icon>mdi-circle-small</v-icon>
+                  <div class="d-flex ga-1 flex-row align-center">
+                    <span class="font-weight-bold">
+                      ID:
+                    </span>
+                    <span>
+                      <ClickToCopyText>{{ item.omics_data.id }}</ClickToCopyText>
+                    </span>
+                  </div>
+                </div>
+                <div
                   v-if="
                     (omicsType === 'Metabolomics' || omicsType === 'Lipidomics')
                       && (item.omics_data.massSpecConfigId || item.omics_data.chromConfigId)
                   "
                 >
-                  <br>
                   <b>Data Generation Configurations</b>
                   <span v-if="item.omics_data.massSpecConfigId">
                     {{ item.omics_data.massSpecConfigName }}:
@@ -327,17 +344,14 @@ function toggleCollapseWorkflow(item: any) {
                     {{ item.omics_data.chromConfigName }}:
                     {{ ' ' + item.omics_data.chromConfigId }}
                   </span>
-                </span>
-                <span v-if="omicsType === 'Proteomics'">
-                  <br>
+                </div>
+                <div v-if="omicsType === 'Proteomics'">
                   <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category as keyof typeof metaproteomicCategoryEnumToDisplay] }}</b>
-                </span>
-                <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data as NomMetadataItem)">
-                  <br>
+                </div>
+                <div v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data as NomMetadataItem)">
                   <b>Data Generation: </b> NOM via
                   {{ nomMetadataString(item.omics_data as NomMetadataItem) }}
-                </span>
-                <br>
+                </div>
                 <div v-if="getRelatedBiosampleIds(item.omics_data).length">
                   <v-icon>
                     mdi-flask-outline

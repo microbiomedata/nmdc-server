@@ -337,10 +337,10 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
                     </div>
                   </template>
                   <template #item-subtitle="{ result }">
-                    <div class="d-flex ga-1">
+                    <div class="d-flex ga-1 align-center">
                       <span class="flex-shrink-0 text-no-wrap">
                         <strong class="mr-1">ID:</strong>
-                        <ClickToCopyText>
+                        <ClickToCopyText background-color="#ffffff">
                           {{ result.id }}
                         </ClickToCopyText>
                       </span>
@@ -432,7 +432,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
                           <div class="d-flex ga-1">
                             <span class="flex-shrink-0 text-no-wrap">
                               <strong class="mr-1">ID:</strong>
-                              <ClickToCopyText>
+                              <ClickToCopyText background-color="#ffffff">
                                 {{ child.id }}
                               </ClickToCopyText>
                             </span>

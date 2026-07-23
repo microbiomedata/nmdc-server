@@ -4,10 +4,15 @@ import { ref } from 'vue';
 /**
  * ClickToCopyText provides a container that copies its text content to the clipboard when clicked.
  */
-const { iconOverlay } = defineProps<{
+withDefaults(defineProps<{
+  /** Valid CSS color string to give the copy button a specific background color */
+  backgroundColor?: string;
   /** If true, the copy icon will be overlaid on the right edge of the text instead of appearing to the right of it. */
   iconOverlay?: boolean;
-}>();
+}>(), {
+  backgroundColor: 'inherit',
+  iconOverlay: false,
+});
 const isTooltipVisible = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -44,7 +49,7 @@ const handleClick = () => {
                 v-if="isHovering"
                 class="ml-1 position-absolute"
                 :style="{
-                  backgroundColor: '#ffffff',
+                  backgroundColor: backgroundColor || 'inherit',
                   top: '50%',
                   right: iconOverlay ? 0 : '-20px',
                   transform: 'translateY(-50%)',
