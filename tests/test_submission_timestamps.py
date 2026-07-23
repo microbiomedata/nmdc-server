@@ -1,5 +1,5 @@
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
@@ -9,7 +9,7 @@ from nmdc_server.ingest.common import merge_download_artifact
 
 
 def make_sample_set(
-    submission_id: UUID, *, date_last_modified: datetime | None = None
+    submission_id: str, *, date_last_modified: datetime | None = None
 ) -> models.SubmissionSampleSet:
     return models.SubmissionSampleSet(
         id=uuid4(),
@@ -46,8 +46,8 @@ def test_merge_preserves_submission_timestamps(db: Session):
     merge_download_artifact(db, [submission])
     merge_download_artifact(db, [sample_set])
 
-    copied_submission = db.get(models.SubmissionMetadata, submission.id)
-    copied_sample_set = db.get(models.SubmissionSampleSet, sample_set.id)
+    copied_submission = db.get(models.SubmissionMetadata, submission.id)  # type: ignore[attr-defined]
+    copied_sample_set = db.get(models.SubmissionSampleSet, sample_set.id)  # type: ignore[attr-defined]
 
     assert copied_submission is not None
     assert copied_sample_set is not None
