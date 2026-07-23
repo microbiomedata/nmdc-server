@@ -387,6 +387,7 @@ export default defineComponent({
         </tr>
         <tr>
           <td>
+            {{ item.file_type }}
             <v-tooltip
               v-if="item.selected"
               location="right"
@@ -395,13 +396,12 @@ export default defineComponent({
               <template #activator="{ props }">
                 <v-icon
                   v-bind="props"
-                  class="mr-2"
+                  class="ml-2"
                 >
                   mdi-checkbox-marked-circle-outline
                 </v-icon>
               </template>
             </v-tooltip>
-            {{ item.file_type }}
             <v-tooltip
               :disabled="!disableIndividualDataProductDownload"
               location="bottom"
