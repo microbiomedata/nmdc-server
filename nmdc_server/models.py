@@ -1524,6 +1524,12 @@ def update_submission_sample_set_timestamps(session: Session, _flush_context, _i
             continue
 
         is_new = obj in session.new
+        # The "new" incoming sample set already has a date_last_modified timestamp. This is an
+        # expected scenario during ingest where existing sample sets are copied from one database
+        # to the other. Do not update the sample set or parent submission timestamps in this case.
+        if is_new and obj.date_last_modified is not None:
+            continue
+
         if not is_new and not any(
             get_history(obj, column_name).has_changes()
             for column_name in SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS
