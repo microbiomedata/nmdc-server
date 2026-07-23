@@ -335,7 +335,7 @@ function toggleCollapseWorkflow(item: any) {
                       && (item.omics_data.massSpecConfigId || item.omics_data.chromConfigId)
                   "
                 >
-                  <b>Data Generation Configurations</b>
+                  <b>Data Generation Configurations: </b>
                   <span v-if="item.omics_data.massSpecConfigId">
                     {{ item.omics_data.massSpecConfigName }}:
                     {{ item.omics_data.massSpecConfigId }};
