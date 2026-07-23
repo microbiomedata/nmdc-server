@@ -63,11 +63,6 @@ export default defineComponent({
   setup(props) {
     const headers: DataTableHeader[] = [
       {
-        title: '',
-        value: 'group_name',
-        sortable: false,
-      },
-      {
         title: 'Data Object Type',
         value: 'object_type',
         sortable: false,
@@ -213,6 +208,8 @@ export default defineComponent({
           }))),
     ));
 
+    console.log('items', items.value);
+
     function getRelatedBiosampleIds(omicsData: any) {
       if (!omicsData || !omicsData.inputIds) {
         return [];
@@ -337,67 +334,73 @@ export default defineComponent({
           :style="{ 'background-color': '#e0e0e0' }"
         >
           <td colspan="6">
-            <b>Workflow Activity:</b> {{ item.group_name }}
-            <span
-              v-if="
-                (omicsType === 'Metabolomics' || omicsType === 'Lipidomics')
-                  && (item.omics_data.massSpecConfigId || item.omics_data.chromConfigId)
-              "
-            >
-              <br>
-              <b>Data Generation Configurations</b>
-              <span v-if="item.omics_data.massSpecConfigId">
-                {{ item.omics_data.massSpecConfigName }}:
-                {{ item.omics_data.massSpecConfigId }};
-              </span>
-              <span v-if="item.omics_data.chromConfigId">
-                {{ item.omics_data.chromConfigName }}:
-                {{ ' ' + item.omics_data.chromConfigId }}
-              </span>
-            </span>
-            <span v-if="omicsType === 'Proteomics'">
-              <br>
-              <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category as keyof typeof metaproteomicCategoryEnumToDisplay] }}</b>
-            </span>
-            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data as NomMetadataItem)">
-              <br>
-              <b>Data Generation: </b> NOM via
-              {{ nomMetadataString(item.omics_data as NomMetadataItem) }}
-            </span>
-            <br>
-            <div v-if="getRelatedBiosampleIds(item.omics_data).length">
+            <div class="d-flex flex-row align-center">
               <v-icon>
-                mdi-flask-outline
+                mdi-chevron-down
               </v-icon>
-              <span class="text-subtitle-2 grey--text text--darken-3"><b>Associated biosample inputs:</b></span>
-              <router-link
-                v-for="biosampleId in getRelatedBiosampleIds(item.omics_data)"
-                :key="biosampleId"
-                :to="{name: 'Sample', params: { id: biosampleId }}"
-                class="ml-2 grey--text text--darken-3"
-              >
-                {{ biosampleId }}
-              </router-link>
+              <span class="ml-4">
+                <b>Workflow Activity:</b> {{ item.group_name }}
+                <span
+                  v-if="
+                    (omicsType === 'Metabolomics' || omicsType === 'Lipidomics')
+                      && (item.omics_data.massSpecConfigId || item.omics_data.chromConfigId)
+                  "
+                >
+                  <br>
+                  <b>Data Generation Configurations</b>
+                  <span v-if="item.omics_data.massSpecConfigId">
+                    {{ item.omics_data.massSpecConfigName }}:
+                    {{ item.omics_data.massSpecConfigId }};
+                  </span>
+                  <span v-if="item.omics_data.chromConfigId">
+                    {{ item.omics_data.chromConfigName }}:
+                    {{ ' ' + item.omics_data.chromConfigId }}
+                  </span>
+                </span>
+                <span v-if="omicsType === 'Proteomics'">
+                  <br>
+                  <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category as keyof typeof metaproteomicCategoryEnumToDisplay] }}</b>
+                </span>
+                <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data as NomMetadataItem)">
+                  <br>
+                  <b>Data Generation: </b> NOM via
+                  {{ nomMetadataString(item.omics_data as NomMetadataItem) }}
+                </span>
+                <br>
+                <div v-if="getRelatedBiosampleIds(item.omics_data).length">
+                  <v-icon>
+                    mdi-flask-outline
+                  </v-icon>
+                  <span class="text-subtitle-2 grey--text text--darken-3"><b>Associated biosample inputs:</b></span>
+                  <router-link
+                    v-for="biosampleId in getRelatedBiosampleIds(item.omics_data)"
+                    :key="biosampleId"
+                    :to="{name: 'Sample', params: { id: biosampleId }}"
+                    class="ml-2 grey--text text--darken-3"
+                  >
+                    {{ biosampleId }}
+                  </router-link>
+                </div>
+              </span>
             </div>
           </td>
         </tr>
         <tr>
           <td>
             <v-tooltip
+              v-if="item.selected"
               location="right"
-              text="This file is included in the currently selected bulk download"
+              text="This file is included in the currently selected bulk download."
             >
               <template #activator="{ props }">
                 <v-icon
                   v-bind="props"
-                  :style="{ visibility: item.selected ? 'visible' : 'hidden'}"
+                  class="mr-2"
                 >
                   mdi-checkbox-marked-circle-outline
                 </v-icon>
               </template>
             </v-tooltip>
-          </td>
-          <td>
             {{ item.file_type }}
             <v-tooltip
               :disabled="!disableIndividualDataProductDownload"
