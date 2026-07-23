@@ -1,8 +1,6 @@
-<script lang="ts">
+<script setup lang="ts">
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import {
-  computed, defineComponent, PropType, reactive, ref, Ref, watch,
-} from 'vue';
+import { computed, reactive, ref, Ref, watch } from 'vue';
 import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
@@ -18,19 +16,20 @@ import { metaproteomicCategoryEnumToDisplay } from '@/encoding';
 
 import DownloadDialog from './DownloadDialog.vue';
 
-const descriptionMap: Record<string, string> = {
-  'fastq.gz': 'Raw output file',
-  'filterStats.txt': 'Reads QC summary statistics',
-  'filtered.fastq.gz': 'Reads QC result fastq (clean data)',
-  'mapping_stats.txt': 'Assembled contigs coverage information',
-  'assembly_contigs.fna': 'Final assembly contigs fasta',
-  'assembly_scaffolds.fna': 'Final assembly scaffolds fasta',
-  'assembly.agp': 'An AGP format file describes the assembly',
-  'pairedMapped_sorted.bam': 'Sorted bam file of reads mapping back to the final assembly',
-  'KO TSV': 'Tab delimited file for KO annotation.',
-  'EC TSV': 'Tab delimited file for EC annotation.',
-  'Protein FAA': 'FASTA amino acid file for annotated proteins.',
-};
+// // TODO: This is unused. Do we still need it?
+// const descriptionMap: Record<string, string> = {
+//   'fastq.gz': 'Raw output file',
+//   'filterStats.txt': 'Reads QC summary statistics',
+//   'filtered.fastq.gz': 'Reads QC result fastq (clean data)',
+//   'mapping_stats.txt': 'Assembled contigs coverage information',
+//   'assembly_contigs.fna': 'Final assembly contigs fasta',
+//   'assembly_scaffolds.fna': 'Final assembly scaffolds fasta',
+//   'assembly.agp': 'An AGP format file describes the assembly',
+//   'pairedMapped_sorted.bam': 'Sorted bam file of reads mapping back to the final assembly',
+//   'KO TSV': 'Tab delimited file for KO annotation.',
+//   'EC TSV': 'Tab delimited file for EC annotation.',
+//   'Protein FAA': 'FASTA amino acid file for annotated proteins.',
+// };
 
 export interface NomMetadataItem {
   massSpecPolarityMode?: string,
@@ -38,232 +37,199 @@ export interface NomMetadataItem {
   sampledPortions?: string,
 }
 
-export default defineComponent({
-  components: { DownloadDialog },
-
-  props: {
-    omicsProcessing: {
-      type: Array as PropType<OmicsProcessingResult[]>,
-      required: true,
-    },
-    omicsType: {
-      type: String,
-      required: true,
-    },
-    loggedInUser: {
-      type: Boolean,
-      default: false,
-    },
-    biosample: {
-      type: Object as PropType<BiosampleSearchResult>,
-      required: true,
-    },
-  },
-
-  setup(props) {
-    const headers: DataTableHeader[] = [
-      {
-        title: 'Data Object Type',
-        value: 'object_type',
-        sortable: false,
-      },
-      {
-        title: 'Data Object Description',
-        value: 'object_description',
-        sortable: false,
-      },
-      {
-        title: 'File Size',
-        value: 'file_size_bytes',
-        width: 100,
-        sortable: false,
-      },
-      {
-        title: 'Downloads',
-        value: 'downloads',
-        width: 80,
-        sortable: false,
-      },
-      {
-        title: 'Download',
-        value: 'action',
-        width: 80,
-        sortable: false,
-      },
-    ];
-
-    const disableIndividualDataProductDownload = ref(true);
-    api.getAppSettings().then((appSettings) => {
-      disableIndividualDataProductDownload.value = appSettings.disable_individual_data_product_download;
-    });
-
-    const selectedHtmlDataObject: Ref<any | null> = ref(null);
-    const dataModal = ref(false);
-    const iframeDataSource = ref('');
-    const iframeLoading = ref(false);
-    function hasHtmlData(fileType: string) {
-      return [
-        'Kraken2 Krona Plot',
-        'GOTTCHA2 Krona Plot',
-        'Centrifuge Krona Plot',
-        'SingleM Krona Plot',
-      ].includes(fileType);
-    }
-    async function openHtmlDataModal(item: any) {
-      iframeLoading.value = true;
-      dataModal.value = true;
-      iframeDataSource.value = await api.getDataObjectHtmlContentUrl(item.id);
-      selectedHtmlDataObject.value = item;
-    }
-    watch(dataModal, () => {
-      if (!dataModal.value) {
-        selectedHtmlDataObject.value = null;
-        iframeDataSource.value = '';
-      }
-    });
-    function onIframeLoaded() {
-      iframeLoading.value = false;
-    }
-
-    const termsDialog = reactive({
-      item: null as null | OmicsProcessingResult,
-      value: false,
-    });
-
-    function nomMetadataString(item: NomMetadataItem): string {
-      return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
-    }
-
-    function getPermissibleValue<T extends keyof typeof NmdcSchema.enums>(permissibleValueName: string, enumName: T): typeof NmdcSchema.enums[T]['permissible_values'][keyof typeof NmdcSchema.enums[T]['permissible_values']] | null {
-      const enumObj = NmdcSchema.enums[enumName];
-      if (permissibleValueName in enumObj.permissible_values) {
-        return enumObj.permissible_values[permissibleValueName as keyof typeof enumObj.permissible_values];
-      }
-      return null;
-    }
-
-    function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
-      const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
-      const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
-      return omicsProcessing.omics_data.map((omics) => {
-        const omicsCopy = { ...omics };
-        omicsCopy.inputIds = biosampleInputIds;
-        if (annotations.mass_spectrometry_configuration_id) {
-          omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
-          omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
-          const polarityModePv = getPermissibleValue(
-            annotations.mass_spectrometry_config_polarity_mode as string,
-            'PolarityModeEnum',
-          );
-          if (polarityModePv) {
-            omicsCopy.massSpecPolarityMode = polarityModePv.text + ' mode';
-          } else {
-            omicsCopy.massSpecPolarityMode = '';
-          }
-        }
-        if (annotations.chromatography_configuration_id) {
-          omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
-          omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
-        }
-        if (annotations.eluent_introduction_category) {
-          omicsCopy.eluentIntroductionCategory = getPermissibleValue(
-            annotations.eluent_introduction_category as string,
-            'EluentIntroductionCategoryEnum'
-          )?.title || '';
-        }
-        if (annotations.sampled_portions?.length) {
-          const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => {
-            const samplePortionPv = getPermissibleValue(sampledPortion, 'SamplePortionEnum');
-            if (!samplePortionPv) {
-              return sampledPortion;
-            }
-            if ('title' in samplePortionPv) {
-              return samplePortionPv.title;
-            }
-            return samplePortionPv.text;
-          });
-          omicsCopy.sampledPortions = displaySampledPortions.join(', ');
-        }
-        return omicsCopy;
-      });
-    }
-
-    function getGroupName(omicsData: {id: string, name: string}): string {
-      if (omicsData.name) {
-        return omicsData.name.replace('Metagenome', props.omicsType) || omicsData.id;
-      }
-      return `${props.omicsType} Analysis ${omicsData.id}`;
-    }
-
-    const items = computed(() => flattenDeep(
-      flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p))))
-        .map((omics_data) => omics_data.outputs
-          .filter((data) => data.file_type && data.file_type_description)
-          .map((data_object, i) => ({
-            ...data_object,
-            omics_data,
-            /* TODO Hack to replace metagenome with omics type name */
-            group_name: getGroupName(omics_data),
-            newgroup: i === 0,
-          }))),
-    ));
-
-    console.log('items', items.value);
-
-    function getRelatedBiosampleIds(omicsData: any) {
-      if (!omicsData || !omicsData.inputIds) {
-        return [];
-      }
-      return omicsData.inputIds.filter((id: string) => id !== props.biosample.id);
-    }
-
-    async function getDownloadUrlAndOpen(item: OmicsProcessingResult) {
-      if (typeof item.url === 'string') {
-        const { data } = await client.get(item.url, { baseURL: '' });
-        window.open(data.url, '_blank', 'noopener,noreferrer');
-      }
-    }
-
-    async function handleDownload(item: OmicsProcessingResult) {
-      if (typeof item.url === 'string') {
-        if (stateRefs.hasAcceptedTerms.value) {
-          getDownloadUrlAndOpen(item);
-        } else {
-          termsDialog.item = item;
-          termsDialog.value = true;
-        }
-      }
-    }
-
-    function onAcceptTerms() {
-      termsDialog.value = false;
-      acceptTerms();
-      getDownloadUrlAndOpen(termsDialog.item!);
-      termsDialog.item = null;
-    }
-
-    return {
-      dataModal,
-      iframeLoading,
-      hasHtmlData,
-      openHtmlDataModal,
-      selectedHtmlDataObject,
-      iframeDataSource,
-      onIframeLoaded,
-      onAcceptTerms,
-      handleDownload,
-      descriptionMap,
-      headers,
-      items,
-      humanFileSize,
-      termsDialog,
-      getRelatedBiosampleIds,
-      metaproteomicCategoryEnumToDisplay,
-      nomMetadataString,
-      disableIndividualDataProductDownload,
-    };
-  },
+const props = withDefaults(defineProps<{
+  omicsProcessing: OmicsProcessingResult[],
+  omicsType: string,
+  loggedInUser?: boolean,
+  biosample: BiosampleSearchResult,
+}>(), {
+  loggedInUser: false,
 });
+
+const headers: DataTableHeader[] = [
+  {
+    title: 'Data Object Type',
+    value: 'object_type',
+    sortable: false,
+  },
+  {
+    title: 'Data Object Description',
+    value: 'object_description',
+    sortable: false,
+  },
+  {
+    title: 'File Size',
+    value: 'file_size_bytes',
+    width: 100,
+    sortable: false,
+  },
+  {
+    title: 'Downloads',
+    value: 'downloads',
+    width: 80,
+    sortable: false,
+  },
+  {
+    title: 'Download',
+    value: 'action',
+    width: 80,
+    sortable: false,
+  },
+];
+
+const disableIndividualDataProductDownload = ref(true);
+api.getAppSettings().then((appSettings) => {
+  disableIndividualDataProductDownload.value = appSettings.disable_individual_data_product_download;
+});
+
+const selectedHtmlDataObject: Ref<any | null> = ref(null);
+const dataModal = ref(false);
+const iframeDataSource = ref('');
+const iframeLoading = ref(false);
+
+function hasHtmlData(fileType: string) {
+  return [
+    'Kraken2 Krona Plot',
+    'GOTTCHA2 Krona Plot',
+    'Centrifuge Krona Plot',
+    'SingleM Krona Plot',
+  ].includes(fileType);
+}
+
+async function openHtmlDataModal(item: any) {
+  iframeLoading.value = true;
+  dataModal.value = true;
+  iframeDataSource.value = await api.getDataObjectHtmlContentUrl(item.id);
+  selectedHtmlDataObject.value = item;
+}
+
+watch(dataModal, () => {
+  if (!dataModal.value) {
+    selectedHtmlDataObject.value = null;
+    iframeDataSource.value = '';
+  }
+});
+
+function onIframeLoaded() {
+  iframeLoading.value = false;
+}
+
+const termsDialog = reactive({
+  item: null as null | OmicsProcessingResult,
+  value: false,
+});
+
+function nomMetadataString(item: NomMetadataItem): string {
+  return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
+}
+
+function getPermissibleValue<T extends keyof typeof NmdcSchema.enums>(permissibleValueName: string, enumName: T): typeof NmdcSchema.enums[T]['permissible_values'][keyof typeof NmdcSchema.enums[T]['permissible_values']] | null {
+  const enumObj = NmdcSchema.enums[enumName];
+  if (permissibleValueName in enumObj.permissible_values) {
+    return enumObj.permissible_values[permissibleValueName as keyof typeof enumObj.permissible_values];
+  }
+  return null;
+}
+
+function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
+  const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
+  const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
+  return omicsProcessing.omics_data.map((omics) => {
+    const omicsCopy = { ...omics };
+    omicsCopy.inputIds = biosampleInputIds;
+    if (annotations.mass_spectrometry_configuration_id) {
+      omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
+      omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
+      const polarityModePv = getPermissibleValue(
+        annotations.mass_spectrometry_config_polarity_mode as string,
+        'PolarityModeEnum',
+      );
+      if (polarityModePv) {
+        omicsCopy.massSpecPolarityMode = polarityModePv.text + ' mode';
+      } else {
+        omicsCopy.massSpecPolarityMode = '';
+      }
+    }
+    if (annotations.chromatography_configuration_id) {
+      omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
+      omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
+    }
+    if (annotations.eluent_introduction_category) {
+      omicsCopy.eluentIntroductionCategory = getPermissibleValue(
+        annotations.eluent_introduction_category as string,
+        'EluentIntroductionCategoryEnum'
+      )?.title || '';
+    }
+    if (annotations.sampled_portions?.length) {
+      const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => {
+        const samplePortionPv = getPermissibleValue(sampledPortion, 'SamplePortionEnum');
+        if (!samplePortionPv) {
+          return sampledPortion;
+        }
+        if ('title' in samplePortionPv) {
+          return samplePortionPv.title;
+        }
+        return samplePortionPv.text;
+      });
+      omicsCopy.sampledPortions = displaySampledPortions.join(', ');
+    }
+    return omicsCopy;
+  });
+}
+
+function getGroupName(omicsData: {id: string, name: string}): string {
+  if (omicsData.name) {
+    return omicsData.name.replace('Metagenome', props.omicsType) || omicsData.id;
+  }
+  return `${props.omicsType} Analysis ${omicsData.id}`;
+}
+
+const items = computed(() => flattenDeep(
+  flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p))))
+    .map((omics_data) => omics_data.outputs
+      .filter((data) => data.file_type && data.file_type_description)
+      .map((data_object, i) => ({
+        ...data_object,
+        omics_data,
+        /* TODO Hack to replace metagenome with omics type name */
+        group_name: getGroupName(omics_data),
+        newgroup: i === 0,
+      }))),
+));
+
+console.log('items', items.value);
+
+function getRelatedBiosampleIds(omicsData: any) {
+  if (!omicsData || !omicsData.inputIds) {
+    return [];
+  }
+  return omicsData.inputIds.filter((id: string) => id !== props.biosample.id);
+}
+
+async function getDownloadUrlAndOpen(item: OmicsProcessingResult) {
+  if (typeof item.url === 'string') {
+    const { data } = await client.get(item.url, { baseURL: '' });
+    window.open(data.url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+async function handleDownload(item: OmicsProcessingResult) {
+  if (typeof item.url === 'string') {
+    if (stateRefs.hasAcceptedTerms.value) {
+      getDownloadUrlAndOpen(item);
+    } else {
+      termsDialog.item = item;
+      termsDialog.value = true;
+    }
+  }
+}
+
+function onAcceptTerms() {
+  termsDialog.value = false;
+  acceptTerms();
+  getDownloadUrlAndOpen(termsDialog.item!);
+  termsDialog.item = null;
+}
 </script>
 
 <template>
@@ -393,9 +359,9 @@ export default defineComponent({
               location="right"
               text="This file is included in the currently selected bulk download."
             >
-              <template #activator="{ props }">
+              <template #activator="{ props: activatorProps }">
                 <v-icon
-                  v-bind="props"
+                  v-bind="activatorProps"
                   class="ml-2"
                 >
                   mdi-checkbox-marked-circle-outline
@@ -406,8 +372,8 @@ export default defineComponent({
               :disabled="!disableIndividualDataProductDownload"
               location="bottom"
             >
-              <template #activator="{ props }">
-                <span v-bind="props">
+              <template #activator="{ props: activatorProps }">
+                <span v-bind="activatorProps">
                   <v-btn
                     v-if="hasHtmlData(item.file_type)"
                     :disabled="disableIndividualDataProductDownload"
@@ -435,8 +401,8 @@ export default defineComponent({
               :disabled="!!(loggedInUser && item.url && !disableIndividualDataProductDownload)"
               location="bottom"
             >
-              <template #activator="{ props }">
-                <span v-bind="props">
+              <template #activator="{ props: activatorProps }">
+                <span v-bind="activatorProps">
                   <v-btn
                     v-if="item.url"
                     icon
