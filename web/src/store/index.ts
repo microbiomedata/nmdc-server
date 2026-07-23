@@ -20,6 +20,7 @@ const state = reactive({
   treeData: null as EnvoTree | null,
   bannerTitle: null as string | null,
   bannerMessage: null as string | null,
+  collapsedWorkflows: {} as Record<string, boolean>,
 });
 const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,

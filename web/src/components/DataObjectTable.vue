@@ -230,6 +230,11 @@ function onAcceptTerms() {
   getDownloadUrlAndOpen(termsDialog.item!);
   termsDialog.item = null;
 }
+
+function toggleCollapseWorkflow(item: any) {
+  const id = item.omics_data.id;
+  stateRefs.collapsedWorkflows.value[id] = !stateRefs.collapsedWorkflows.value[id];
+}
 </script>
 
 <template>
@@ -300,9 +305,9 @@ function onAcceptTerms() {
           :style="{ 'background-color': '#e0e0e0' }"
         >
           <td colspan="6">
-            <div class="d-flex flex-row align-center">
-              <v-icon>
-                mdi-chevron-down
+            <div class="d-flex flex-row align-center py-2">
+              <v-icon @click="toggleCollapseWorkflow(item)">
+                {{ stateRefs.collapsedWorkflows.value[item.omics_data.id] ? 'mdi-chevron-right' : 'mdi-chevron-down' }}
               </v-icon>
               <span class="ml-4">
                 <b>Workflow Activity:</b> {{ item.group_name }}
@@ -351,7 +356,7 @@ function onAcceptTerms() {
             </div>
           </td>
         </tr>
-        <tr>
+        <tr v-if="!stateRefs.collapsedWorkflows.value[item.omics_data.id] && !item.hidden">
           <td>
             {{ item.file_type }}
             <v-tooltip

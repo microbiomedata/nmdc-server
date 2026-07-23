@@ -77,12 +77,12 @@ export interface DataObjectSearchResult extends BaseSearchResult {
   file_type: string;
   file_type_description: string;
   url: string;
-
-  // download count
+  /** download count */
   downloads: number;
-
-  // indicates selected for bulk download
+  /** indicates selected for bulk download */
   selected: boolean;
+  /** Whether or not this result is hidden by the Show Older Workflow Executions setting */
+  hidden?: boolean;
 }
 
 export interface OmicsProcessingBaseResult extends BaseSearchResult {
