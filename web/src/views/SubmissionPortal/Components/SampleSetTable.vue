@@ -325,7 +325,7 @@ async function handleStatusChange(item: SubmissionSampleSetListItem | null, newS
       >
         Set new status for "{{ statusDialogSubmission.name }}"
       </v-card-title>
-      <v-card-text>
+      <v-card-text class="pt-2">
         <v-select
           v-if="statusDialogSubmission && statusDialogSubmission.name != ''"
           :model-value="statusDialogNewStatus"
@@ -336,6 +336,9 @@ async function handleStatusChange(item: SubmissionSampleSetListItem | null, newS
           :disabled="statusDialogSubmission?.status === 'InProgress'"
           @update:model-value="(newValue) => statusDialogNewStatus = newValue"
         />
+        <p class="pt-2">
+          In-progress sample sets and sample sets in test submissions cannot have their status changed.
+        </p>
       </v-card-text>
       <v-card-actions>
         <v-spacer />
