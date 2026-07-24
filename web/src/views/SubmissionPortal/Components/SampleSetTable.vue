@@ -49,9 +49,17 @@ const router = useRouter();
 const store = useSubmissionStore();
 const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionSampleSetListItem | null>(null);
+
 const isStatusDialogOpen = ref(false);
 const statusDialogSubmission = ref<SubmissionSampleSetListItem | null>(null);
 const statusDialogNewStatus = ref<SubmissionStatusKey | null>(null);
+const statusDialogDisabledMessage = computed(() => {
+  if (statusDialogSubmission.value?.status === 'InProgress') {
+    return 'In Progress sample sets cannot have their status manually changed.';
+  }
+  return null;
+});
+
 const currentUser = stateRefs.user;
 const sampleSetEditableState = ref<Record<string, boolean>>({});
 const isContributor = computed(() => {
@@ -325,19 +333,21 @@ async function handleStatusChange(item: SubmissionSampleSetListItem | null, newS
       >
         Set new status for "{{ statusDialogSubmission.name }}"
       </v-card-title>
-      <v-card-text class="pt-2">
+      <v-card-text>
         <v-select
           v-if="statusDialogSubmission && statusDialogSubmission.name != ''"
-          :model-value="statusDialogNewStatus"
+          v-model="statusDialogNewStatus"
           :items="getFormattedStatusTransitions(statusDialogSubmission)"
           density="compact"
           variant="outlined"
           hide-details
-          :disabled="statusDialogSubmission?.status === 'InProgress'"
-          @update:model-value="(newValue) => statusDialogNewStatus = newValue"
+          :disabled="!!statusDialogDisabledMessage"
         />
-        <p class="pt-2">
-          In-progress sample sets and sample sets in test submissions cannot have their status changed.
+        <p
+          v-if="statusDialogDisabledMessage"
+          class="ml-4 mt-2 text-caption"
+        >
+          {{ statusDialogDisabledMessage }}
         </p>
       </v-card-text>
       <v-card-actions>
