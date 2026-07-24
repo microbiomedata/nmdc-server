@@ -64,6 +64,7 @@ const checkboxDisabledReason = computed<Record<string, string | null>>(() => {
       </template>
     </PageTitle>
     <SubmissionForm
+      ref="formRef"
       in-sample-set-context
       @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >

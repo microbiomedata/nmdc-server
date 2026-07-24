@@ -276,25 +276,25 @@ export default class HarmonizerApi {
 highlight(row?: number, col?: number) {
   const borders = this.dh.hot.getPlugin('customBorders');
   nextTick(() => borders.clearBorders());
-  
+
   if (row !== undefined && col !== undefined) {
     const hot = this.dh.hot;
     const totalRows = hot.countRows();
     const totalCols = hot.countCols();
-    
+
     // Create border definitions for the entire row and column
     const cellsToHighlight: number[][] = [];
-    
+
     // Add all cells in the row
     for (let c = 0; c < totalCols; c++) {
       cellsToHighlight.push([row, c, row, c]);
     }
-    
+
     // Add all cells in the column
     for (let r = 0; r < totalRows; r++) {
       cellsToHighlight.push([r, col, r, col]);
     }
-    
+
     nextTick(() => {
       // Apply a background to row and column
       borders.setBorders(cellsToHighlight, {
@@ -303,7 +303,7 @@ highlight(row?: number, col?: number) {
         top: { hide: false, width: 1, color: colors.purpleLightest },
         bottom: { hide: false, width: 1, color: colors.purpleLightest },
       });
-      
+
       // Highlight the target cell itself with a stronger border
       borders.setBorders([[row, col, row, col]], {
         left: { hide: false, width: 2, color: 'magenta' },
@@ -311,7 +311,7 @@ highlight(row?: number, col?: number) {
         top: { hide: false, width: 2, color: 'magenta' },
         bottom: { hide: false, width: 2, color: 'magenta' },
       });
-      
+
       hot.render();
     });
   }
@@ -527,8 +527,11 @@ highlight(row?: number, col?: number) {
     hot.updateSettings({ columns });
   }
 
-  setTableReadOnly() {
-    this.dh.hot.updateSettings({ readOnly: true });
+  setTableReadOnly(options: { readOnly: boolean }) {
+    if (!this.dh || !this.dh.hot || !this.ready.value) {
+      return;
+    }
+    this.dh.hot.updateSettings(options);
     this.dh.hot.render();
   }
 

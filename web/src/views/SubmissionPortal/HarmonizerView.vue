@@ -242,6 +242,7 @@ function loadTemplateData(templateKey: TemplateName, template: HarmonizerTemplat
   harmonizerApi.loadData(templateData);
   harmonizerApi.setInvalidCells(store.sampleSet.forms.sampleData.validation?.invalidCells[templateKey] || {});
   harmonizerApi.changeVisibility(columnVisibility.value);
+  harmonizerApi.setTableReadOnly({ readOnly: !isEditable.value });
 }
 
 const validationErrors = computed(() => {
@@ -533,7 +534,7 @@ async function validateTemplate(
   template: HarmonizerTemplateInfo | null,
   { focusInvalidCell = true } = {},
 ) {
-  if (!templateKey || !template) {
+  if (!templateKey || !template || !isEditable.value) {
     return;
   }
 
@@ -804,11 +805,7 @@ async function fetchSuggestionsFromStudyDetails() {
 }
 
 watch(isEditable, (canEdit) => {
-  if (harmonizerApi.ready.value) {
-    if (!canEdit) {
-      harmonizerApi.setTableReadOnly();
-    }
-  }
+  harmonizerApi.setTableReadOnly({ readOnly: !canEdit });
 });
 
 onMounted(async () => {
@@ -833,8 +830,6 @@ onMounted(async () => {
     if (isEditable.value) {
       // Revive any stashed suggestions (in localstorage) for the active template
       store.sampleSet.suggestions = getPendingSuggestions(store.sampleSet.record!.id, activeTemplate.value?.schemaClass!);
-    } else {
-      harmonizerApi.setTableReadOnly();
     }
   }
 });
