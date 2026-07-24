@@ -528,7 +528,7 @@ highlight(row?: number, col?: number) {
   }
 
   setTableReadOnly(options: { readOnly: boolean }) {
-    if (!this.dh || !this.dh.hot || !this.ready) {
+    if (!this.dh || !this.dh.hot || !this.ready.value) {
       return;
     }
     this.dh.hot.updateSettings(options);
