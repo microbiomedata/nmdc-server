@@ -41,12 +41,12 @@ def make_requests_session() -> requests.Session:
         #       following start times (if the responses were to arrive immediately, which is not
         #       realistic, but is a useful condition for explaining what those two parameters do):
         #       00:00 - Request #1
-        #       00:00 - Request #2 or "Retry #1" after waiting 0s
-        #       00:02 - Request #3 or "Retry #2" after waiting 2s
-        #       00:06 - Request #4 of "Retry #3" after waiting 4s
-        #       00:14 - Request #5 or "Retry #4" after waiting 8s
-        #       00:30 - Request #6 or "Retry #5" after waiting 16s
-        #       01:02 - Request #7 or "Retry #6" after waiting 32s
+        #       00:00 - Request #2 (i.e. "Retry #1") after waiting 0s
+        #       00:02 - Request #3 (i.e. "Retry #2") after waiting 2s
+        #       00:06 - Request #4 (i.e. "Retry #3") after waiting 4s
+        #       00:14 - Request #5 (i.e. "Retry #4") after waiting 8s
+        #       00:30 - Request #6 (i.e. "Retry #5") after waiting 16s
+        #       01:02 - Request #7 (i.e. "Retry #6") after waiting 32s
         total=6,
         backoff_factor=1,
         allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
