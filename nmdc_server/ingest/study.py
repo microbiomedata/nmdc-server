@@ -55,16 +55,21 @@ def transform_doi(doi: str) -> str:
 def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     """
     Fetches and returns the data (bytes) from the URL in the "url" field of the first dictionary,
-    if any, in the specified list. If the list is empty or the request fails, returns `None`.
-    Note: If the first list item lacks a "url" field, this function raises a `KeyError`.
+    if any, in the `image_urls` list. If the list is empty or the request fails, returns `None`.
+
+    Note: If the first list item lacks a "url" field, this function raises a `KeyError`. I don't
+          know what's special about the first list item—that was the original behavior and was not
+          prepared to modify it.
     """
 
     if image_urls:
         url = image_urls[0]["url"]
         try:
-            r = requests.get(url)
-            if r.ok:
-                return r.content
+            response = requests.get(url)
+            response.raise_for_status()
+            return response.content
+        # Note: `requests.RequestException` accounts for not only `requests.HTTPError`, but also
+        #       `requests.Timeout` (which we've encountered in production) and other exceptions.
         except requests.RequestException as e:
             logger.error(f"Failed to download image from '{url}': {e}")
     return None
