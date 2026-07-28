@@ -56,7 +56,7 @@ def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     """
     Fetches and returns the data (bytes) from the URL in the "url" field of the first dictionary,
     if any, in the specified list. If the list is empty or the request times out, returns `None`.
-    Note: If the first list item lacks an "url" field, this function raises a `KeyError`.
+    Note: If the first list item lacks a "url" field, this function raises a `KeyError`.
     """
 
     if image_urls:
