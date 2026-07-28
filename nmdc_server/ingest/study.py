@@ -58,7 +58,7 @@ def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     if any, in the `image_urls` list. If the list is empty or the request fails, returns `None`.
 
     Note: If the first list item lacks a "url" field, this function raises a `KeyError`. I don't
-          know what's special about the first list item—that was the original behavior and was not
+          know what's special about the first list item—that was the original behavior and I am not
           prepared to modify it.
     """
 
