@@ -53,10 +53,20 @@ def transform_doi(doi: str) -> str:
 
 
 def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
+    """
+    Fetches and returns the data (bytes) from the URL in the "url" field of the first dictionary,
+    if any, in the specified list. If the list is empty or the request times out, returns `None`.
+    Note: If the first list item lacks an "url" field, this function raises a `KeyError`.
+    """
+
     if image_urls:
-        r = requests.get(image_urls[0]["url"])
-        if r.ok:
-            return r.content
+        url = image_urls[0]["url"]
+        try:
+            r = requests.get(url)
+            if r.ok:
+                return r.content
+        except requests.ConnectTimeout as e:
+            logger.error(f"Failed to download image from '{url}': {e}")
     return None
 
 
