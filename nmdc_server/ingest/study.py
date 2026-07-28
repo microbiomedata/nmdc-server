@@ -16,6 +16,13 @@ from nmdc_server.schemas import StudyCreate
 
 logger = get_logger(__name__)
 
+# Define how long we want `requests` to wait (a) to establish a connection to the remote server,
+# and (b) for the remote server to send the first (or any subsequent) byte of the response.
+# Docs: https://docs.python-requests.org/en/latest/user/advanced/#timeouts
+requests_timeout_for_connection = 5  # in seconds
+requests_timeout_between_response_bytes = 20  # in seconds
+requests_timeout: tuple = (requests_timeout_for_connection, requests_timeout_between_response_bytes)
+
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
     pi = db.query(PrincipalInvestigator).filter_by(name=name).first()
@@ -25,7 +32,7 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
     image_data = None
     if url:
         try:
-            r = requests.get(url)
+            r = requests.get(url, timeout=requests_timeout)
             r.raise_for_status()
         except Exception as e:
             logger.error(f"Failed to download image for {name} from {url} : {e}")
@@ -65,7 +72,7 @@ def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     if image_urls:
         url = image_urls[0]["url"]
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=requests_timeout)
             response.raise_for_status()
             return response.content
         # Note: `requests.RequestException` accounts for not only `requests.HTTPError`, but also
