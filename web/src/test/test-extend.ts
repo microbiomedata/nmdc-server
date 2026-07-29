@@ -5,13 +5,15 @@ import { worker } from './mocks/worker';
 export const test = testBase.extend({
   worker: [
     async ({task}, use) => {
-      setActivePinia(createPinia());
-      // Start the worker before the test
-      await worker.start();
-      // Expose the worker object on the test's context
-      await use(worker);
-      // Reset handlers after the test
-      worker.resetHandlers();
+        if (task !== null) {
+            setActivePinia(createPinia());
+            // Start the worker before the test
+            await worker.start();
+            // Expose the worker object on the test's context
+            await use(worker);
+            // Reset handlers after the test
+            worker.resetHandlers();
+        }
     },
     {
       auto: true,
