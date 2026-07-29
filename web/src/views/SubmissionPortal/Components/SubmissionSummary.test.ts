@@ -1,7 +1,6 @@
 import { render } from '@/test/setup';
 import { test } from '@/test/test-extend';
 import { expect, vi, beforeEach } from 'vitest';
-import { createPinia, setActivePinia } from 'pinia';
 import SubmissionSummary from './SubmissionSummary.vue';
 import { useSubmissionStore } from '../store';
 

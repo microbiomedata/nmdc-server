@@ -2,7 +2,7 @@ import { render } from '@/test/setup';
 import { test } from '@/test/test-extend';
 import { expect, vi, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { SetupWorker, setupWorker } from 'msw/browser';
+import { SetupWorker } from 'msw/browser';
 import TimelineVisGroup from './TimelineVisGroup.vue';
 
 beforeEach(() => {
