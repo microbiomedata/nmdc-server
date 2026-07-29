@@ -71,6 +71,7 @@ const router = createRouter({
           path: '',
           props: (route) => ({
             id: getRouteParamString(route.params.id) ?? null,
+            sampleSetId: getRouteParamString(route.params.sampleSetId) ?? null,
           }),
           children: [
             {
