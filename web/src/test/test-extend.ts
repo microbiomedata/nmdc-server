@@ -4,7 +4,7 @@ import { worker } from './mocks/worker';
 
 export const test = testBase.extend({
   worker: [
-    async ({}, use) => {
+    async (_, use) => {
       setActivePinia(createPinia());
       // Start the worker before the test
       await worker.start();
