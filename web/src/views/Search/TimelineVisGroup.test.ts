@@ -3,6 +3,7 @@ import { test } from '@/test/test-extend';
 import { expect, vi, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { SetupWorker } from 'msw/browser';
+import { userEvent } from 'vitest/browser';
 import TimelineVisGroup from './TimelineVisGroup.vue';
 
 beforeEach(() => {
@@ -17,6 +18,23 @@ test.describe('TimelineVisGroup.vue', () => {
 
     await expect.element(screen.getByText(/collection date/i)).toBeInTheDocument();
   });
+
+  test('clicks button using vitest/browser userEvent', async () => {
+  const screen = await render(TimelineVisGroup, {
+    props: { conditions: [] },
+  });
+
+  const user = userEvent.setup();
+  const helpButton = screen.getByRole('button').first();
+  const firstButton = helpButton;
+
+  if (firstButton) {
+    await user.click(firstButton);
+    // Verify interaction worked, this second test doesn't do anything but if the first hangs
+    // then we know user interaction isn't working
+    await expect.element(firstButton).toBeInTheDocument();
+  }
+});
 
   test('displays all UpSet legend items', async () => {
     const screen = await render(TimelineVisGroup, {
