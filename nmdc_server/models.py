@@ -29,7 +29,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session, backref, query_expression, relationship
+from sqlalchemy.orm import Session, backref, declared_attr, query_expression, relationship
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
 
@@ -624,8 +624,12 @@ omics_processing_output_association = output_association("omics_processing")
 
 
 # This is a base class for all workflow processing activities.
-# https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
-# TODO : does this exist anymore?
+# https://microbiomedata.github.io/nmdc-schema/WorkflowExecution/
+# The terminology, "PipelineStep", is equivalent to "WorkflowExecution" in the NMDC schema.
+# TODO:
+# - Add an optional superseded_by field
+#   - The value of superseded_by should be the id of another PipelineStep that supersedes this one.
+#   - Read about sqlachemy Adjacency List Relationships: https://docs.sqlalchemy.org/en/20/orm/self_referential.html 
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
@@ -636,6 +640,14 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=True)
+
+    @declared_attr
+    def superseded_by(cls):
+        return Column(String, ForeignKey(f"{cls.__tablename__}.id"), nullable=True)
+
+    @declared_attr
+    def preceded_by(cls):
+        return relationship(cls.__name__, foreign_keys=f"[{cls.__name__}.superseded_by]")
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
@@ -890,7 +902,7 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     outputs = output_relationship(metabolomics_analysis_output_association)
     was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
-
+# The terminology, "OmicsProcessing", has been updated to the term "DataGeneration""
 class OmicsProcessing(Base, AnnotatedModel):
     __tablename__ = "omics_processing"
 
