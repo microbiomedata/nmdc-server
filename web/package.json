@@ -10,8 +10,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
-    "test": "vitest run",
-    "postinstall": "playwright install"
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
@@ -56,7 +55,6 @@
     "xlsx": "^0.17.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.0",
     "@sentry/vite-plugin": "^5.1.1",
     "@testing-library/user-event": "^14.6.1",
     "@testing-library/vue": "^8.1.0",
@@ -72,6 +70,7 @@
     "globals": "^16.5.0",
     "msw": "^2.15.0",
     "npm-run-all2": "^8.0.4",
+    "playwright": "^1.62.1",
     "sass-embedded": "^1.92.1",
     "typescript": "~5.9.2",
     "unplugin-fonts": "^1.4.0",
