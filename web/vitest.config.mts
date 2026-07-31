@@ -20,14 +20,6 @@ export default defineConfig(
         ],
       },
       setupFiles: ['./src/test/setup.ts'],
-      deps: {
-        inline: ['vuetify'],
-      },
-      server: {
-        deps: {
-          inline: ['vuetify'],
-        },
-      },
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
@@ -35,8 +27,7 @@ export default defineConfig(
       },
     },
     optimizeDeps: {
-      exclude: ['vuetify'],
-      include: ['@testing-library/vue', '@testing-library/user-event'],
+      include: ['@testing-library/vue'],
     },
   })
 );
