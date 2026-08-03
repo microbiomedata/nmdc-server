@@ -364,7 +364,7 @@ def load_amplicon_data(
                 data_generation["target_subfragment"] = target_subfragment.get("has_raw_value")
 
 
-def load(db: Session, cursor: Cursor, mongodb: Database):
+def load(db: Session, cursor, mongodb: Database):
     logger = get_logger(__name__)
     config_map: dict[str, dict[str, Any]] = {}
     for obj in cursor:
