@@ -16,35 +16,51 @@ import {
 } from '@/views/SubmissionPortal/types.ts';
 import PageSection from '@/components/Presentation/PageSection.vue';
 
+const props = withDefaults(defineProps<{
+  sampleSets?: SubmissionSampleSetListItem[];
+  compact?: boolean;
+  showActions?: boolean;
+}>(), {
+  sampleSets: undefined,
+  compact: false,
+  showActions: true,
+});
 
-const headers: DataTableHeader[] = [
-  {
-    title: 'Sample Set Name',
-    value: 'name',
-    sortable: true,
-  },
-  {
-    title: 'Templates',
-    value: 'templates',
-    sortable: false,
-  },
-  {
-    title: 'Status',
-    value: 'status',
-    sortable: true,
-  },
-  {
-    title: 'Last Modified',
-    value: 'date_last_modified',
-    sortable: true,
-  },
-  {
-    title: '',
-    value: 'action',
-    align: 'end',
-    sortable: false,
-  },
-];
+const headers = computed<DataTableHeader[]>(() => {
+  const baseHeaders: DataTableHeader[] = [
+    {
+      title: 'Sample Set Name',
+      value: 'name',
+      sortable: true,
+    },
+    {
+      title: 'Templates',
+      value: 'templates',
+      sortable: false,
+    },
+    {
+      title: 'Status',
+      value: 'status',
+      sortable: true,
+    },
+    {
+      title: 'Last Modified',
+      value: 'date_last_modified',
+      sortable: true,
+    },
+  ];
+
+  if (props.showActions && !props.compact) {
+    baseHeaders.push({
+      title: '',
+      value: 'action',
+      align: 'end',
+      sortable: false,
+    });
+  }
+
+  return baseHeaders;
+});
 const router = useRouter();
 const store = useSubmissionStore();
 const isDeleteDialogOpen = ref(false);
@@ -72,7 +88,11 @@ const isContributor = computed(() => {
 
 const sampleSet = ref<SubmissionSampleSetListItem[]>([]);
 onMounted(async () => {
-  sampleSet.value = store.submission.record!.sample_sets;
+  if (props.sampleSets) {
+    sampleSet.value = props.sampleSets;
+    return;
+  }
+  sampleSet.value = store.submission.record?.sample_sets ?? [];
 });
 
 watch(
@@ -206,7 +226,39 @@ async function handleStatusChange(item: SubmissionSampleSetListItem | null, newS
 
 </script>
 <template>
-  <PageSection>
+  <div v-if="compact">
+    <v-card variant="outlined">
+      <v-data-table
+        :headers="headers"
+        :items="sampleSet"
+        hide-default-footer
+        density="compact"
+      >
+        <template #[`item.name`]="{ item }">
+          {{ item.name }}
+        </template>
+
+        <template #[`item.templates`]="{ item }">
+          {{ Array.isArray(item.templates) ? item.templates.join(' + ') : item.templates }}
+        </template>
+
+        <template #[`item.status`]="{ item }">
+          <div class="d-flex align-center">
+            <v-chip
+              :color="getStatus(item.status as SubmissionStatusKey).color"
+            >
+              {{ getStatus(item.status as SubmissionStatusKey).text }}
+            </v-chip>
+          </div>
+        </template>
+
+        <template #[`item.date_last_modified`]="{ item }">
+          {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
+        </template>
+      </v-data-table>
+    </v-card>
+  </div>
+  <PageSection v-else>
     <v-card variant="outlined">
       <v-data-table
         :headers="headers"

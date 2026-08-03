@@ -6,6 +6,7 @@ import { VTextField } from 'vuetify/components';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
+import SampleSetTable from './SampleSetTable.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
@@ -14,6 +15,7 @@ import { SearchParams } from '@/data/api';
 import { addSubmissionRole, deleteSubmission } from '../store/api';
 import {
   PaginatedResponse,
+  SubmissionMetadata,
   SubmissionMetadataSlim,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -59,6 +61,8 @@ const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionMetadataSlim | null>(null);
 const isReviewerAssignmentDialogOpen = ref(false);
 const isReviewerAssignmentSnackbarOpen = ref(false);
+const isSampleSetPreviewDialogOpen = ref(false);
+const sampleSetPreviewSubmission = ref<SubmissionMetadata | null>(null);
 const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
 const currentUser = stateRefs.user;
 const isTestFilter = ref(null);
@@ -135,6 +139,14 @@ const orcidTextFieldRef = useTemplateRef<InstanceType<typeof VTextField>>('orcid
 function openReviewerDialog(item: SubmissionMetadataSlim | null) {
   isReviewerAssignmentDialogOpen.value = true;
   selectedSubmission.value = item;
+}
+
+async function openSampleSetPreviewDialog(item: SubmissionMetadataSlim | null) {
+  if (!item) {
+    return;
+  }
+  isSampleSetPreviewDialogOpen.value = true;
+  sampleSetPreviewSubmission.value = await api.getSubmission(item.id);
 }
 
 async function addReviewer() {
@@ -340,6 +352,11 @@ async function addReviewer() {
                       <v-list-item-title>Delete</v-list-item-title>
                     </v-list-item>
                     <v-list-item
+                      @click="() => openSampleSetPreviewDialog(item)"
+                    >
+                      <v-list-item-title>Sample Set Preview</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item
                       v-if="currentUser?.is_admin"
                       @click="() => openReviewerDialog(item)"
                     >
@@ -353,6 +370,38 @@ async function addReviewer() {
         </v-card>
       </v-card>
     </v-container>
+    <v-dialog
+      v-model="isSampleSetPreviewDialogOpen"
+      max-width="900px"
+    >
+      <v-card>
+        <v-card-title class="text-h5">
+          Sample Set Preview
+        </v-card-title>
+        <v-card-text>
+          <SampleSetTable
+            v-if="sampleSetPreviewSubmission"
+            :sample-sets="sampleSetPreviewSubmission.sample_sets"
+            compact
+          />
+          <div
+            v-else
+            class="text-body-2 text-medium-emphasis"
+          >
+            No sample sets are available for this submission.
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            class="ma-3"
+            @click="isSampleSetPreviewDialogOpen = false"
+          >
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-dialog
       v-model="isDeleteDialogOpen"
       :width="550"
