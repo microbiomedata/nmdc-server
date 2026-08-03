@@ -67,6 +67,7 @@ const testFilterValues = [
   { text: 'Show only test submissions', val: true },
   { text: 'Hide test submissions', val: false }];
 const searchText = ref('');
+const resumeContextMenuId = ref<string | null>(null);
 
 async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<SubmissionMetadataSlim>> {
   return api.listSubmissions(params, isTestFilter.value, searchText.value);
@@ -75,6 +76,11 @@ async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<S
 
 async function resume(item: SubmissionMetadataSlim) {
   router?.push({ name: 'Submission Summary', params: { id: item.id } });
+}
+
+function resumeNewTab(item: SubmissionMetadataSlim) {
+  const url = router.resolve({ name: 'Submission Summary', params: { id: item.id } }).href;
+  window.open(url, '_blank');
 }
 
 const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
@@ -273,16 +279,45 @@ async function addReviewer() {
             <template #[`item.action`]="{ item }">
               <div class="d-flex align-center">
                 <v-spacer />
-                <v-btn
-                  size="small"
-                  color="primary"
-                  @click="() => resume(item)"
+                <v-menu
+                  :model-value="resumeContextMenuId === item.id"
+                  @update:model-value="(val) => resumeContextMenuId = val ? item.id : null"
+                  location="bottom"
+                  offset-y
                 >
-                  Resume
-                  <v-icon class="pl-1">
-                    mdi-arrow-right-circle
-                  </v-icon>
-                </v-btn>
+                  <template #activator="{ props }">
+                    <div
+                      v-bind="props"
+                      @contextmenu.prevent="() => { resumeContextMenuId = resumeContextMenuId === item.id ? null : item.id; }"
+                      style="display: inline-block;"
+                    >
+                      <v-btn
+                        size="small"
+                        color="primary"
+                        @click="() => resume(item)"
+                      >
+                        Resume
+                        <v-icon class="pl-1">
+                          mdi-arrow-right-circle
+                        </v-icon>
+                      </v-btn>
+                    </div>
+                  </template>
+                  <v-list>
+                    <v-list-item @click="() => resume(item)">
+                      <v-list-item-title>
+                        <v-icon class="mr-2" size="small">mdi-arrow-right-circle</v-icon>
+                        Resume in this tab
+                      </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="() => resumeNewTab(item)">
+                      <v-list-item-title>
+                        <v-icon class="mr-2" size="small">mdi-open-in-new</v-icon>
+                        Resume in new tab
+                      </v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
                 <v-menu
                   offset-x
                 >
