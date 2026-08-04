@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref, useTemplateRef, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref, useTemplateRef, watch } from 'vue';
+import { useSubmissionStore } from '../store';
 import { DataTableHeader } from 'vuetify';
 import { VTextField } from 'vuetify/components';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
-import SampleSetTable from './SampleSetTable.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
@@ -15,7 +14,6 @@ import { SearchParams } from '@/data/api';
 import { addSubmissionRole, deleteSubmission } from '../store/api';
 import {
   PaginatedResponse,
-  SubmissionMetadata,
   SubmissionMetadataSlim,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -46,7 +44,7 @@ const headers: DataTableHeader[] = [
   },
 ];
 
-const router = useRouter();
+const store = useSubmissionStore();
 const itemsPerPage = 10;
 const defaultSortBy = 'date_last_modified';
 const defaultSortOrder = 'desc';
@@ -61,31 +59,30 @@ const isDeleteDialogOpen = ref(false);
 const deleteDialogSubmission = ref<SubmissionMetadataSlim | null>(null);
 const isReviewerAssignmentDialogOpen = ref(false);
 const isReviewerAssignmentSnackbarOpen = ref(false);
-const isSampleSetPreviewDialogOpen = ref(false);
-const sampleSetPreviewSubmission = ref<SubmissionMetadata | null>(null);
 const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
 const currentUser = stateRefs.user;
-const isTestFilter = ref(null);
 const testFilterValues = [
   { text: 'Show all submissions', val: null },
   { text: 'Show only test submissions', val: true },
   { text: 'Hide test submissions', val: false }];
-const searchText = ref('');
-const resumeContextMenuId = ref<string | null>(null);
+
+function saveFilters() {
+  store.saveSubmissionListFilters();
+}
+
+function restoreFilters() {
+  store.restoreSubmissionListFilters();
+}
+
+onMounted(() => {
+  restoreFilters();
+  saveFilters();
+});
 
 async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<SubmissionMetadataSlim>> {
-  return api.listSubmissions(params, isTestFilter.value, searchText.value);
+  return api.listSubmissions(params, store.submissionListFilters.isTestFilter, store.submissionListFilters.searchText);
 }
 
-
-async function resume(item: SubmissionMetadataSlim) {
-  router?.push({ name: 'Submission Summary', params: { id: item.id } });
-}
-
-function resumeNewTab(item: SubmissionMetadataSlim) {
-  const url = router.resolve({ name: 'Submission Summary', params: { id: item.id } }).href;
-  window.open(url, '_blank');
-}
 
 const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
 
@@ -104,13 +101,15 @@ function updateTableOptions(newOptions: any) {
   applySortOptions();
 }
 
-watch(isTestFilter, () => {
+watch(() => store.submissionListFilters.isTestFilter, () => {
+  saveFilters();
   options.value.page = 1;
   submission.setPage(options.value.page);
   applySortOptions();
 }, { deep: true });
 
-watch(searchText, () => {
+watch(() => store.submissionListFilters.searchText, () => {
+  saveFilters();
   options.value.page = 1;
   submission.setPage(options.value.page);
   applySortOptions();
@@ -139,14 +138,6 @@ const orcidTextFieldRef = useTemplateRef<InstanceType<typeof VTextField>>('orcid
 function openReviewerDialog(item: SubmissionMetadataSlim | null) {
   isReviewerAssignmentDialogOpen.value = true;
   selectedSubmission.value = item;
-}
-
-async function openSampleSetPreviewDialog(item: SubmissionMetadataSlim | null) {
-  if (!item) {
-    return;
-  }
-  isSampleSetPreviewDialogOpen.value = true;
-  sampleSetPreviewSubmission.value = await api.getSubmission(item.id);
 }
 
 async function addReviewer() {
@@ -234,7 +225,7 @@ async function addReviewer() {
             cols="3"
           >
             <v-text-field
-              v-model="searchText"
+              v-model="store.submissionListFilters.searchText"
               label="Search"
               variant="outlined"
               class="pr-2"
@@ -246,7 +237,7 @@ async function addReviewer() {
           </v-col>
           <v-col>
             <v-select
-              v-model="isTestFilter"
+              v-model="store.submissionListFilters.isTestFilter"
               :items="testFilterValues"
               item-title="text"
               item-value="val"
@@ -267,9 +258,15 @@ async function addReviewer() {
             @update:options="updateTableOptions"
           >
             <template #[`item.study_name`]="{ item }">
-              {{ item.study_name }}
+              <router-link
+                :to="{ name: 'Submission Summary', params: { id: item.id } }"
+                class="text-primary text-decoration-none"
+              >
+                {{ item.study_name }}
+              </router-link>
               <v-chip
                 v-if="item.is_test_submission"
+                class="ml-2"
                 color="orange"
                 text-color="white"
                 small
@@ -292,45 +289,6 @@ async function addReviewer() {
               <div class="d-flex align-center">
                 <v-spacer />
                 <v-menu
-                  :model-value="resumeContextMenuId === item.id"
-                  @update:model-value="(val) => resumeContextMenuId = val ? item.id : null"
-                  location="bottom"
-                  offset-y
-                >
-                  <template #activator="{ props }">
-                    <div
-                      v-bind="props"
-                      @contextmenu.prevent="() => { resumeContextMenuId = resumeContextMenuId === item.id ? null : item.id; }"
-                      style="display: inline-block;"
-                    >
-                      <v-btn
-                        size="small"
-                        color="primary"
-                        @click="() => resume(item)"
-                      >
-                        Resume
-                        <v-icon class="pl-1">
-                          mdi-arrow-right-circle
-                        </v-icon>
-                      </v-btn>
-                    </div>
-                  </template>
-                  <v-list>
-                    <v-list-item @click="() => resume(item)">
-                      <v-list-item-title>
-                        <v-icon class="mr-2" size="small">mdi-arrow-right-circle</v-icon>
-                        Resume in this tab
-                      </v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="() => resumeNewTab(item)">
-                      <v-list-item-title>
-                        <v-icon class="mr-2" size="small">mdi-open-in-new</v-icon>
-                        Resume in new tab
-                      </v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-                <v-menu
                   offset-x
                 >
                   <template #activator="{ props }">
@@ -352,11 +310,6 @@ async function addReviewer() {
                       <v-list-item-title>Delete</v-list-item-title>
                     </v-list-item>
                     <v-list-item
-                      @click="() => openSampleSetPreviewDialog(item)"
-                    >
-                      <v-list-item-title>Sample Set Preview</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item
                       v-if="currentUser?.is_admin"
                       @click="() => openReviewerDialog(item)"
                     >
@@ -370,38 +323,6 @@ async function addReviewer() {
         </v-card>
       </v-card>
     </v-container>
-    <v-dialog
-      v-model="isSampleSetPreviewDialogOpen"
-      max-width="900px"
-    >
-      <v-card>
-        <v-card-title class="text-h5">
-          Sample Set Preview
-        </v-card-title>
-        <v-card-text>
-          <SampleSetTable
-            v-if="sampleSetPreviewSubmission"
-            :sample-sets="sampleSetPreviewSubmission.sample_sets"
-            compact
-          />
-          <div
-            v-else
-            class="text-body-2 text-medium-emphasis"
-          >
-            No sample sets are available for this submission.
-          </div>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            class="ma-3"
-            @click="isSampleSetPreviewDialogOpen = false"
-          >
-            Close
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
     <v-dialog
       v-model="isDeleteDialogOpen"
       :width="550"

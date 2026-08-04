@@ -40,6 +40,8 @@ import { stateRefs } from '@/store';
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage.ts';
 import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
 
+const SUBMISSION_LIST_FILTERS_KEY = 'storage.submissionListFilters';
+
 const EDITABLE_SAMPLE_SET_STATUSES = [
   SubmissionStatusEnum.InProgress.text,
   SubmissionStatusEnum.UpdatesRequired.text,
@@ -170,6 +172,11 @@ type UiState = {
   pendingImageUploads: Set<SubmissionImageType>
 }
 
+type SubmissionListFilterState = {
+  searchText: string;
+  isTestFilter: boolean | null;
+}
+
 /* STATE-FREE HELPERS */
 function createEmptySubmissionForms(): SubmissionForms {
   return {
@@ -213,6 +220,10 @@ export const useSubmissionStore = defineStore('submission', () => {
     suggestionFills: new Set(Object.values(SuggestionFill)),
     suggestionTypes: new Set([SuggestionType.ADDITIONS, SuggestionType.REPLACEMENTS]),
     pendingImageUploads: new Set(),
+  });
+  const submissionListFilters = reactive<SubmissionListFilterState>({
+    searchText: '',
+    isTestFilter: null,
   });
 
   /* GETTERS */
@@ -516,6 +527,39 @@ export const useSubmissionStore = defineStore('submission', () => {
   });
 
   /* HELPERS */
+  /** 
+   * Save current submission list filters to session storage that they can be persisted through page transitions
+  */
+  function saveSubmissionListFilters() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.sessionStorage.setItem(SUBMISSION_LIST_FILTERS_KEY, JSON.stringify(submissionListFilters));
+  }
+
+  /**
+   * Load previously saved filters for the submission list
+   */
+  function restoreSubmissionListFilters() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const savedFilters = window.sessionStorage.getItem(SUBMISSION_LIST_FILTERS_KEY);
+    if (!savedFilters) {
+      return;
+    }
+
+    const parsedFilters = JSON.parse(savedFilters) as Partial<SubmissionListFilterState>;
+    if (typeof parsedFilters.searchText === 'string') {
+      submissionListFilters.searchText = parsedFilters.searchText;
+    }
+
+    if (parsedFilters.isTestFilter === null || typeof parsedFilters.isTestFilter === 'boolean') {
+      submissionListFilters.isTestFilter = parsedFilters.isTestFilter;
+    }
+  }
+
   /**
    * Populate the submission state with data from the server.
    *
@@ -1072,6 +1116,7 @@ export const useSubmissionStore = defineStore('submission', () => {
     submission,
     sampleSet,
     ui,
+    submissionListFilters,
 
     /* GETTERS */
     studyName,
@@ -1082,6 +1127,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     hasPendingImageUploads,
 
     /* ACTIONS */
+    saveSubmissionListFilters,
+    restoreSubmissionListFilters,
     loadSubmission,
     createSubmission,
     createSubmissionSampleSet,
