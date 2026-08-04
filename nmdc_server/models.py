@@ -991,7 +991,7 @@ class OmicsProcessing(Base, AnnotatedModel):
     # not have to be added as a `query_expression`.
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
-        all_items = chain(
+        all_items: list["PipelineStep"] = list(chain(
             self.reads_qc,
             self.metatranscriptome_annotation,
             self.metaproteomic_analysis,
@@ -1003,14 +1003,23 @@ class OmicsProcessing(Base, AnnotatedModel):
             self.metagenome_assembly,
             self.metatranscriptome_assembly,
             self.metagenome_annotation,
+        ))
+        # Sort by type first, then by ended_at_time descending (newer first).
+        # Items without an ended_at_time are sorted last within their type.
+        all_items.sort(
+            key=lambda item: (
+                item.type,
+                item.ended_at_time is None,
+                -(item.ended_at_time.timestamp() if item.ended_at_time else 0),
+            )
         )
         # If the `_exclude_superseded` attribute is set to True,
         # filter out any items that have been superseded by another item.
-        # This happens when the `include_older_workflow_executions` parameter 
+        # This happens when the `include_older_workflow_executions` parameter
         # in the search_biosample query is set to False.
         if getattr(self, "_exclude_superseded", False):
             return (item for item in all_items if not item.superseded_by)
-        return all_items
+        return iter(all_items)
 
 
 class DataObject(Base):
