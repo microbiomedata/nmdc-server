@@ -328,6 +328,18 @@ function toggleCollapseWorkflow(item: any) {
                       <ClickToCopyText>{{ item.omics_data.id }}</ClickToCopyText>
                     </span>
                   </div>
+                  <v-icon v-if="item.omics_data.superseded_by">mdi-circle-small</v-icon>
+                  <div 
+                    v-if="item.omics_data.superseded_by" 
+                    class="d-flex ga-1 flex-row align-center"
+                  >
+                    <span class="font-weight-bold">
+                      Superseded by:
+                    </span>
+                    <span>
+                      <ClickToCopyText>{{ item.omics_data.superseded_by }}</ClickToCopyText>
+                    </span>
+                  </div>
                 </div>
                 <div
                   v-if="
