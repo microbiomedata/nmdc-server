@@ -2,6 +2,7 @@ import re
 from typing import Any, Dict, Iterable, List, Protocol, Set, cast
 
 from pymongo.collection import Collection
+from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -226,10 +227,16 @@ def load(
 ):
     logger = get_logger(__name__)
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
+    # Collect superseded_by values separately to avoid self-referential FK violations.
+    # Records are inserted with superseded_by=None, then updated in a second pass
+    # after all records of this type are committed (guaranteeing the referenced IDs exist).
+    superseded_by_map: Dict[str, str] = {}
+    pipeline_table = None
 
     for obj in cursor:
         inputs = obj.pop("has_input", [])
         outputs = obj.pop("has_output", [])
+        superseded_by = obj.pop("superseded_by", None)
 
         if workflow_type is not None:
             # unset the type, override it with the schema's default type
@@ -264,6 +271,11 @@ def load(
             errors["pipeline"].add(obj["id"])
             db.rollback()
             continue
+
+        if superseded_by:
+            superseded_by_map[pipeline.id] = superseded_by
+        if pipeline_table is None:
+            pipeline_table = pipeline.__class__.__table__
 
         id_ = pipeline.id
         table_name = pipeline.__tablename__
@@ -320,3 +332,14 @@ def load(
             assert output
             output.workflow_type = workflow_type
             db.add(output)
+
+    # Second pass: update superseded_by now that all records of this type are committed,
+    # so the self-referential FK constraint is satisfied for every value.
+    if superseded_by_map and pipeline_table is not None:
+        for record_id, superseded_by_value in superseded_by_map.items():
+            db.execute(
+                update(pipeline_table)
+                .where(pipeline_table.c.id == record_id)
+                .values(superseded_by=superseded_by_value)
+            )
+        db.commit()
