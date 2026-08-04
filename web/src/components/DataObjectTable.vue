@@ -365,10 +365,7 @@ function toggleCollapseWorkflow(item: any) {
                   {{ nomMetadataString(item.omics_data as NomMetadataItem) }}
                 </div>
                 <div v-if="getRelatedBiosampleIds(item.omics_data).length">
-                  <v-icon>
-                    mdi-flask-outline
-                  </v-icon>
-                  <span class="text-subtitle-2 grey--text text--darken-3"><b>Associated biosample inputs:</b></span>
+                  <span class="text-subtitle-2 grey--text text--darken-3"><b>Associated Biosample Inputs:</b></span>
                   <router-link
                     v-for="biosampleId in getRelatedBiosampleIds(item.omics_data)"
                     :key="biosampleId"
