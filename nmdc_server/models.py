@@ -29,7 +29,13 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session, backref, declared_attr, query_expression, relationship  # type: ignore[attr-defined]
+from sqlalchemy.orm import (  # type: ignore[attr-defined]
+    Session,
+    backref,
+    declared_attr,
+    query_expression,
+    relationship,
+)
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
 
