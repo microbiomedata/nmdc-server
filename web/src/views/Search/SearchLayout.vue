@@ -285,11 +285,31 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
               <div
                 class="d-flex align-center ga-4 mr-4"
               >
-                <v-checkbox
-                  v-model="includeOlderWorkflowExecutions"
-                  label="Include older workflow executions"
-                  hide-details
-                />
+                <div class="d-flex align-center ga-1">    
+                  <v-checkbox
+                    v-model="includeOlderWorkflowExecutions"
+                    label="Include older workflow executions"
+                    hide-details
+                  />
+                  <v-tooltip
+                    location="top"
+                    max-width="300px"
+                  >
+                    <template #activator="{ props }">
+                      <v-icon
+                        v-bind="props"
+                        color="grey-darken-1"
+                        size="small"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    <span>
+                      Select this option to include older workflow executions and their data objects within a sample's omics tables below. 
+                      This will also determine whether those workflow executions and their data objects are included in your downloads.
+                    </span>
+                  </v-tooltip>
+                </div>
                 <BulkDownload
                   :disabled="!loggedInUser"
                   :search-result-count="biosample.data.results.count"
