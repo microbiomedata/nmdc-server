@@ -60,6 +60,9 @@ export default defineComponent({
       ) {
         const item = props.item as BiosampleSearchResult;
         const env = item[field];
+        if (!env) {
+          return '';
+        }
         return `${env.label} (${env.id})`;
       }
       if (field === 'emsl_biosample_identifiers') {
@@ -86,7 +89,12 @@ export default defineComponent({
           || field === 'env_medium'
       ) {
         const item = props.item as BiosampleSearchResult;
+        console.log('item', item);
+        console.log('field', field);
         const env = item[field];
+        if (!env || !env.id) {
+          return undefined;
+        }
         const request = `http://purl.obolibrary.org/obo/${env.id.replace(':', '_')}`;
         let apiUrl = '';
         if (env.id.startsWith('ENVO')) {
