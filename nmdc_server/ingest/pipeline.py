@@ -275,7 +275,7 @@ def load(
         if superseded_by:
             superseded_by_map[pipeline.id] = superseded_by
         if pipeline_table is None:
-            pipeline_table = pipeline.__class__.__table__
+            pipeline_table = pipeline.__class__.__table__  # type: ignore[attr-defined]
 
         id_ = pipeline.id
         table_name = pipeline.__tablename__

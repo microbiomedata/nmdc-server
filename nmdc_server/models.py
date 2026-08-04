@@ -29,7 +29,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session, backref, declared_attr, query_expression, relationship
+from sqlalchemy.orm import Session, backref, declared_attr, query_expression, relationship  # type: ignore[attr-defined]
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
 
@@ -643,7 +643,7 @@ class PipelineStep:
 
     @declared_attr
     def preceded_by(cls):
-        return relationship(cls.__name__, foreign_keys=f"[{cls.__name__}.superseded_by]")
+        return relationship(cls.__name__, foreign_keys=f"[{cls.__name__}.superseded_by]")  # type: ignore[attr-defined]
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
