@@ -446,6 +446,7 @@ export interface SearchParams {
   sortOrder?: string;
   conditions: Condition[];
   data_object_filter?: DataObjectFilter[];
+  include_older_workflow_executions?: boolean;
 }
 
 export interface SearchResponse<T> {
@@ -488,7 +489,16 @@ async function _search<T>(
 }
 
 async function searchBiosample(params: SearchParams) {
-  return _search<BiosampleSearchResult>("biosample", params);
+  const { offset = 0, limit = 100, conditions, data_object_filter, include_older_workflow_executions } = params;
+  const { data } = await client.post<SearchResponse<BiosampleSearchResult>>(
+    'biosample/search',
+    { conditions, data_object_filter, include_older_workflow_executions },
+    {
+      params: { offset, limit },
+      cache: { enabled: true },
+    }
+  );
+  return data;
 }
 
 async function searchStudy(params: SearchParams) {

@@ -985,13 +985,13 @@ class OmicsProcessing(Base, AnnotatedModel):
     )
 
     # This property injects information in the omics_processing result
-    # regarding output data from workflow processing runs.  Because there
+    # regarding output data from workflow processing runs. Because there
     # are no filters that filter out individual processing runs, this
-    # can be done outside of the main query.  For this reason, it does
+    # can be done outside of the main query. For this reason, it does
     # not have to be added as a `query_expression`.
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
-        return chain(
+        all_items = chain(
             self.reads_qc,
             self.metatranscriptome_annotation,
             self.metaproteomic_analysis,
@@ -1004,6 +1004,13 @@ class OmicsProcessing(Base, AnnotatedModel):
             self.metatranscriptome_assembly,
             self.metagenome_annotation,
         )
+        # If the `_exclude_superseded` attribute is set to True,
+        # filter out any items that have been superseded by another item.
+        # This happens when the `include_older_workflow_executions` parameter 
+        # in the search_biosample query is set to False.
+        if getattr(self, "_exclude_superseded", False):
+            return (item for item in all_items if not item.superseded_by)
+        return all_items
 
 
 class DataObject(Base):

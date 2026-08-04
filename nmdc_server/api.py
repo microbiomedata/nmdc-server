@@ -322,6 +322,10 @@ async def search_biosample(
     # query.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
         for op in biosample.omics_processing:
+            # If the query parameter `include_older_workflow_executions` is False (the default),
+            # then filter out any workflow executions that have been superseded by another.
+            if not query.include_older_workflow_executions:
+                op._exclude_superseded = True  # type: ignore[attr-defined]
             for da in op.outputs:
                 data_object_ids.add(da.id)
                 da.selected = schemas.DataObject.is_selected(

@@ -89,7 +89,15 @@ function selectStudyAndOmics(studyId: string, omicsType: string) {
   setConditions([...stateRefs.conditions.value, ...conditions]);
 }
 
-const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter, 10);
+const includeOlderWorkflowExecutions = ref(false);
+const biosample = usePaginatedResults(
+  stateRefs.conditions,
+  api.searchBiosample,
+  dataObjectFilter,
+  10,
+  computed(() => true),
+  computed(() => ({ include_older_workflow_executions: includeOlderWorkflowExecutions.value })),
+);
 const studyType = types.study;
 const studySummaryData = useFacetSummaryData({
   field: ref('study_id'),
@@ -275,8 +283,13 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
               </v-tab>
               <v-spacer />
               <div
-                class="d-flex align-center mr-4"
+                class="d-flex align-center ga-4 mr-4"
               >
+                <v-checkbox
+                  v-model="includeOlderWorkflowExecutions"
+                  label="Include older workflow executions"
+                  hide-details
+                />
                 <BulkDownload
                   :disabled="!loggedInUser"
                   :search-result-count="biosample.data.results.count"
