@@ -96,6 +96,16 @@ onMounted(async () => {
 });
 
 watch(
+  () => props.sampleSets,
+  (newList) => {
+    if (newList) {
+      sampleSet.value = newList;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
   sampleSet,
   (newList) => {
     const editableStatuses = ['InProgress', 'UpdatesRequired'];
