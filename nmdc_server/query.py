@@ -1282,7 +1282,7 @@ class FacetQuery(SearchQuery):
 class BiosampleSearchQuery(SearchQuery):
     data_object_filter: List[DataObjectFilter] = []
     """
-    A list of filters to apply to the data objects associated with the biosamples. 
+    A list of filters to apply to the data objects associated with the biosamples.
     Each filter specifies a workflow type and/or file type to include in the results.
     """
     include_older_workflow_executions: bool = False

@@ -626,10 +626,6 @@ omics_processing_output_association = output_association("omics_processing")
 # This is a base class for all workflow processing activities.
 # https://microbiomedata.github.io/nmdc-schema/WorkflowExecution/
 # The terminology, "PipelineStep", is equivalent to "WorkflowExecution" in the NMDC schema.
-# TODO:
-# - Add an optional superseded_by field
-#   - The value of superseded_by should be the id of another PipelineStep that supersedes this one.
-#   - Read about sqlachemy Adjacency List Relationships: https://docs.sqlalchemy.org/en/20/orm/self_referential.html 
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
@@ -902,12 +898,14 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     outputs = output_relationship(metabolomics_analysis_output_association)
     was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
+
 # The terminology, "OmicsProcessing", has been updated to the term "DataGeneration""
 class OmicsProcessing(Base, AnnotatedModel):
     __tablename__ = "omics_processing"
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
+
     biosample_inputs = relationship(
         "Biosample",
         secondary=biosample_input_association,
@@ -991,19 +989,21 @@ class OmicsProcessing(Base, AnnotatedModel):
     # not have to be added as a `query_expression`.
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
-        all_items: list["PipelineStep"] = list(chain(
-            self.reads_qc,
-            self.metatranscriptome_annotation,
-            self.metaproteomic_analysis,
-            self.mags_analysis,
-            self.read_based_analysis,
-            self.nom_analysis,
-            self.metabolomics_analysis,
-            self.metatranscriptome,
-            self.metagenome_assembly,
-            self.metatranscriptome_assembly,
-            self.metagenome_annotation,
-        ))
+        all_items: list["PipelineStep"] = list(
+            chain(
+                self.reads_qc,
+                self.metatranscriptome_annotation,
+                self.metaproteomic_analysis,
+                self.mags_analysis,
+                self.read_based_analysis,
+                self.nom_analysis,
+                self.metabolomics_analysis,
+                self.metatranscriptome,
+                self.metagenome_assembly,
+                self.metatranscriptome_assembly,
+                self.metagenome_annotation,
+            )
+        )
         # Sort by type first, then by ended_at_time descending (newer first).
         # Items without an ended_at_time are sorted last within their type.
         all_items.sort(

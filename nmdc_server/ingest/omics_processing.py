@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, Optional
 from pydantic import field_validator, model_validator
 from pydantic.v1 import validator
 from pymongo.collection import Collection
-from pymongo.cursor import Cursor
 from pymongo.database import Database
 from sqlalchemy.orm import Session
 
