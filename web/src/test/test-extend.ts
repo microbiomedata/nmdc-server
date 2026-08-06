@@ -1,21 +1,20 @@
 import { test as testBase } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { worker } from './mocks/worker';
 
 export const test = testBase.extend({
-  worker: [
-    async ({task}, use) => {
-        if (task !== null) {
-            setActivePinia(createPinia());
-            // Start the worker before the test
-            await worker.start();
-            // Expose the worker object on the test's context
-            await use(worker);
-            // Reset handlers after the test
-            worker.resetHandlers();
-        }
+  pinia: [
+    async ({}, use) => {
+      // Create a fresh pinia instance for each test
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      
+      await use(pinia);
+      
+      // Cleanup after test
+      setActivePinia(undefined as any);
     },
     {
       auto: true,
-    }],
+    },
+  ],
 });

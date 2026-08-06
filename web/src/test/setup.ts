@@ -1,16 +1,35 @@
-import { afterEach, vi } from 'vitest';
-import { cleanup, render as vitestRender } from 'vitest-browser-vue';
+import { afterEach, beforeAll, vi } from 'vitest';
+import { cleanup, render as testingLibraryRender } from '@testing-library/vue';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
+import { setupServer } from 'msw/node';
+import { handlers } from './mocks/handlers';
+import '@testing-library/jest-dom/vitest';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { expect } from 'vitest';
+
+// Extend Vitest's expect method with methods from react-testing-library
+expect.extend(matchers);
+
+// Mock CSS imports
+vi.mock('*.css', () => ({ default: '' }));
+
+// Setup MSW server for Node environment
+const server = setupServer(...handlers);
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
 
 afterEach(() => {
   cleanup();
+  server.resetHandlers();
   vi.clearAllMocks();
   vi.restoreAllMocks();
 });
 
-// Mock ResizeObserver and window
+// Mock ResizeObserver and window APIs
 declare global {
   interface Window {
     ResizeObserver: any;
@@ -36,7 +55,7 @@ window.visualViewport = {
   removeEventListener: vi.fn(),
 } as any;
 
-//create a vuetify instance for components to import from and use
+// Create a vuetify instance for components to import from and use
 const vuetify = createVuetify({
   components,
   directives,
@@ -45,15 +64,20 @@ const vuetify = createVuetify({
   },
 });
 
-//provide a render that uses vuetify
-export async function render(component: any, options: Record<string, any> = {}) {
-  return vitestRender(component, {
+// Provide a render that uses vuetify
+export function render(component: any, options: Record<string, any> = {}) {
+  return testingLibraryRender(component, {
     global: {
       plugins: [vuetify],
+      stubs: {
+        RouterLink: true,
+        transition: false,
+        'transition-stub': false,
+      },
       ...(options.global || {}),
     },
     ...options,
   });
 }
 
-export { cleanup };
+export { cleanup, server };

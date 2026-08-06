@@ -15,6 +15,20 @@ export const handlers = [
     ]);
   }),
 
+  http.post('/api/biosample/facet', () => {
+    return HttpResponse.json([
+      { facet: '1', count: 5 },
+      { facet: '2', count: 3 },
+    ]);
+  }),
+
+  http.post('/api/biosample/binned_facet', () => {
+    return HttpResponse.json([
+      { facet: '1', count: 5 },
+      { facet: '2', count: 3 },
+    ]);
+  }),
+
   http.post('/api/submission/sample-set', () => {
     return HttpResponse.json({
       id: 'sample-set-1',

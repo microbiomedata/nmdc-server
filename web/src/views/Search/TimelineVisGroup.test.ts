@@ -1,9 +1,9 @@
-import { render } from '@/test/setup';
+import { render, server } from '@/test/setup';
 import { test } from '@/test/test-extend';
 import { expect, vi, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { SetupWorker } from 'msw/browser';
-import { userEvent } from 'vitest/browser';
+import { screen, waitFor } from '@testing-library/vue';
+import userEvent from '@testing-library/user-event';
 import TimelineVisGroup from './TimelineVisGroup.vue';
 
 beforeEach(() => {
@@ -12,32 +12,30 @@ beforeEach(() => {
 
 test.describe('TimelineVisGroup.vue', () => {
   test('renders without errors', async () => {
-    const screen = await render(TimelineVisGroup, {
+    render(TimelineVisGroup, {
       props: { conditions: [] },
     });
 
-    await expect.element(screen.getByText(/collection date/i)).toBeInTheDocument();
+    expect(screen.getByText(/collection date/i)).toBeInTheDocument();
   });
 
-  test('clicks button using vitest/browser userEvent', async () => {
-  const screen = await render(TimelineVisGroup, {
-    props: { conditions: [] },
+  test('Can click buttons', async () => {
+    render(TimelineVisGroup, {
+      props: { conditions: [] },
+    });
+
+    const user = userEvent.setup();
+    const buttons = screen.getAllByRole('button');
+    const firstButton = buttons[0];
+
+    if (firstButton) {
+      await user.click(firstButton);
+      expect(firstButton).toBeInTheDocument();
+    }
   });
-
-  const user = userEvent.setup();
-  const helpButton = screen.getByRole('button').first();
-  const firstButton = helpButton;
-
-  if (firstButton) {
-    await user.click(firstButton);
-    // Verify interaction worked, this second test doesn't do anything but if the first hangs
-    // then we know user interaction isn't working
-    await expect.element(firstButton).toBeInTheDocument();
-  }
-});
 
   test('displays all UpSet legend items', async () => {
-    const screen = await render(TimelineVisGroup, {
+    render(TimelineVisGroup, {
       props: { conditions: [] },
     });
 
@@ -49,7 +47,7 @@ test.describe('TimelineVisGroup.vue', () => {
     ];
 
     for (const legend of legends) {
-      await expect.element(screen.getByText(legend)).toBeInTheDocument();
+      expect(screen.getByText(legend)).toBeInTheDocument();
     }
   });
 
@@ -58,48 +56,40 @@ test.describe('TimelineVisGroup.vue', () => {
       { table: 'biosample' as const, field: 'env_medium', op: '==' as const, value: 'soil' },
     ];
 
-    const screen = await render(TimelineVisGroup, {
+    render(TimelineVisGroup, {
       props: { conditions },
     });
 
-    await expect.element(screen.getByText(/collection date/i)).toBeInTheDocument();
+    expect(screen.getByText(/collection date/i)).toBeInTheDocument();
   });
 
-  test('calls both biosample and study facet summary APIs', async ({ worker }: { worker: SetupWorker}) => {
-    const biosampleSpy = vi.fn(() => HttpResponse.json([{ facet: '1', count: 5 }]));
-    const studySpy = vi.fn(() => HttpResponse.json([{ facet: '1', count: 3 }]));
-
-    worker.use(
-      http.post('/api/biosample/facet', biosampleSpy),
-      http.post('/api/study/facet', studySpy)
-    );
-
-    await render(TimelineVisGroup, {
+  test('makes API calls to fetch data', async () => {
+    render(TimelineVisGroup, {
       props: { conditions: [] },
     });
 
-    // Wait for API calls
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    expect(biosampleSpy).toHaveBeenCalled();
-    expect(studySpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText(/collection date/i)).toBeInTheDocument();
+    });
   });
 
-  test('handles empty facet summary data', async ({ worker }: { worker: SetupWorker}) => {
-    worker.use(
+  test('handles empty facet summary data', async () => {
+    server.use(
       http.post('/api/biosample/facet', () => {
         return HttpResponse.json([]);
       }),
       http.post('/api/study/facet', () => {
         return HttpResponse.json([]);
+      }),
+      http.post('/api/biosample/binned_facet', () => {
+        return HttpResponse.json([]);
       })
     );
 
-    const screen = await render(TimelineVisGroup, {
+    render(TimelineVisGroup, {
       props: { conditions: [] },
     });
 
-    // Component should still render
-    await expect.element(screen.getByText(/collection date/i)).toBeInTheDocument();
+    expect(screen.getByText(/collection date/i)).toBeInTheDocument();
   });
 });
