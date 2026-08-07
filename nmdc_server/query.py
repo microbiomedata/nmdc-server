@@ -1296,6 +1296,8 @@ class SearchQuery(BaseModel):
 
 class MultiSearchQuery(SearchQuery):
     endpoints: List[str] = []
+    include_older_workflow_executions: bool = False
+    """If True, include workflow executions superseded by newer ones and their outputs."""
 
 
 class ConditionResultSchema(SimpleConditionSchema):

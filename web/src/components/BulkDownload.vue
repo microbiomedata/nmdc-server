@@ -115,7 +115,7 @@ async function downloadMetadata() {
     metadataDownloadLoading.value = true;
     metadataTermsDialog.value = false;
     const endpoints = metadataDownloadSelected.value;
-    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints);
+    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints, stateRefs.includeOlderWorkflowExecutions.value);
     downloadBlob(blob, 'metadata.zip');
   } catch (error) {
     console.error('Failed to download metadata:', error);

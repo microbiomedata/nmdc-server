@@ -593,10 +593,10 @@ async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource
   return data;
 }
 
-async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
+async function getMetadataZip(conditions: Condition[], endpoints: string[], includeOlderWorkflowExecutions: boolean = false): Promise<Blob> {
   const { data } = await client.post<Blob>(
     `download_metadata`,
-    { conditions, endpoints },
+    { conditions, endpoints, include_older_workflow_executions: includeOlderWorkflowExecutions },
     { responseType: 'blob' }
   );
   return data;

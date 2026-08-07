@@ -523,6 +523,7 @@ def get_documents_by_biosample_ids(
     biosample_ids_list: list[str],
     high_level_type: str,
     batch_size: int = 1000,
+    include_older_workflow_executions: bool = True,
 ) -> Iterator[dict]:
     """
     Yield documents of type, `high_level_type`, related to any of the specified `Biosample`s.
@@ -546,8 +547,22 @@ def get_documents_by_biosample_ids(
         select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
-        .order_by(models.BiosampleRelatedDocument.id)
-        .execution_options(stream_results=True, yield_per=batch_size)
+    )
+
+    if not include_older_workflow_executions:
+        if high_level_type == "nmdc:DataObject":
+            superseded_outputs = aggregations.make_superseded_wfe_outputs_subquery(db)
+            statement = statement.where(
+                models.BiosampleRelatedDocument.id.notin_(select(superseded_outputs.c.id))
+            )
+        elif high_level_type == "nmdc:WorkflowExecution":
+            # JSONB `->>` produces SQL NULL for both an absent key and a JSON null.
+            statement = statement.where(
+                models.BiosampleRelatedDocument.document["superseded_by"].astext.is_(None)
+            )
+
+    statement = statement.order_by(models.BiosampleRelatedDocument.id).execution_options(
+        stream_results=True, yield_per=batch_size
     )
     for row in db.execute(statement):
         yield row[0]

@@ -517,7 +517,10 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                         jf.write(b"[\n")
                         first = True
                         for doc in crud.get_documents_by_biosample_ids(
-                            db, biosample_ids, high_level_type
+                            db,
+                            biosample_ids,
+                            high_level_type,
+                            include_older_workflow_executions=q.include_older_workflow_executions,
                         ):
                             if not first:
                                 # Write a comma before all but the first document to maintain valid JSON list syntax.
