@@ -1186,7 +1186,7 @@ class DataObjectAggregation(BaseModel):
 
 class DataObjectQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
-    include_older_workflow_executions: bool = True
+    include_older_workflow_executions: bool = False
     """If True, include older workflow executions that have been superseded by newer ones."""
 
     def _make_superseded_data_object_ids_subquery(self, db: Session):
