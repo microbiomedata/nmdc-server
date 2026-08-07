@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -590,17 +590,90 @@ def create_file_download(
     return db_file_download
 
 
-def safe_name(name: str) -> str:
-    """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
-    return name.replace("/", "_").replace("\\", "_").replace(":", "_")
+# def safe_name(name: str) -> str:
+#     """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
+#     return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
 
-def construct_data_object_filename(data_object_id: str, data_object_name: str) -> str:
-    """
-    Construct a unique file name for the data object that is safe to use in a zip file.
-    The file name becomes `<data_object.id>__<data_object.name>` with any characters that are not safe for file names replaced with underscores.
-    """
-    return f"{safe_name(data_object_id)}__{safe_name(data_object_name)}"
+# def construct_data_object_filename(data_object_id: str, data_object_name: str) -> str:
+#     """
+#     Construct a unique file name for the data object that is safe to use in a zip file.
+#     The file name becomes `<data_object.id>__<data_object.name>` with any characters that are not safe for file names replaced with underscores.
+#     """
+#     return f"{safe_name(data_object_id)}__{safe_name(data_object_name)}"
+
+
+# def create_bulk_download(
+#     db: Session, bulk_download: bulk_download_schema.BulkDownloadCreate
+# ) -> Optional[models.BulkDownload]:
+#     data_object_query = query.DataObjectQuerySchema(
+#         conditions=bulk_download.conditions,
+#         data_object_filter=bulk_download.filter,
+#     )
+#     try:
+#         bulk_download_model = models.BulkDownload(**bulk_download.dict())
+#         db.add(bulk_download_model)
+
+#         has_files = False
+#         for data_object in data_object_query.execute(db):
+#             if data_object.url is None:
+#                 logger.warning("Data object url is empty in bulk download")
+#                 continue
+
+#             has_files = True
+
+#             db.add(
+#                 models.BulkDownloadDataObject(
+#                     bulk_download=bulk_download_model,
+#                     data_object=data_object,
+#                     path=f"data/{construct_data_object_filename(data_object.id, data_object.name)}",
+#                 )
+#             )
+
+#         if not has_files:
+#             db.rollback()
+#             return None
+
+#         db.commit()
+#         return bulk_download_model
+
+#     except Exception:
+#         db.rollback()
+#         raise
+
+
+def construct_zip_file_path(data_object: models.DataObject) -> str:
+    """Return a path inside the zip file for the data object."""
+    # TODO:
+    #   - Users will most likely want more descriptive folder names
+    #   - Add metadata for parent entities in the zip file
+    #   - We probably want to reference the workflow activity but that
+    #     involves a complicated query... need a way to join that information
+    #     in the original query (possibly in the sqlalchemy relationship)
+    if not data_object.omics_processings:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Data object has no associated omics processings.",
+        )
+    omics_processing = data_object.omics_processings[0]
+    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
+
+    def safe_name(name: str) -> str:
+        return name.replace("/", "_").replace("\\", "_").replace(":", "_")
+
+    op_name = safe_name(omics_processing.id)
+
+    if biosamples:
+        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
+        study = biosamples[0].study
+    else:
+        # Some emsl omics_processing are missing biosamples
+        biosample_name = "unknown"
+        study = omics_processing.study
+
+    study_name = safe_name(study.id)
+    da_name = safe_name(data_object.name)
+    return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
 
 
 def create_bulk_download(
@@ -626,7 +699,7 @@ def create_bulk_download(
                 models.BulkDownloadDataObject(
                     bulk_download=bulk_download_model,
                     data_object=data_object,
-                    path=f"data/{construct_data_object_filename(data_object.id, data_object.name)}",
+                    path=construct_zip_file_path(data_object),
                 )
             )
 
