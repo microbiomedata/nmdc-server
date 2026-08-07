@@ -781,11 +781,12 @@ async function getEnvoTrees() {
 /**
  * Bulk Download API
  */
-async function getBulkDownloadSummary(conditions: Condition[]) {
+async function getBulkDownloadSummary(conditions: Condition[], includeOlderWorkflowExecutions: boolean = false) {
   const { data } = await client.post<BulkDownloadSummary>(
     "data_object/workflow_summary",
     {
       conditions,
+      include_older_workflow_executions: includeOlderWorkflowExecutions,
     }
   );
   return data;
@@ -793,13 +794,15 @@ async function getBulkDownloadSummary(conditions: Condition[]) {
 
 async function getBulkDownloadAggregateSummary(
   conditions: Condition[],
-  dataObjectFilter: DataObjectFilter[]
+  dataObjectFilter: DataObjectFilter[],
+  includeOlderWorkflowExecutions: boolean = false
 ) {
   const { data } = await client.post<BulkDownloadAggregateSummary>(
     "bulk_download/summary",
     {
       conditions,
       data_object_filter: dataObjectFilter,
+      include_older_workflow_executions: includeOlderWorkflowExecutions,
     }
   );
   return data;
@@ -807,11 +810,13 @@ async function getBulkDownloadAggregateSummary(
 
 async function createBulkDownload(
   conditions: Condition[],
-  dataObjectFilter: DataObjectFilter[]
+  dataObjectFilter: DataObjectFilter[],
+  includeOlderWorkflowExecutions: boolean = false
 ) {
   const { data } = await client.post<BulkDownload>("bulk_download", {
     conditions,
     data_object_filter: dataObjectFilter,
+    include_older_workflow_executions: includeOlderWorkflowExecutions,
   });
   return {
     ...data,

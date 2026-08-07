@@ -913,7 +913,9 @@ def data_object_aggregation(
     query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
     db: Session = Depends(get_db),
 ):
-    return crud.aggregate_data_object_by_workflow(db, query.conditions)
+    return crud.aggregate_data_object_by_workflow(
+        db, query.conditions, query.include_older_workflow_executions
+    )
 
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
@@ -948,6 +950,7 @@ async def create_bulk_download(
             orcid=user.orcid,
             conditions=query.conditions,
             filter=query.data_object_filter,
+            include_older_workflow_executions=query.include_older_workflow_executions,
         ),
     )
     if bulk_download is None:

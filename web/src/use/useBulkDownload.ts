@@ -10,6 +10,7 @@ import useRequest from './useRequest';
 export default function useBulkDownload(
   conditions: Ref<Condition[]>,
   dataObjectFilter: Ref<DataObjectFilter[]>,
+  includeOlderWorkflowExecutions: Ref<boolean> = ref(false),
 ) {
   const downloadOptions = ref({} as BulkDownloadSummary);
   const bulkDownloads = ref([] as BulkDownload[]);
@@ -21,7 +22,11 @@ export default function useBulkDownload(
 
   async function download() {
     return request(async () => {
-      const val = await api.createBulkDownload(conditions.value, dataObjectFilter.value);
+      const val = await api.createBulkDownload(
+        conditions.value,
+        dataObjectFilter.value,
+        includeOlderWorkflowExecutions.value,
+      );
       bulkDownloads.value.push(val);
       return val;
     });
@@ -31,15 +36,19 @@ export default function useBulkDownload(
     downloadSummary.value = await api.getBulkDownloadAggregateSummary(
       conditions.value,
       dataObjectFilter.value,
+      includeOlderWorkflowExecutions.value,
     );
   }
 
   async function getDownloadOptions() {
-    downloadOptions.value = await api.getBulkDownloadSummary(conditions.value);
+    downloadOptions.value = await api.getBulkDownloadSummary(
+      conditions.value,
+      includeOlderWorkflowExecutions.value,
+    );
   }
 
-  watch([conditions, dataObjectFilter], getSummary);
-  watch([conditions], getDownloadOptions);
+  watch([conditions, dataObjectFilter, includeOlderWorkflowExecutions], getSummary);
+  watch([conditions, includeOlderWorkflowExecutions], getDownloadOptions);
 
   getDownloadOptions();
   getSummary();

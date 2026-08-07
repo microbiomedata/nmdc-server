@@ -486,9 +486,13 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
 
 
 def aggregate_data_object_by_workflow(
-    db: Session, conditions: List[query.ConditionSchema]
+    db: Session,
+    conditions: List[query.ConditionSchema],
+    include_older_workflow_executions: bool = True,
 ) -> schemas.DataObjectAggregation:
-    return aggregations.get_data_object_aggregation(db, conditions)
+    return aggregations.get_data_object_aggregation(
+        db, conditions, include_older_workflow_executions
+    )
 
 
 def search_data_objects(
@@ -607,6 +611,7 @@ def create_bulk_download(
     data_object_query = query.DataObjectQuerySchema(
         conditions=bulk_download.conditions,
         data_object_filter=bulk_download.filter,
+        include_older_workflow_executions=bulk_download.include_older_workflow_executions,
     )
     try:
         bulk_download_model = models.BulkDownload(**bulk_download.dict())
