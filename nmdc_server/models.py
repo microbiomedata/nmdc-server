@@ -150,7 +150,10 @@ class EnvoTerm(Base):
 # query all ancestor terms with a recursive query.
 class EnvoAncestor(Base):
     __tablename__ = "envo_ancestor"
-    __table_args__ = (UniqueConstraint("id", "ancestor_id"),)
+    __table_args__ = (
+        UniqueConstraint("id", "ancestor_id"),
+        Index("idx_envo_ancestor_ancestor_id", "ancestor_id"),
+    )
 
     id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
     ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
@@ -513,6 +516,9 @@ class Biosample(Base, AnnotatedModel):
             ),
             postgresql_using="gin",
         ),
+        Index("idx_biosample_env_broad_scale_id", "env_broad_scale_id"),
+        Index("idx_biosample_env_local_scale_id", "env_local_scale_id"),
+        Index("idx_biosample_env_medium_id", "env_medium_id"),
     )
 
     add_date = Column(DateTime, nullable=True)
@@ -624,6 +630,26 @@ class BiosampleRelatedDocument(Base):
         default=list,
         comment="IDs of documents that are immediately downstream of the document",
     )
+
+
+Index(
+    "ix_biosample_related_document_biosample_ids",
+    BiosampleRelatedDocument.biosample_ids,
+    postgresql_using="gin",
+)
+Index(
+    "ix_biosample_related_document_high_level_type",
+    BiosampleRelatedDocument.high_level_type,
+)
+Index(
+    "ix_biosample_related_document_document_type",
+    BiosampleRelatedDocument.document["type"].astext,
+)
+Index(
+    "ix_biosample_related_document_downstream_neighbor_ids",
+    BiosampleRelatedDocument.downstream_neighbor_ids,
+    postgresql_using="gin",
+)
 
 
 omics_processing_output_association = output_association("omics_processing")
