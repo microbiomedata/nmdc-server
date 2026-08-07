@@ -23,7 +23,7 @@ requests_timeout_for_connection: float = 5.0  # in seconds
 requests_timeout_for_next_byte_of_response: float = 20.0  # in seconds
 requests_timeout: tuple[float, float] = (
     requests_timeout_for_connection,
-    requests_timeout_for_next_byte_of_response
+    requests_timeout_for_next_byte_of_response,
 )
 
 
