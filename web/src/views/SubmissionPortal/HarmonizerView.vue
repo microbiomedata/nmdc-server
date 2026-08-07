@@ -1,59 +1,39 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
-import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
+import { clamp, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
 import {
+  AppBannerHeightKey,
   DATA_MG,
   DATA_MG_INTERLEAVED,
   DATA_MT,
   DATA_MT_INTERLEAVED,
   EMSL,
   HARMONIZER_TEMPLATES,
+  HarmonizerTemplateInfo,
+  JGI_ISOLATE_GENOME,
+  JGI_ISOLATE_TRANSCRIPTOME,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
-  SuggestionsMode,
+  SubmissionEditorRole,
+  TemplateName,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
-import {
-  fetchSuggestionsFromSampleRows,
-  canEditSampleMetadata,
-  canEditSubmissionByStatus,
-  hasChanged,
-  incrementalSaveRecord,
-  incrementalSaveRecordRequest,
-  isOwner,
-  isSubmissionValid,
-  isTestSubmission,
-  mergeSampleData,
-  metadataSuggestions,
-  resetSampleMetadataValidation,
-  sampleData,
-  setTabInvalidCells,
-  setTabValidated,
-  status,
-  submit,
-  suggestionMode,
-  templateList,
-  validationState,
-  packageName,
-  fetchSuggestionsFromStudyInfo,
-} from './store';
-import { AppBannerHeightKey } from './SubmissionView.vue';
-import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import StatusAlert from './Components/StatusAlert.vue';
-import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/views/SubmissionPortal/colors.ts';
+import SubmissionUneditableBanner from './Components/SubmissionUneditableBanner.vue';
+import { useSubmissionStore } from './store';
+import { storeToRefs } from 'pinia';
+import { getHarmonizerTemplateData, getHarmonizerTemplateForTab } from './harmonizerTabs';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -81,8 +61,6 @@ const ColorKey = {
 const HELP_SIDEBAR_WIDTH = 320;
 const TABS_HEIGHT = 48;
 
-const SUGGESTION_REQUEST_DELAY = 3000;
-
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
 const SAMP_NAME = 'samp_name';
@@ -107,9 +85,18 @@ const ALWAYS_READ_ONLY_COLUMNS = [
   'jgi_proposal_id',
 ];
 
-const props = defineProps<{
+defineProps<{
   id: string,
+  sampleSetId: string,
 }>();
+
+const store = useSubmissionStore();
+const {
+  loadSuggestionsFromStudyInfo,
+  saveSampleSetFormEdits,
+  submitSampleSet
+} = store;
+const { templateList, isOwner } = storeToRefs(store);
 
 const harmonizerApi = new HarmonizerApi();
 const jumpToModel = ref();
@@ -117,19 +104,37 @@ const highlightedValidationError = ref(0);
 const validationActiveCategory = ref('All Errors');
 const columnVisibility = ref('all');
 const sidebarOpen = ref(true);
+const showSuggesterBadge = ref(false);
 
-const activeTemplateKey = ref(templateList.value[0]);
-const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
-const activeTabIndex = ref(0);
-const activeTemplateData = computed(() => {
-  if (!activeTemplate.value?.sampleDataSlot) {
-    return [];
+// show badge on load if submission already has sample data
+watch(() => store.sampleSet.forms.sampleData.data, (newData: Record<string, any[]>) => {
+  const hasData = Object.values(newData).some((rows) => rows.length > 0);
+  if (hasData) {
+    showSuggesterBadge.value = true;
   }
-  return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
-});
-const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
-const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
-const tabsValidated = computed(() => validationState.sampleMetadata?.tabsValidated || {});
+}, { immediate: true});
+
+// show badge on each cell edit
+// watch (hasChanged, (newVal: number, oldVal: number) => {
+//   if (newVal > oldVal) {
+//     showSuggesterBadge.value = true;
+//   }
+// });
+
+const activeTabIndex = ref(0);
+const activeTemplateState = computed(() => getHarmonizerTemplateForTab(templateList.value, activeTabIndex.value));
+const activeTemplateKey = computed(() => activeTemplateState.value.key);
+const activeTemplate = computed(() => activeTemplateState.value.template);
+const activeTemplateData = computed(() => getHarmonizerTemplateData(store.sampleSet.forms.sampleData.data, activeTemplate.value));
+const hasValidSampleEnvironmentSelection = computed(
+  () => isEqual(store.sampleSet.forms.sampleEnvironmentForm.validation, [])
+);
+const hasValidUserFacilitySelection = computed(
+  () => isEqual(store.sampleSet.forms.multiOmicsForm.validation, [])
+);
+const tabsValidated = computed(
+  () => store.sampleSet.forms.sampleData.validation?.tabsValidated || {}
+);
 
 const submitDialog = ref(false);
 
@@ -138,25 +143,111 @@ const importErrorSnackbar = ref(false);
 const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
 
-watch(activeTemplate, () => {
+const allowedRoles: SubmissionEditorRole[] = ['owner', 'editor', 'metadata_contributor']
+const isEditable = computed(() => store.getUneditableReason(allowedRoles, true) === undefined);
+
+function setTabValidated(tabName: TemplateName, validated: boolean) {
+  if (store.sampleSet.forms.sampleData.validation === null) {
+    store.sampleSet.forms.sampleData.validation = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  if (!templateList.value.includes(tabName)) {
+    return;
+  }
+  store.sampleSet.forms.sampleData.validation.tabsValidated[tabName] = validated;
+}
+
+function mergeSampleData(key: string | undefined, data: any[]) {
+  if (!key) {
+    return;
+  }
+  store.sampleSet.forms.sampleData.data = {
+    ...store.sampleSet.forms.sampleData.data,
+    [key]: data,
+  };
+}
+
+function setTabInvalidCells(tabName: TemplateName, invalidCells: Record<number, Record<number, string>>) {
+  if (store.sampleSet.forms.sampleData.validation === null) {
+    store.sampleSet.forms.sampleData.validation = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  if (!templateList.value.includes(tabName)) {
+    return;
+  }
+  store.sampleSet.forms.sampleData.validation.invalidCells[tabName] = invalidCells;
+}
+
+function resetSampleMetadataValidation() {
+  if (store.sampleSet.forms.sampleData.validation === null) {
+    store.sampleSet.forms.sampleData.validation = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  store.sampleSet.forms.sampleData.validation.invalidCells = {};
+  Object.keys(store.sampleSet.forms.sampleData.validation.tabsValidated).forEach((tab) => {
+    store.sampleSet.forms.sampleData.validation!.tabsValidated[tab] = false;
+  });
+}
+
+function isSampleSetValid(): boolean {
+  const { multiOmicsForm, sampleEnvironmentForm, sampleData, senderShippingInfoForm } = store.sampleSet.forms;
+  if (!isEqual(multiOmicsForm.validation, [])) {
+    return false;
+  }
+  if (!isEqual(sampleEnvironmentForm.validation, [])) {
+    return false;
+  }
+  // The sender shipping info form is optional. If it has been validated, it must have no errors
+  if (senderShippingInfoForm.validation != null && !isEqual(senderShippingInfoForm.validation, [])) {
+    return false;
+  }
+  // The sample metadata must be validated with no errors
+  if (sampleData.validation == null) {
+    return false;
+  }
+  const tabsValidatedValues = Object.values(sampleData.validation.tabsValidated);
+  if (tabsValidatedValues.length === 0) {
+    return false;
+  }
+  if (tabsValidatedValues.some((validated) => !validated)) {
+    return false;
+  }
+  if (Object.values(sampleData.validation.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Load a template's stored rows and validation state into the Data Harmonizer table.
+ */
+function loadTemplateData(templateKey: TemplateName, template: HarmonizerTemplateInfo) {
   // WARNING: It's important to do the column settings update /before/ data. Otherwise,
   // columns will not be rendered with the correct width.
   harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
 
   // If the environment tab selected is a mixin it should be readonly
   const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'mixin');
-  if (environmentList.includes(activeTemplateKey.value!)) {
+  const templateData = getHarmonizerTemplateData(store.sampleSet.forms.sampleData.data, template);
+  if (environmentList.includes(templateKey)) {
     harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
-    harmonizerApi.setMaxRows(activeTemplateData.value.length);
+    harmonizerApi.setMaxRows(templateData.length);
   }
-  harmonizerApi.loadData(activeTemplateData.value);
-  harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+  harmonizerApi.loadData(templateData);
+  harmonizerApi.setInvalidCells(store.sampleSet.forms.sampleData.validation?.invalidCells[templateKey] || {});
   harmonizerApi.changeVisibility(columnVisibility.value);
-});
+  harmonizerApi.setTableReadOnly({ readOnly: !isEditable.value });
+}
 
 const validationErrors = computed(() => {
   const remapped: ValidationErrors = {};
-  const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
+  const invalid: Record<number, Record<number, string>> = store.sampleSet.forms.sampleData.validation?.invalidCells[activeTemplateKey.value!] || {};
   if (Object.keys(invalid).length) {
     remapped['All Errors'] = [];
   }
@@ -178,41 +269,26 @@ const validationErrors = computed(() => {
 const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
 const validationTotalCounts = computed(() => Object.fromEntries(
-  Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
+  Object.entries(store.sampleSet.forms.sampleData.validation?.invalidCells || {}).map(([template, cells]) => ([
     template,
     sum(Object.values(cells).map((row) => Object.keys(row).length)),
   ])),
 ));
 
-const saveRecord = () => incrementalSaveRecord(props.id);
-    // Count is incremented on successful saves. We use a separate ref for showing the success message because we want
-    // to not show it when this view first mounts (based on saves that may have happened in other views). And we want
-    // to be able to hide it after a delay.
-    const isSaveSuccessMessageVisible = ref(false);
-    const { start: startHideSuccessMessageTimer } = useTimeoutFn(() => {
-      isSaveSuccessMessageVisible.value = false;
-    }, 5000);
-    watch(() => incrementalSaveRecordRequest.count.value, () => {
-      isSaveSuccessMessageVisible.value = true;
-      startHideSuccessMessageTimer();
-    });
-
-let changeBatch: any[] = [];
-const debouncedSuggestionRequest = debounce(async () => {
-  const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-  await fetchSuggestionsFromSampleRows(props.id, activeTemplate.value?.schemaClass!, changedRowData);
-  changeBatch = [];
-}, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
-
-watch(suggestionMode, () => {
-  // If live suggestions are disabled, clear the queue and cancel the timer
-  if (suggestionMode.value !== SuggestionsMode.LIVE) {
-    changeBatch = [];
-    debouncedSuggestionRequest.cancel();
-  }
+const saveRecord = () => saveSampleSetFormEdits();
+// Count is incremented on successful saves. We use a separate ref for showing the success message because we want
+// to not show it when this view first mounts (based on saves that may have happened in other views). And we want
+// to be able to hide it after a delay.
+const isSaveSuccessMessageVisible = ref(false);
+const { start: startHideSuccessMessageTimer } = useTimeoutFn(() => {
+  isSaveSuccessMessageVisible.value = false;
+}, 5000);
+watch(() => store.sampleSet.requests.saving.count, () => {
+  isSaveSuccessMessageVisible.value = true;
+  startHideSuccessMessageTimer();
 });
 
-function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
+function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: TemplateName) {
   const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
   if (environmentKeys.includes(templateKey)) {
     return true;
@@ -236,6 +312,12 @@ function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) 
   if (templateKey === JGI_MT) {
     return row_types.includes('metatranscriptomics');
   }
+  if (templateKey === JGI_ISOLATE_GENOME) {
+    return row_types.includes('isolate genome sequencing')
+  }
+  if (templateKey === JGI_ISOLATE_TRANSCRIPTOME) {
+    return row_types.includes('isolate transcriptome sequencing')
+  }
   if (templateKey === DATA_MG) {
     return row_types.includes('metagenomics');
   }
@@ -254,17 +336,17 @@ function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) 
 // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
 const isNonEmpty = (val: any) => val !== null && val !== '';
 
-function synchronizeTabData(templateKey: string) {
+function synchronizeTabData(templateKey: TemplateName) {
   const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
   if (environmentKeys.includes(templateKey)) {
     return;
   }
-  const nextData = { ...sampleData.value };
-  const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
+  const nextData = { ...store.sampleSet.forms.sampleData.data };
+  const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
 
   const environmentSlots = templateList.value
-    .filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published')
-    .map((t) => HARMONIZER_TEMPLATES[t]?.sampleDataSlot);
+    .filter((t) => HARMONIZER_TEMPLATES[t].status === 'published')
+    .map((t) => HARMONIZER_TEMPLATES[t].sampleDataSlot);
 
   if (!templateSlot || !environmentSlots) {
     return;
@@ -322,7 +404,7 @@ function synchronizeTabData(templateKey: string) {
       });
     });
   }
-  sampleData.value = nextData;
+  store.sampleSet.forms.sampleData.data = nextData;
 }
 
 /**
@@ -337,7 +419,7 @@ const syncAndMergeTabsForRemovedRows = () => {
   );
   // If there are any sampleDataSlots populated that somehow are missing from
   // the template list, make sure those data are updated as well.
-  Object.keys(sampleData.value).forEach((key) => {
+  Object.keys(store.sampleSet.forms.sampleData.data).forEach((key) => {
     // Loop through keys in the sampleData for the submission. Each
     // key maps to a template. We have to find that template.
     const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
@@ -347,21 +429,12 @@ const syncAndMergeTabsForRemovedRows = () => {
       // If we found the template, synchronize the data
       // Make sure we carry the deletion through to the sampleData
       // The current tab's data needs to be updated first, then synchronized
-      synchronizeTabData(templateKey);
+      synchronizeTabData(templateKey as TemplateName);
     }
   });
 };
 
-const onDataChange = async (changes: any[]) => {
-  // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
-  // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
-  if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
-    // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
-    // where either the previous value or updated value (or both) are non-empty.
-    const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
-    changeBatch.push(...nonEmptyChanges);
-    debouncedSuggestionRequest();
-  }
+const onDataChange = async (changes: any[], _source: string | null) => {
   // If any changes touched the sample name or analysis/data type columns on an environment
   // tab, we need to synch those changes to non-active tabs
   const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
@@ -371,7 +444,6 @@ const onDataChange = async (changes: any[]) => {
     return isNonemptyChange && isRelevantColumn;
   });
 
-  hasChanged.value += 1;
   if (shouldSynchronizeTabs) {
     syncAndMergeTabsForRemovedRows();
   } else {
@@ -407,16 +479,16 @@ function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number,
   const duplicateErrors: Record<string, Record<number, Record<number, string>>> = {};
 
   // Track sample names and which tabs/rows they appear in
-  const sampleNameMap = new Map<string, Array<{ templateKey: string; rowIndex: number }>>();
+  const sampleNameMap = new Map<string, Array<{ templateKey: TemplateName; rowIndex: number }>>();
 
   // Collect all sample names from environmental tabs
-  packageName.value.forEach((templateKey) => {
+  store.sampleSet.forms.sampleEnvironmentForm.packageName.forEach((templateKey) => {
     const template = HARMONIZER_TEMPLATES[templateKey];
     if (!template?.sampleDataSlot || !template?.schemaClass) {
       return;
     }
 
-    const tabData = sampleData.value[template.sampleDataSlot] || [];
+    const tabData = store.sampleSet.forms.sampleData.data[template.sampleDataSlot] || [];
     tabData.forEach((row, rowIndex) => {
       const sampleName = row[SAMP_NAME];
       if (sampleName && sampleName.trim()) {
@@ -454,7 +526,18 @@ function validateDuplicateSampleNamesAcrossTabs(): Record<string, Record<number,
   return duplicateErrors;
 }
 
-async function validate() {
+/**
+ * Validate the Data Harmonizer table currently loaded for the provided template.
+ */
+async function validateTemplate(
+  templateKey: TemplateName | null,
+  template: HarmonizerTemplateInfo | null,
+  { focusInvalidCell = true } = {},
+) {
+  if (!templateKey || !template || !isEditable.value) {
+    return;
+  }
+
   const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
 
   // Check if the spreadsheet is empty
@@ -462,19 +545,19 @@ async function validate() {
   // Update invalid cells if empty
   if (isEmpty) {
     harmonizerApi.setInvalidCells({});
-    setTabInvalidCells(activeTemplateKey.value!, {});
-    setTabValidated(activeTemplateKey.value!, false);
+    setTabInvalidCells(templateKey, {});
+    setTabValidated(templateKey, false);
     emptySheetSnackbar.value = true;
     saveRecord(); // This is a background save that we intentionally don't wait for
     return;
   }
 
-  mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
+  mergeSampleData(template.sampleDataSlot, data);
   const result = await harmonizerApi.validate();
 
   // Add cross-tab duplicate sample name validation
   const crossTabDuplicates = validateDuplicateSampleNamesAcrossTabs();
-  const crossTabDuplicatesForCurrentTab = crossTabDuplicates[activeTemplateKey.value!] || {};
+  const crossTabDuplicatesForCurrentTab = crossTabDuplicates[templateKey] || {};
 
   // Merge the cross-tab duplicate errors into the current tab's validation result
   Object.entries(crossTabDuplicatesForCurrentTab).forEach(([rowStr, colErrors]) => {
@@ -490,26 +573,34 @@ async function validate() {
     sidebarOpen.value = true;
   }
 
-  setTabInvalidCells(activeTemplateKey.value!, result);
-  setTabValidated(activeTemplateKey.value!, valid);
+  setTabInvalidCells(templateKey, result);
+  setTabValidated(templateKey, valid);
   saveRecord(); // This is a background save that we intentionally don't wait for
 
-  if (valid === false) {
+  if (valid === false && focusInvalidCell) {
     errorClick(0);
   }
-  validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
+  validationSuccessSnackbar.value = Object.values(store.sampleSet.forms.sampleData.validation?.tabsValidated || {}).every((value) => value);
+}
+
+/**
+ * Validate the active template represented by the selected tab.
+ */
+async function validate() {
+  await validateTemplate(activeTemplateKey.value, activeTemplate.value);
 }
 
 const submissionState = computed(() => {
-  const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
-  const canSubmitByStatus = status.value === 'InProgress'
-  const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
+  const status = store.sampleSet.record?.status
+  const hasSubmitPermission = isOwner.value || stateRefs.user?.value?.is_admin;
+  const canSubmitByStatus = status === 'InProgress'
+  const isSubmitted = submitCount.value > 0 || status === 'SubmittedPendingReview';
   let submitDisabledReason: string | null = null;
   if (!hasSubmitPermission) {
     submitDisabledReason = 'You do not have permission to submit this record.';
   } else if (!canSubmitByStatus) {
-    submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
-  } else if (!isSubmissionValid()) {
+    submitDisabledReason = `Submission cannot be made while in status: ${status}.`;
+  } else if (!isSampleSetValid()) {
     submitDisabledReason = 'Some forms contain validation errors.';
   }
   return {
@@ -518,12 +609,6 @@ const submissionState = computed(() => {
     canSubmit: submitDisabledReason === null,
   };
 });
-
-const handleSubmitClick = () => {
-  if (submissionState.value.canSubmit) {
-    submitDialog.value = true;
-  }
-};
 
 const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
   .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -550,8 +635,8 @@ watch(columnVisibility, () => {
   harmonizerApi.changeVisibility(columnVisibility.value);
 });
 
-watch(activeTabIndex, (newIndex) => {
-  changeTemplate(newIndex);
+watch(activeTabIndex, (newIndex, oldIndex) => {
+  changeTemplate(newIndex, oldIndex);
 });
 
 const selectedHelpDict = computed(() => {
@@ -561,11 +646,23 @@ const selectedHelpDict = computed(() => {
   return null;
 });
 
-const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+const {
+  request: submitRequest,
+  loading: submitLoading,
+  count: submitCount,
+  error: submitError,
+  reset: submitReset,
+} = useRequest();
+const handleSubmitClick = () => {
+  if (submissionState.value.canSubmit) {
+    submitReset();
+    submitDialog.value = true;
+  }
+};
 const doSubmit = () => submitRequest(async () => {
   const data = await harmonizerApi.exportJson();
   mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-  await submit(props.id, 'SubmittedPendingReview');
+  await submitSampleSet();
   submitDialog.value = false;
 });
 
@@ -582,11 +679,12 @@ async function downloadSamples() {
     }
     const worksheet = utils.json_to_sheet([
       harmonizerApi.getHeaderRow(template.schemaClass),
-      ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
+      ...HarmonizerApi.flattenArrayValues(store.sampleSet.forms.sampleData.data[template.sampleDataSlot] || []),
     ], {
       skipHeader: true,
     });
-    utils.book_append_sheet(workbook, worksheet, template.excelWorksheetName || template.displayName);
+    const worksheetName = harmonizerApi.getExcelWorksheetName(template);
+    utils.book_append_sheet(workbook, worksheet, worksheetName);
   });
   writeFile(workbook, EXPORT_FILENAME, { compression: true });
 }
@@ -602,16 +700,20 @@ function openFile(file: File) {
     const notImported = [] as string[];
     Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
       const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
-        template.excelWorksheetName === name || template.displayName === name
+        harmonizerApi.getExcelWorksheetName(template) === name
       ));
+      if (!template || !template.sampleDataSlot || !template.schemaClass) {
+        notImported.push(name);
+        return;
+      }
       const templateSelected = templateList.value.find((selectedTemplate) => {
         const templateName = HARMONIZER_TEMPLATES[selectedTemplate]?.displayName || '';
         return (
           template?.displayName === templateName
-          || template?.excelWorksheetName === templateName
+          || harmonizerApi.getExcelWorksheetName(template) === templateName
         );
       });
-      if (!template || !template.sampleDataSlot || !template.schemaClass || !templateSelected) {
+      if (!templateSelected) {
         notImported.push(name);
         return;
       }
@@ -637,14 +739,13 @@ function openFile(file: File) {
     importErrorSnackbar.value = notImported.length > 0;
 
     // Load imported data
-    sampleData.value = imported;
+    store.sampleSet.forms.sampleData.data = imported;
 
     // Clear validation state
     harmonizerApi.setInvalidCells({});
     resetSampleMetadataValidation();
 
     // Sync with backend
-    hasChanged.value += 1;
     saveRecord(); // This is a background save that we intentionally don't wait for
 
     // Load data for active tab into DataHarmonizer
@@ -661,51 +762,50 @@ function addHooks() {
   harmonizerApi.addChangeHook(onDataChange);
   harmonizerApi.addRowRemovedHook(async () => {
     syncAndMergeTabsForRemovedRows();
-    hasChanged.value += 1;
     saveRecord();
   });
 }
 
-async function changeTemplate(index: number) {
+/**
+ * Persist and validate the previously loaded template, then switch Data Harmonizer to the newly selected tab.
+ */
+async function changeTemplate(index: number, previousIndex: number) {
   if (!harmonizerApi.ready.value) {
     return;
   }
 
-  await validate();
+  const previousTemplateKey = templateList.value[previousIndex] || null;
+  const previousTemplate = previousTemplateKey ? HARMONIZER_TEMPLATES[previousTemplateKey] : null;
+  await validateTemplate(previousTemplateKey, previousTemplate, { focusInvalidCell: false });
 
   const nextTemplateKey = templateList.value[index];
   const nextTemplate = nextTemplateKey ? HARMONIZER_TEMPLATES[nextTemplateKey] : null;
 
   if (nextTemplate && nextTemplateKey) {
     // Get the stashed suggestions (if any) for the next template and present them.
-    metadataSuggestions.value = getPendingSuggestions(props.id, nextTemplate.schemaClass!);
+    store.sampleSet.suggestions = getPendingSuggestions(store.sampleSet.record!.id, nextTemplate.schemaClass!);
 
     // When changing templates we may need to populate the common columns
     // from the environment tabs
     synchronizeTabData(nextTemplateKey);
-    activeTemplateKey.value = nextTemplateKey;
-    activeTemplate.value = nextTemplate;
     harmonizerApi.useTemplate(nextTemplate.schemaClass);
+    loadTemplateData(nextTemplateKey, nextTemplate);
     addHooks();
   }
 }
 
 async function fetchSuggestionsFromStudyDetails() {
-  if (!activeTemplate.value?.schemaClass) {
+  if (!activeTemplate.value?.schemaClass || !activeTemplate.value?.sampleDataSlot) {
     return [];
   }
-  const allSchemaClassNames = packageName.value
+  const allSchemaClassNames = store.sampleSet.forms.sampleEnvironmentForm.packageName
     .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
-    .filter((c) => c !== undefined);
-  return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
+    .filter((c): c is string => c !== undefined);
+  return loadSuggestionsFromStudyInfo(allSchemaClassNames, activeTemplate.value.schemaClass, activeTemplate.value.sampleDataSlot, harmonizerApi);
 }
 
-watch(() => canEditSampleMetadata(), (canEdit) => {
-  if (harmonizerApi.ready.value) {
-    if (!canEdit) {
-      harmonizerApi.setTableReadOnly();
-    }
-  }
+watch(isEditable, (canEdit) => {
+  harmonizerApi.setTableReadOnly({ readOnly: !canEdit });
 });
 
 onMounted(async () => {
@@ -719,20 +819,17 @@ onMounted(async () => {
     await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
     await nextTick();
     // Load data and invalid cells for the active tab
-    harmonizerApi.loadData(activeTemplateData.value);
-    harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+    if (activeTemplateKey.value && activeTemplate.value) {
+      loadTemplateData(activeTemplateKey.value, activeTemplate.value);
+    }
     // If the tab has no validation state from the server, mark it as unvalidated
-    if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
+    if (!store.sampleSet.forms.sampleData.validation || !has(store.sampleSet.forms.sampleData.validation.tabsValidated, activeTemplateKey.value!)) {
       setTabValidated(activeTemplateKey.value!, false);
     }
     addHooks();
-    if (canEditSampleMetadata()) {
+    if (isEditable.value) {
       // Revive any stashed suggestions (in localstorage) for the active template
-      metadataSuggestions.value = getPendingSuggestions(props.id, activeTemplate.value?.schemaClass!);
-      // Fetch suggestions generated by study-level forms
-      void fetchSuggestionsFromStudyDetails();
-    } else {
-      harmonizerApi.setTableReadOnly();
+      store.sampleSet.suggestions = getPendingSuggestions(store.sampleSet.record!.id, activeTemplate.value?.schemaClass!);
     }
   }
 });
@@ -743,16 +840,14 @@ const appBannerHeight = inject(AppBannerHeightKey);
 </script>
 
 <template>
-  <SaveErrorSnackbar />
-  <SubmissionNavigationSidebar />
   <div
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionPermissionBanner
-      v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
+    <SubmissionUneditableBanner
+      :allowed-roles="allowedRoles"
+      in-sample-set-context
     />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-alert
       v-if="!hasValidSampleEnvironmentSelection"
       class="ma-8 flex-grow-0 overflow-visible"
@@ -778,7 +873,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
             v-if="validationErrorGroups.length === 0"
             color="primary"
             variant="outlined"
-            :disabled="!canEditSampleMetadata()"
+            :disabled="!isEditable"
             @click="validate"
           >
             Validate
@@ -865,7 +960,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
 
           <!-- Show loading indicator -->
           <span
-            v-if="incrementalSaveRecordRequest.loading.value"
+            v-if="store.sampleSet.requests.saving.loading"
             class="text-center"
           >
             <v-progress-circular
@@ -1058,6 +1153,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
           <v-icon v-else>
             mdi-menu-open
           </v-icon>
+          <span
+            v-if="!sidebarOpen && showSuggesterBadge"
+            style="position: absolute; top: 9px; right: 16px; width: 10px; height: 10px; background-color: #ff5330; border-radius: 50%; pointer-events: none;"
+          />
         </v-btn>
 
         <v-navigation-drawer
@@ -1073,16 +1172,19 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :column-help="selectedHelpDict"
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
-            :metadata-editing-allowed="canEditSampleMetadata()"
+            :metadata-editing-allowed="isEditable"
+            :show-suggester-badge="showSuggesterBadge"
+            @fetch-study-info-suggestions="fetchSuggestionsFromStudyDetails"
             @import-xlsx="openFile"
             @export-xlsx="downloadSamples"
+            @clear-suggester-badge="showSuggesterBadge = false"
           />
         </v-navigation-drawer>
       </v-layout>
       <div class="harmonizer-bottom-container">
         <div class="harmonizer-style-container">
           <div
-            v-if="canEditSampleMetadata()"
+            v-if="isEditable"
             id="harmonizer-footer-root"
           />
         </div>
@@ -1116,7 +1218,6 @@ const appBannerHeight = inject(AppBannerHeightKey);
               >
                 <v-btn
                   color="success"
-                  depressed
                   :disabled="!submissionState.canSubmit"
                   :loading="submitLoading"
                   @click="handleSubmitClick"
@@ -1132,39 +1233,47 @@ const appBannerHeight = inject(AppBannerHeightKey);
                     v-model="submitDialog"
                     width="auto"
                   >
-                    <v-card v-if="isTestSubmission">
-                      <v-card-title>
-                        Submit
-                      </v-card-title>
-                      <v-card-text>
-                        Test submissions cannot be submitted for NMDC review.
-                      </v-card-text>
+                    <v-card
+                      v-if="store.submission.record?.is_test_submission"
+                      title="Submit"
+                      text="Test submissions cannot be submitted for NMDC review."
+                    >
                       <v-card-actions>
                         <v-btn
-                          text
                           @click="submitDialog = false"
                         >
                           Close
                         </v-btn>
                       </v-card-actions>
                     </v-card>
-                    <v-card v-else>
-                      <v-card-title>
-                        Submit
-                      </v-card-title>
+                    <v-card
+                      v-else
+                      title="Submit"
+                    >
                       <v-card-text>
-                        You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                        <p>You are about to submit this study and metadata for NMDC review. Would you like to continue?</p>
+                        <p
+                          v-if="submitError"
+                          class="text-red-darken-2"
+                        >
+                          An error occurred while processing your submission. Please try again. If the problem persists, contact support.
+                        </p>
                       </v-card-text>
                       <v-card-actions>
                         <v-btn
-                          color="primary"
-                          class="mr-2"
+                          :disabled="submitLoading"
+                          @click="submitDialog = false"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          color="success"
+                          :disabled="submitLoading"
+                          variant="elevated"
+                          :loading="submitLoading"
                           @click="doSubmit"
                         >
-                          Yes- Submit
-                        </v-btn>
-                        <v-btn @click="submitDialog = false">
-                          Cancel
+                          Yes - Submit
                         </v-btn>
                       </v-card-actions>
                     </v-card>

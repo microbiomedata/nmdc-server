@@ -53,7 +53,7 @@ CREDENTIAL_MISSING_EXCEPTION = HTTPException(
 )
 
 AUTHORIZATION_CODE_INVALID_EXCEPTION = HTTPException(
-    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     detail="Invalid authorization code",
 )
 

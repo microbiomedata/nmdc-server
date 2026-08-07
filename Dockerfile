@@ -10,7 +10,7 @@ RUN apt-get update
 RUN apt-get install -y postgresql-client-15 git libpq-dev libc6-dev gcc
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.15 /uv /uvx /bin/
 
 # Configure global uv options
 ENV UV_PYTHON_DOWNLOADS=0
@@ -30,7 +30,10 @@ COPY . /app/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
+# Activate the virtual environment
+ENV PATH="/app/.venv/bin:$PATH"
+
 COPY .env.production /app/.env
 RUN chmod +x /app/start.sh
 WORKDIR /app/
-CMD ["uv", "run", "/app/start.sh"]
+CMD ["/app/start.sh"]

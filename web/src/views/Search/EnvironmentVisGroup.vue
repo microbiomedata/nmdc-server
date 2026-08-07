@@ -1,49 +1,34 @@
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
 import EcosystemSankey from '@/components/EcosystemSankey.vue';
-
-import {
-  toggleConditions,
-} from '@/store';
+import HelpWrapper from '@/components/HelpWrapper.vue';
+import { toggleConditions } from '@/store';
 import { Condition } from '@/data/api';
+import { VISUALIZATION_HEIGHT } from '@/views/Search/types';
 
-export default defineComponent({
-  components: {
-    EcosystemSankey,
-  },
+const helpSankey = 'This Sankey diagram shows samples by their ecosystem. There is a hierarchical relationship between ecosystem categories, ecosystem types, ecosystem subtypes, and specific ecosystems. Click on a section to filter by that ecosystem.';
 
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-  },
-
-  setup() {
-    return {
-      toggleConditions,
-    };
-  },
-});
+defineProps<{
+  conditions: Condition[];
+}>(); 
 </script>
 
 <template>
   <v-row>
     <v-col :cols="12">
-      <div
-        class="pr-2 overflow-y-auto overflow-x-hidden"
-        style="
-            height: 700px;
-            width: 100%;
-            max-width: 100%;
-          "
+      <HelpWrapper
+        :height="VISUALIZATION_HEIGHT"
+        :help-text="helpSankey"
+        allow-fullscreen
       >
         <EcosystemSankey
           :conditions="conditions"
-          style="width: 100%"
+          :style="{
+            width: '100%',
+            padding: '1rem',
+          }"
           @selected="toggleConditions($event.conditions)"
         />
-      </div>
+      </HelpWrapper>
     </v-col>
   </v-row>
 </template>

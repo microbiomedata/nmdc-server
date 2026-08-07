@@ -75,41 +75,41 @@ const rejectedSuggestions = new StoredMap<string[]>(REJECTED_SUGGESTIONS);
 const pendingSuggestions = new StoredMap<MetadataSuggestion[]>(PENDING_SUGGESTIONS);
 
 /**
- * Get the stored rejected suggestions for a given submission and schema class.
- * @param submissionId
+ * Get the stored rejected suggestions for a given sample set and schema class.
+ * @param sampleSetId
  * @param schemaClassName
  */
-function getRejectedSuggestions(submissionId: string, schemaClassName: string): string[] {
-  return rejectedSuggestions.get([submissionId, schemaClassName]) || [];
+function getRejectedSuggestions(sampleSetId: string, schemaClassName: string): string[] {
+  return rejectedSuggestions.get([sampleSetId, schemaClassName]) || [];
 }
 
 /**
- * Set the stored rejected suggestions for a given submission and schema class.
- * @param submissionId
+ * Set the stored rejected suggestions for a given sample set and schema class.
+ * @param sampleSetId
  * @param schemaClassName
  * @param suggestions
  */
-function setRejectedSuggestions(submissionId: string, schemaClassName: string, suggestions: string[]) {
-  rejectedSuggestions.set([submissionId, schemaClassName], suggestions);
+function setRejectedSuggestions(sampleSetId: string, schemaClassName: string, suggestions: string[]) {
+  rejectedSuggestions.set([sampleSetId, schemaClassName], suggestions);
 }
 
 /**
- * Get the stored pending suggestions for a given submission and schema class.
- * @param submissionId
+ * Get the stored pending suggestions for a given sample set and schema class.
+ * @param sampleSetId
  * @param schemaClassName
  */
-function getPendingSuggestions(submissionId: string, schemaClassName: string) {
-  return pendingSuggestions.get([submissionId, schemaClassName]) || [];
+function getPendingSuggestions(sampleSetId: string, schemaClassName: string) {
+  return pendingSuggestions.get([sampleSetId, schemaClassName]) || [];
 }
 
 /**
- * Set the stored pending suggestions for a given submission and schema class.
- * @param submissionId
+ * Set the stored pending suggestions for a given sample set and schema class.
+ * @param sampleSetId
  * @param schemaClassName
  * @param suggestions
  */
-function setPendingSuggestions(submissionId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
-  return pendingSuggestions.set([submissionId, schemaClassName], suggestions);
+function setPendingSuggestions(sampleSetId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
+  return pendingSuggestions.set([sampleSetId, schemaClassName], suggestions);
 }
 
 export {

@@ -1,17 +1,12 @@
 import re
 
-import requests
-from requests.adapters import HTTPAdapter
 from requests.models import Response
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
-from urllib3.util.retry import Retry
 
+from nmdc_server.ingest.common import requests_session
 from nmdc_server.logger import get_logger
 from nmdc_server.models import DOIInfo, DOIType
-
-retry_strategy = Retry(total=10)
-adapter = HTTPAdapter(max_retries=retry_strategy)
 
 
 def get_doi_info(doi: str) -> Response:
@@ -19,9 +14,7 @@ def get_doi_info(doi: str) -> Response:
     headers = {
         "Accept": "application/vnd.citationstyles.csl+json",
     }
-    http = requests.Session()
-    http.mount("https://", adapter)
-    return requests.get(url, headers=headers, timeout=60)
+    return requests_session.get(url, headers=headers, timeout=60)
 
 
 def upsert_doi(db: Session, doi_value: str, doi_category: str, doi_provider: str = ""):

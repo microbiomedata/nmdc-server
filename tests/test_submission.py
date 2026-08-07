@@ -1,7 +1,6 @@
-import json
 from csv import DictReader
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.encoders import jsonable_encoder
@@ -12,14 +11,23 @@ from starlette.testclient import TestClient
 from nmdc_server.models import (
     SubmissionEditorRole,
     SubmissionImagesObject,
+    SubmissionMetadata,
     SubmissionRole,
 )
 from nmdc_server.schemas_submission import (
     SubmissionMetadataSchema,
     SubmissionMetadataSchemaPatch,
+    SubmissionSampleSet,
+    SubmissionSampleSetPatch,
 )
 from nmdc_server.storage import BucketName, storage
 from tests import fakes
+from tests.fakes import (
+    multi_omics_form_default,
+    sample_data_default,
+    sample_environment_form_default,
+    sender_shipping_info_form_default,
+)
 
 
 @pytest.fixture
@@ -33,7 +41,7 @@ def suggest_payload():
 
 
 def test_list_submissions(db: Session, client: TestClient, logged_in_user):
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -47,6 +55,54 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     response = client.request(method="GET", url="/api/metadata_submission")
     assert response.status_code == 200
     assert response.json()["results"][0]["id"] == str(submission.id)
+
+
+def test_create_submission(db: Session, client: TestClient, logged_in_user):
+    study_name = "test test test"
+    pi_email = "test@example.org"
+    payload = {
+        "study_form": {
+            "studyName": study_name,
+            "piName": "",
+            "piEmail": pi_email,
+            "piOrcid": "",
+            "linkOutWebpage": [],
+            "studyDate": None,
+            "dataDois": [],
+            "publicationDois": [],
+            "fundingSources": [],
+            "description": "",
+            "notes": "",
+            "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
+            "validation": None,
+        },
+        "source_client": "submission_portal",
+        "is_test_submission": False,
+    }
+    response = client.request(
+        method="POST", url="/api/metadata_submission", json=jsonable_encoder(payload)
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["study_form"]["studyName"] == study_name
+    assert body["study_form"]["piEmail"] == pi_email
+    assert body["author_orcid"] == logged_in_user.orcid
+    assert body["permission_level"] == SubmissionEditorRole.owner.value
+
+    # Verify there is a new SubmissionMetadata record in the database
+    submission_id = body["id"]
+    submission = db.get(SubmissionMetadata, submission_id)  # type: ignore[attr-defined]
+    assert submission is not None
+    assert submission.study_form["studyName"] == study_name
+    assert submission.study_name == study_name
+    assert submission.study_form["piEmail"] == pi_email
+    assert submission.author_id == logged_in_user.id
+    assert len(submission.roles) == 1
+    assert submission.roles[0].user_orcid == logged_in_user.orcid
+    assert submission.roles[0].role == SubmissionEditorRole.owner.value
 
 
 def test_get_metadata_submissions_mixs_as_non_admin(
@@ -65,31 +121,39 @@ def test_get_metadata_submissions_mixs_as_admin(
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
 
     # Create test submission
-    # submission1 has "Submitted- Pending Review" as the status (this is the one we want)
-    submission1 = fakes.MetadataSubmissionFactory(
+    # submission1 has a sample set with "Submitted - Pending Review" as the status (this is the one we want)
+    submission1 = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
-        status=SubmissionStatusEnum.SubmittedPendingReview.text,
-        metadata_submission={
-            "sampleData": {
-                "built_env_data": [
-                    {
-                        "samp_name": "Sample A",
-                        "env_medium": "Medium A",
-                        "env_broad_scale": "Broad Scale A",
-                        "env_local_scale": "Local Scale A",
+        sample_sets=[
+            fakes.SubmissionSampleSetFactory(
+                status=SubmissionStatusEnum.SubmittedPendingReview.text,
+                sample_data={
+                    "data": {
+                        "built_env_data": [
+                            {
+                                "samp_name": "Sample A",
+                                "env_medium": "Medium A",
+                                "env_broad_scale": "Broad Scale A",
+                                "env_local_scale": "Local Scale A",
+                            },
+                            {
+                                "samp_name": "Sample B",
+                                "env_medium": "Medium B",
+                                "env_broad_scale": "Broad Scale B",
+                                "env_local_scale": "Local Scale B",
+                            },
+                        ]
                     },
-                    {
-                        "samp_name": "Sample B",
-                        "env_medium": "Medium B",
-                        "env_broad_scale": "Broad Scale B",
-                        "env_local_scale": "Local Scale B",
+                    "validation": {
+                        "invalidCells": {},
+                        "tabsValidated": {},
                     },
-                ]
-            },
-            "packageName": "Env Pkg 1",
-        },
+                },
+                sample_environment_form={"packageName": "Env Pkg 1", "validation": None},
+            )
+        ],
     )
     db.commit()
     response = client.request(method="get", url="/api/metadata_submission/mixs_report")
@@ -102,6 +166,7 @@ def test_get_metadata_submissions_mixs_as_admin(
 
     fieldnames = [
         "Submission ID",
+        "Sample Set Name",
         "Status",
         "Sample Name",
         "Environmental Package/Extension",
@@ -161,11 +226,12 @@ def test_get_metadata_submissions_report_as_admin(
 
     # Create two submissions, only one of which is owned by the logged-in user.
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
         is_test_submission=False,
+        sample_sets=[fakes.SubmissionSampleSetFactory()],
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -174,15 +240,10 @@ def test_get_metadata_submissions_report_as_admin(
         role=SubmissionEditorRole.owner,
     )
     other_user = fakes.UserFactory()
-    other_submission = fakes.MetadataSubmissionFactory(
-        author=other_user,
-        author_orcid=other_user.orcid,
-        created=now + timedelta(seconds=1),
-        # TODO: Omit some optional fields in order to simplify the test data.
-        # See: `class MetadataSubmissionRecordCreate` in `schema_submission.py`
-        # See: https://microbiomedata.github.io/submission-schema/SampleData/
-        metadata_submission={
-            "sampleData": {
+    other_submission_sample_set = fakes.SubmissionSampleSetFactory(
+        name="Other Submission Sample Set",
+        sample_data={
+            "data": {
                 "soil_data": [
                     {
                         "ph": "\n4\n",
@@ -263,67 +324,76 @@ def test_get_metadata_submissions_report_as_admin(
                     {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
                 ],
             },
-            "multiOmicsForm": {
-                "studyNumber": "",
-                "JGIStudyId": "",
-                "omicsProcessingTypes": [],
-                "facilities": [],
-                "otherAward": "",
-                "doe": None,
-                "dataGenerated": None,
-                "facilityGenerated": None,
-                "award": "MONet",
-                "awardDois": [],
-                "mgCompatible": None,
+            "validation": {
+                "invalidCells": {},
+                "tabsValidated": {},
             },
-            "studyForm": {
-                "studyName": "My study name",
-                "piName": "My PI name",
-                "piEmail": "My PI email",
-                "piOrcid": "",
-                "linkOutWebpage": [],
-                "fundingSources": [],
-                "description": "",
-                "notes": "",
-                "contributors": [],
-                "alternativeNames": [],
-                "GOLDStudyId": "",
-                "NCBIBioProjectId": "",
-            },
-            "templates": [],
-            "addressForm": {
-                "shipper": {
-                    "name": "",
-                    "email": "",
-                    "phone": "",
-                    "line1": "",
-                    "line2": "",
-                    "city": "",
-                    "state": "",
-                    "postalCode": "",
-                    "country": "",
-                },
-                "shippingConditions": "",
-                "sample": "",
-                "description": "",
-                "experimentalGoals": "",
-                "randomization": "",
-                "permitNumber": "",
-                "biosafetyLevel": "",
-                "comments": "",
-            },
-            "validationState": {
-                "studyForm": None,
-                "multiOmicsForm": None,
-                "sampleEnvironmentForm": None,
-                "senderShippingInfoForm": None,
-                "sampleMetadata": None,
-            },
-            "packageName": [],
         },
-        is_test_submission=True,
+        multi_omics_form={
+            "studyNumber": "",
+            "JGIStudyId": "",
+            "omicsProcessingTypes": [],
+            "facilities": [],
+            "otherAward": "",
+            "doe": None,
+            "dataGenerated": None,
+            "facilityGenerated": None,
+            "award": "MONet",
+            "awardDois": [],
+            "mgCompatible": None,
+            "validation": None,
+        },
+        templates=[],
+        sender_shipping_info_form={
+            "shipper": {
+                "name": "",
+                "email": "",
+                "phone": "",
+                "line1": "",
+                "line2": "",
+                "city": "",
+                "state": "",
+                "postalCode": "",
+                "country": "",
+            },
+            "shippingConditions": "",
+            "sample": "",
+            "description": "",
+            "experimentalGoals": "",
+            "randomization": "",
+            "permitNumber": "",
+            "biosafetyLevel": "",
+            "comments": "",
+            "validation": None,
+        },
+        sample_environment_form={
+            "packageName": [],
+            "validation": None,
+        },
         status=SubmissionStatusEnum.InProgress.text,
+    )
+    other_submission = fakes.SubmissionMetadataFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+        created=now + timedelta(seconds=1),
+        is_test_submission=True,
         source_client="field_notes",
+        study_form={
+            "studyName": "My study name",
+            "piName": "My PI name",
+            "piEmail": "My PI email",
+            "piOrcid": "",
+            "linkOutWebpage": [],
+            "fundingSources": [],
+            "description": "",
+            "notes": "",
+            "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
+            "validation": None,
+        },
+        sample_sets=[other_submission_sample_set],
     )
     db.commit()
 
@@ -344,6 +414,7 @@ def test_get_metadata_submissions_report_as_admin(
         "Source Client",
         "Status",
         "Is Test Submission",
+        "Sample Set Name",
         "Date Last Modified",
         "Date Created",
         "Number of Samples",
@@ -366,7 +437,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Source Client"] == "field_notes"
     assert data_row["Status"] == SubmissionStatusEnum.InProgress.text
     assert data_row["Is Test Submission"] == "True"
-    assert data_row["Number of Samples"] == "4"
+    assert data_row["Number of Samples"] == "2"
     assert data_row["Award"] == "MONet"
     assert isinstance(data_row["Date Last Modified"], str)
     assert isinstance(data_row["Date Created"], str)
@@ -390,7 +461,7 @@ def test_get_metadata_submissions_report_as_admin(
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -423,7 +494,7 @@ def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user)
 
 def test_cannot_acquire_lock_on_locked_submission(db: Session, client: TestClient, logged_in_user):
     locking_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
@@ -446,7 +517,7 @@ def test_cannot_acquire_lock_on_locked_submission(db: Session, client: TestClien
 
 
 def test_release_submission_lock(db: Session, client: TestClient, logged_in_user):
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
@@ -483,7 +554,7 @@ def test_cannot_release_other_users_submission_lock(
     db: Session, client: TestClient, logged_in_user
 ):
     locking_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
@@ -507,7 +578,7 @@ def test_cannot_release_other_users_submission_lock(
 
 def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_user):
     # Locked by a random user at utcnow by default
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
@@ -532,7 +603,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_u
 
 def test_try_edit_expired_locked_submission(db: Session, client: TestClient, logged_in_user):
     # initialize test submission with expired lock
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
@@ -558,7 +629,7 @@ def test_try_edit_expired_locked_submission(db: Session, client: TestClient, log
 def test_try_edit_locked_by_current_user_submission(
     db: Session, client: TestClient, logged_in_user
 ):
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
@@ -583,12 +654,12 @@ def test_try_edit_locked_by_current_user_submission(
 
 def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_user):
     user_a = fakes.UserFactory()
-    submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
-    fakes.MetadataSubmissionFactory(
+    submission_a = fakes.SubmissionMetadataFactory(author=user_a, author_orcid=user_a.orcid)
+    fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
     )
-    fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
+    fakes.SubmissionMetadataFactory(author=user_a, author_orcid=user_a.orcid)
     db.commit()
     fakes.SubmissionRoleFactory(
         submission=submission_a,
@@ -609,13 +680,13 @@ def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_u
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.SubmissionMetadataFactory()
         db.commit()
         role = fakes.SubmissionRoleFactory(
             submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
         )
     else:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.SubmissionMetadataFactory()
     db.commit()
     response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == code
@@ -626,14 +697,14 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
     [
         (SubmissionEditorRole.owner, 200),
         (SubmissionEditorRole.editor, 200),
-        (SubmissionEditorRole.metadata_contributor, 200),
+        (SubmissionEditorRole.metadata_contributor, 403),
         (SubmissionEditorRole.viewer, 403),
         (SubmissionEditorRole.reviewer, 403),
         (None, 403),
     ],
 )
 def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
-    submission = fakes.MetadataSubmissionFactory()
+    submission = fakes.SubmissionMetadataFactory()
     if role is not None:
         fakes.SubmissionRoleFactory(
             submission=submission,
@@ -643,20 +714,10 @@ def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_u
         )
     db.commit()
 
-    match role:
-        case SubmissionEditorRole.owner:
-            payload = {
-                "metadata_submission": submission.metadata_submission,
-                "permissions": {"0000-0000-0000-0000": SubmissionEditorRole.viewer.value},
-            }
-        case SubmissionEditorRole.editor:
-            payload = {"metadata_submission": submission.metadata_submission}
-        case SubmissionEditorRole.metadata_contributor:
-            payload = {
-                "metadata_submission": {"sampleData": submission.metadata_submission["sampleData"]}
-            }
-        case _:
-            payload = {"metadata_submission": submission.metadata_submission}
+    payload = {"study_form": submission.study_form}
+    if role == SubmissionEditorRole.owner:
+        payload["permissions"] = {"0000-0000-0000-0000": SubmissionEditorRole.viewer.value}
+
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
@@ -667,13 +728,13 @@ def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_u
 
 def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     pi_orcid = fakes.Faker("pystr")
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
         submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
     )
-    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    payload = SubmissionMetadataSchemaPatch.model_validate(submission)
     db.commit()
 
     payload.permissions = {str(pi_orcid): SubmissionEditorRole.owner.value}
@@ -699,22 +760,23 @@ def test_piecewise_patch_metadata_contributor(
     db: Session, client: TestClient, logged_in_user, samples_only, code
 ):
     user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
+    sample_set = fakes.SubmissionSampleSetFactory()
+    submission = fakes.SubmissionMetadataFactory(
+        author=user, author_orcid=user.orcid, sample_sets=[sample_set]
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.metadata_contributor,
     )
-    full_payload = SubmissionMetadataSchemaPatch.model_validate(submission)
+    full_payload = SubmissionSampleSetPatch.model_validate(sample_set)
     db.commit()
 
     if samples_only:
-        request_dict = {
-            "metadata_submission": {"sampleData": full_payload.metadata_submission.sampleData}
-        }
+        request_dict = {"sample_data": full_payload.sample_data}
         request_payload = jsonable_encoder(
-            SubmissionMetadataSchemaPatch.model_validate(request_dict), exclude_unset=True
+            SubmissionSampleSetPatch.model_validate(request_dict), exclude_unset=True
         )
     else:
         request_payload = jsonable_encoder(full_payload)
@@ -722,7 +784,7 @@ def test_piecewise_patch_metadata_contributor(
     # Logged in user should not be able to submit full payload because it contains non-sample data
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}",
         json=request_payload,
     )
     assert response.status_code == code
@@ -731,7 +793,7 @@ def test_piecewise_patch_metadata_contributor(
 def test_delete_role_on_patch(db: Session, client: TestClient, logged_in_user):
     user_orcid = fakes.Faker("pystr")
     pi_orcid = fakes.Faker("pystr")
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -769,7 +831,7 @@ def test_delete_role_on_patch(db: Session, client: TestClient, logged_in_user):
 
 def test_update_role_on_patch(db: Session, client: TestClient, logged_in_user):
     user_orcid = fakes.Faker("pystr")
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -800,7 +862,7 @@ def test_update_role_on_patch(db: Session, client: TestClient, logged_in_user):
 
 
 def test_add_role_by_dedicated_endpoint(db: Session, client: TestClient, logged_in_user):
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -830,7 +892,7 @@ def test_add_role_by_dedicated_endpoint(db: Session, client: TestClient, logged_
 
 def test_remove_role_by_dedicated_endpoint(db: Session, client: TestClient, logged_in_user):
     editor_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -862,7 +924,7 @@ def test_remove_role_by_dedicated_endpoint(db: Session, client: TestClient, logg
 
 
 def test_delete_submission_by_owner(db: Session, client: TestClient, logged_in_user):
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -884,7 +946,7 @@ def test_delete_submission_by_owner(db: Session, client: TestClient, logged_in_u
 
 def test_delete_submission_by_non_owner(db: Session, client: TestClient, logged_in_user):
     user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
+    submission = fakes.SubmissionMetadataFactory(author=user, author_orcid=user.orcid)
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -904,7 +966,7 @@ def test_delete_submission_by_non_owner(db: Session, client: TestClient, logged_
 
 def test_delete_submission_while_locked(db: Session, client: TestClient, logged_in_user):
     user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=user,
@@ -933,38 +995,9 @@ def test_delete_submission_while_locked(db: Session, client: TestClient, logged_
     assert response.status_code == 200
 
 
-def test_sync_submission_templates(db: Session, client: TestClient, logged_in_user):
-    template = "foo"
-    submission = fakes.MetadataSubmissionFactory(
-        author=logged_in_user,
-        author_orcid=logged_in_user.orcid,
-        locked_by=logged_in_user,
-        lock_updated=datetime.now(tz=UTC),
-    )
-    fakes.SubmissionRoleFactory(
-        submission=submission,
-        submission_id=submission.id,
-        user_orcid=logged_in_user.orcid,
-        role=SubmissionEditorRole.owner,
-    )
-    payload = jsonable_encoder(
-        SubmissionMetadataSchemaPatch.model_validate(submission), exclude_unset=True
-    )
-    payload["metadata_submission"]["templates"] = [template]
-    db.commit()
-
-    _ = client.request(
-        method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload
-    )
-    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
-    assert response.status_code == 200
-    assert len(response.json()["templates"]) == 1
-    assert response.json()["templates"][0] == template
-
-
 def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_user):
     expected_val = "my study"
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
@@ -979,12 +1012,10 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
     payload = jsonable_encoder(
         SubmissionMetadataSchemaPatch.model_validate(submission), exclude_unset=True
     )
-    payload["metadata_submission"]["studyForm"]["studyName"] = expected_val
+    payload["study_form"]["studyName"] = expected_val
     db.commit()
 
-    _ = client.request(
-        method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload
-    )
+    client.request(method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload)
     response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == 200
     assert response.json()["study_name"] == expected_val
@@ -1077,7 +1108,7 @@ def test_metadata_suggest_invalid_type(client: TestClient, suggest_payload, logg
 
 def test_set_submission_pi_image_success(db: Session, client: TestClient, logged_in_user):
     """Test successfully setting a PI image for a submission."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1114,7 +1145,7 @@ def test_set_submission_primary_study_image_success(
     db: Session, client: TestClient, logged_in_user
 ):
     """Test successfully setting a primary study image for a submission."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1149,7 +1180,7 @@ def test_set_submission_primary_study_image_success(
 
 def test_set_submission_study_images_success(db: Session, client: TestClient, logged_in_user):
     """Test successfully adding images to the study_images collection."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1211,7 +1242,7 @@ def test_set_submission_image_replaces_existing_single_image(
     db: Session, client: TestClient, logged_in_user, temp_storage_object
 ):
     """Test that setting a single image type replaces the existing image."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1259,7 +1290,7 @@ def test_set_submission_image_unauthorized_user(db: Session, client: TestClient,
     """Test that unauthorized users cannot set submission images."""
     # Create submission owned by a different user
     other_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    submission = fakes.SubmissionMetadataFactory(author=other_user, author_orcid=other_user.orcid)
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1286,7 +1317,7 @@ def test_set_submission_image_viewer_role_unauthorized(
 ):
     """Test that users with viewer role cannot set submission images."""
     other_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    submission = fakes.SubmissionMetadataFactory(author=other_user, author_orcid=other_user.orcid)
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1320,7 +1351,7 @@ def test_set_submission_image_editor_role_authorized(
 ):
     """Test that users with editor role can set submission images."""
     other_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    submission = fakes.SubmissionMetadataFactory(author=other_user, author_orcid=other_user.orcid)
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1354,7 +1385,7 @@ def test_set_submission_image_admin_role_authorized(
 ):
     """Test that users with admin role can set submission images."""
     other_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    submission = fakes.SubmissionMetadataFactory(author=other_user, author_orcid=other_user.orcid)
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1397,7 +1428,7 @@ def test_set_submission_image_nonexistent_submission(
 
 def test_set_submission_image_invalid_image_type(db: Session, client: TestClient, logged_in_user):
     """Test setting image with invalid image type returns 422."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1425,7 +1456,7 @@ def test_set_submission_image_missing_required_fields(
     db: Session, client: TestClient, logged_in_user
 ):
     """Test setting image with missing required fields returns 422."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1450,7 +1481,7 @@ def test_delete_submission_pi_image_success(
     db: Session, client: TestClient, logged_in_user, temp_storage_object
 ):
     """Test successfully deleting a PI image from a submission."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1474,7 +1505,7 @@ def test_delete_submission_pi_image_success(
 
     # Delete the PI image
     response = client.delete(f"/api/metadata_submission/{submission.id}/image/pi_image")
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify the image was deleted from the database
     db.refresh(submission)
@@ -1488,7 +1519,7 @@ def test_delete_submission_primary_study_image_success(
     db: Session, client: TestClient, logged_in_user, temp_storage_object
 ):
     """Test successfully deleting a primary study image from a submission."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1512,7 +1543,7 @@ def test_delete_submission_primary_study_image_success(
 
     # Delete the primary study image
     response = client.delete(f"/api/metadata_submission/{submission.id}/image/primary_study_image")
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify the image was deleted from the database
     db.refresh(submission)
@@ -1526,7 +1557,7 @@ def test_delete_submission_study_images_success(
     db: Session, client: TestClient, logged_in_user, temp_storage_object
 ):
     """Test successfully deleting a study image from a submission."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1559,7 +1590,7 @@ def test_delete_submission_study_images_success(
         f"/api/metadata_submission/{submission.id}/image/study_images"
         f"?image_name={image_to_delete.name}"
     )
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     # Verify the image was deleted from the database
     db.refresh(submission)
@@ -1575,7 +1606,14 @@ def test_finalize_submission(
 ):
     """Tests that an admin can successfully make submission images public."""
     other_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    submission = fakes.SubmissionMetadataFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+        sample_sets=[
+            fakes.SubmissionSampleSetFactory(),
+            fakes.SubmissionSampleSetFactory(),
+        ],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1623,11 +1661,9 @@ def test_finalize_submission(
     assert body.get("primary_study_image_url") is not None
     assert len(body.get("study_image_urls", [])) == 2
 
-    # Assert that the study ID has been set on the submission and the status has been updated
-    # to "Released"
+    # Assert that the study ID has been set on the submission
     db.refresh(submission)
     assert submission.nmdc_study_id == study_id
-    assert submission.status == SubmissionStatusEnum.Released.text
 
     # The expected public image object names should be the same as the submission image names,
     # but with the submission ID replaced by the study ID
@@ -1662,7 +1698,7 @@ def test_finalize_submission_unauthorized(
     db: Session, client: TestClient, logged_in_user, temp_storage_object
 ):
     """Tests that a non-admin user (even the submission owner) cannot finalize a submission."""
-    submission = fakes.MetadataSubmissionFactory(
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.SubmissionRoleFactory(
@@ -1699,8 +1735,12 @@ def test_finalize_submission_unauthorized(
 def test_owner_allowed_to_make_approved_status_changes(
     db: Session, client: TestClient, logged_in_user, original_status, new_status, is_allowed
 ):
-    """Test that a submission owner can change submission status to allowed values"""
-    submission = fakes.MetadataSubmissionFactory(status=original_status)
+    """Test that a submission owner can change sample set status to allowed values"""
+    sample_set = fakes.SubmissionSampleSetFactory(status=original_status)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1711,16 +1751,16 @@ def test_owner_allowed_to_make_approved_status_changes(
 
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": new_status}),
     )
-    db.refresh(submission)
+    db.refresh(sample_set)
 
     if is_allowed:
         assert response.status_code == 200
         response_body = response.json()
         assert response_body["status"] == new_status
-        assert submission.status == new_status
+        assert sample_set.status == new_status
     else:
         assert response.status_code == 422
 
@@ -1729,7 +1769,11 @@ def test_admin_allowed_to_make_any_status_changes(
     db: Session, client: TestClient, logged_in_admin_user
 ):
     """Test that an admin user can change submission status to any value"""
-    submission = fakes.MetadataSubmissionFactory(status=SubmissionStatusEnum.InProgress.text)
+    sample_set = fakes.SubmissionSampleSetFactory(status=SubmissionStatusEnum.InProgress.text)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1738,23 +1782,27 @@ def test_admin_allowed_to_make_any_status_changes(
     )
     db.commit()
 
-    new_status = SubmissionStatusEnum.ApprovedPendingUserFacility.text
+    new_status = SubmissionStatusEnum.UpdatesRequired.text
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": new_status}),
     )
-    db.refresh(submission)
+    db.refresh(sample_set)
 
     assert response.status_code == 200
     response_body = response.json()
     assert response_body["status"] == new_status
-    assert submission.status == new_status
+    assert sample_set.status == new_status
 
 
 def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logged_in_user):
     """Test that a user with editor role cannot change submission status"""
-    submission = fakes.MetadataSubmissionFactory(status=SubmissionStatusEnum.InProgress.text)
+    sample_set = fakes.SubmissionSampleSetFactory(status=SubmissionStatusEnum.InProgress.text)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1766,7 +1814,7 @@ def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logg
     new_status = SubmissionStatusEnum.SubmittedPendingReview.text
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": new_status}),
     )
 
@@ -1775,7 +1823,11 @@ def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logg
 
 def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_admin_user):
     """Test that an invalid submission status is rejected"""
-    submission = fakes.MetadataSubmissionFactory(status=SubmissionStatusEnum.InProgress.text)
+    sample_set = fakes.SubmissionSampleSetFactory(status=SubmissionStatusEnum.InProgress.text)
+    submission = fakes.SubmissionMetadataFactory(
+        is_test_submission=True,  # avoid triggering GitHub issue creation logic
+        sample_sets=[sample_set],
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -1786,26 +1838,30 @@ def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_a
 
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}/status",
+        url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
         json=jsonable_encoder({"status": "InvalidStatus"}),
     )
 
     assert response.status_code == 422
 
 
-def test_github_issue_resubmission_creates_comment_only(
+def test_github_issue_creation_on_first_sample_set_submission(
     db: Session, client: TestClient, logged_in_user
 ):
     """
-    Confirm that when a submission status becomes 'SubmittedPendingReview'
-    and a GitHub issue number already exists, a comment is added (not a new issue).
+    Confirm that when a sample set status becomes 'SubmittedPendingReview' and neither the
+    submission nor the sample set has an associated GitHub issue, a new GitHub issue is created
+    for both the submission and the sample set.
     """
-    submission = fakes.MetadataSubmissionFactory(
+    sample_set = fakes.SubmissionSampleSetFactory(
+        status=SubmissionStatusEnum.InProgress.text,
+    )
+    submission = fakes.SubmissionMetadataFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
-        status=SubmissionStatusEnum.InProgress.text,
         is_test_submission=False,
-        submission_issue=123,
+        github_issue=None,
+        sample_sets=[sample_set],
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -1815,37 +1871,311 @@ def test_github_issue_resubmission_creates_comment_only(
     )
     db.commit()
 
-    comment_response = Mock(status_code=201, json=lambda: {"id": 456})
-    get_response = Mock(status_code=200, json=lambda: {"state": "open", "number": 123})
-
     with (
-        patch("nmdc_server.api.requests.post", return_value=comment_response) as mock_post,
-        patch("nmdc_server.api.requests.get", return_value=get_response) as mock_get,
-        patch("nmdc_server.api.requests.patch") as mock_patch,
-        patch("nmdc_server.api.settings") as mock_settings,
+        patch(
+            "nmdc_server.api.github.create_submission_issue", return_value="1234"
+        ) as mock_create_submission_issue,
+        patch(
+            "nmdc_server.api.github.create_sample_set_issue", return_value="5678"
+        ) as mock_create_sample_set_issue,
+        patch(
+            "nmdc_server.api.github.add_sample_set_resubmit_comment"
+        ) as mock_add_sample_set_resubmit_comment,
     ):
-        mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
-        mock_settings.github_authentication_token = "fake_token"
-
         response = client.request(
             method="PATCH",
-            url=f"/api/metadata_submission/{submission.id}/status",
+            url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
             json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
         )
 
+        # Verify the request was handled successfully
         assert response.status_code == 200
-        assert mock_post.call_count == 1
+        db.refresh(submission)
+        db.refresh(sample_set)
 
-        # Verify comment endpoint was called
-        assert "/issues/123/comments" in mock_post.call_args[0][0]
+        # Verify that the create_submission_issue was called
+        assert mock_create_submission_issue.call_count == 1
 
-        # Verify comment content
-        comment_data = json.loads(mock_post.call_args[1]["data"])
-        assert "Submission Resubmitted" in comment_data["body"]
-        assert logged_in_user.name in comment_data["body"]
+        # Verify that the github_issue field was updated with the new issue number
+        assert submission.github_issue == "1234"
 
-        # Verify issue state was checked
-        assert mock_get.call_count == 1
+        # Verify that create_sample_set_issue was called for the sample set
+        assert mock_create_sample_set_issue.call_count == 1
 
-        # Verify issue was not reopened (it's already open)
-        assert mock_patch.call_count == 0
+        # Verify that the sample set's github_issue field was updated with the new issue number
+        assert sample_set.github_issue == "5678"
+
+        # Verify that add_sample_set_resubmit_comment was not called since this is the first submission
+        assert mock_add_sample_set_resubmit_comment.call_count == 0
+
+
+def test_github_issue_resubmission_creates_comment_only(
+    db: Session, client: TestClient, logged_in_user
+):
+    """
+    Confirm that when a sample set status becomes 'SubmittedPendingReview'
+    and a GitHub issue number already exists, a comment is added (not a new issue).
+    """
+    sample_set = fakes.SubmissionSampleSetFactory(
+        status=SubmissionStatusEnum.InProgress.text,
+        github_issue="1234",
+    )
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        is_test_submission=False,
+        github_issue="5678",
+        sample_sets=[sample_set],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    with (
+        patch("nmdc_server.api.github.create_submission_issue") as mock_create_submission_issue,
+        patch("nmdc_server.api.github.create_sample_set_issue") as mock_create_sample_set_issue,
+        patch(
+            "nmdc_server.api.github.add_sample_set_resubmit_comment"
+        ) as mock_add_sample_set_resubmit_comment,
+    ):
+        response = client.request(
+            method="PATCH",
+            url=f"/api/metadata_submission/sample_set/{sample_set.id}/status",
+            json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
+        )
+
+        # Verify the request was handled successfully
+        assert response.status_code == 200
+
+        # Verify that the existing issues were reused and only the resubmit comment path ran.
+        assert mock_add_sample_set_resubmit_comment.call_count == 1
+        assert mock_create_submission_issue.call_count == 0
+        assert mock_create_sample_set_issue.call_count == 0
+
+
+def test_list_sample_sets_of_submission(db: Session, client: TestClient, logged_in_user):
+    """Test that the sample sets associated with a submission are correctly listed."""
+    sample_set_1 = fakes.SubmissionSampleSetFactory(name="Sample Set 1")
+    sample_set_2 = fakes.SubmissionSampleSetFactory(name="Sample Set 2")
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        sample_sets=[sample_set_1, sample_set_2],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    response = client.get(f"/api/metadata_submission/{submission.id}/sample_set")
+    assert response.status_code == 200
+    sample_sets = response.json()
+    assert len(sample_sets) == 2
+    assert {sample_set["name"] for sample_set in sample_sets} == {"Sample Set 1", "Sample Set 2"}
+
+
+def test_get_sample_set_by_id(db: Session, client: TestClient, logged_in_user):
+    """Test that a specific sample set can be retrieved by its ID."""
+    sample_set = fakes.SubmissionSampleSetFactory(name="Test Sample Set")
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        sample_sets=[sample_set],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    response = client.get(f"/api/metadata_submission/sample_set/{sample_set.id}")
+    assert response.status_code == 200
+    retrieved_sample_set = response.json()
+    assert retrieved_sample_set["id"] == str(sample_set.id)
+    assert retrieved_sample_set["name"] == "Test Sample Set"
+
+
+def test_get_sample_set_by_id_unauthorized(db: Session, client: TestClient, logged_in_user):
+    """Test that a user without access cannot retrieve a sample set by ID."""
+    sample_set = fakes.SubmissionSampleSetFactory(name="Private Sample Set")
+    # The submission author is **not** the logged-in user
+    other_user = fakes.UserFactory()
+    submission = fakes.SubmissionMetadataFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+        sample_sets=[sample_set],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=submission.author_orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    response = client.get(f"/api/metadata_submission/sample_set/{sample_set.id}")
+    assert response.status_code == 403
+
+
+def test_create_sample_set(db: Session, client: TestClient, logged_in_user):
+    """Test that a new sample set can be created and associated with a submission."""
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    new_sample_set_data = {
+        "name": "New Sample Set",
+        "templates": [],
+        "multi_omics_form": multi_omics_form_default,
+        "sample_environment_form": sample_environment_form_default,
+        "sender_shipping_info_form": sender_shipping_info_form_default,
+        "sample_data": sample_data_default,
+    }
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/sample_set", json=new_sample_set_data
+    )
+    assert response.status_code == 201
+    created_sample_set = response.json()
+    assert created_sample_set["name"] == "New Sample Set"
+    assert created_sample_set["id"] is not None
+
+    # Verify the sample set is associated with the submission in the database
+    db.refresh(submission)
+    assert len(submission.sample_sets) == 1
+    assert submission.sample_sets[0].name == "New Sample Set"
+
+
+def test_create_sample_set_unauthorized(db: Session, client: TestClient, logged_in_user):
+    """Test that a user without access cannot create a sample set for a submission."""
+    # The submission author is **not** the logged-in user
+    other_user = fakes.UserFactory()
+    submission = fakes.SubmissionMetadataFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=submission.author_orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    new_sample_set_data = {
+        "name": "Unauthorized Sample Set",
+        "templates": [],
+        "multi_omics_form": multi_omics_form_default,
+        "sample_environment_form": sample_environment_form_default,
+        "sender_shipping_info_form": sender_shipping_info_form_default,
+        "sample_data": sample_data_default,
+    }
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/sample_set", json=new_sample_set_data
+    )
+    assert response.status_code == 403
+
+
+def test_update_sample_set(db: Session, client: TestClient, logged_in_user):
+    """Test that an existing sample set can be updated."""
+    sample_set = fakes.SubmissionSampleSetFactory(name="Original Sample Set")
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        sample_sets=[sample_set],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    updated_sample_set_body = SubmissionSampleSetPatch.model_validate(sample_set)
+    updated_sample_set_body.name = "Updated Sample Set"
+    response = client.patch(
+        f"/api/metadata_submission/sample_set/{sample_set.id}",
+        json=jsonable_encoder(updated_sample_set_body, exclude_unset=True),
+    )
+    assert response.status_code == 200
+    updated_sample_set = response.json()
+    assert updated_sample_set["name"] == "Updated Sample Set"
+    assert updated_sample_set["id"] == str(sample_set.id)
+
+    # Verify the sample set is updated in the database
+    db.refresh(sample_set)
+    assert sample_set.name == "Updated Sample Set"
+
+
+def test_update_sample_set_unauthorized(db: Session, client: TestClient, logged_in_user):
+    """Test that a user without access cannot update a sample set."""
+    sample_set = fakes.SubmissionSampleSetFactory(name="Private Sample Set")
+    # The submission author is **not** the logged-in user
+    other_user = fakes.UserFactory()
+    submission = fakes.SubmissionMetadataFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+        sample_sets=[sample_set],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=submission.author_orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    updated_sample_set_body = SubmissionSampleSet.model_validate(sample_set)
+    updated_sample_set_body.name = "Unauthorized Update"
+    response = client.patch(
+        f"/api/metadata_submission/sample_set/{sample_set.id}",
+        json=jsonable_encoder(updated_sample_set_body, exclude_unset=True),
+    )
+    assert response.status_code == 403
+
+
+def test_delete_sample_set(db: Session, client: TestClient, logged_in_user):
+    """Test that a sample set can be deleted from a submission."""
+    sample_set_1 = fakes.SubmissionSampleSetFactory(name="Sample Set 1")
+    sample_set_2 = fakes.SubmissionSampleSetFactory(name="Sample Set 2")
+    sample_set_3 = fakes.SubmissionSampleSetFactory(name="Sample Set 3")
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        sample_sets=[sample_set_1, sample_set_2, sample_set_3],
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    response = client.delete(f"/api/metadata_submission/sample_set/{sample_set_2.id}")
+    assert response.status_code == 204
+
+    # Verify the sample set is deleted from the database
+    db.refresh(submission)
+    assert len(submission.sample_sets) == 2
+    assert {sample_set.name for sample_set in submission.sample_sets} == {
+        "Sample Set 1",
+        "Sample Set 3",
+    }

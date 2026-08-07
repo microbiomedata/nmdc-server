@@ -42,23 +42,23 @@ function base64UrlencodedToArrayBuffer(base64Urlencoded: string) {
  * q parameter, and remove the conditions parameter.
  */
 export function stringifyQuery(params: any) {
-  if ('conditions' in params) {
-    if (params.conditions.length) {
-      const clone = cloneDeep(params);
+  // Make a shallow copy of the params object so we don't modify the original
+  const queryParams = { ...params };
+  if ('conditions' in queryParams) {
+    if (queryParams.conditions.length) {
+      const clone = cloneDeep(queryParams);
       clone.conditions.forEach((c: Condition) => {
-         
         c.value = JSON.stringify(c.value);
       });
       // https://github.com/protobufjs/protobuf.js/issues/1261#issuecomment-667430623
       const msg = QueryParams.fromObject(clone);
       const u8a = QueryParams.encode(msg).finish();
-       
-      params.q = arrayBufferToBase64Urlencoded(u8a);
+
+      queryParams.q = arrayBufferToBase64Urlencoded(u8a);
     }
-     
-    delete params.conditions;
+    delete queryParams.conditions;
   }
-  const queryParamsString = new URLSearchParams(params).toString();
+  const queryParamsString = new URLSearchParams(queryParams).toString();
   return queryParamsString ? `${queryParamsString}` : '';
 }
 
@@ -74,7 +74,6 @@ export function parseQuery(q: string) {
     const obj = QueryParams.toObject(msg, { enums: String });
     obj.conditions.forEach((c: Condition) => {
       // @ts-ignore
-       
       c.value = JSON.parse(c.value);
     });
     parsed.conditions = obj.conditions;

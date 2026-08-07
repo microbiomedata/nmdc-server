@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { incrementalSaveRecordRequest } from '@/views/SubmissionPortal/store';
-import { ref, watch } from 'vue';
+import { computed, ref } from 'vue';
+import { useSubmissionStore } from '../store';
 
-const snackbarVisible = ref(incrementalSaveRecordRequest.error.value !== null);
+const store = useSubmissionStore();
 
-watch(() => incrementalSaveRecordRequest.error.value, (newError) => {
-  snackbarVisible.value = newError !== null;
+const dismissedErrorKey = ref<string | null>(null);
+
+const currentErrorKey = computed(() => JSON.stringify([
+  store.submission.requests.saving.error,
+  store.sampleSet.requests.saving.error,
+]));
+
+const hasSaveError = computed(() => (
+  store.submission.requests.saving.error !== null ||
+  store.sampleSet.requests.saving.error !== null
+));
+
+const snackbarVisible = computed({
+  get: () => hasSaveError.value && dismissedErrorKey.value !== currentErrorKey.value,
+  set: (visible: boolean) => {
+    if (!visible) {
+      dismissedErrorKey.value = currentErrorKey.value;
+    }
+  },
 });
 </script>
 

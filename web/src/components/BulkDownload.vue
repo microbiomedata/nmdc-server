@@ -42,6 +42,11 @@ const {
   download,
 } = useBulkDownload(stateRefs.conditions, dataObjectFilter);
 
+const disableBulkDataProductDownload = ref(true);
+api.getAppSettings().then((appSettings) => {
+  disableBulkDataProductDownload.value = appSettings.disable_bulk_data_product_download;
+});
+
 function createLabelString(label: string, count: number, size: number): string {
   const labelString = `${label} (${count}`;
   if (size > 0) {
@@ -234,6 +239,17 @@ watch(
       >
         <v-tabs-window-item value="data-products">
           <v-sheet
+            v-if="disableBulkDataProductDownload"
+            class="pa-3 d-flex flex-column"
+          >
+            <span
+              class="text-caption font-weight-bold"
+            >
+              Bulk downloading data products is temporarily disabled.
+            </span>
+          </v-sheet>
+          <v-sheet
+            v-if="!disableBulkDataProductDownload"
             class="pa-3 d-flex flex-column"
           >
             <span

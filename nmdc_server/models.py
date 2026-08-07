@@ -24,6 +24,7 @@ from sqlalchemy import (
     column,
     event,
     func,
+    update,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -359,12 +360,21 @@ class AnnotatedModel:
     annotations = Column(JSONB, nullable=False, default=dict)
 
 
+# -- Updating Full Text Search (FTS) --
+# To update the fields that are included and indexed for FTS, update the following:
+# 1. The arguments in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
+# 2. The columns in the SELECT statements in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
+# 3. The columns included in the `__table_args__` Index definitions in the `Study` model below.
+# 4. The columns included in the `__ts_vector__` assignment after the `Study` model definition below.
+# 5. The columns included in the `__table_args__` Index definitions in the `Biosample` model below.
+# 6. The columns included in the `__ts_vector__` assignment after the `Biosample` model definition below.
+# 7. Update the Text Search section of the Data Portal User Guide documentation (https://github.com/microbiomedata/docs/blob/main/content/home/src/howto_guides/portal_guide.md#text-search).
+
+
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
-    # Index Creation (for FTS) Part 1:
-    # bare column() refs, used only for __table_args__
-    # (DDL context requires unqualified names)
+    # Study Index Creation (for FTS) Part 1:
     __table_args__ = (
         Index(
             "ix_study_fts",
@@ -451,9 +461,7 @@ class Study(Base, AnnotatedModel):
         return doi_info
 
 
-# Index Creation (for FTS) Part 2:
-# __ts_vector__ is assigned after class creation using fully-qualified ORM
-# column attrs (e.g. Study.id), so it can be used directly in query filters
+# Study Index Creation (for FTS) Part 2:
 Study.__ts_vector__ = func.nmdc_study_fts(
     Study.id,
     Study.name,
@@ -477,9 +485,7 @@ biosample_input_association = Table(
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
-    # Index Creation (for FTS) Part 1:
-    # bare column() refs, used only for __table_args__
-    # (DDL context requires unqualified names)
+    # Biosample Index Creation (for FTS) Part 1:
     __table_args__ = (
         Index(
             "ix_biosample_fts",
@@ -562,9 +568,7 @@ class Biosample(Base, AnnotatedModel):
         db.commit()
 
 
-# Index Creation (for FTS) Part 2:
-# __ts_vector__ is assigned after class creation using fully-qualified ORM
-# column attrs (e.g. Biosample.id), so it can be used directly in query filters
+# Biosample Index Creation (for FTS) Part 2:
 Biosample.__ts_vector__ = func.nmdc_biosample_fts(
     Biosample.id,
     Biosample.name,
@@ -1295,11 +1299,9 @@ class SubmissionMetadata(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
-    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
-    metadata_submission = Column(JSONB, nullable=False)
+    study_form = Column(JSONB, nullable=True)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)
-    templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
     nmdc_study_id = Column(String, nullable=True)
@@ -1308,7 +1310,7 @@ class SubmissionMetadata(Base):
         nullable=False,
         default=lambda: datetime.now(UTC),
     )
-    submission_issue = Column(String, nullable=True)
+    github_issue = Column(String, nullable=True)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.
@@ -1351,6 +1353,9 @@ class SubmissionMetadata(Base):
     )
     study_images = relationship(
         SubmissionImagesObject, secondary=submission_study_image_association
+    )
+    sample_sets = relationship(
+        "SubmissionSampleSet", cascade="all, delete-orphan", cascade_backrefs=False
     )
 
     @property
@@ -1396,11 +1401,44 @@ class SubmissionMetadata(Base):
 
     @property
     def sample_count(self) -> int:
-        if not self.metadata_submission or not isinstance(self.metadata_submission, dict):
+        if not self.sample_sets:
             return 0
-        sample_data = self.metadata_submission.get("sampleData", {})
+
+        return sum(sample_set.sample_count for sample_set in self.sample_sets)
+
+
+class SubmissionSampleSet(Base):
+    __tablename__ = "submission_sample_set"
+
+    id = Column(type_=UUID(as_uuid=True), primary_key=True, default=uuid4)
+    submission_metadata_id = Column(
+        UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), nullable=False
+    )
+    name = Column(String, nullable=False)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    date_last_modified = Column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+    )
+    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
+    github_issue = Column(String, nullable=True)
+    templates = Column(JSONB, nullable=False)
+    sample_environment_form = Column(JSONB, nullable=False)
+    sender_shipping_info_form = Column(JSONB, nullable=False)
+    multi_omics_form = Column(JSONB, nullable=False)
+    sample_data = Column(JSONB, nullable=False)
+    submission_metadata = relationship("SubmissionMetadata", viewonly=True)
+
+    @property
+    def sample_count(self) -> int:
+        if not isinstance(self.sample_data, dict):
+            return 0
+
+        sample_data = self.sample_data.get("data", {})
         if not sample_data:
             return 0
+
         count = 0
         for slot in sample_data:
             if slot in ENVIRONMENTAL_DATA_SLOTS:
@@ -1463,3 +1501,44 @@ def update_submission_metadata_date(mapper, _connection, target):
             if history.has_changes():
                 target.date_last_modified = datetime.now(UTC)
                 return
+
+
+SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS = {
+    "name",
+    "status",
+    "templates",
+    "sample_environment_form",
+    "sender_shipping_info_form",
+    "multi_omics_form",
+    "sample_data",
+}
+
+
+@event.listens_for(Session, "before_flush")
+def update_submission_sample_set_timestamps(session: Session, _flush_context, _instances) -> None:
+    """Keep sample set and parent submission timestamps in sync before flush."""
+    now = datetime.now(UTC)
+
+    for obj in session.new.union(session.dirty):
+        if not isinstance(obj, SubmissionSampleSet):
+            continue
+
+        is_new = obj in session.new
+        # The "new" incoming sample set already has a date_last_modified timestamp. This is an
+        # expected scenario during ingest where existing sample sets are copied from one database
+        # to the other. Do not update the sample set or parent submission timestamps in this case.
+        if is_new and obj.date_last_modified is not None:
+            continue
+
+        if not is_new and not any(
+            get_history(obj, column_name).has_changes()
+            for column_name in SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS
+        ):
+            continue
+
+        obj.date_last_modified = now
+        session.execute(
+            update(SubmissionMetadata.__table__)
+            .where(SubmissionMetadata.id == obj.submission_metadata_id)
+            .values(date_last_modified=now)
+        )

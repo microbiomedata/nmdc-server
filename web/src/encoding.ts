@@ -258,7 +258,7 @@ function makeSetsFromBitmask(mask_str: string) {
 
 const types = {
   study: {
-    icon: 'mdi-book',
+    icon: 'mdi-book-outline',
     heading: 'Studies',
     name: 'study',
     plural: 'studies',

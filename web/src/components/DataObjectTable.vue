@@ -97,6 +97,11 @@ export default defineComponent({
       },
     ];
 
+    const disableIndividualDataProductDownload = ref(true);
+    api.getAppSettings().then((appSettings) => {
+      disableIndividualDataProductDownload.value = appSettings.disable_individual_data_product_download;
+    });
+
     const selectedHtmlDataObject: Ref<any | null> = ref(null);
     const dataModal = ref(false);
     const iframeDataSource = ref('');
@@ -258,6 +263,7 @@ export default defineComponent({
       getRelatedBiosampleIds,
       metaproteomicCategoryEnumToDisplay,
       nomMetadataString,
+      disableIndividualDataProductDownload,
     };
   },
 });
@@ -393,22 +399,37 @@ export default defineComponent({
           </td>
           <td>
             {{ item.file_type }}
-            <v-btn
-              v-if="hasHtmlData(item.file_type)"
-              color="primary"
-              icon
-              variant="plain"
-              @click="openHtmlDataModal(item)"
+            <v-tooltip
+              :disabled="!disableIndividualDataProductDownload"
+              location="bottom"
             >
-              <v-icon>mdi-magnify</v-icon>
-            </v-btn>
+              <template #activator="{ props }">
+                <span v-bind="props">
+                  <v-btn
+                    v-if="hasHtmlData(item.file_type)"
+                    :disabled="disableIndividualDataProductDownload"
+                    color="primary"
+                    icon
+                    variant="plain"
+                    @click="openHtmlDataModal(item)"
+                  >
+                    <v-icon>mdi-magnify</v-icon>
+                  </v-btn>
+                </span>
+              </template>
+              <template #default>
+                <span>
+                  HTML preview is temporarily disabled.
+                </span>
+              </template>
+            </v-tooltip>
           </td>
           <td>{{ item.file_type_description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes) }}</td>
           <td>{{ item.downloads }}</td>
           <td>
             <v-tooltip
-              :disabled="!!(loggedInUser && item.url)"
+              :disabled="!!(loggedInUser && item.url && !disableIndividualDataProductDownload)"
               location="bottom"
             >
               <template #activator="{ props }">
@@ -416,7 +437,7 @@ export default defineComponent({
                   <v-btn
                     v-if="item.url"
                     icon
-                    :disabled="!loggedInUser"
+                    :disabled="!loggedInUser || disableIndividualDataProductDownload"
                     variant="text"
                     color="primary"
                     @click="handleDownload(item as unknown as OmicsProcessingResult)"
@@ -436,8 +457,11 @@ export default defineComponent({
                 </span>
               </template>
               <template #default>
-                <span v-if="item.url">
-                  You must be logged in
+                <span v-if="item.url && !loggedInUser">
+                  You must be logged in.
+                </span>
+                <span v-else-if="item.url && loggedInUser && disableIndividualDataProductDownload">
+                  Downloading individual data products is temporarily disabled.
                 </span>
                 <span v-else>
                   File unavailable

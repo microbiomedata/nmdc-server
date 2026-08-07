@@ -69,3 +69,9 @@ export default defineComponent({
     />
   </div>
 </template>
+
+<style scoped>
+svg {
+  display: block;
+}
+</style>

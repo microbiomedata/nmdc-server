@@ -20,6 +20,7 @@ export default defineComponent({
 
 <template>
   <v-app-bar
+    tag="nav"
     class="navigation-button-text-animate"
     color="white"
     :height="APP_HEADER_HEIGHT"
@@ -84,6 +85,7 @@ export default defineComponent({
           <v-list-item
             v-for="item in menu.items"
             :key="item.label"
+            class="nav-link"
             :href="item.href"
             :to="item.to"
             :ripple="false"

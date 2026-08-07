@@ -5,6 +5,7 @@ __pycache__/
 .tox/
 .vscode/
 .idea/
+opencode.json
 .venv
 vetur.config.js
 **.local**
@@ -12,6 +13,7 @@ build/**
 data/**
 .DS_Store
 .agents
+static
 
 # Ignore all files in the auth directory except for the README.md file.
 # **DO NOT** add additional exclusions here unless they have already been discussed and approved by the team.

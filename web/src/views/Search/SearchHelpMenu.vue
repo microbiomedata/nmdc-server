@@ -12,13 +12,12 @@ export default defineComponent({});
   >
     <template #activator="{ props }">
       <v-btn
-        icon
         variant="plain"
+        size="x-small"
         v-bind="props"
+        style="text-transform: none; font-size: 0.875rem;"
       >
-        <v-icon>
-          mdi-help-circle
-        </v-icon>
+        Need help?
       </v-btn>
     </template>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from 'vue';
-import { StudySearchResults } from '@/data/api';
+import { StudySearchResult } from '@/data/api';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 function getOrcid(person: any) {
@@ -55,7 +55,7 @@ export default defineComponent({
   components: { OrcidId },
   props: {
     item: {
-      type: Object as PropType<StudySearchResults>,
+      type: Object as PropType<StudySearchResult>,
       required: true,
     },
   },

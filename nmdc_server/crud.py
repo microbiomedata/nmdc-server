@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, selectinload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -328,7 +328,9 @@ def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermT
     term = query.replace(pathway_prefix, "map") if pathway_prefix else query
     q = (
         db.query(models.KoTermText)
-        .filter(models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(term))
+        .filter(
+            models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(f"%{term}%")
+        )
         .order_by(models.KoTermText.term)
         .limit(limit)
     )
@@ -890,6 +892,35 @@ contributors_edit_roles = [
 ]
 
 
+def raise_for_insufficient_submission_role(
+    db: Session,
+    submission: models.SubmissionMetadata,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> None:
+    """Check if the requesting user has one of the allowed roles on the submission, and raise an
+    HTTPException if not.
+
+    :raise HTTPException: If the user does not have one of the allowed roles on the submission.
+
+    :param db: The database session.
+    :param submission: The submission to check permissions for.
+    :param requester: The user requesting access to the submission.
+    :param allowed_roles: A list of allowed roles that the user must have on the submission. If
+        None, no role check is performed.
+    """
+    if allowed_roles and not requester.is_admin:
+        # If the user is not an admin, check if they have one of the allowed roles
+        # on the submission.
+        role = get_submission_role(db, submission.id, requester.orcid)
+        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permission to complete this action",
+            )
+
+
 def get_submission_for_user(
     db: Session,
     submission_id: str,
@@ -914,16 +945,40 @@ def get_submission_for_user(
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    if allowed_roles and not requester.is_admin:
-        # If the user is not an admin, check if they have one of the allowed roles
-        # on the submission.
-        role = get_submission_role(db, submission_id, requester.orcid)
-        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permission to complete this action",
-            )
+    raise_for_insufficient_submission_role(db, submission, requester, allowed_roles=allowed_roles)
     return submission
+
+
+def get_submission_sample_set_for_user(
+    db: Session,
+    sample_set_id: str,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> models.SubmissionSampleSet:
+    """Get a submission sample set by ID and additionally check if the requesting user has one of the
+    allowed roles on the parent submission.
+
+    :raise HTTPException: If the submission sample set does not exist or if the user does not have
+        one of the allowed roles on the parent submission.
+
+    :param db: The database session.
+    :param sample_set_id: The ID of the submission sample set to retrieve.
+    :param requester: The user requesting the submission sample set.
+    :param allowed_roles: A list of allowed roles that the user must have on the parent submission. If
+        None, no role check is performed.
+    """
+    sample_set: Optional[models.SubmissionSampleSet] = db.get(  # type: ignore
+        models.SubmissionSampleSet, sample_set_id
+    )
+    if sample_set is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission sample set not found"
+        )
+    raise_for_insufficient_submission_role(
+        db, sample_set.submission_metadata, requester, allowed_roles=allowed_roles
+    )
+    return sample_set
 
 
 def get_submission_role(
@@ -989,21 +1044,37 @@ def get_submissions_for_user(
     search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
-    column = (
-        models.User.name
-        if column_sort == "author.name"
-        else getattr(models.SubmissionMetadata, column_sort)
-    )
-
     all_submissions = (
         db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+    )
+
+    column: Any
+    if column_sort == "author.name":
+        column = models.User.name
+    elif column_sort == "status":
+        # TODO: This sort path assumes the compatibility model where each submission has
+        # exactly one relevant sample set. Once the API/UI expose multiple sample sets,
+        # sorting submissions by "status" must define which sample set status is used,
+        # or move the sort to sample-set-aware endpoints.
+        all_submissions = all_submissions.outerjoin(
+            models.SubmissionSampleSet,
+            models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
+        )
+        column = models.SubmissionSampleSet.status
+    else:
+        column = getattr(models.SubmissionMetadata, column_sort)
+
+    all_submissions = (
+        all_submissions
         # Primary sort by requested column
         .order_by(column.asc() if order == "asc" else column.desc())
         # Secondary sorts to ensure consistent order since primary sort may have ties
         # (e.g. multiple submissions from the same author)
-        .order_by(models.SubmissionMetadata.study_name.asc())
-        .order_by(models.SubmissionMetadata.id.asc())
+        .order_by(models.SubmissionMetadata.study_name.asc()).order_by(
+            models.SubmissionMetadata.id.asc()
+        )
     )
 
     if is_test_submission_filter != None:
@@ -1036,21 +1107,38 @@ def get_query_for_all_submissions(db: Session):
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    all_submissions = db.query(models.SubmissionMetadata).order_by(
-        models.SubmissionMetadata.created.desc()
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
+        .order_by(models.SubmissionMetadata.created.desc())
     )
     return all_submissions
 
 
-def get_query_for_submitted_pending_review_submissions(db: Session):
+def get_query_for_all_submission_sample_sets(db: Session):
+    r"""Returns a SQLAlchemy query that can be used to retrieve all submission sample sets."""
+    all_submission_sample_sets = (
+        db.query(models.SubmissionSampleSet)
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
+        .order_by(models.SubmissionSampleSet.created.desc())
+    )
+    return all_submission_sample_sets
+
+
+def get_query_for_submitted_pending_review_sample_sets(db: Session):
     r"""
-    Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
+    Returns a SQLAlchemy query that can be used to retrieve submission sample sets pending
+    review.
 
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
+    submitted_pending_review = (
+        db.query(models.SubmissionSampleSet)
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
+        .filter(
+            models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        )
     )
     return submitted_pending_review
 

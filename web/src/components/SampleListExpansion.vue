@@ -69,7 +69,7 @@ export default defineComponent({
 <template>
   <div
     v-if="result.omics_processing.length"
-    class="d-flex flex-column mb-2"
+    class="d-flex flex-column"
   >
     <div class="d-flex flex-row flex-wrap">
       <v-tooltip
@@ -87,7 +87,7 @@ export default defineComponent({
               :variant="!isOpen(projects[0]?.id) ? 'outlined' : 'flat'"
               :color="isOpen(projects[0]?.id) ? 'primary' : 'default'"
               :disabled="isDisabled(omicsType, projects)"
-              class="mr-2 mt-2"
+              class="mr-2"
               @click="() => $emit('open-details', projects[0]?.id)"
             >
               {{ fieldDisplayName(omicsType) }}

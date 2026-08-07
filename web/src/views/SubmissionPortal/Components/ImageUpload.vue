@@ -2,17 +2,18 @@
 import {
   computed,
   defineComponent,
+  onUnmounted,
   PropType,
   ref,
+  watch,
 } from 'vue';
 // WARNING: The useForm composable is not part of the Vuetify public API yet
 //          https://github.com/vuetifyjs/vuetify/issues/19315
 // @ts-ignore
 import { useForm } from 'vuetify/lib/composables/form';
-import { deleteSubmissionImage, generateSignedUploadUrl, setSubmissionImage } from '@/views/SubmissionPortal/store/api';
 import useRequest from '@/use/useRequest';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
-import { useRoute } from 'vue-router';
+import { useSubmissionStore } from '../store';
 
 export default defineComponent({
   props: {
@@ -64,21 +65,11 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: [
-    /**
-     * Emitted when the upload request completes successfully. Will be called with the updated MetadataSubmissionRecord.
-     */
-    'on-upload-success',
-    /**
-     * Emitted when the delete request completes successfully.
-     */
-    'on-delete-success',
-  ],
-  setup(props, { emit }) {
-    const route = useRoute();
+  setup(props) {
     const fileInputRef = ref();
     const fileRef = ref<File | null>(null);
     const form = useForm();
+    const store = useSubmissionStore();
     const filePreview = computed(() => {
       if (fileRef.value) {
         return URL.createObjectURL(fileRef.value);
@@ -86,41 +77,26 @@ export default defineComponent({
       return props.imageUrl;
     });
 
+    // add selected but not yet uploaded to the list of pending uploads
+    watch(fileRef, (file) => {
+      store.setImageUploadPending(props.imageType, !!file);
+    })
+
+    onUnmounted(() => {
+      store.setImageUploadPending(props.imageType, false);
+    });
+
     const { request: uploadRequest, loading: uploading, error: uploadError } = useRequest();
     const handleUpload = () => uploadRequest(async () => {
       if (!fileRef.value) {
         return;
       }
-      const submissionId = (route.params as { id: string }).id;
-      // First, get a signed URL from the backend
-      const signedUrlResponse = await generateSignedUploadUrl(submissionId, fileRef.value);
-
-      // Next, upload the file to the signed URL
-      const uploadResponse = await fetch(signedUrlResponse.url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': fileRef.value.type,
-        },
-        body: fileRef.value,
-      });
-
-      // If the upload was successful, update the submission record with the new image reference and emit a success
-      // event with the updated record
-      if (uploadResponse.ok) {
-        const updatedSubmission = await setSubmissionImage(submissionId, fileRef.value, signedUrlResponse.object_name, props.imageType);
-        fileRef.value = null;
-        emit('on-upload-success', updatedSubmission);
-      } else {
-        throw new Error('File upload failed');
-      }
+      await store.uploadSubmissionImage(fileRef.value, props.imageType);
+      fileRef.value = null;
     });
 
     const { request: deleteRequest, loading: deleting, error: deleteError } = useRequest();
-    const handleDelete = () => deleteRequest(async () => {
-      const submissionId = (route.params as { id: string }).id;
-      await deleteSubmissionImage(submissionId, props.imageType);
-      emit('on-delete-success');
-    });
+    const handleDelete = () => deleteRequest(() => store.deleteSubmissionImage(props.imageType));
 
     const handleChangeClick = () => {
       if (fileInputRef.value) {

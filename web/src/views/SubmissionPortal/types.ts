@@ -2,6 +2,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'
 
 import { User } from '@/types';
 import { RouteLocationRaw } from 'vue-router';
+import { InjectionKey, Ref } from 'vue';
 
 /**
  * A manifest of the options available in DataHarmonizer
@@ -10,6 +11,8 @@ export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
 export const JGI_MT = 'jgi_mt';
+export const JGI_ISOLATE_GENOME = 'jgi_isolate_genome';
+export const JGI_ISOLATE_TRANSCRIPTOME = 'jgi_isolate_transcriptome';
 export const DATA_MG = 'data_mg';
 export const DATA_MG_INTERLEAVED = 'data_mg_interleaved';
 export const DATA_MT = 'data_mt';
@@ -17,13 +20,13 @@ export const DATA_MT_INTERLEAVED = 'data_mt_interleaved';
 
 export interface HarmonizerTemplateInfo {
   displayName: string,
-  schemaClass?: string,
-  sampleDataSlot?: string,
+  schemaClass: string,
+  sampleDataSlot: string,
   status: 'published' | 'mixin' | 'disabled',
-  // This value comes from annotations in the schema. It will be populated once the schema is loaded.
-  excelWorksheetName?: string,
 }
-export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
+// Holds a mapping between template names stored in Postgres and various related pieces of information about them.
+// Note: the key order determines the order in which tabs are shown on the Sample Metadata screen.
+export const HARMONIZER_TEMPLATES = {
   air: {
     displayName: 'air',
     schemaClass: 'AirInterface',
@@ -41,26 +44,6 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     schemaClass: 'HostAssociatedInterface',
     sampleDataSlot: 'host_associated_data',
     status: 'published',
-  },
-  'human-associated': {
-    displayName: 'human-associated',
-    status: 'disabled',
-  },
-  'human-gut': {
-    displayName: 'human - gut',
-    status: 'disabled',
-  },
-  'human-oral': {
-    displayName: 'human - oral',
-    status: 'disabled',
-  },
-  'human-skin': {
-    displayName: 'human - skin',
-    status: 'disabled',
-  },
-  'human-vaginal': {
-    displayName: 'human - vaginal',
-    status: 'disabled',
   },
   'hydrocarbon resources-cores': {
     displayName: 'hydrocarbon resources - cores',
@@ -110,6 +93,12 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'water_data',
     status: 'published',
   },
+  isolate: {
+    displayName: 'isolate',
+    schemaClass: 'IsolateInterface',
+    sampleDataSlot: 'isolate_data',
+    status: 'published',
+  },
   [EMSL]: {
     displayName: 'EMSL',
     schemaClass: 'EmslInterface',
@@ -132,6 +121,18 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     displayName: 'JGI MT',
     schemaClass: 'JgiMtInterface',
     sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
+  },
+  [JGI_ISOLATE_GENOME]: {
+    displayName: 'Isolate Genome',
+    schemaClass: 'JgiIsolateGenomeInterface',
+    sampleDataSlot: 'jgi_isolate_genome_data',
+    status: 'mixin',
+  },
+  [JGI_ISOLATE_TRANSCRIPTOME]: {
+    displayName: 'Isolate Transcriptome',
+    schemaClass: 'JgiIsolateTranscriptomeInterface',
+    sampleDataSlot: 'jgi_isolate_transcriptome_data',
     status: 'mixin',
   },
   [DATA_MG]: {
@@ -158,7 +159,11 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'metatranscriptome_sequencing_interleaved_data',
     status: 'mixin',
   },
-};
+} satisfies Record<string, HarmonizerTemplateInfo>;
+
+export type TemplateName = keyof typeof HARMONIZER_TEMPLATES;
+
+export const JGI_TEMPLATE_NAMES: TemplateName[] = [JGI_MG, JGI_MG_LR, JGI_MT]
 
 export enum BiosafetyLevels {
   BSL1 = 'BSL1',
@@ -174,15 +179,13 @@ export enum AwardTypes {
 }
 
 export enum SuggestionType {
-  ALL = 'All Types',
-  ADDITIONS = 'Additions Only',
-  REPLACEMENTS = 'Replacements Only',
+  ADDITIONS = 'Additions',
+  REPLACEMENTS = 'Replacements',
 }
 
-export enum SuggestionsMode {
-  LIVE = 'Live',
-  ON_DEMAND = 'On Demand',
-  OFF = 'Off',
+export enum SuggestionFill {
+  FIELD_SUGGESTION = 'Suggest Fields',
+  VALUE_SUGGESTION = 'Suggest Values'
 }
 
 export interface CellData {
@@ -227,6 +230,70 @@ export interface NmdcAddress {
   country: string;
 }
 
+export interface ValidatedForm {
+  validation: string[] | null;
+}
+
+export interface SenderShippingInfoForm extends ValidatedForm {
+  shipper: NmdcAddress;
+  expectedShippingDate: string | null;
+  shippingConditions: string;
+  sample: string;
+  description: string;
+  experimentalGoals: string;
+  randomization: string;
+  usdaRegulated: boolean | null;
+  permitNumber: string;
+  biosafetyLevel: string;
+  irbOrHipaa: boolean | null;
+  comments: string;
+}
+
+export interface ExternalProtocol {
+  url: string | null;
+  doi: string | null;
+  name: string | null;
+  description: string | null;
+}
+
+export interface Protocols {
+  sampleProtocol: SampleProtocol,
+  acquisitionProtocol: AcquisitionProtocol,
+  dataProtocol: DataProtocol,
+}
+
+export type OmicsProcessingType =
+  // non-doe types
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' | 'isolate-genome' | 'isolate-transcriptome' |
+  // doe facility associated types
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' |
+  'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi' | 'isolate-genome-jgi' | 'isolate-transcriptome-jgi';
+
+export interface MultiOmicsForm extends ValidatedForm {
+  award: string | null;
+  awardDois: Doi[] | null;
+  dataGenerated: boolean | null;
+  doe: boolean | null;
+  facilities: string[] | null;
+  facilityGenerated: boolean | null;
+  JGIStudyId: string;
+  mgCompatible: boolean | null;
+  mgInterleaved: boolean | null;
+  mtCompatible: boolean | null;
+  mtInterleaved: boolean | null;
+  omicsProcessingTypes: OmicsProcessingType[];
+  otherAward: string | null;
+  ship: boolean | null;
+  studyNumber: string
+  unknownDoi: boolean | null;
+  mpProtocols: Protocols | null;
+  mbProtocols: Protocols | null;
+  mbGcProtocols: Protocols | null;
+  lipProtocols: Protocols | null;
+  nomProtocols: Protocols | null;
+  nomLcProtocols: Protocols | null;
+}
+
 export interface SubmissionPage {
   title: string;
   link: RouteLocationRaw;
@@ -238,33 +305,47 @@ export interface SampleMetadataValidationState {
   tabsValidated: Record<string, boolean>;
 }
 
-// null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
-// an array of strings indicates validation errors for the form
-// an empty array indicates the form has been validated with no errors
-export interface SubmissionValidationState {
-  studyForm: string[] | null;
-  multiOmicsForm: string[] | null;
-  sampleEnvironmentForm: string[] | null;
-  senderShippingInfoForm: string[] | null;
-  sampleMetadata: SampleMetadataValidationState | null;
+export interface SampleData {
+  data: Record<string, any[]>;
+  validation: SampleMetadataValidationState | null;
 }
 
-export interface MetadataSubmission {
+export interface SampleEnvironmentForm extends ValidatedForm {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  addressForm: any;
-  templates: string[];
-  studyForm: any;
-  multiOmicsForm: any;
-  sampleData: Record<string, any[]>;
-  validationState: SubmissionValidationState;
 }
 
-export interface MetadataSubmissionRecordSlim {
+export interface Contributor {
+  name: string;
+  orcid: string;
+  roles: string[];
+  permissionLevel: SubmissionEditorRole | null;
+}
+
+export interface StudyFormCreate extends ValidatedForm {
+  studyName: string;
+  piName: string;
+  piEmail: string;
+  piOrcid: string;
+  fundingSources: string[] | null;
+  dataDois: Doi[] | null;
+  publicationDois: Doi[] | null;
+  linkOutWebpage: string[];
+  studyDate: string | null;
+  description: string;
+  notes: string;
+  contributors: Contributor[];
+}
+
+export interface StudyForm extends StudyFormCreate {
+  alternativeNames: string[];
+  GOLDStudyId: string;
+  NCBIBioProjectId: string;
+}
+
+export interface SubmissionMetadataSlim {
   id: string;
   author: User;
   study_name: string;
-  templates: string[];
-  status: SubmissionStatusKey;
   date_last_modified: string;
   created: string;
   is_test_submission: boolean;
@@ -273,16 +354,76 @@ export interface MetadataSubmissionRecordSlim {
   contributors: string[];
 }
 
-export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
+export type SourceClient = 'submission_portal' | 'field_notes' | 'nmdc_edge';
+
+export interface SubmissionMetadataCreate {
+  study_form: StudyFormCreate;
+  source_client: SourceClient | null;
+  is_test_submission: boolean;
+}
+
+export interface SubmissionMetadataPatch {
+  study_form?: StudyForm;
+  permissions?: Record<string, string>;
+}
+
+export interface SubmissionMetadata extends SubmissionMetadataSlim {
   author_orcid: string;
-  metadata_submission: MetadataSubmission;
+  study_form: StudyForm;
   nmdc_study_id: string | null;
-  locked_by: User;
-  lock_updated: string;
-  permission_level: string | null;
-  source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
+  locked_by: User | null;
+  lock_updated: string | null;
+  permission_level: SubmissionEditorRole | null;
+  source_client: SourceClient | null;
   primary_study_image_url: string | null;
   pi_image_url: string | null;
+  sample_sets: SubmissionSampleSetListItem[];
+}
+
+export interface SubmissionSampleSetNavigationValidation {
+  multi_omics_data: string[] | null;
+  sample_environment: string[] | null;
+  sample_metadata: string[] | null;
+}
+
+export interface SubmissionSampleSetListItem {
+  id: string;
+  name: string;
+  templates: string[];
+  status: string;
+  created: string;
+  date_last_modified: string;
+  navigation_validation: SubmissionSampleSetNavigationValidation;
+}
+
+export interface SubmissionSampleSetCreate {
+  name: string;
+  templates: string[];
+  status?: string;
+  multi_omics_form: MultiOmicsForm
+  sample_environment_form: SampleEnvironmentForm;
+  sender_shipping_info_form: SenderShippingInfoForm;
+  sample_data: SampleData;
+}
+
+export interface SubmissionSampleSetPatch {
+  name?: string;
+  templates?: string[];
+  multi_omics_form?: MultiOmicsForm;
+  sample_environment_form?: SampleEnvironmentForm;
+  sender_shipping_info_form?: SenderShippingInfoForm;
+  sample_data?: SampleData;
+}
+
+export interface SubmissionSampleSetStatusPatch {
+  status: string;
+}
+
+export interface SubmissionSampleSet extends SubmissionSampleSetListItem {
+  multi_omics_form: MultiOmicsForm;
+  sample_environment_form: SampleEnvironmentForm;
+  sender_shipping_info_form: SenderShippingInfoForm;
+  sample_data: SampleData;
 }
 
 export interface PaginatedResponse<T> {
@@ -293,8 +434,8 @@ export interface PaginatedResponse<T> {
 export interface LockOperationResult {
   success: boolean;
   message: string
-  locked_by?: User | null;
-  lock_updated?: string | null;
+  locked_by: User | null;
+  lock_updated: string | null;
 }
 
 export interface Doi {
@@ -320,7 +461,14 @@ export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
+export type UneditableReason =
+  'locked_by_other' |
+  'insufficient_permissions' |
+  'uneditable_status' |
+  'already_submitted';
+
+export const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
+export type SubmissionStatusKey = keyof typeof SubmissionStatusEnum;
 
 export type AllowedStatusTransitions = Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
 
@@ -347,3 +495,5 @@ export interface StatusOption {
   value: string;
   title: string;
 }
+
+export const AppBannerHeightKey = Symbol() as InjectionKey<Ref<number>>;

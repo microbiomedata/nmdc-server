@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from pydantic import field_validator, model_validator
 from pydantic.v1 import validator
@@ -184,7 +184,27 @@ def load_omics_processing(  # noqa: C901
 
     # Get amplicon specific fields
     if obj["omics_type"] == "Amplicon":
-        load_amplicon_data(obj, input_ids, mongodb)
+
+        def find_library_preparation_having_id_in_output(id_: str) -> Optional[dict]:
+            """
+            Helper function that returns the first `LibraryPreparation` document residing in the
+            `material_processing_set` Mongo collection, whose `has_output` field contains the
+            specified ID. If no such document exists, this function returns `None`.
+            """
+            material_processing_set = mongodb["material_processing_set"]
+            material_processing = material_processing_set.find_one(
+                {
+                    "has_output": id_,
+                    "type": "nmdc:LibraryPreparation",
+                }
+            )
+            return material_processing
+
+        load_amplicon_data(
+            data_generation=obj,
+            input_ids=input_ids,
+            find_library_preparation_having_id_in_output=find_library_preparation_having_id_in_output,
+        )
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -241,29 +261,107 @@ def load_omics_processing(  # noqa: C901
     db.add(omics_processing)
 
 
-def load_amplicon_data(obj, input_ids, mongodb):
+def load_amplicon_data(
+    data_generation,
+    input_ids,
+    find_library_preparation_having_id_in_output: Callable[[str], Optional[dict]],
+):
     """
-    Load amplicon-specific fields for omics processing records.
+    Load amplicon-specific fields onto a data generation record.
+
+    Here, "data generation" is the modern NMDC term for what the surrounding ingest code
+    still calls "omics processing"; they refer to the same thing.
+
+    ``target_gene`` and ``target_subfragment`` are optional, independent slots on
+    ``LibraryPreparation``: either, both, or neither may be present. Each is read
+    independently from the first LibraryPreparation in this data generation's input chain
+    that declares it, so a ``target_subfragment`` is captured even when its source
+    LibraryPreparation omits ``target_gene`` (and vice versa).
+
+    Following the convention of load_omics_processing, this mutates `data_generation` in place,
+    rather than returning a value.
 
     Args:
-        obj: The omics processing object to populate with amplicon data
-        input_ids: List of input IDs to search for material processing data
-        mongodb: MongoDB database connection
+        data_generation: The data generation record to populate with amplicon data (mutated in place)
+        input_ids: List of input IDs to search for the producing LibraryPreparation
+        find_library_preparation_having_id_in_output: A callback function that returns the first
+                                                      `LibraryPreparation` document whose
+                                                      `has_output` field contains the specified ID.
+
+    Doctests (these can be run via `$ python -m doctest nmdc_server/ingest/omics_processing.py`):
+
+    1. Neither ``target_gene`` nor ``target_subfragment`` present:
+    >>> dgen = {}
+    >>> load_amplicon_data(dgen, ["input_a"], lambda id_: {"id": "nmdc:libprep-1"})
+    >>> dgen
+    {'target_gene': None, 'target_subfragment': None}
+
+    2. Only ``target_subfragment`` present:
+    >>> dgen = {}
+    >>> load_amplicon_data(dgen, ["input_a"], lambda id_: {"target_subfragment": {"has_raw_value": "MySubfragment"}})
+    >>> dgen
+    {'target_gene': None, 'target_subfragment': 'MySubfragment'}
+
+    3. Only ``target_gene`` present:
+    >>> dgen = {}
+    >>> load_amplicon_data(dgen, ["input_a"], lambda id_: {"target_gene": "MyGene"})
+    >>> dgen
+    {'target_gene': 'MyGene', 'target_subfragment': None}
+
+    4. Both ``target_gene`` and ``target_subfragment`` present:
+    >>> dgen = {}
+    >>> load_amplicon_data(dgen, ["input_a"], lambda id_: {"target_gene": "MyGene", "target_subfragment": {"has_raw_value": "MySubfragment"}})
+    >>> dgen
+    {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
+
+    5. No LibraryPreparation is found for any input (callback returns None):
+    >>> dgen = {}
+    >>> load_amplicon_data(dgen, ["input_a"], lambda id_: None)
+    >>> dgen
+    {'target_gene': None, 'target_subfragment': None}
+
+    6. No input IDs at all:
+    >>> dgen = {}
+    >>> load_amplicon_data(dgen, [], lambda id_: None)
+    >>> dgen
+    {'target_gene': None, 'target_subfragment': None}
+
+    7. Multiple inputs whose LibraryPreparations each carry only one field; both are collected:
+    >>> dgen = {}
+    >>> lib_preps = {"input_a": {"target_gene": "MyGene"}, "input_b": {"target_subfragment": {"has_raw_value": "MySubfragment"}}}
+    >>> load_amplicon_data(dgen, ["input_a", "input_b"], lib_preps.get)
+    >>> dgen
+    {'target_gene': 'MyGene', 'target_subfragment': 'MySubfragment'}
     """
+
+    data_generation["target_gene"] = None
+    data_generation["target_subfragment"] = None
+
     for input_id in input_ids:
-        material_processing_set = mongodb["material_processing_set"].find_one(
-            {"has_output": {"$in": [input_id]}}
-        )
-        if material_processing_set and "target_gene" in material_processing_set:
-            obj["target_gene"] = material_processing_set["target_gene"]
-            target_subfragment = material_processing_set["target_subfragment"]
-            if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
-                obj["target_subfragment"] = target_subfragment["has_raw_value"]
-            else:
-                obj["target_subfragment"] = target_subfragment
-        else:
-            obj["target_gene"] = None
-            obj["target_subfragment"] = None
+        # If the `target_gene` and `target_subfragment` fields of the `DataGeneration` both already
+        # contain values other than `None`, stop iterating. This avoids unnecessary Mongo queries.
+        if (
+            data_generation["target_gene"] is not None
+            and data_generation["target_subfragment"] is not None
+        ):
+            break
+
+        # Find a (amplicon) LibraryPreparation document that produced this input.
+        amplicon_lib_prep = find_library_preparation_having_id_in_output(input_id)
+        if not amplicon_lib_prep:
+            continue
+
+        # If the `target_gene` field of the `DataGeneration` is still `None`, use the `target_gene`
+        # value from the LibraryPrepation we found earlier.
+        if data_generation["target_gene"] is None:
+            data_generation["target_gene"] = amplicon_lib_prep.get("target_gene")
+
+        # If the `target_subfragment` field of the `DataGeneration` is still `None`, use the
+        # `target_subfragment.has_raw_value` value from the LibraryPrepation we found earlier.
+        if data_generation["target_subfragment"] is None:
+            target_subfragment = amplicon_lib_prep.get("target_subfragment")
+            if isinstance(target_subfragment, dict):
+                data_generation["target_subfragment"] = target_subfragment.get("has_raw_value")
 
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
