@@ -21,15 +21,19 @@ export default function useBulkDownload(
   } as BulkDownloadAggregateSummary);
 
   async function download() {
-    return request(async () => {
-      const val = await api.createBulkDownload(
+    const val = await request(async () => {
+      const result = await api.createBulkDownload(
         conditions.value,
         dataObjectFilter.value,
         includeOlderWorkflowExecutions.value,
       );
-      bulkDownloads.value.push(val);
-      return val;
+      bulkDownloads.value.push(result);
+      return result;
     });
+    if (error.value) {
+      throw new Error(error.value);
+    }
+    return val;
   }
 
   async function getSummary() {
@@ -41,6 +45,7 @@ export default function useBulkDownload(
   }
 
   async function getDownloadOptions() {
+    console.log('Re-fetching download options with conditions:', conditions.value, 'and includeOlderWorkflowExecutions:', includeOlderWorkflowExecutions.value);
     downloadOptions.value = await api.getBulkDownloadSummary(
       conditions.value,
       includeOlderWorkflowExecutions.value,

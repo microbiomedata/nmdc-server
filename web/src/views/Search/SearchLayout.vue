@@ -89,7 +89,7 @@ function selectStudyAndOmics(studyId: string, omicsType: string) {
   setConditions([...stateRefs.conditions.value, ...conditions]);
 }
 
-const includeOlderWorkflowExecutions = ref(false);
+const includeOlderWorkflowExecutions = ref(stateRefs.includeOlderWorkflowExecutions);
 const biosample = usePaginatedResults(
   stateRefs.conditions,
   api.searchBiosample,

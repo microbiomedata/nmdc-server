@@ -614,7 +614,7 @@ def create_bulk_download(
         include_older_workflow_executions=bulk_download.include_older_workflow_executions,
     )
     try:
-        bulk_download_model = models.BulkDownload(**bulk_download.dict())
+        bulk_download_model = models.BulkDownload(**bulk_download.model_dump())
         db.add(bulk_download_model)
 
         has_files = False

@@ -40,7 +40,7 @@ const {
   downloadSummary,
   downloadOptions,
   download,
-} = useBulkDownload(stateRefs.conditions, dataObjectFilter);
+} = useBulkDownload(stateRefs.conditions, dataObjectFilter, stateRefs.includeOlderWorkflowExecutions);
 
 const disableBulkDataProductDownload = ref(true);
 api.getAppSettings().then((appSettings) => {
@@ -99,8 +99,8 @@ async function createAndDownload() {
     bulkTermsDialog.value = false;
     const val = await download();
     if (val) window.location.assign(val.url);
-  } catch (error) {
-    console.error('Failed to create bulk download:', error);
+  } catch (err) {
+    console.error('Failed to create bulk download:', err);
     errorDialog.value = true;
   }
 }

@@ -14,6 +14,7 @@ let router: Router | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
+  includeOlderWorkflowExecutions: false,
   userLoading: false,
   user: null as User | null,
   hasAcceptedTerms: false,
