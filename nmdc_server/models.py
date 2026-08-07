@@ -1221,6 +1221,10 @@ class BulkDownload(Base):
     # the filter on data objects `List[DataObjectFilter]`
     filter = Column(JSONB, nullable=True)
 
+    # Whether or not to include data objects from older workflow executions
+    # (ones that have been superseded) in the bulk download
+    include_older_workflow_executions = Column(Boolean, nullable=False, default=False)
+
     expired = Column(Boolean, nullable=False, default=False)
 
 
