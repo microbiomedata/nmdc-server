@@ -46,6 +46,7 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 from nmdc_server.storage import BucketName, sanitize_filename, storage
 from nmdc_server.table import Table
 
@@ -972,7 +973,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
     # Note: We added these statements to help with debugging when this functionality was new.
-    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    # logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     async with (
         httpx.AsyncClient(timeout=None) as client,
@@ -1016,9 +1017,15 @@ async def get_bulk_download_data_object_metadata(
     if len(data_object_ids_list) == 0:
         return []
 
-    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+    data_object_documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+    data_objects_json = []
+    for document, biosample_ids in data_object_documents:
+        document["_bulk_download_filename"] = crud.construct_data_object_filename(document['id'], document['name'])
+        document["_related_biosample_ids"] = biosample_ids
+        document["_globus_path"] = document["url"].replace("https://data.microbiomedata.org/data", "")
+        data_objects_json.append(document)
 
-    return JSONResponse(content=documents)
+    return JSONResponse(content=data_objects_json)
 
 
 @router.get(
@@ -1099,6 +1106,29 @@ async def get_bulk_download_readme(
     readme_content = readme_path.read_text(encoding="utf-8")
 
     return Response(content=readme_content, media_type="text/markdown")
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/ro-crate-metadata.json",
+    tags=["download"],
+)
+async def get_bulk_download_rocrate(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON object representing the RO-Crate metadata for the bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    rocrate_dict = generate_rocrate_for_bulk_download(bulk_download)
+
+    return JSONResponse(content=rocrate_dict)
 
 
 @router.get(

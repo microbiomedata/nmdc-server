@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -505,13 +505,36 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        select(models.BiosampleRelatedDocument.document, models.BiosampleRelatedDocument.biosample_ids)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.id.in_(ids_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
 
     rows = db.execute(statement).all()
-    return [row[0] for row in rows]
+    return rows
+
+
+def get_related_biosamples_by_data_object_ids(
+    db: Session, data_object_ids: list[str]
+) -> list[dict]:
+    """
+    Take a list of `DataObject` IDs and map each one to its related biosamples.
+    """
+    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
+    statement = (
+        select(
+            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
+            models.BiosampleRelatedDocument.biosample_ids,
+        )
+        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    for row in rows:
+        data_object_id_to_biosample_ids_map[row[0]] = row[1]
+
+    return data_object_id_to_biosample_ids_map
 
 
 def get_documents_by_biosample_ids(
@@ -567,38 +590,17 @@ def create_file_download(
     return db_file_download
 
 
-def construct_zip_file_path(data_object: models.DataObject) -> str:
-    """Return a path inside the zip file for the data object."""
-    # TODO:
-    #   - Users will most likely want more descriptive folder names
-    #   - Add metadata for parent entities in the zip file
-    #   - We probably want to reference the workflow activity but that
-    #     involves a complicated query... need a way to join that information
-    #     in the original query (possibly in the sqlalchemy relationship)
-    if not data_object.omics_processings:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data object has no associated omics processings.",
-        )
-    omics_processing = data_object.omics_processings[0]
-    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
+def safe_name(name: str) -> str:
+    """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
+    return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
-    def safe_name(name: str) -> str:
-        return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
-    op_name = safe_name(omics_processing.id)
-
-    if biosamples:
-        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
-        study = biosamples[0].study
-    else:
-        # Some emsl omics_processing are missing biosamples
-        biosample_name = "unknown"
-        study = omics_processing.study
-
-    study_name = safe_name(study.id)
-    da_name = safe_name(data_object.name)
-    return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
+def construct_data_object_filename(data_object_id: str, data_object_name: str) -> str:
+    """
+    Construct a unique file name for the data object that is safe to use in a zip file.
+    The file name becomes `<data_object.id>__<data_object.name>` with any characters that are not safe for file names replaced with underscores.
+    """
+    return f"{safe_name(data_object_id)}__{safe_name(data_object_name)}"
 
 
 def create_bulk_download(
@@ -624,7 +626,7 @@ def create_bulk_download(
                 models.BulkDownloadDataObject(
                     bulk_download=bulk_download_model,
                     data_object=data_object,
-                    path=construct_zip_file_path(data_object),
+                    path=f"data/{construct_data_object_filename(data_object.id, data_object.name)}",
                 )
             )
 
@@ -703,6 +705,12 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     # deliberately skip the expired check.
     # TODO: Might want to invalidate the URL (status.HTTP_410_GONE) after the bulk_download is expired
     base = settings.portal_api_internal_url
+    file_descriptions.append(
+        {
+            "url": f"{base}/api/bulk_download/{id}/ro-crate-metadata.json",
+            "zipPath": "ro-crate-metadata.json",
+        }
+    )
     file_descriptions.append(
         {
             "url": f"{base}/api/bulk_download/{id}/README.md",
