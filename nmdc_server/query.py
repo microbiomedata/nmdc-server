@@ -1225,7 +1225,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         if not self.include_older_workflow_executions:
             superseded_subquery = self._make_superseded_data_object_ids_subquery(db)
             result_query = result_query.filter(
-                models.DataObject.id.notin_(select(superseded_subquery.c.id))  # type: ignore
+                models.DataObject.id.notin_(select(superseded_subquery.c.id))
             )
         return result_query
 

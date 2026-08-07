@@ -272,7 +272,7 @@ def get_data_object_aggregation(
     subquery = query.OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
     if not include_older_workflow_executions:
         superseded_subquery = make_superseded_wfe_outputs_subquery(db)
-        superseded_ids_query = select(superseded_subquery.c.id)  # type: ignore
+        superseded_ids_query = select(superseded_subquery.c.id)
     agg: schemas.DataObjectAggregation = {
         workflow.value: schemas.DataObjectAggregationElement()
         for workflow in WorkflowActivityTypeEnum
@@ -327,7 +327,9 @@ def get_data_object_aggregation(
         file_type_rows_query = file_type_rows_query.filter(
             models.DataObject.id.notin_(superseded_ids_query)
         )
-    for row in file_type_rows_query.group_by(models.DataObject.workflow_type, models.DataObject.file_type):
+    for row in file_type_rows_query.group_by(
+        models.DataObject.workflow_type, models.DataObject.file_type
+    ):
         agg[row[0]].file_types[row[1]] = schemas.DataObjectAggregationNode(
             count=row[2], size=row[3]
         )
