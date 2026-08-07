@@ -1,4 +1,4 @@
-"""empty message
+"""Add superseded_by columns to analysis tables
 
 Revision ID: a67ca461ab87
 Revises: f7ab5b690b5e
