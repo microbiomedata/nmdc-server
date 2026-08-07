@@ -40,7 +40,7 @@ const {
   downloadSummary,
   downloadOptions,
   download,
-} = useBulkDownload(stateRefs.conditions, dataObjectFilter);
+} = useBulkDownload(stateRefs.conditions, dataObjectFilter, stateRefs.includeOlderWorkflowExecutions);
 
 const disableBulkDataProductDownload = ref(true);
 api.getAppSettings().then((appSettings) => {
@@ -99,8 +99,8 @@ async function createAndDownload() {
     bulkTermsDialog.value = false;
     const val = await download();
     if (val) window.location.assign(val.url);
-  } catch (error) {
-    console.error('Failed to create bulk download:', error);
+  } catch (err) {
+    console.error('Failed to create bulk download:', err);
     errorDialog.value = true;
   }
 }
@@ -115,7 +115,7 @@ async function downloadMetadata() {
     metadataDownloadLoading.value = true;
     metadataTermsDialog.value = false;
     const endpoints = metadataDownloadSelected.value;
-    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints);
+    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints, stateRefs.includeOlderWorkflowExecutions.value);
     downloadBlob(blob, 'metadata.zip');
   } catch (error) {
     console.error('Failed to download metadata:', error);

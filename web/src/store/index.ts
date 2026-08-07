@@ -14,12 +14,14 @@ let router: Router | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
+  includeOlderWorkflowExecutions: false,
   userLoading: false,
   user: null as User | null,
   hasAcceptedTerms: false,
   treeData: null as EnvoTree | null,
   bannerTitle: null as string | null,
   bannerMessage: null as string | null,
+  collapsedWorkflows: {} as Record<string, boolean>,
 });
 const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,

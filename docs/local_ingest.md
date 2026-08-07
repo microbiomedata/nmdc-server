@@ -12,106 +12,61 @@ Another reason is control of the source data. Keeping a copy of the mongo databa
 
 If you expect that a change to `nmdc-schema` will affect (break) ingest, you have freedom over your local mongo data to actually test how those changes will interact with ingest.
 
-## Obtaining data for a local mongo database
+## Step 1: Dump data from MongoDB
 
-You'll still need to use an `ssh` tunnel to get an initial set of data (and updated data in the future). Assuming you're using the [sshproxy](https://docs.nersc.gov/connect/mfa/#sshproxy) and have a key, you can establish a tunnel like so:
-
-```bash
-ssh -L 0.0.0.0:27018:mongo-loadbalancer.nmdc.production.svc.spin.nersc.org:27017 <nersc_user>@dtn01.nersc.gov -i ~/.ssh/nersc
-```
-
-Now your port `27018` will forward to the production mongo database hosted on NERSC.
-
-Here is a simple bash script you can use to back up the data to your local machine. This particular method backs up one collection at a time, and only backs up the collections that ingest needs. You'll need to set some environment variables for this to work.
+You'll need an SSH tunnel to the MongoDB instance you want to dump from. Once the tunnel is active, use the `scripts/mongo_dump.sh` script to dump the ingest-relevant collections to `data/mongo/` (which is gitignored).
 
 ```bash
-host="localhost"
-port="27018"
-user="org.microbiomedata.data_reader"
-password="$SOURCE_MONGO_PASSWORD"
-database="nmdc"
-authenticationDatabase="admin"
-backup_dir="/path/to/mongo/dumps"  # change me
+# Dump from dev MongoDB (tunnel on port 37018):
+./scripts/mongo_dump.sh <user> <password> 37018
 
-collections=(
-    "biosample_set"
-    "configuration_set"
-    "data_object_set"
-    "field_research_site_set"
-    "instrument_set"
-    "material_sample_set"
-    "processed_sample_set"
-    "study_set"
-    "planned_process_set"
-    "collecting_biosamples_from_site_set"
-    "data_generation_set"
-    "material_processing_set"
-    "protocol_execution_set"
-    "storage_process_set"
-    "workflow_execution_set"
-    "manifest_set"
-    # The largest collection in mongo. Not necessary for ingest in most cases.
-    # If testing gene function annotation ingest/search, you may need this.
-    # "functional_annotation_agg"
-)
-
-mkdir -p "$backup_dir"
-
-for collection in "${collections[@]}"; do
-    echo "backing up collection $collection"
-    mongodump --host "$host" --port "$port" --username "$user" --password "$password" --authenticationDatabase "$authenticationDatabase" --db "$database" --collection "$collection" --out "$backup_dir"
-done
-
-echo "Backup complete"
+# Dump from prod MongoDB (tunnel on port 27124, the default):
+./scripts/mongo_dump.sh <user> <password>
 ```
 
-## Setting up your local mongo database
+See `scripts/mongo_dump.sh` for the full list of arguments and options, including how to include the `functional_annotation_agg` collection (needed only for gene function annotation testing).
 
-This part is pretty easy. We can leverage the fact that we're using `docker` in our local development environments to spin up a mongo service with the rest of our stack. If you create a file called `docker-compose.local.yml` and add the following:
+## Step 2: Start a local MongoDB container
+
+Create a `docker-compose.local.yml` file at the root of this repository with the following contents:
 
 ```yaml
 version: "3.3"
 services:
   mongodb_container:
-   image: mongo:latest
-   environment:
-     MONGO_INITDB_ROOT_USERNAME: root
-     MONGO_INITDB_ROOT_PASSWORD: rootpassword
-   ports:
-     - 27017:27017
-   container_name: mongo_db
-   volumes:
-    # For data to persist after this service goes down, we need to mount a volume.
-     - /path/to/store/data:/data/db
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - 27017:27017
+    container_name: mongo_db
+    volumes:
+      - mongodb_data:/data/db
 
 volumes:
-  mongodb_data_container:
+  mongodb_data:
 ```
 
-Then run
+The named volume (`mongodb_data`) ensures data persists across container restarts — you only need to restore the dump once.
+
+Start just the MongoDB container:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.local.yml up
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d mongodb_container
 ```
 
-to spin up the "normal" NMDC server stack with an additional service for mongo.
+## Step 3: Restore the dump
 
-## Restoring the back up
-
-Here's another very simple script you can run to restore the backup you retrieved earlier into you new local mongo service (the local mongo service must be up for this to work)
+Use the `scripts/mongo_restore.sh` script to restore the dump into the local container:
 
 ```bash
-#!/bin/bash
-
-host="localhost"
-port="27017"
-database="nmdc"
-path="/path/to/mongo/dumps"
-
-mongorestore --host "$host" --port "$port" --drop "$path"
+./scripts/mongo_restore.sh
 ```
 
-## Obtaining static files used by the ingester
+The tunnel is no longer needed after this point.
+
+## Step 4: Obtain static files used by the ingester
 
 The ingester requires some static files to be present at `/data/ingest` within the container
 it's running in.
@@ -142,16 +97,16 @@ kegg_pathway.tab.txt
 Pfam-A.clans.tsv
 ```
 
-Now—since the `docker-compose.yml` file tells Docker to mount the host's `./data/ingest` directory
-at `/data/ingest` within the `backend` container—the next time you run the ingester,
-those files will be present where the ingester expects them to be.
+Since the `docker-compose.yml` file mounts the host's `./data/ingest` directory at `/data/ingest`
+within the `backend` container, these files will be present where the ingester expects them.
 
-## Running ingest
+## Step 5: Configure `.env` for the local MongoDB
 
-First you'll need to make sure your local ingest process knows to pull data from your local mongo. Set the following in your `.env` file:
+Set the following in your `.env` file so the ingest process connects to the local container
+instead of the remote tunnel:
 
 ```
-# Settings for ingest from local mongo using docker-compose.local
+# Settings for ingest from local mongo using docker-compose.local.yml
 NMDC_MONGO_HOST="mongo_db"
 NMDC_MONGO_PORT=27017
 NMDC_MONGO_DATABASE="nmdc"
@@ -159,8 +114,13 @@ NMDC_MONGO_USER="root"
 NMDC_MONGO_PASSWORD="rootpassword"
 ```
 
-Then, run ingest via `docker compose`:
+## Step 6: Run ingest
 
 ```bash
 docker compose run --rm backend nmdc-server ingest -vv --skip-annotation
 ```
+
+> **Note**: `--skip-annotation` omits metagenome/metatranscriptome annotation loading, which is
+> the slowest part of ingest (several hours). Omit this flag only if you specifically need to test
+> gene function annotation. You can also use `--function-limit N` to cap the number of gene
+> functions loaded per workflow (e.g. `--function-limit 10`) for a faster partial run.

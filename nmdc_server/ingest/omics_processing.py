@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, Optional
 from pydantic import field_validator, model_validator
 from pydantic.v1 import validator
 from pymongo.collection import Collection
-from pymongo.cursor import Cursor
 from pymongo.database import Database
 from sqlalchemy.orm import Session
 
@@ -364,7 +363,7 @@ def load_amplicon_data(
                 data_generation["target_subfragment"] = target_subfragment.get("has_raw_value")
 
 
-def load(db: Session, cursor: Cursor, mongodb: Database):
+def load(db: Session, cursor, mongodb: Database):
     logger = get_logger(__name__)
     config_map: dict[str, dict[str, Any]] = {}
     for obj in cursor:

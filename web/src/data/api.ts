@@ -77,12 +77,12 @@ export interface DataObjectSearchResult extends BaseSearchResult {
   file_type: string;
   file_type_description: string;
   url: string;
-
-  // download count
+  /** download count */
   downloads: number;
-
-  // indicates selected for bulk download
+  /** indicates selected for bulk download */
   selected: boolean;
+  /** Whether or not this result is hidden by the Show Older Workflow Executions setting */
+  hidden?: boolean;
 }
 
 export interface OmicsProcessingBaseResult extends BaseSearchResult {
@@ -446,6 +446,7 @@ export interface SearchParams {
   sortOrder?: string;
   conditions: Condition[];
   data_object_filter?: DataObjectFilter[];
+  include_older_workflow_executions?: boolean;
 }
 
 export interface SearchResponse<T> {
@@ -488,7 +489,16 @@ async function _search<T>(
 }
 
 async function searchBiosample(params: SearchParams) {
-  return _search<BiosampleSearchResult>("biosample", params);
+  const { offset = 0, limit = 100, conditions, data_object_filter, include_older_workflow_executions } = params;
+  const { data } = await client.post<SearchResponse<BiosampleSearchResult>>(
+    'biosample/search',
+    { conditions, data_object_filter, include_older_workflow_executions },
+    {
+      params: { offset, limit },
+      cache: { enabled: true },
+    }
+  );
+  return data;
 }
 
 async function searchStudy(params: SearchParams) {
@@ -583,10 +593,10 @@ async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource
   return data;
 }
 
-async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
+async function getMetadataZip(conditions: Condition[], endpoints: string[], includeOlderWorkflowExecutions: boolean = false): Promise<Blob> {
   const { data } = await client.post<Blob>(
     `download_metadata`,
-    { conditions, endpoints },
+    { conditions, endpoints, include_older_workflow_executions: includeOlderWorkflowExecutions },
     { responseType: 'blob' }
   );
   return data;
@@ -771,11 +781,12 @@ async function getEnvoTrees() {
 /**
  * Bulk Download API
  */
-async function getBulkDownloadSummary(conditions: Condition[]) {
+async function getBulkDownloadSummary(conditions: Condition[], includeOlderWorkflowExecutions: boolean = false) {
   const { data } = await client.post<BulkDownloadSummary>(
     "data_object/workflow_summary",
     {
       conditions,
+      include_older_workflow_executions: includeOlderWorkflowExecutions,
     }
   );
   return data;
@@ -783,13 +794,15 @@ async function getBulkDownloadSummary(conditions: Condition[]) {
 
 async function getBulkDownloadAggregateSummary(
   conditions: Condition[],
-  dataObjectFilter: DataObjectFilter[]
+  dataObjectFilter: DataObjectFilter[],
+  includeOlderWorkflowExecutions: boolean = false
 ) {
   const { data } = await client.post<BulkDownloadAggregateSummary>(
     "bulk_download/summary",
     {
       conditions,
       data_object_filter: dataObjectFilter,
+      include_older_workflow_executions: includeOlderWorkflowExecutions,
     }
   );
   return data;
@@ -797,11 +810,13 @@ async function getBulkDownloadAggregateSummary(
 
 async function createBulkDownload(
   conditions: Condition[],
-  dataObjectFilter: DataObjectFilter[]
+  dataObjectFilter: DataObjectFilter[],
+  includeOlderWorkflowExecutions: boolean = false
 ) {
   const { data } = await client.post<BulkDownload>("bulk_download", {
     conditions,
     data_object_filter: dataObjectFilter,
+    include_older_workflow_executions: includeOlderWorkflowExecutions,
   });
   return {
     ...data,

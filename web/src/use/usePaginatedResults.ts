@@ -33,6 +33,8 @@ export default function usePaginatedResult<T>(
   dataObjectFilter?: Ref<DataObjectFilter[]>,
   limit = 15,
   enabled: Ref<boolean> = computed(() => true),
+  /** Search params to that are conditionally included in the fetch  */
+  extraParams?: Ref<Partial<SearchParams>>,
 ): PaginatedResult<T> {
   const data = shallowReactive({
     results: { count: 0, results: [] } as SearchResponse<T>,
@@ -69,6 +71,7 @@ export default function usePaginatedResult<T>(
         sortOrder: data.sortOrder,
         conditions: conditions.value,
         data_object_filter: dataObjectFilter?.value,
+        ...extraParams?.value,
       });
       data.pageSync = Math.floor(data.offset / data.limit) + 1;
     });
@@ -85,6 +88,9 @@ export default function usePaginatedResult<T>(
 
   if (dataObjectFilter !== undefined) {
     watch(dataObjectFilter, debouncedFetchResults, { deep: true });
+  }
+  if (extraParams !== undefined) {
+    watch(extraParams, debouncedFetchResults, { deep: true });
   }
   debouncedFetchResults();
   // ENDTODO
