@@ -40,7 +40,7 @@ const {
   downloadSummary,
   downloadOptions,
   download,
-} = useBulkDownload(stateRefs.conditions, dataObjectFilter, stateRefs.includeOlderWorkflowExecutions);
+} = useBulkDownload(stateRefs.conditions, dataObjectFilter, stateRefs.includeSupersededWorkflowExecutions);
 
 const disableBulkDataProductDownload = ref(true);
 api.getAppSettings().then((appSettings) => {
@@ -115,7 +115,7 @@ async function downloadMetadata() {
     metadataDownloadLoading.value = true;
     metadataTermsDialog.value = false;
     const endpoints = metadataDownloadSelected.value;
-    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints, stateRefs.includeOlderWorkflowExecutions.value);
+    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints, stateRefs.includeSupersededWorkflowExecutions.value);
     downloadBlob(blob, 'metadata.zip');
   } catch (error) {
     console.error('Failed to download metadata:', error);

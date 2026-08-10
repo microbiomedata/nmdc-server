@@ -89,14 +89,14 @@ function selectStudyAndOmics(studyId: string, omicsType: string) {
   setConditions([...stateRefs.conditions.value, ...conditions]);
 }
 
-const includeOlderWorkflowExecutions = ref(stateRefs.includeOlderWorkflowExecutions);
+const includeSupersededWorkflowExecutions = ref(stateRefs.includeSupersededWorkflowExecutions);
 const biosample = usePaginatedResults(
   stateRefs.conditions,
   api.searchBiosample,
   dataObjectFilter,
   10,
   computed(() => true),
-  computed(() => ({ include_superseded_workflow_executions: includeOlderWorkflowExecutions.value })),
+  computed(() => ({ include_superseded_workflow_executions: includeSupersededWorkflowExecutions.value })),
 );
 const studyType = types.study;
 const studySummaryData = useFacetSummaryData({
@@ -287,7 +287,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
               >
                 <div class="d-flex align-center ga-1">    
                   <v-checkbox
-                    v-model="includeOlderWorkflowExecutions"
+                    v-model="includeSupersededWorkflowExecutions"
                     label="Include older workflow executions"
                     hide-details
                   />

@@ -593,10 +593,10 @@ async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource
   return data;
 }
 
-async function getMetadataZip(conditions: Condition[], endpoints: string[], includeOlderWorkflowExecutions: boolean = false): Promise<Blob> {
+async function getMetadataZip(conditions: Condition[], endpoints: string[], includeSupersededWorkflowExecutions: boolean = false): Promise<Blob> {
   const { data } = await client.post<Blob>(
     `download_metadata`,
-    { conditions, endpoints, include_superseded_workflow_executions: includeOlderWorkflowExecutions },
+    { conditions, endpoints, include_superseded_workflow_executions: includeSupersededWorkflowExecutions },
     { responseType: 'blob' }
   );
   return data;
@@ -781,12 +781,12 @@ async function getEnvoTrees() {
 /**
  * Bulk Download API
  */
-async function getBulkDownloadSummary(conditions: Condition[], includeOlderWorkflowExecutions: boolean = false) {
+async function getBulkDownloadSummary(conditions: Condition[], includeSupersededWorkflowExecutions: boolean = false) {
   const { data } = await client.post<BulkDownloadSummary>(
     "data_object/workflow_summary",
     {
       conditions,
-      include_superseded_workflow_executions: includeOlderWorkflowExecutions,
+      include_superseded_workflow_executions: includeSupersededWorkflowExecutions,
     }
   );
   return data;
@@ -795,14 +795,14 @@ async function getBulkDownloadSummary(conditions: Condition[], includeOlderWorkf
 async function getBulkDownloadAggregateSummary(
   conditions: Condition[],
   dataObjectFilter: DataObjectFilter[],
-  includeOlderWorkflowExecutions: boolean = false
+  includeSupersededWorkflowExecutions: boolean = false
 ) {
   const { data } = await client.post<BulkDownloadAggregateSummary>(
     "bulk_download/summary",
     {
       conditions,
       data_object_filter: dataObjectFilter,
-      include_superseded_workflow_executions: includeOlderWorkflowExecutions,
+      include_superseded_workflow_executions: includeSupersededWorkflowExecutions,
     }
   );
   return data;
@@ -811,12 +811,12 @@ async function getBulkDownloadAggregateSummary(
 async function createBulkDownload(
   conditions: Condition[],
   dataObjectFilter: DataObjectFilter[],
-  includeOlderWorkflowExecutions: boolean = false
+  includeSupersededWorkflowExecutions: boolean = false
 ) {
   const { data } = await client.post<BulkDownload>("bulk_download", {
     conditions,
     data_object_filter: dataObjectFilter,
-    include_superseded_workflow_executions: includeOlderWorkflowExecutions,
+    include_superseded_workflow_executions: includeSupersededWorkflowExecutions,
   });
   return {
     ...data,
