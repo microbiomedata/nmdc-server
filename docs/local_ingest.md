@@ -39,7 +39,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
     ports:
-      - 27017:27017
+      - "127.0.0.1:27017:27017"
     container_name: mongo_db
     volumes:
       - mongodb_data:/data/db
