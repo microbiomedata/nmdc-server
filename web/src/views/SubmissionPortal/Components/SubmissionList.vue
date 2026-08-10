@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, useTemplateRef, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref, useTemplateRef, watch } from 'vue';
+import { useSubmissionStore } from '../store';
 import { DataTableHeader } from 'vuetify';
 import { VTextField } from 'vuetify/components';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -44,7 +44,7 @@ const headers: DataTableHeader[] = [
   },
 ];
 
-const router = useRouter();
+const store = useSubmissionStore();
 const itemsPerPage = 10;
 const defaultSortBy = 'date_last_modified';
 const defaultSortOrder = 'desc';
@@ -61,21 +61,28 @@ const isReviewerAssignmentDialogOpen = ref(false);
 const isReviewerAssignmentSnackbarOpen = ref(false);
 const selectedSubmission = ref<SubmissionMetadataSlim | null>(null);
 const currentUser = stateRefs.user;
-const isTestFilter = ref(null);
 const testFilterValues = [
   { text: 'Show all submissions', val: null },
   { text: 'Show only test submissions', val: true },
   { text: 'Hide test submissions', val: false }];
-const searchText = ref('');
+
+function saveFilters() {
+  store.saveSubmissionListFilters();
+}
+
+function restoreFilters() {
+  store.restoreSubmissionListFilters();
+}
+
+onMounted(() => {
+  restoreFilters();
+  saveFilters();
+});
 
 async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<SubmissionMetadataSlim>> {
-  return api.listSubmissions(params, isTestFilter.value, searchText.value);
+  return api.listSubmissions(params, store.submissionListFilters.isTestFilter, store.submissionListFilters.searchText);
 }
 
-
-async function resume(item: SubmissionMetadataSlim) {
-  router?.push({ name: 'Submission Summary', params: { id: item.id } });
-}
 
 const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
 
@@ -94,13 +101,15 @@ function updateTableOptions(newOptions: any) {
   applySortOptions();
 }
 
-watch(isTestFilter, () => {
+watch(() => store.submissionListFilters.isTestFilter, () => {
+  saveFilters();
   options.value.page = 1;
   submission.setPage(options.value.page);
   applySortOptions();
 }, { deep: true });
 
-watch(searchText, () => {
+watch(() => store.submissionListFilters.searchText, () => {
+  saveFilters();
   options.value.page = 1;
   submission.setPage(options.value.page);
   applySortOptions();
@@ -216,7 +225,7 @@ async function addReviewer() {
             cols="3"
           >
             <v-text-field
-              v-model="searchText"
+              v-model="store.submissionListFilters.searchText"
               label="Search"
               variant="outlined"
               class="pr-2"
@@ -228,7 +237,7 @@ async function addReviewer() {
           </v-col>
           <v-col>
             <v-select
-              v-model="isTestFilter"
+              v-model="store.submissionListFilters.isTestFilter"
               :items="testFilterValues"
               item-title="text"
               item-value="val"
@@ -249,9 +258,15 @@ async function addReviewer() {
             @update:options="updateTableOptions"
           >
             <template #[`item.study_name`]="{ item }">
-              {{ item.study_name }}
+              <router-link
+                :to="{ name: 'Submission Summary', params: { id: item.id } }"
+                class="text-primary text-decoration-none"
+              >
+                {{ item.study_name }}
+              </router-link>
               <v-chip
                 v-if="item.is_test_submission"
+                class="ml-2"
                 color="orange"
                 text-color="white"
                 small
@@ -273,16 +288,6 @@ async function addReviewer() {
             <template #[`item.action`]="{ item }">
               <div class="d-flex align-center">
                 <v-spacer />
-                <v-btn
-                  size="small"
-                  color="primary"
-                  @click="() => resume(item)"
-                >
-                  Resume
-                  <v-icon class="pl-1">
-                    mdi-arrow-right-circle
-                  </v-icon>
-                </v-btn>
                 <v-menu
                   offset-x
                 >

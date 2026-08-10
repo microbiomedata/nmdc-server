@@ -108,6 +108,7 @@ async function createNewSampleSet() {
   >
     <v-btn
       color="primary"
+      class="mb-2"
       @click="createNewSampleSet"
     >
       <v-icon>mdi-plus</v-icon>
