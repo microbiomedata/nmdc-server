@@ -1025,6 +1025,14 @@ class DataObject(Base):
         back_populates="outputs",
     )  # type: ignore
 
+    @property
+    def workflow_activities(self) -> Iterator["PipelineStep"]:
+        """Yield workflow activities that produced this data object."""
+        for omics_processing in self.omics_processings:
+            for workflow_activity in omics_processing.omics_data:
+                if any(output.id == self.id for output in workflow_activity.outputs):
+                    yield workflow_activity
+
     # Define a property that can be used to shortcut calculating counts.
     # Useful when downstream code can more efficiently determine download
     # counts for a batch of DataObjects and inject those counts.

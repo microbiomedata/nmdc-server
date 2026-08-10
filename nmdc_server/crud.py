@@ -644,36 +644,26 @@ def create_file_download(
 
 def construct_zip_file_path(data_object: models.DataObject) -> str:
     """Return a path inside the zip file for the data object."""
-    # TODO:
-    #   - Users will most likely want more descriptive folder names
-    #   - Add metadata for parent entities in the zip file
-    #   - We probably want to reference the workflow activity but that
-    #     involves a complicated query... need a way to join that information
-    #     in the original query (possibly in the sqlalchemy relationship)
     if not data_object.omics_processings:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data object has no associated omics processings.",
         )
     omics_processing = data_object.omics_processings[0]
-    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
+    workflow_activity = next(data_object.workflow_activities, None)
+    if workflow_activity is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Data object has no associated workflow activity output.",
+        )
 
     def safe_name(name: str) -> str:
         return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
-    op_name = safe_name(omics_processing.id)
-
-    if biosamples:
-        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
-        study = biosamples[0].study
-    else:
-        # Some emsl omics_processing are missing biosamples
-        biosample_name = "unknown"
-        study = omics_processing.study
-
-    study_name = safe_name(study.id)
-    da_name = safe_name(data_object.name)
-    return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
+    data_generation_name = safe_name(omics_processing.name)
+    workflow_activity_name = safe_name(workflow_activity.name)
+    data_object_file_name = safe_name(data_object.name)
+    return f"{data_generation_name}/{workflow_activity_name}/{data_object_file_name}"
 
 
 def create_bulk_download(
