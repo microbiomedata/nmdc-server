@@ -1047,7 +1047,7 @@ class OmicsProcessing(Base, AnnotatedModel):
         )
         # If the `_exclude_superseded` attribute is set to True,
         # filter out any items that have been superseded by another item.
-        # This happens when the `include_older_workflow_executions` parameter
+        # This happens when the `include_superseded_workflow_executions` parameter
         # in the search_biosample query is set to False.
         if getattr(self, "_exclude_superseded", False):
             return (item for item in all_items if not item.superseded_by)
@@ -1249,7 +1249,7 @@ class BulkDownload(Base):
 
     # Whether or not to include data objects from older workflow executions
     # (ones that have been superseded) in the bulk download
-    include_older_workflow_executions = Column(Boolean, nullable=False, default=False)
+    include_superseded_workflow_executions = Column(Boolean, nullable=False, default=False)
 
     expired = Column(Boolean, nullable=False, default=False)
 

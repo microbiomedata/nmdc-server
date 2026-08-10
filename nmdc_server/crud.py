@@ -488,10 +488,10 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
 def aggregate_data_object_by_workflow(
     db: Session,
     conditions: List[query.ConditionSchema],
-    include_older_workflow_executions: bool = True,
+    include_superseded_workflow_executions: bool = True,
 ) -> schemas.DataObjectAggregation:
     return aggregations.get_data_object_aggregation(
-        db, conditions, include_older_workflow_executions
+        db, conditions, include_superseded_workflow_executions
     )
 
 
@@ -523,7 +523,7 @@ def get_documents_by_biosample_ids(
     biosample_ids_list: list[str],
     high_level_type: str,
     batch_size: int = 1000,
-    include_older_workflow_executions: bool = True,
+    include_superseded_workflow_executions: bool = True,
 ) -> Iterator[dict]:
     """
     Yield documents of type, `high_level_type`, related to any of the specified `Biosample`s.
@@ -549,7 +549,7 @@ def get_documents_by_biosample_ids(
         .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
     )
 
-    if not include_older_workflow_executions:
+    if not include_superseded_workflow_executions:
         if high_level_type == "nmdc:DataObject":
             superseded_outputs = aggregations.make_superseded_wfe_outputs_subquery(db)
             statement = statement.where(
@@ -626,7 +626,7 @@ def create_bulk_download(
     data_object_query = query.DataObjectQuerySchema(
         conditions=bulk_download.conditions,
         data_object_filter=bulk_download.filter,
-        include_older_workflow_executions=bulk_download.include_older_workflow_executions,
+        include_superseded_workflow_executions=bulk_download.include_superseded_workflow_executions,
     )
     try:
         bulk_download_model = models.BulkDownload(**bulk_download.model_dump())

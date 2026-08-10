@@ -263,14 +263,14 @@ def get_geospatial_aggregation(
 def get_data_object_aggregation(
     db: Session,
     conditions: List[query.ConditionSchema],
-    include_older_workflow_executions: bool = True,
+    include_superseded_workflow_executions: bool = True,
 ) -> schemas.DataObjectAggregation:
     """
     Aggregate data objects by workflow type and file type,
     optionally excluding outputs of superseded workflow executions.
     """
     subquery = query.OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
-    if not include_older_workflow_executions:
+    if not include_superseded_workflow_executions:
         superseded_subquery = make_superseded_wfe_outputs_subquery(db)
         superseded_ids_query = select(superseded_subquery.c.id)
     agg: schemas.DataObjectAggregation = {
@@ -296,7 +296,7 @@ def get_data_object_aggregation(
             models.DataObject.url != None,  # noqa: E711
         )
     )
-    if not include_older_workflow_executions:
+    if not include_superseded_workflow_executions:
         workflow_rows_query = workflow_rows_query.filter(
             models.DataObject.id.notin_(superseded_ids_query)
         )
@@ -323,7 +323,7 @@ def get_data_object_aggregation(
             models.DataObject.url != None,  # noqa: E711
         )
     )
-    if not include_older_workflow_executions:
+    if not include_superseded_workflow_executions:
         file_type_rows_query = file_type_rows_query.filter(
             models.DataObject.id.notin_(superseded_ids_query)
         )

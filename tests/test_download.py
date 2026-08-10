@@ -58,7 +58,7 @@ def test_metadata_download_filters_superseded_workflow_executions_and_outputs(
 
     request = {
         "endpoints": ["nmdc:DataObject", "nmdc:WorkflowExecution"],
-        "include_older_workflow_executions": False,
+        "include_superseded_workflow_executions": False,
     }
     response = client.post("/api/download_metadata", json=request)
 
@@ -70,7 +70,7 @@ def test_metadata_download_filters_superseded_workflow_executions_and_outputs(
         current_workflow.id
     ]
 
-    request["include_older_workflow_executions"] = True
+    request["include_superseded_workflow_executions"] = True
     response = client.post("/api/download_metadata", json=request)
 
     assert response.status_code == 200

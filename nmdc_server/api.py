@@ -322,9 +322,9 @@ async def search_biosample(
     # query.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
         for op in biosample.omics_processing:
-            # If the query parameter `include_older_workflow_executions` is False (the default),
+            # If the query parameter `include_superseded_workflow_executions` is False (the default),
             # then filter out any workflow executions that have been superseded by another.
-            if not query.include_older_workflow_executions:
+            if not query.include_superseded_workflow_executions:
                 op._exclude_superseded = True  # type: ignore[attr-defined]
             for da in op.outputs:
                 data_object_ids.add(da.id)
@@ -520,7 +520,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                             db,
                             biosample_ids,
                             high_level_type,
-                            include_older_workflow_executions=q.include_older_workflow_executions,
+                            include_superseded_workflow_executions=q.include_superseded_workflow_executions,
                         ):
                             if not first:
                                 # Write a comma before all but the first document to maintain valid JSON list syntax.
@@ -917,7 +917,7 @@ def data_object_aggregation(
     db: Session = Depends(get_db),
 ):
     return crud.aggregate_data_object_by_workflow(
-        db, query.conditions, query.include_older_workflow_executions
+        db, query.conditions, query.include_superseded_workflow_executions
     )
 
 
@@ -953,7 +953,7 @@ async def create_bulk_download(
             orcid=user.orcid,
             conditions=query.conditions,
             filter=query.data_object_filter,
-            include_older_workflow_executions=query.include_older_workflow_executions,
+            include_superseded_workflow_executions=query.include_superseded_workflow_executions,
         ),
     )
     if bulk_download is None:

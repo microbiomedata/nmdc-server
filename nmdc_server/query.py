@@ -983,7 +983,7 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
-    include_older_workflow_executions: bool = False
+    include_superseded_workflow_executions: bool = False
     """If True, include older workflow executions that have been superseded by newer ones."""
 
     @property
@@ -1186,7 +1186,7 @@ class DataObjectAggregation(BaseModel):
 
 class DataObjectQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
-    include_older_workflow_executions: bool = False
+    include_superseded_workflow_executions: bool = False
     """If True, include older workflow executions that have been superseded by newer ones."""
 
     def _make_superseded_data_object_ids_subquery(self, db: Session):
@@ -1222,7 +1222,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         result_query = db.query(models.DataObject).join(
             union_query, models.DataObject.id == union_query.c.id
         )
-        if not self.include_older_workflow_executions:
+        if not self.include_superseded_workflow_executions:
             superseded_subquery = self._make_superseded_data_object_ids_subquery(db)
             result_query = result_query.filter(
                 models.DataObject.id.notin_(select(superseded_subquery.c.id))
@@ -1296,7 +1296,7 @@ class SearchQuery(BaseModel):
 
 class MultiSearchQuery(SearchQuery):
     endpoints: List[str] = []
-    include_older_workflow_executions: bool = False
+    include_superseded_workflow_executions: bool = False
     """If True, include workflow executions superseded by newer ones and their outputs."""
 
 
@@ -1314,7 +1314,7 @@ class BiosampleSearchQuery(SearchQuery):
     A list of filters to apply to the data objects associated with the biosamples.
     Each filter specifies a workflow type and/or file type to include in the results.
     """
-    include_older_workflow_executions: bool = False
+    include_superseded_workflow_executions: bool = False
     """If True, include older workflow executions that have been superseded by newer ones."""
 
 

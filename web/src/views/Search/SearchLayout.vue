@@ -96,7 +96,7 @@ const biosample = usePaginatedResults(
   dataObjectFilter,
   10,
   computed(() => true),
-  computed(() => ({ include_older_workflow_executions: includeOlderWorkflowExecutions.value })),
+  computed(() => ({ include_superseded_workflow_executions: includeOlderWorkflowExecutions.value })),
 );
 const studyType = types.study;
 const studySummaryData = useFacetSummaryData({

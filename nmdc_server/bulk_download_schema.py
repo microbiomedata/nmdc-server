@@ -14,7 +14,7 @@ from nmdc_server.schemas import FileDownloadMetadata
 class BulkDownloadBase(FileDownloadMetadata):
     conditions: List[ConditionSchema] = []
     filter: List[DataObjectFilter] = []
-    include_older_workflow_executions: bool = False
+    include_superseded_workflow_executions: bool = False
 
 
 class BulkDownload(BulkDownloadBase):
