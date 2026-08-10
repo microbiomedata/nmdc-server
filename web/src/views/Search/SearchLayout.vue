@@ -305,7 +305,7 @@ watch([activeVisTab, activeResultsTab], ([newVisTab, newResultsTab], [oldVisTab,
                       </v-icon>
                     </template>
                     <span>
-                      Select this option to include workflow executions and their data objects within a sample's omics tables below even if they have been superseded by a newer one. 
+                      Select this option to include workflow executions and their data objects within a sample's omics tables below even if they have been superseded by newer ones. 
                       This will also determine whether those workflow executions and their data objects are included in your downloads.
                     </span>
                   </v-tooltip>
