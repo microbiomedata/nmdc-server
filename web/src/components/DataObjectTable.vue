@@ -231,7 +231,7 @@ function onAcceptTerms() {
 
 function toggleCollapseWorkflow(item: any) {
   const id = item.omics_data.id;
-  stateRefs.collapsedWorkflows.value[id] = !stateRefs.collapsedWorkflows.value[id];
+  stateRefs.collapsedWorkflowExecutions.value[id] = !stateRefs.collapsedWorkflowExecutions.value[id];
 }
 </script>
 
@@ -305,7 +305,7 @@ function toggleCollapseWorkflow(item: any) {
           <td colspan="6">
             <div class="d-flex flex-row align-center py-2">
               <v-icon @click="toggleCollapseWorkflow(item)">
-                {{ stateRefs.collapsedWorkflows.value[item.omics_data.id] ? 'mdi-chevron-right' : 'mdi-chevron-down' }}
+                {{ stateRefs.collapsedWorkflowExecutions.value[item.omics_data.id] ? 'mdi-chevron-right' : 'mdi-chevron-down' }}
               </v-icon>
               <span class="ml-4">
                 <div class="d-flex ga-2 flex-row align-center">
@@ -377,7 +377,7 @@ function toggleCollapseWorkflow(item: any) {
             </div>
           </td>
         </tr>
-        <tr v-if="!stateRefs.collapsedWorkflows.value[item.omics_data.id] && !item.hidden">
+        <tr v-if="!stateRefs.collapsedWorkflowExecutions.value[item.omics_data.id] && !item.hidden">
           <td>
             {{ item.file_type }}
             <v-tooltip
