@@ -60,17 +60,17 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
       </router-link>
     </template>
     <template #item-subtitle="{ result }">
-      <div class="d-flex ga-1">
+      <div class="d-flex ga-1 align-center">
         <span class="flex-shrink-0 text-no-wrap">
           <strong class="mr-1">ID:</strong>
-          <ClickToCopyText>
+          <ClickToCopyText background-color="#ffffff">
             {{ result.id }}
           </ClickToCopyText>
         </span>
         <v-icon>mdi-circle-small</v-icon>
         <span class="flex-shrink-0 text-no-wrap">
           <strong class="mr-2">Study ID:</strong>
-          <ClickToCopyText>
+          <ClickToCopyText background-color="#ffffff">
             {{ (result as BiosampleSearchResult).study_id }}
           </ClickToCopyText>
         </span>
@@ -103,7 +103,10 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
                 v-for="id in result.emsl_biosample_identifiers"
                 :key="id"
               >
-                <ClickToCopyText icon-overlay>
+                <ClickToCopyText
+                  background-color="#ffffff"
+                  icon-overlay
+                >
                   {{ id }}
                 </ClickToCopyText>
               </v-slide-group-item>

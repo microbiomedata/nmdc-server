@@ -1,10 +1,87 @@
+import io
+import json
+import zipfile
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import query
+from nmdc_server import models, query
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from tests import fakes
+
+
+def _metadata_zip_documents(response, filename: str) -> list[dict]:
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        return json.loads(archive.read(filename))
+
+
+def test_metadata_download_filters_superseded_workflow_executions_and_outputs(
+    db: Session, client: TestClient
+):
+    sample = fakes.BiosampleFactory()
+    current_workflow = fakes.MetagenomeAnnotationFactory()
+    superseded_workflow = fakes.MetagenomeAnnotationFactory(superseded_by=current_workflow.id)
+    current_output = fakes.DataObjectFactory()
+    superseded_output = fakes.DataObjectFactory()
+    current_workflow.outputs.append(current_output)
+    superseded_workflow.outputs.append(superseded_output)
+
+    documents = [
+        models.BiosampleRelatedDocument(
+            id=current_workflow.id,
+            biosample_ids=[sample.id],
+            high_level_type="nmdc:WorkflowExecution",
+            document={"id": current_workflow.id},
+        ),
+        models.BiosampleRelatedDocument(
+            id=superseded_workflow.id,
+            biosample_ids=[sample.id],
+            high_level_type="nmdc:WorkflowExecution",
+            document={"id": superseded_workflow.id, "superseded_by": current_workflow.id},
+        ),
+        models.BiosampleRelatedDocument(
+            id=current_output.id,
+            biosample_ids=[sample.id],
+            high_level_type="nmdc:DataObject",
+            document={"id": current_output.id},
+        ),
+        models.BiosampleRelatedDocument(
+            id=superseded_output.id,
+            biosample_ids=[sample.id],
+            high_level_type="nmdc:DataObject",
+            document={"id": superseded_output.id},
+        ),
+    ]
+    db.add_all(documents)
+    db.commit()
+
+    request = {
+        "endpoints": ["nmdc:DataObject", "nmdc:WorkflowExecution"],
+        "include_superseded_workflow_executions": False,
+    }
+    response = client.post("/api/download_metadata", json=request)
+
+    assert response.status_code == 200
+    assert [doc["id"] for doc in _metadata_zip_documents(response, "data_objects.json")] == [
+        current_output.id
+    ]
+    assert [doc["id"] for doc in _metadata_zip_documents(response, "workflow_executions.json")] == [
+        current_workflow.id
+    ]
+
+    request["include_superseded_workflow_executions"] = True
+    response = client.post("/api/download_metadata", json=request)
+
+    assert response.status_code == 200
+    assert {doc["id"] for doc in _metadata_zip_documents(response, "data_objects.json")} == {
+        current_output.id,
+        superseded_output.id,
+    }
+    assert {doc["id"] for doc in _metadata_zip_documents(response, "workflow_executions.json")} == {
+        current_workflow.id,
+        superseded_workflow.id,
+    }
 
 
 def test_bulk_download_query(db: Session):
