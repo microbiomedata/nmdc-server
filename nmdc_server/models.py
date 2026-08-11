@@ -671,10 +671,18 @@ class PipelineStep:
 
     @declared_attr
     def superseded_by(cls):
+        """
+        Foreign key column referencing another record in the same table
+        for which this record is superseded by.
+        """
         return Column(String, ForeignKey(f"{cls.__tablename__}.id"), nullable=True)
 
     @declared_attr
-    def preceded_by(cls):
+    def supersedes(cls):
+        """
+        Foreign key column referencing another record in the same table
+        for which this record supersedes (takes precedence over).
+        """
         return relationship(cls.__name__, foreign_keys=f"[{cls.__name__}.superseded_by]")  # type: ignore[attr-defined]
 
     has_inputs = association_proxy("inputs", "id")
