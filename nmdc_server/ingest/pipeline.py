@@ -354,8 +354,6 @@ def load(
             table = Base.metadata.tables[table_name]
             superseded_by = supersession_descriptor["superseding_record_id"]
             db.execute(
-                update(table)
-                .where(table.c.id == own_id)
-                .values(superseded_by=superseded_by)
+                update(table).where(table.c.id == own_id).values(superseded_by=superseded_by)
             )
         db.commit()
