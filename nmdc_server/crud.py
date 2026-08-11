@@ -590,56 +590,9 @@ def create_file_download(
     return db_file_download
 
 
-# def safe_name(name: str) -> str:
-#     """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
-#     return name.replace("/", "_").replace("\\", "_").replace(":", "_")
-
-
-# def construct_data_object_filename(data_object_id: str, data_object_name: str) -> str:
-#     """
-#     Construct a unique file name for the data object that is safe to use in a zip file.
-#     The file name becomes `<data_object.id>__<data_object.name>` with any characters that are not safe for file names replaced with underscores.
-#     """
-#     return f"{safe_name(data_object_id)}__{safe_name(data_object_name)}"
-
-
-# def create_bulk_download(
-#     db: Session, bulk_download: bulk_download_schema.BulkDownloadCreate
-# ) -> Optional[models.BulkDownload]:
-#     data_object_query = query.DataObjectQuerySchema(
-#         conditions=bulk_download.conditions,
-#         data_object_filter=bulk_download.filter,
-#     )
-#     try:
-#         bulk_download_model = models.BulkDownload(**bulk_download.dict())
-#         db.add(bulk_download_model)
-
-#         has_files = False
-#         for data_object in data_object_query.execute(db):
-#             if data_object.url is None:
-#                 logger.warning("Data object url is empty in bulk download")
-#                 continue
-
-#             has_files = True
-
-#             db.add(
-#                 models.BulkDownloadDataObject(
-#                     bulk_download=bulk_download_model,
-#                     data_object=data_object,
-#                     path=f"data/{construct_data_object_filename(data_object.id, data_object.name)}",
-#                 )
-#             )
-
-#         if not has_files:
-#             db.rollback()
-#             return None
-
-#         db.commit()
-#         return bulk_download_model
-
-#     except Exception:
-#         db.rollback()
-#         raise
+def safe_name(name: str) -> str:
+    """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
+    return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
 
 def construct_zip_file_path(data_object: models.DataObject) -> str:
@@ -650,20 +603,17 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
             detail="Data object has no associated omics processings.",
         )
     omics_processing = data_object.omics_processings[0]
-    workflow_activity = next(data_object.workflow_activities, None)
+    workflow_activity = data_object.workflow_activity
     if workflow_activity is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data object has no associated workflow activity output.",
         )
 
-    def safe_name(name: str) -> str:
-        return name.replace("/", "_").replace("\\", "_").replace(":", "_")
-
-    data_generation_name = safe_name(omics_processing.name)
-    workflow_activity_name = safe_name(workflow_activity.name)
+    data_generation_id = safe_name(omics_processing.id)
+    workflow_activity_id = safe_name(workflow_activity.id)
     data_object_file_name = safe_name(data_object.name)
-    return f"{data_generation_name}/{workflow_activity_name}/{data_object_file_name}"
+    return f"{data_generation_id}/{workflow_activity_id}/{data_object_file_name}"
 
 
 def create_bulk_download(
@@ -689,7 +639,7 @@ def create_bulk_download(
                 models.BulkDownloadDataObject(
                     bulk_download=bulk_download_model,
                     data_object=data_object,
-                    path=construct_zip_file_path(data_object),
+                    path=f"data/{construct_zip_file_path(data_object)}",
                 )
             )
 
