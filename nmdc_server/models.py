@@ -943,6 +943,9 @@ class MetabolomicsAnalysis(Base, PipelineStep):
 class OmicsProcessing(Base, AnnotatedModel):
     __tablename__ = "omics_processing"
 
+    _exclude_superseded: bool = False
+    """Optionally set to True to exclude superseded workflow executions from the `omics_data` property."""
+
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
 
@@ -1057,7 +1060,7 @@ class OmicsProcessing(Base, AnnotatedModel):
         # filter out any items that have been superseded by another item.
         # This happens when the `include_superseded_workflow_executions` parameter
         # in the search_biosample query is set to False.
-        if getattr(self, "_exclude_superseded", False):
+        if self._exclude_superseded:
             return (item for item in all_items if not item.superseded_by)
         return iter(all_items)
 

@@ -320,12 +320,12 @@ async def search_biosample(
     # As a side effect, track all relevant data object IDs for this query.
     # They will be used to get download counts for all data objects in one
     # query.
-    def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+    def insert_selected(biosample: models.Biosample) -> models.Biosample:
         for op in biosample.omics_processing:
             # If the query parameter `include_superseded_workflow_executions` is False (the default),
             # then filter out any workflow executions that have been superseded by another.
             if not query.include_superseded_workflow_executions:
-                op._exclude_superseded = True  # type: ignore[attr-defined]
+                op._exclude_superseded = True
             for da in op.outputs:
                 data_object_ids.add(da.id)
                 da.selected = schemas.DataObject.is_selected(
