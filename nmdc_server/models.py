@@ -657,7 +657,7 @@ omics_processing_output_association = output_association("omics_processing")
 
 # This is a base class for all workflow processing activities.
 # https://microbiomedata.github.io/nmdc-schema/WorkflowExecution/
-# The terminology, "PipelineStep", is equivalent to "WorkflowExecution" in the NMDC schema.
+# The term, "PipelineStep", is equivalent to "WorkflowExecution" in the NMDC schema.
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
@@ -931,7 +931,7 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
 
-# The terminology, "OmicsProcessing", has been updated to the term "DataGeneration""
+# The term, "OmicsProcessing", has been updated to the term, "DataGeneration""
 class OmicsProcessing(Base, AnnotatedModel):
     __tablename__ = "omics_processing"
 
