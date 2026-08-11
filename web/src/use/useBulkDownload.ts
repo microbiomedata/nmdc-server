@@ -45,7 +45,6 @@ export default function useBulkDownload(
   }
 
   async function getDownloadOptions() {
-    console.log('Re-fetching download options with conditions:', conditions.value, 'and includeSupersededWorkflowExecutions:', includeSupersededWorkflowExecutions.value);
     downloadOptions.value = await api.getBulkDownloadSummary(
       conditions.value,
       includeSupersededWorkflowExecutions.value,

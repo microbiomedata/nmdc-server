@@ -89,8 +89,6 @@ export default defineComponent({
           || field === 'env_medium'
       ) {
         const item = props.item as BiosampleSearchResult;
-        console.log('item', item);
-        console.log('field', field);
         const env = item[field];
         if (!env || !env.id) {
           return undefined;
