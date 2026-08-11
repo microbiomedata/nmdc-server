@@ -18,11 +18,16 @@ You'll need an SSH tunnel to the MongoDB instance you want to dump from. Once th
 
 ```bash
 # Dump from dev MongoDB (tunnel on port 37018):
-./scripts/mongo_dump.sh <user> <password> 37018
+./scripts/mongo_dump.sh 37018
 
 # Dump from prod MongoDB (tunnel on port 27124, the default):
-./scripts/mongo_dump.sh <user> <password>
+./scripts/mongo_dump.sh
 ```
+
+The script reads `NMDC_MONGO_USER` and `NMDC_MONGO_PASSWORD` from the `.env`
+file at the repository root. You can set `ENV_FILE` to use a different file.
+Because Step 5 below replaces these values with the local MongoDB credentials,
+set them to the remote credentials before creating another dump.
 
 See `scripts/mongo_dump.sh` for the full list of arguments and options, including how to include the `functional_annotation_agg` collection (needed only for gene function annotation testing).
 
