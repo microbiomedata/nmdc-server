@@ -12,8 +12,10 @@ import { expect } from 'vitest';
 // Extend Vitest's expect method with methods from react-testing-library
 expect.extend(matchers);
 
-// Mock CSS imports
+// Mock CSS and image imports
 vi.mock('*.css', () => ({ default: '' }));
+vi.mock('*.png', () => ({ default: '' }));
+vi.mock('*.svg', () => ({ default: '' }));
 
 // Setup MSW server for Node environment
 const server = setupServer(...handlers);
@@ -66,17 +68,19 @@ const vuetify = createVuetify({
 
 // Provide a render that uses vuetify
 export function render(component: any, options: Record<string, any> = {}) {
+  const { global: globalOptions, ...restOptions } = options;
   return testingLibraryRender(component, {
+    ...restOptions,
     global: {
-      plugins: [vuetify],
+      ...globalOptions,
+      plugins: [vuetify, ...(globalOptions?.plugins || [])],
       stubs: {
         RouterLink: true,
         transition: false,
         'transition-stub': false,
+        ...(globalOptions?.stubs || {}),
       },
-      ...(options.global || {}),
     },
-    ...options,
   });
 }
 

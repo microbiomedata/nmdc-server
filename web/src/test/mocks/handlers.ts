@@ -35,4 +35,38 @@ export const handlers = [
       name: 'Sample Set 1',
     });
   }),
+  
+  http.get('/api/study/:id', ({ params }) => {
+    return HttpResponse.json({
+      id: params.id,
+      name: 'Test Study',
+      description: 'Test study description',
+    });
+  }),
+
+  http.post('/api/biosample/search', async () => {
+    return HttpResponse.json({
+      count: 13,
+      results: [
+        {
+          id: 'bs-1',
+          name: 'Biosample 1',
+          type: 'Biosample',
+        },
+      ],
+    });
+  }),
+
+  http.post('/api/biosamples', () => {
+    return HttpResponse.json({
+      count: 13,
+      results: [
+        {
+          id: 'bs-1',
+          name: 'Biosample 1',
+          type: 'Biosample',
+        },
+      ],
+    });
+  }),
 ];
