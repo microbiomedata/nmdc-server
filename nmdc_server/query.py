@@ -984,7 +984,7 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
     include_superseded_workflow_executions: bool = False
-    """If True, include older workflow executions that have been superseded by newer ones."""
+    """If True, include workflow executions that have been superseded by other ones."""
 
     @property
     def table(self) -> Table:
@@ -1187,7 +1187,7 @@ class DataObjectAggregation(BaseModel):
 class DataObjectQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
     include_superseded_workflow_executions: bool = False
-    """If True, include older workflow executions that have been superseded by newer ones."""
+    """If True, include workflow executions that have been superseded by other ones."""
 
     def _make_superseded_data_object_ids_subquery(self, db: Session):
         r"""
@@ -1315,7 +1315,7 @@ class BiosampleSearchQuery(SearchQuery):
     Each filter specifies a workflow type and/or file type to include in the results.
     """
     include_superseded_workflow_executions: bool = False
-    """If True, include older workflow executions that have been superseded by newer ones."""
+    """If True, include workflow executions that have been superseded by other ones."""
 
 
 class BinnedRangeFacetQuery(FacetQuery):
