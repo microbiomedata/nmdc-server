@@ -1758,15 +1758,6 @@ wheels = [
 ]
 
 [[package]]
-name = "markdown"
-version = "3.10.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2b/f4/69fa6ed85ae003c2378ffa8f6d2e3234662abd02c10d216c0ba96081a238/markdown-3.10.2.tar.gz", hash = "sha256:994d51325d25ad8aa7ce4ebaec003febcce822c3f8c911e3b17c52f7f589f950", size = 368805, upload-time = "2026-02-09T14:57:26.942Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/1f/77fa3081e4f66ca3576c896ae5d31c3002ac6607f9747d2e3aa49227e464/markdown-3.10.2-py3-none-any.whl", hash = "sha256:e91464b71ae3ee7afd3017d9f358ef0baf158fd9a298db92f1d4761133824c36", size = 108180, upload-time = "2026-02-09T14:57:25.787Z" },
-]
-
-[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2001,7 +1992,7 @@ wheels = [
 
 [[package]]
 name = "nmdc-schema"
-version = "11.22.0"
+version = "11.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2012,7 +2003,6 @@ dependencies = [
     { name = "jsonschema" },
     { name = "linkml" },
     { name = "linkml-runtime" },
-    { name = "pymdown-extensions" },
     { name = "pymongo" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
@@ -2020,9 +2010,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/b2/792b33c9be21aca6ca3e167f1888eaa87bf593b6c6f1127c7de178595715/nmdc_schema-11.22.0.tar.gz", hash = "sha256:a5e802efff1ea172209005d140cdea92eebb6dc594e8a0c3c3af16699e29396d", size = 781854, upload-time = "2026-07-16T01:15:28.315Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/df/47fe489c988e91e1de43e923eb88327c7780d6641e346cc5a2e73084c84a/nmdc_schema-11.23.0.tar.gz", hash = "sha256:12060bd363963b28102ccffb4e1452da9c423d913126fc7480789596ebfb572e", size = 799042, upload-time = "2026-08-13T21:52:45.614Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b9/f4/b6ddfcb672f61bb103b5596ef639343ded57e358b7101d31d26e60f77654/nmdc_schema-11.22.0-py3-none-any.whl", hash = "sha256:0860804693c5ac233aff31657979def76ec3f6bfa6c782583c5d95b39ae61b8c", size = 859046, upload-time = "2026-07-16T01:15:26.77Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/8c/c6c252acab3ce81c56115fdbe4856674ecd0ce89b5a3be148fc8007edd8e/nmdc_schema-11.23.0-py3-none-any.whl", hash = "sha256:369ddeaa2965b172a6609f292b48163e670b03b25d7317da44068a57b6fe437f", size = 877322, upload-time = "2026-08-13T21:52:43.788Z" },
 ]
 
 [[package]]
@@ -2099,8 +2089,8 @@ requires-dist = [
     { name = "nmdc-api-utilities" },
     { name = "nmdc-geoloc-tools" },
     { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.2.1" },
-    { name = "nmdc-schema", specifier = "==11.22.0" },
-    { name = "nmdc-submission-schema", specifier = "==11.22.0" },
+    { name = "nmdc-schema", specifier = "==11.23.0" },
+    { name = "nmdc-submission-schema", specifier = "==11.23.0" },
     { name = "pint" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -2141,15 +2131,15 @@ lint = [
 
 [[package]]
 name = "nmdc-submission-schema"
-version = "11.22.0"
+version = "11.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "linkml-runtime" },
     { name = "rdflib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a4/23/a976b7033d62e74baa841e12ba1fe55e1ef602703e9664bf90f836eecfcf/nmdc_submission_schema-11.22.0.tar.gz", hash = "sha256:456ec54ac721d081d9f008d21a4bd33c4ccf569e8185279c83e9e5506e0a69a4", size = 738112, upload-time = "2026-07-16T16:09:35.942Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/c6/9a940b3a4b28c92fa9978106b9db1ab7677b80c3203571ad153511652590/nmdc_submission_schema-11.23.0.tar.gz", hash = "sha256:d94d84054a39fd65724a5d406a0597b11954951dc9649edb206e962fa3c46796", size = 741006, upload-time = "2026-08-14T00:27:56.37Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/15/86881c00d284ad48f2ad5cef5fd855b3b0bcd4160c26c22979398ec1c662/nmdc_submission_schema-11.22.0-py3-none-any.whl", hash = "sha256:5b8719d4af2dfb0325f153e598c24860a0ef40610d01959f55ece5f49c4b3a48", size = 754217, upload-time = "2026-07-16T16:09:34.165Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/fd/bc55d47612de88ae6ebf5fd58ab32d3120f8471a9c4365c99101667932b1/nmdc_submission_schema-11.23.0-py3-none-any.whl", hash = "sha256:dad12cfa03206dc3ee958b24830092491f57c1027f389344395f2426f70b3b9d", size = 757507, upload-time = "2026-08-14T00:27:54.878Z" },
 ]
 
 [[package]]
@@ -2817,19 +2807,6 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
-]
-
-[[package]]
-name = "pymdown-extensions"
-version = "10.21.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "markdown" },
-    { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/26/d1015444da4d952a1ca487a236b522eb979766f0295a0bd0c5fc089989a9/pymdown_extensions-10.21.3.tar.gz", hash = "sha256:72cfcf55f07aea0d4af2c4f11dd4e52466ddfb1bb819673146398e0bd3a77354", size = 854140, upload-time = "2026-05-13T12:57:32.267Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/85/545a951eecc270fcd688288c600017e2050a1aacb56c711d208586d3e470/pymdown_extensions-10.21.3-py3-none-any.whl", hash = "sha256:d7a5d08014fc571e80ca21dd6f854e31f94c489800350564d55d15b3c41e76b6", size = 269002, upload-time = "2026-05-13T12:57:30.296Z" },
 ]
 
 [[package]]

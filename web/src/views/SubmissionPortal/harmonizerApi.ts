@@ -8,10 +8,12 @@ import {
   ColumnHelpInfo,
   HarmonizerTemplateInfo,
   MetadataSuggestionRequest,
+  TemplateName,
 } from '@/views/SubmissionPortal/types';
 import {
   type DataHarmonizerData,
   validatePlateWellsForJgi,
+  validateReadUrlsOrInsdcRunIdentifiers,
 } from '@/views/SubmissionPortal/validation';
 // @ts-ignore
 import colors from '@/colors';
@@ -449,11 +451,21 @@ highlight(row?: number, col?: number) {
    * Private method to perform custom validation logic on the data in the DataHarmonizer instance. This method should be
    * called as part of the overall validation process after the DataHarmonizer's built-in validation has been performed.
    *
+   * @param template The template to validate
    * @private
    */
-  private doCustomValidation() {
+  private doCustomValidation(template: TemplateName) {
     const data: DataHarmonizerData = this.dh.getDataObjects();
-    validatePlateWellsForJgi(data).forEach((issue) => {
+    const issues = validatePlateWellsForJgi(data);
+    if (template === 'data_mg' || template === 'data_mt') {
+      const readSlots = ['read_1_url', 'read_2_url'];
+      issues.push(...validateReadUrlsOrInsdcRunIdentifiers(data, readSlots));
+    }
+    if (template === 'data_mg_interleaved' || template === 'data_mt_interleaved') {
+      const readSlots = ['interleaved_url'];
+      issues.push(...validateReadUrlsOrInsdcRunIdentifiers(data, readSlots));
+    }
+    issues.forEach((issue) => {
       this.setInvalidCell(issue.row, issue.slot, issue.message);
     });
   }
@@ -463,10 +475,10 @@ highlight(row?: number, col?: number) {
    * Validate the data in the DataHarmonizer instance by applying both the DataHarmonizer's built-in validation logic
    * and any custom validation logic.
    */
-  async validate() {
+  async validate(template: TemplateName) {
     this.clearCommentsForInvalidCells();
     await this.dh.validate();
-    this.doCustomValidation();
+    this.doCustomValidation(template);
     this.setCommentsForInvalidCells();
     this.refreshState();
     return this.dh.invalid_cells;
