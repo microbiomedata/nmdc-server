@@ -557,7 +557,7 @@ async function validateTemplate(
   }
 
   mergeSampleData(template.sampleDataSlot, data);
-  const result = await harmonizerApi.validate();
+  const result = await harmonizerApi.validate(templateKey);
 
   // Add cross-tab duplicate sample name validation
   const crossTabDuplicates = validateDuplicateSampleNamesAcrossTabs();

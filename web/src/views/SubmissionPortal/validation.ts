@@ -159,3 +159,42 @@ export function validatePlateWellsForJgi(data: DataHarmonizerData): ValidationIs
 
   return issues;
 }
+
+
+/**
+ * Validates that the provided read URL slots are required unless `insdc_run_identifiers`
+ * is provided. If `insdc_run_identifiers` is provided, then the read URL slots may be
+ * filled in or left blank.
+ *
+ * @param data - The data of the current DataHarmonizer tab to validate
+ * @param read_slots - An array of the read URL slot names to validate
+ * @returns An array of validation issues
+ */
+export function validateReadUrlsOrInsdcRunIdentifiers(data: DataHarmonizerData, read_slots: string[]): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const message = 'This field is required unless an INSDC run identifier is provided';
+
+  const INSDC_RUN_IDENTIFIERS_SLOT = 'insdc_run_identifiers';
+
+  data.forEach((row, rowIndex) => {
+    const readUrls = read_slots.map((slot) => ({
+      slot,
+      value: getTrimmedString(row[slot]),
+    }));
+    const insdcRunIdentifiers = getTrimmedString(row[INSDC_RUN_IDENTIFIERS_SLOT]);
+
+    if (!insdcRunIdentifiers && readUrls.some((readUrl) => readUrl.value === '')) {
+      readUrls.forEach((readUrl) => {
+        if (readUrl.value === '') {
+          issues.push({
+            row: rowIndex,
+            slot: readUrl.slot,
+            message,
+          });
+        }
+      });
+    }
+  });
+
+  return issues;
+}
