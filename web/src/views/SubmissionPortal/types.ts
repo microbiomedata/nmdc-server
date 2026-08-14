@@ -136,27 +136,27 @@ export const HARMONIZER_TEMPLATES = {
     status: 'mixin',
   },
   [DATA_MG]: {
-    displayName: 'Metagenomics Data',
-    schemaClass: 'MetagenomeSequencingNonInterleavedDataInterface',
-    sampleDataSlot: 'metagenome_sequencing_non_interleaved_data',
+    displayName: 'DNA Sequence Data',
+    schemaClass: 'DnaSequencingNonInterleavedDataInterface',
+    sampleDataSlot: 'dna_sequencing_non_interleaved_data',
     status: 'mixin',
   },
   [DATA_MG_INTERLEAVED]: {
-    displayName: 'Metagenomics Data (Interleaved)',
-    schemaClass: 'MetagenomeSequencingInterleavedDataInterface',
-    sampleDataSlot: 'metagenome_sequencing_interleaved_data',
+    displayName: 'DNA Sequence Data (Interleaved)',
+    schemaClass: 'DnaSequencingInterleavedDataInterface',
+    sampleDataSlot: 'dna_sequencing_interleaved_data',
     status: 'mixin',
   },
   [DATA_MT]: {
-    displayName: 'Metatranscriptomics Data',
-    schemaClass: 'MetatranscriptomeSequencingNonInterleavedDataInterface',
-    sampleDataSlot: 'metatranscriptome_sequencing_non_interleaved_data',
+    displayName: 'RNA Sequence Data',
+    schemaClass: 'RnaSequencingNonInterleavedDataInterface',
+    sampleDataSlot: 'rna_sequencing_non_interleaved_data',
     status: 'mixin',
   },
   [DATA_MT_INTERLEAVED]: {
-    displayName: 'Metatranscriptomics Data (Interleaved)',
-    schemaClass: 'MetatranscriptomeSequencingInterleavedDataInterface',
-    sampleDataSlot: 'metatranscriptome_sequencing_interleaved_data',
+    displayName: 'RNA Sequence Data (Interleaved)',
+    schemaClass: 'RnaSequencingInterleavedDataInterface',
+    sampleDataSlot: 'rna_sequencing_interleaved_data',
     status: 'mixin',
   },
 } satisfies Record<string, HarmonizerTemplateInfo>;
@@ -269,6 +269,8 @@ export type OmicsProcessingType =
   'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' |
   'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi' | 'isolate-genome-jgi' | 'isolate-transcriptome-jgi';
 
+export type IsolateDataFormat = 'interleaved' | 'non-interleaved' | 'insdc-repository';
+
 export interface MultiOmicsForm extends ValidatedForm {
   award: string | null;
   awardDois: Doi[] | null;
@@ -292,6 +294,8 @@ export interface MultiOmicsForm extends ValidatedForm {
   lipProtocols: Protocols | null;
   nomProtocols: Protocols | null;
   nomLcProtocols: Protocols | null;
+  isolateGenomeDataFormat: IsolateDataFormat | null;
+  isolateTranscriptomeDataFormat: IsolateDataFormat | null;
 }
 
 export interface SubmissionPage {
