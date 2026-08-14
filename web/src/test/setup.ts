@@ -9,7 +9,7 @@ import '@testing-library/jest-dom/vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import { expect } from 'vitest';
 
-// Extend Vitest's expect method with methods from react-testing-library
+// Extend Vitest's expect method with methods from test-library/jest-dom
 expect.extend(matchers);
 
 // Mock CSS and image imports

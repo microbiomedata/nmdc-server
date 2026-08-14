@@ -22,6 +22,9 @@ beforeEach(() => {
     }),
     http.post('/api/study/facet', () => {
       return HttpResponse.json(mockFacetSummary);
+    }),
+    http.post('/api/data_generation/facet', () => {
+      return HttpResponse.json(mockFacetSummary);
     })
   );
 });

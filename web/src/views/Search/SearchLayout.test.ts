@@ -10,7 +10,13 @@ import userEvent from '@testing-library/user-event';
 import { createStubs } from '@/test/stubs';
 import { setConditions } from '@/store';
 import SearchLayout from './SearchLayout.vue';
-import type { StudySearchResult } from '@/data/api';
+import type { StudySearchResult, FacetSummaryResponse } from '@/data/api';
+
+const mockFacetSummary: FacetSummaryResponse[] = [
+  { facet: 'metagenomics', count: 100 },
+  { facet: 'metatranscriptomics', count: 75 },
+  { facet: 'metabolomics', count: 50 },
+];
 
 const mockStudy: StudySearchResult = {
   id: 'study-1',
@@ -46,10 +52,7 @@ beforeEach(() => {
       disable_individual_data_product_download: false,
     })),
     http.post('/api/study/search', () => HttpResponse.json(mockStudySearchResponse)),
-    http.post('/api/data_generation/facet', () => HttpResponse.json([
-      { facet: '1', count: 5 },
-      { facet: '2', count: 3 },
-    ])),
+    http.post('/api/data_generation/facet', () => HttpResponse.json(mockFacetSummary)),
     http.post('/api/data_object/workflow_summary', () => HttpResponse.json({})),
     http.post('/api/bulk_download/summary', () => HttpResponse.json({ count: 0, size: 0 })),
   );

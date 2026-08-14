@@ -77,29 +77,13 @@ const mockStudy: StudySearchResult = {
 } as unknown as StudySearchResult;
 // We don't need all the study fields for testing, so we cast unknown to SSR to avoid having to fill in all the required fields.
 
-const mockBiosamples = {
-  results: {
-    count: 13,
-    limit: 5,
-    offset: 0,
-  },
-  data: [
-    {
-      id: 'bs-1',
-      name: 'Biosample 1',
-      type: 'Biosample',
-    },
-  ],
-};
-
 beforeEach(() => {
   vi.clearAllMocks();
+  //This handler is used for the initial study page load to fetch the mock study data
+  //It's too specific to be a general handler
   server.use(
     http.get('/api/study/study-123', () => {
       return HttpResponse.json(mockStudy);
-    }),
-    http.post('/api/biosample/search', () => {
-      return HttpResponse.json(mockBiosamples);
     })
   );
 });
@@ -230,6 +214,8 @@ test.describe('StudyPage.vue', () => {
   });
 
   test('Shows an error dialog and does not download the file when the API call fails', async () => {
+    //suppress console output for test, errors from this test are expected and handled
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // Uses a different id so the axios GET cache doesn't return an earlier test's response.
     // TODO: Another axios cache fix
     server.use(
@@ -253,6 +239,7 @@ test.describe('StudyPage.vue', () => {
       expect(screen.getByText('Your download could not be completed.')).toBeInTheDocument();
     });
     expect(mockDownloadJson).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   test('Displays team info section', async () => {
