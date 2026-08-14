@@ -2,6 +2,9 @@
 import { IsolateDataFormat } from '@/views/SubmissionPortal/types.ts';
 
 const model = defineModel<IsolateDataFormat | null>({ required: true });
+defineProps<{
+  disabled?: boolean
+}>();
 const options: { value: IsolateDataFormat, label: string }[] = [
   {
     value: 'interleaved',
@@ -26,5 +29,6 @@ const options: { value: IsolateDataFormat, label: string }[] = [
     item-value="value"
     label="Select one of the following options"
     :rules="[(v) => !!v || 'Please select an option']"
+    :disabled="disabled"
   />
 </template>

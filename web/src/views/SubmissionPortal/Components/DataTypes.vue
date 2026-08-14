@@ -285,6 +285,7 @@ emits: ['revalidate'],
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Isolate Genome"
         value="isolate-genome"
+        :disabled="templateHasData('data_mg') || templateHasData('data_mg_interleaved') || undefined"
         hide-details
       />
       <div
@@ -293,6 +294,7 @@ emits: ['revalidate'],
       >
         <IsolateDataFormatQuestion
           v-model="multiOmicsForm.isolateGenomeDataFormat"
+          :disabled="templateHasData('data_mg') || templateHasData('data_mg_interleaved') || undefined"
         />
       </div>
 
@@ -300,6 +302,7 @@ emits: ['revalidate'],
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Isolate Transcriptome"
         value="isolate-transcriptome"
+        :disabled="templateHasData('data_mt') || templateHasData('data_mt_interleaved') || undefined"
         hide-details
       />
       <div
@@ -308,6 +311,7 @@ emits: ['revalidate'],
       >
         <IsolateDataFormatQuestion
           v-model="multiOmicsForm.isolateTranscriptomeDataFormat"
+          :disabled="templateHasData('data_mt') || templateHasData('data_mt_interleaved') || undefined"
         />
       </div>
     </div>
