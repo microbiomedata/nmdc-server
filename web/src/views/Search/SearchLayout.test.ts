@@ -10,13 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { createStubs } from '@/test/stubs';
 import { setConditions } from '@/store';
 import SearchLayout from './SearchLayout.vue';
-import type { StudySearchResult, FacetSummaryResponse } from '@/data/api';
-
-const mockFacetSummary: FacetSummaryResponse[] = [
-  { facet: 'metagenomics', count: 100 },
-  { facet: 'metatranscriptomics', count: 75 },
-  { facet: 'metabolomics', count: 50 },
-];
+import type { StudySearchResult } from '@/data/api';
 
 const mockStudy: StudySearchResult = {
   id: 'study-1',
@@ -27,15 +21,12 @@ const mockStudy: StudySearchResult = {
   children: [],
   omics_processing_counts: null,
 } as unknown as StudySearchResult;
-// We don't need all the study fields for testing, so we cast unknown to SSR to avoid having to fill in all the required fields.
 
 const mockStudySearchResponse = {
   count: 1,
   results: [mockStudy],
 };
 
-// BiosampleSearchResults renders individual biosample identifiers that aren't
-// part of this test's mock data, so it's stubbed out; it's covered by its own tests.
 const componentStubs = {
   BiosampleSearchResults: { template: '<div>Search Results</div>' },
 };
@@ -52,14 +43,15 @@ beforeEach(() => {
       disable_individual_data_product_download: false,
     })),
     http.post('/api/study/search', () => HttpResponse.json(mockStudySearchResponse)),
-    http.post('/api/data_generation/facet', () => HttpResponse.json(mockFacetSummary)),
+    http.post('/api/biosample/search', () => HttpResponse.json({
+      count: 13,
+      results: [],
+    })),
     http.post('/api/data_object/workflow_summary', () => HttpResponse.json({})),
     http.post('/api/bulk_download/summary', () => HttpResponse.json({ count: 0, size: 0 })),
   );
 });
 
-// SearchLayout requires a v-app layout provider
-// And a router to render router-links
 async function renderSearchLayout() {
   const router = createRouter({
     history: createMemoryHistory(),
@@ -152,4 +144,3 @@ test.describe('SearchLayout.vue', () => {
     });
   });
 });
-

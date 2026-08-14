@@ -5,28 +5,10 @@ import { http, HttpResponse } from 'msw';
 import { screen } from '@testing-library/vue';
 import { createStubs } from '@/test/stubs';
 import DataTypesVisGroup from './DataTypesVisGroup.vue';
-import type { Condition, FacetSummaryResponse } from '@/data/api';
-
-const mockFacetSummary: FacetSummaryResponse[] = [
-  { facet: 'metagenomics', count: 100 },
-  { facet: 'metatranscriptomics', count: 75 },
-  { facet: 'metabolomics', count: 50 },
-];
+import type { Condition } from '@/data/api';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Set default handlers for all tests
-  server.use(
-    http.post('/api/biosample/facet', () => {
-      return HttpResponse.json(mockFacetSummary);
-    }),
-    http.post('/api/study/facet', () => {
-      return HttpResponse.json(mockFacetSummary);
-    }),
-    http.post('/api/data_generation/facet', () => {
-      return HttpResponse.json(mockFacetSummary);
-    })
-  );
 });
 
 test.describe('DataTypesVisGroup.vue', () => {
@@ -118,10 +100,10 @@ test.describe('DataTypesVisGroup.vue', () => {
   test('Handles empty facet summary data', () => {
     server.use(
       http.post('/api/biosample/facet', () => {
-        return HttpResponse.json([]);
+        return HttpResponse.json({ facets: {} });
       }),
       http.post('/api/study/facet', () => {
-        return HttpResponse.json([]);
+        return HttpResponse.json({ facets: {} });
       })
     );
 
