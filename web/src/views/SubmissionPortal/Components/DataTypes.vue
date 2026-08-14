@@ -289,7 +289,7 @@ emits: ['revalidate'],
         hide-details
       />
       <div
-        v-if="multiOmicsForm.omicsProcessingTypes.includes('isolate-genome')"
+        v-if="multiOmicsForm.dataGenerated && multiOmicsForm.omicsProcessingTypes.includes('isolate-genome')"
         class="mx-8"
       >
         <IsolateDataFormatQuestion
@@ -306,7 +306,7 @@ emits: ['revalidate'],
         hide-details
       />
       <div
-        v-if="multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome')"
+        v-if="multiOmicsForm.dataGenerated && multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome')"
         class="mx-8"
       >
         <IsolateDataFormatQuestion
