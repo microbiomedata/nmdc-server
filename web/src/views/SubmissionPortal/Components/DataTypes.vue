@@ -3,9 +3,11 @@ import { computed, defineComponent } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import ExternalProtocolForm from './ExternalProtocolForm.vue';
 import { useSubmissionStore } from '../store';
+import IsolateDataFormatQuestion from '@/views/SubmissionPortal/Components/IsolateDataFormatQuestion.vue';
 
 export default defineComponent({
   components: {
+    IsolateDataFormatQuestion,
     ExternalProtocolForm,
   },
   props: {
@@ -285,6 +287,14 @@ emits: ['revalidate'],
         value="isolate-genome"
         hide-details
       />
+      <div
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('isolate-genome')"
+        class="mx-8"
+      >
+        <IsolateDataFormatQuestion
+          v-model="multiOmicsForm.isolateGenomeDataFormat"
+        />
+      </div>
 
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
@@ -292,6 +302,14 @@ emits: ['revalidate'],
         value="isolate-transcriptome"
         hide-details
       />
+      <div
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome')"
+        class="mx-8"
+      >
+        <IsolateDataFormatQuestion
+          v-model="multiOmicsForm.isolateTranscriptomeDataFormat"
+        />
+      </div>
     </div>
   </div>
 </template>

@@ -319,16 +319,20 @@ function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: Template
     return row_types.includes('isolate transcriptome sequencing')
   }
   if (templateKey === DATA_MG) {
-    return row_types.includes('metagenomics');
+    return row_types.includes('metagenomics')
+      || row_types.includes('isolate genome sequencing');
   }
   if (templateKey === DATA_MG_INTERLEAVED) {
-    return row_types.includes('metagenomics');
+    return row_types.includes('metagenomics')
+      || row_types.includes('isolate genome sequencing')
   }
   if (templateKey === DATA_MT) {
-    return row_types.includes('metatranscriptomics');
+    return row_types.includes('metatranscriptomics')
+      || row_types.includes('isolate transcriptome sequencing');
   }
   if (templateKey === DATA_MT_INTERLEAVED) {
-    return row_types.includes('metatranscriptomics');
+    return row_types.includes('metatranscriptomics')
+      || row_types.includes('isolate transcriptome sequencing');
   }
   return false;
 }

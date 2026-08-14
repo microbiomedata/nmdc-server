@@ -92,6 +92,8 @@ const multiOmicsFormDefault: MultiOmicsForm = {
   lipProtocols: null,
   nomProtocols: null,
   nomLcProtocols: null,
+  isolateGenomeDataFormat: null,
+  isolateTranscriptomeDataFormat: null,
   validation: null,
 };
 
@@ -264,6 +266,26 @@ export const useSubmissionStore = defineStore('submission', () => {
             }
           }
         }
+        if (multiOmicsForm.omicsProcessingTypes.includes('isolate-genome')) {
+          // Which datatypes were generated? Isolate Genome
+          if (multiOmicsForm.isolateGenomeDataFormat === 'interleaved') {
+            templates.add(DATA_MG_INTERLEAVED);
+          } else if (multiOmicsForm.isolateGenomeDataFormat === 'non-interleaved') {
+            templates.add(DATA_MG);
+          } else if (multiOmicsForm.isolateGenomeDataFormat === 'insdc-repository') {
+            templates.add(DATA_MG_INTERLEAVED);
+          }
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome')) {
+          // Which datatypes were generated? Isolate Transcriptome
+          if (multiOmicsForm.isolateTranscriptomeDataFormat === 'interleaved') {
+            templates.add(DATA_MT_INTERLEAVED);
+          } else if (multiOmicsForm.isolateTranscriptomeDataFormat === 'non-interleaved') {
+            templates.add(DATA_MT);
+          } else if (multiOmicsForm.isolateTranscriptomeDataFormat === 'insdc-repository') {
+            templates.add(DATA_MT_INTERLEAVED);
+          }
+        }
       }
     } else {
       // Have data already been generated? No
@@ -432,11 +454,19 @@ export const useSubmissionStore = defineStore('submission', () => {
         sampleSet.forms.sampleEnvironmentForm.packageName.push('isolate');
       }
     }
+    // isolate genome was removed
+    if (!newValue.includes('isolate-genome') && oldValue.includes('isolate-genome')) {
+      sampleSet.forms.multiOmicsForm.isolateGenomeDataFormat = null;
+    }
     // isolate transcriptome was added, the isolate environment template is automatically added as well.
     if (newValue.includes('isolate-transcriptome') && !oldValue.includes('isolate-transcriptome')) {
       if (!sampleSet.forms.sampleEnvironmentForm.packageName.includes('isolate')) {
         sampleSet.forms.sampleEnvironmentForm.packageName.push('isolate');
       }
+    }
+    // isolate transcriptome was removed
+    if (!newValue.includes('isolate-transcriptome') && oldValue.includes('isolate-transcriptome')) {
+      sampleSet.forms.multiOmicsForm.isolateTranscriptomeDataFormat = null;
     }
     // JGI isolate genome was added, the isolate environment template is automatically added as well.
     if (newValue.includes('isolate-genome-jgi') && !oldValue.includes('isolate-genome-jgi')) {
@@ -527,7 +557,7 @@ export const useSubmissionStore = defineStore('submission', () => {
   });
 
   /* HELPERS */
-  /** 
+  /**
    * Save current submission list filters to session storage that they can be persisted through page transitions
   */
   function saveSubmissionListFilters() {
