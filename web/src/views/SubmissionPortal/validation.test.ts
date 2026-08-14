@@ -171,14 +171,14 @@ describe('validateReadUrlsOrInsdcRunIdentifiers', () => {
       row: {
         read_2_url: 'https://example.org/read-2.fastq.gz',
         interleaved_url: 'https://example.org/interleaved.fastq.gz',
-      },
+      } as Record<string, string>,
     },
     {
       missingSlot: 'read_2_url',
       row: {
         read_1_url: 'https://example.org/read-1.fastq.gz',
         interleaved_url: 'https://example.org/interleaved.fastq.gz',
-      },
+      } as Record<string, string>,
     },
   ])('flags a missing $missingSlot when no INSDC run identifier is provided', ({ missingSlot, row }) => {
     const issues = validateReadUrlsOrInsdcRunIdentifiers([row], pairedReadSlots);
