@@ -296,6 +296,12 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         pending_study_ids = list(dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows))
 
     graph = rocrate_dict["@graph"]
+    _add_archive_entities(
+        graph,
+        data_directory_entity,
+        bulk_download,
+        [*data_generation_rows, *workflow_rows],
+    )
     for id_, row in sorted(study_rows.items()):
         parts = [
             biosample_id
@@ -341,10 +347,4 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         if related_biosamples:
             node["object"] = _references(related_biosamples)
         graph.append(node)
-    _add_archive_entities(
-        graph,
-        data_directory_entity,
-        bulk_download,
-        [*data_generation_rows, *workflow_rows],
-    )
     return rocrate_dict

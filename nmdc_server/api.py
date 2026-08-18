@@ -1088,7 +1088,13 @@ async def get_bulk_download_rocrate(
     if bulk_download.rocrate_metadata_cache is None:
         raise HTTPException(status_code=404, detail="RO-Crate metadata cache not found")
 
-    rocrate_dict = bulk_download.rocrate_metadata_cache
+    cached_rocrate = bulk_download.rocrate_metadata_cache
+    # PostgreSQL JSONB does not preserve object key order. Rebuild the top-level
+    # object so the JSON-LD @context is the first property in the downloaded file.
+    rocrate_dict = {
+        "@context": cached_rocrate["@context"],
+        **{key: value for key, value in cached_rocrate.items() if key != "@context"},
+    }
 
     def clear_rocrate_metadata_cache():
         try:
