@@ -1105,7 +1105,7 @@ class DataObject(Base):
         """
         for omics_processing in self.omics_processings:
             for workflow_activity in omics_processing.omics_data:
-                if self in workflow_activity.outputs:
+                if self in workflow_activity.outputs:  # type: ignore[attr-defined]
                     return workflow_activity
         return None
 

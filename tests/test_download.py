@@ -1,6 +1,7 @@
 import io
 import json
 import zipfile
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -289,7 +290,7 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
 
 
 def test_add_archive_entities_describes_folders():
-    data_directory = {"@id": "data/", "@type": "Dataset"}
+    data_directory: dict[str, Any] = {"@id": "data/", "@type": "Dataset"}
     graph = [data_directory]
     download_file = models.BulkDownloadDataObject(
         data_object_id="nmdc:dobj-1",
@@ -333,7 +334,7 @@ def test_bulk_download_rocrate_endpoint_returns_and_clears_cache(db: Session, cl
     assert response.status_code == 200
     assert response.json() == {"@context": "test", "@graph": []}
     db.expire_all()
-    assert db.get(models.BulkDownload, bulk_download.id).rocrate_metadata_cache is None
+    assert db.get(models.BulkDownload, bulk_download.id).rocrate_metadata_cache is None  # type: ignore[attr-defined]
 
 
 def test_bulk_download_data_object_metadata_uses_archive_path(db: Session, client: TestClient):
