@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 from nmdc_server import models
 
 
+IDENTIFIER_PREFIX_URL = "https://bioregistry.io"
+
+
 def get_rocrate_base_bulk_download():
     """
     Base RO-Crate structure with placeholders for dynamic content.
@@ -109,7 +112,7 @@ def _document(row: models.BiosampleRelatedDocument) -> dict[str, Any]:
     return cast(dict[str, Any], row.document)
 
 
-def _get_data_generation_and_workflow_execution_activities(
+def _get_data_generation_and_workflow_executions(
     db: Session, output_ids: list[str]
 ) -> dict[str, models.BiosampleRelatedDocument]:
     rows = db.execute(
@@ -175,20 +178,20 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     )
 
     data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
-    activity_rows: dict[str, models.BiosampleRelatedDocument] = {}
+    dg_and_wfe_rows: dict[str, models.BiosampleRelatedDocument] = {}
     pending_output_ids = list(dict.fromkeys(data_object_ids))
     visited_output_ids: list[str] = []
     while pending_output_ids:
-        new_activity_rows = _get_data_generation_and_workflow_execution_activities(
+        new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(
             db, pending_output_ids
         )
-        activity_rows.update(new_activity_rows)
+        dg_and_wfe_rows.update(new_dg_and_wfe_rows)
         visited_output_ids.extend(
             id_ for id_ in pending_output_ids if id_ not in visited_output_ids
         )
         input_ids = [
             input_id
-            for row in new_activity_rows.values()
+            for row in new_dg_and_wfe_rows.values()
             for input_id in _document(row).get("has_input", [])
         ]
         pending_output_ids = list(
@@ -197,18 +200,18 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
 
     workflow_rows = {
         id_: row
-        for id_, row in activity_rows.items()
+        for id_, row in dg_and_wfe_rows.items()
         if row.high_level_type == "nmdc:WorkflowExecution"
     }
     data_generation_rows = {
         id_: row
-        for id_, row in activity_rows.items()
+        for id_, row in dg_and_wfe_rows.items()
         if row.high_level_type == "nmdc:DataGeneration"
     }
 
     related_rows = [
         *data_object_rows.values(),
-        *activity_rows.values(),
+        *dg_and_wfe_rows.values(),
     ]
     biosample_ids = list(
         dict.fromkeys(biosample_id for row in related_rows for biosample_id in row.biosample_ids)
@@ -252,15 +255,15 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
             for child_id, child_row in study_rows.items()
             if id_ in (_document(child_row).get("part_of") or [])
         )
-        node = {"@id": id_, "@type": ["Dataset", "nmdc:Study"]}
+        node = {"@id": id_, "@type": ["Dataset", "nmdc:Study"], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         if parts:
             node["hasPart"] = _references(parts)
         graph.append(node)
     for id_, row in sorted(biosample_rows.items()):
-        node = {"@id": id_, "@type": ["Thing", "nmdc:Biosample"]}
+        node = {"@id": id_, "@type": ["Thing", "nmdc:Biosample"], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         graph.append(node)
     for id_, row in sorted(data_generation_rows.items()):
-        node = {"@id": id_, "@type": ["CreateAction", "nmdc:DataGeneration"]}
+        node = {"@id": id_, "@type": ["CreateAction", "nmdc:DataGeneration"], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
@@ -277,7 +280,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         graph.append(node)
     for id_, row in sorted(workflow_rows.items()):
         workflow_type = _document(row).get("type", "nmdc:WorkflowExecution")
-        node = {"@id": id_, "@type": ["CreateAction", workflow_type]}
+        node = {"@id": id_, "@type": ["CreateAction", workflow_type], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
