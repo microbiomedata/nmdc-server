@@ -198,3 +198,36 @@ export function validateReadUrlsOrInsdcRunIdentifiers(data: DataHarmonizerData, 
 
   return issues;
 }
+
+/**
+ * Validates that the values of the `analysis_type` slot do not contain more than one
+ * value from pre-defined mutually exclusive groups.
+ *
+ * @param data - The data of the current DataHarmonizer tab to validate
+ */
+export function validateAnalysisTypeMutuallyExclusiveValues(data: DataHarmonizerData): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const mutuallyExclusiveGroups: string[][] = [
+    ['metagenomics', 'metagenomics_long_read', 'amplicon sequencing assay', 'isolate genome sequencing'],
+    ['metatranscriptomics', 'isolate transcriptome sequencing'],
+  ];
+
+  data.forEach((row, rowIndex) => {
+    const analysisTypeValue = row['analysis_type'];
+    if (!analysisTypeValue || !Array.isArray(analysisTypeValue)) {
+      return;
+    }
+    mutuallyExclusiveGroups.forEach((group) => {
+      const selectedValues = analysisTypeValue.filter((value) => group.includes(value));
+      if (selectedValues.length > 1) {
+        issues.push({
+          row: rowIndex,
+          slot: 'analysis_type',
+          message: `The following values are mutually exclusive and cannot be selected together: ${selectedValues.join(', ')}`,
+        });
+      }
+    })
+  });
+
+  return issues;
+}
