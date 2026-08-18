@@ -255,15 +255,15 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
             for child_id, child_row in study_rows.items()
             if id_ in (_document(child_row).get("part_of") or [])
         )
-        node = {"@id": id_, "@type": ["Dataset", "nmdc:Study"], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
+        node = {"@id": id_, "@type": "nmdc:Study", "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         if parts:
             node["hasPart"] = _references(parts)
         graph.append(node)
     for id_, row in sorted(biosample_rows.items()):
-        node = {"@id": id_, "@type": ["Thing", "nmdc:Biosample"], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
+        node = {"@id": id_, "@type": "nmdc:Biosample", "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         graph.append(node)
     for id_, row in sorted(data_generation_rows.items()):
-        node = {"@id": id_, "@type": ["CreateAction", "nmdc:DataGeneration"], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
+        node = {"@id": id_, "@type": "nmdc:DataGeneration", "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
@@ -280,7 +280,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         graph.append(node)
     for id_, row in sorted(workflow_rows.items()):
         workflow_type = _document(row).get("type", "nmdc:WorkflowExecution")
-        node = {"@id": id_, "@type": ["CreateAction", workflow_type], "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
+        node = {"@id": id_, "@type": workflow_type, "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
