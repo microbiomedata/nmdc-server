@@ -284,11 +284,12 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
 
     assert "nmdc:dobj-1" not in nodes
     assert "nmdc:dobj-unrelated" not in nodes
-    assert nodes["nmdc:bsm-1"]["isPartOf"] == [{"@id": "nmdc:sty-1"}]
-    assert nodes["nmdc:bsm-1"]["subjectOf"] == [{"@id": "nmdc:dgns-1"}]
+    assert nodes["nmdc:sty-1"]["hasPart"] == [{"@id": "nmdc:bsm-1"}]
+    assert "isPartOf" not in nodes["nmdc:bsm-1"]
+    assert "subjectOf" not in nodes["nmdc:bsm-1"]
     assert nodes["nmdc:dgns-1"]["object"] == [{"@id": "nmdc:bsm-1"}]
     assert nodes["nmdc:dgns-1"]["result"] == [{"@id": "nmdc:wfrqc-1"}]
-    assert nodes["nmdc:wfrqc-1"]["isBasedOn"] == [{"@id": "nmdc:dgns-1"}]
+    assert "isBasedOn" not in nodes["nmdc:wfrqc-1"]
 
 
 def test_bulk_download_rocrate_endpoint_returns_and_clears_cache(db: Session, client: TestClient):

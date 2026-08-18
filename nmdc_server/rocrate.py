@@ -255,22 +255,9 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         node = {"@id": id_, "@type": ["Dataset", "nmdc:Study"]}
         if parts:
             node["hasPart"] = _references(parts)
-        parent_studies = _document(row).get("part_of") or []
-        if parent_studies:
-            node["isPartOf"] = _references(parent_studies)
         graph.append(node)
     for id_, row in sorted(biosample_rows.items()):
         node = {"@id": id_, "@type": ["Thing", "nmdc:Biosample"]}
-        associated_studies = _document(row).get("associated_studies", [])
-        if associated_studies:
-            node["isPartOf"] = _references(associated_studies)
-        data_generations = [
-            data_generation_id
-            for data_generation_id, data_generation_row in data_generation_rows.items()
-            if id_ in data_generation_row.biosample_ids
-        ]
-        if data_generations:
-            node["subjectOf"] = _references(data_generations)
         graph.append(node)
     for id_, row in sorted(data_generation_rows.items()):
         node = {"@id": id_, "@type": ["CreateAction", "nmdc:DataGeneration"]}
@@ -291,14 +278,6 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     for id_, row in sorted(workflow_rows.items()):
         workflow_type = _document(row).get("type", "nmdc:WorkflowExecution")
         node = {"@id": id_, "@type": ["CreateAction", workflow_type]}
-        input_ids = _document(row).get("has_input", [])
-        data_generations = [
-            data_generation_id
-            for data_generation_id, data_generation_row in data_generation_rows.items()
-            if _overlap(input_ids, _document(data_generation_row).get("has_output", []))
-        ]
-        if data_generations:
-            node["isBasedOn"] = _references(data_generations)
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
