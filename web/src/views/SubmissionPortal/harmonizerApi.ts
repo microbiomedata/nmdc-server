@@ -11,7 +11,7 @@ import {
   TemplateName,
 } from '@/views/SubmissionPortal/types';
 import {
-  type DataHarmonizerData,
+  type DataHarmonizerData, validateAnalysisTypeMutuallyExclusiveValues,
   validatePlateWellsForJgi,
   validateReadUrlsOrInsdcRunIdentifiers,
 } from '@/views/SubmissionPortal/validation';
@@ -465,6 +465,7 @@ highlight(row?: number, col?: number) {
       const readSlots = ['interleaved_url'];
       issues.push(...validateReadUrlsOrInsdcRunIdentifiers(data, readSlots));
     }
+    issues.push(...validateAnalysisTypeMutuallyExclusiveValues(data));
     issues.forEach((issue) => {
       this.setInvalidCell(issue.row, issue.slot, issue.message);
     });

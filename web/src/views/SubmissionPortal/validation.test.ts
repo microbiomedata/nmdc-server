@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  validateAnalysisTypeMutuallyExclusiveValues,
   validatePlateWellsForJgi,
   validateReadUrlsOrInsdcRunIdentifiers,
 } from './validation';
@@ -206,6 +207,38 @@ describe('validateReadUrlsOrInsdcRunIdentifiers', () => {
 
     expect(issues).toEqual([
       { row: 0, slot: 'interleaved_url', message: requiredMessage },
+    ]);
+  });
+});
+
+describe('validateAnalysisTypeMutuallyExclusiveValues', () => {
+  it('returns no issues when a single value is selected', () => {
+    const issues = validateAnalysisTypeMutuallyExclusiveValues([
+      { analysis_type: ['metagenomics'] },
+    ]);
+
+    expect(issues).toEqual([]);
+  });
+
+  it('returns no issue when an allowed combination is selected', () => {
+    const issues = validateAnalysisTypeMutuallyExclusiveValues([
+      { analysis_type: ['metagenomics', 'metatranscriptomics'] },
+    ]);
+
+    expect(issues).toEqual([]);
+  });
+
+  it('flags an issue when mutually exclusive values are selected', () => {
+    const issues = validateAnalysisTypeMutuallyExclusiveValues([
+      { analysis_type: ['metagenomics', 'metatranscriptomics', 'isolate genome sequencing'] },
+    ]);
+
+    expect(issues).toEqual([
+      {
+        row: 0,
+        slot: 'analysis_type',
+        message: 'The following values are mutually exclusive and cannot be selected together: metagenomics, isolate genome sequencing',
+      },
     ]);
   });
 });
