@@ -321,8 +321,12 @@ async def search_biosample(
     # As a side effect, track all relevant data object IDs for this query.
     # They will be used to get download counts for all data objects in one
     # query.
-    def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+    def insert_selected(biosample: models.Biosample) -> models.Biosample:
         for op in biosample.omics_processing:
+            # If the query parameter `include_superseded_workflow_executions` is False (the default),
+            # then filter out any workflow executions that have been superseded by another.
+            if not query.include_superseded_workflow_executions:
+                op._exclude_superseded = True
             for da in op.outputs:
                 data_object_ids.add(da.id)
                 da.selected = schemas.DataObject.is_selected(
@@ -514,7 +518,10 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                         jf.write(b"[\n")
                         first = True
                         for doc in crud.get_documents_by_biosample_ids(
-                            db, biosample_ids, high_level_type
+                            db,
+                            biosample_ids,
+                            high_level_type,
+                            include_superseded_workflow_executions=q.include_superseded_workflow_executions,
                         ):
                             if not first:
                                 # Write a comma before all but the first document to maintain valid JSON list syntax.
@@ -910,7 +917,9 @@ def data_object_aggregation(
     query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
     db: Session = Depends(get_db),
 ):
-    return crud.aggregate_data_object_by_workflow(db, query.conditions)
+    return crud.aggregate_data_object_by_workflow(
+        db, query.conditions, query.include_superseded_workflow_executions
+    )
 
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
@@ -945,6 +954,7 @@ async def create_bulk_download(
             orcid=user.orcid,
             conditions=query.conditions,
             filter=query.data_object_filter,
+            include_superseded_workflow_executions=query.include_superseded_workflow_executions,
         ),
     )
     if bulk_download is None:

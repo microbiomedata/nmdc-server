@@ -3,9 +3,11 @@ import { computed, defineComponent } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import ExternalProtocolForm from './ExternalProtocolForm.vue';
 import { useSubmissionStore } from '../store';
+import IsolateDataFormatQuestion from '@/views/SubmissionPortal/Components/IsolateDataFormatQuestion.vue';
 
 export default defineComponent({
   components: {
+    IsolateDataFormatQuestion,
     ExternalProtocolForm,
   },
   props: {
@@ -283,15 +285,35 @@ emits: ['revalidate'],
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Isolate Genome"
         value="isolate-genome"
+        :disabled="templateHasData('data_mg') || templateHasData('data_mg_interleaved') || undefined"
         hide-details
       />
+      <div
+        v-if="multiOmicsForm.dataGenerated && multiOmicsForm.omicsProcessingTypes.includes('isolate-genome')"
+        class="mx-8"
+      >
+        <IsolateDataFormatQuestion
+          v-model="multiOmicsForm.isolateGenomeDataFormat"
+          :disabled="templateHasData('data_mg') || templateHasData('data_mg_interleaved') || undefined"
+        />
+      </div>
 
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Isolate Transcriptome"
         value="isolate-transcriptome"
+        :disabled="templateHasData('data_mt') || templateHasData('data_mt_interleaved') || undefined"
         hide-details
       />
+      <div
+        v-if="multiOmicsForm.dataGenerated && multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome')"
+        class="mx-8"
+      >
+        <IsolateDataFormatQuestion
+          v-model="multiOmicsForm.isolateTranscriptomeDataFormat"
+          :disabled="templateHasData('data_mt') || templateHasData('data_mt_interleaved') || undefined"
+        />
+      </div>
     </div>
   </div>
 </template>

@@ -87,6 +87,8 @@ class MultiOmicsForm(BaseModel):
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
     nomLcProtocols: Optional[Protocols] = None
+    isolateGenomeDataFormat: Optional[str] = None
+    isolateTranscriptomeDataFormat: Optional[str] = None
     validation: Optional[List[str]] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and

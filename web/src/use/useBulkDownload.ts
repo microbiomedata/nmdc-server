@@ -10,6 +10,7 @@ import useRequest from './useRequest';
 export default function useBulkDownload(
   conditions: Ref<Condition[]>,
   dataObjectFilter: Ref<DataObjectFilter[]>,
+  includeSupersededWorkflowExecutions: Ref<boolean> = ref(false),
 ) {
   const downloadOptions = ref({} as BulkDownloadSummary);
   const bulkDownloads = ref([] as BulkDownload[]);
@@ -20,26 +21,38 @@ export default function useBulkDownload(
   } as BulkDownloadAggregateSummary);
 
   async function download() {
-    return request(async () => {
-      const val = await api.createBulkDownload(conditions.value, dataObjectFilter.value);
-      bulkDownloads.value.push(val);
-      return val;
+    const val = await request(async () => {
+      const result = await api.createBulkDownload(
+        conditions.value,
+        dataObjectFilter.value,
+        includeSupersededWorkflowExecutions.value,
+      );
+      bulkDownloads.value.push(result);
+      return result;
     });
+    if (error.value) {
+      throw new Error(error.value);
+    }
+    return val;
   }
 
   async function getSummary() {
     downloadSummary.value = await api.getBulkDownloadAggregateSummary(
       conditions.value,
       dataObjectFilter.value,
+      includeSupersededWorkflowExecutions.value,
     );
   }
 
   async function getDownloadOptions() {
-    downloadOptions.value = await api.getBulkDownloadSummary(conditions.value);
+    downloadOptions.value = await api.getBulkDownloadSummary(
+      conditions.value,
+      includeSupersededWorkflowExecutions.value,
+    );
   }
 
-  watch([conditions, dataObjectFilter], getSummary);
-  watch([conditions], getDownloadOptions);
+  watch([conditions, dataObjectFilter, includeSupersededWorkflowExecutions], getSummary);
+  watch([conditions, includeSupersededWorkflowExecutions], getDownloadOptions);
 
   getDownloadOptions();
   getSummary();

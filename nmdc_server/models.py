@@ -29,7 +29,13 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session, backref, query_expression, relationship
+from sqlalchemy.orm import (  # type: ignore[attr-defined]
+    Session,
+    backref,
+    declared_attr,
+    query_expression,
+    relationship,
+)
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
 
@@ -144,7 +150,10 @@ class EnvoTerm(Base):
 # query all ancestor terms with a recursive query.
 class EnvoAncestor(Base):
     __tablename__ = "envo_ancestor"
-    __table_args__ = (UniqueConstraint("id", "ancestor_id"),)
+    __table_args__ = (
+        UniqueConstraint("id", "ancestor_id"),
+        Index("idx_envo_ancestor_ancestor_id", "ancestor_id"),
+    )
 
     id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
     ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
@@ -507,6 +516,9 @@ class Biosample(Base, AnnotatedModel):
             ),
             postgresql_using="gin",
         ),
+        Index("idx_biosample_env_broad_scale_id", "env_broad_scale_id"),
+        Index("idx_biosample_env_local_scale_id", "env_local_scale_id"),
+        Index("idx_biosample_env_medium_id", "env_medium_id"),
     )
 
     add_date = Column(DateTime, nullable=True)
@@ -620,12 +632,32 @@ class BiosampleRelatedDocument(Base):
     )
 
 
+Index(
+    "ix_biosample_related_document_biosample_ids",
+    BiosampleRelatedDocument.biosample_ids,
+    postgresql_using="gin",
+)
+Index(
+    "ix_biosample_related_document_high_level_type",
+    BiosampleRelatedDocument.high_level_type,
+)
+Index(
+    "ix_biosample_related_document_document_type",
+    BiosampleRelatedDocument.document["type"].astext,
+)
+Index(
+    "ix_biosample_related_document_downstream_neighbor_ids",
+    BiosampleRelatedDocument.downstream_neighbor_ids,
+    postgresql_using="gin",
+)
+
+
 omics_processing_output_association = output_association("omics_processing")
 
 
 # This is a base class for all workflow processing activities.
-# https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
-# TODO : does this exist anymore?
+# https://microbiomedata.github.io/nmdc-schema/WorkflowExecution/
+# The term, "PipelineStep", is equivalent to "WorkflowExecution" in the NMDC schema.
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
@@ -636,6 +668,22 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=True)
+
+    @declared_attr
+    def superseded_by(cls):
+        """
+        Foreign key column referencing another record in the same table
+        for which this record is superseded by.
+        """
+        return Column(String, ForeignKey(f"{cls.__tablename__}.id"), nullable=True)
+
+    @declared_attr
+    def supersedes(cls):
+        """
+        Foreign key column referencing another record in the same table
+        for which this record supersedes (takes precedence over).
+        """
+        return relationship(cls.__name__, foreign_keys=f"[{cls.__name__}.superseded_by]")  # type: ignore[attr-defined]
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
@@ -891,11 +939,16 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
 
+# The term, "OmicsProcessing", has been updated to the term, "DataGeneration""
 class OmicsProcessing(Base, AnnotatedModel):
     __tablename__ = "omics_processing"
 
+    _exclude_superseded: bool = False
+    """Optionally set to True to exclude superseded workflow executions from the `omics_data` property."""
+
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
+
     biosample_inputs = relationship(
         "Biosample",
         secondary=biosample_input_association,
@@ -973,25 +1026,43 @@ class OmicsProcessing(Base, AnnotatedModel):
     )
 
     # This property injects information in the omics_processing result
-    # regarding output data from workflow processing runs.  Because there
+    # regarding output data from workflow processing runs. Because there
     # are no filters that filter out individual processing runs, this
-    # can be done outside of the main query.  For this reason, it does
+    # can be done outside of the main query. For this reason, it does
     # not have to be added as a `query_expression`.
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
-        return chain(
-            self.reads_qc,
-            self.metatranscriptome_annotation,
-            self.metaproteomic_analysis,
-            self.mags_analysis,
-            self.read_based_analysis,
-            self.nom_analysis,
-            self.metabolomics_analysis,
-            self.metatranscriptome,
-            self.metagenome_assembly,
-            self.metatranscriptome_assembly,
-            self.metagenome_annotation,
+        all_items: list["PipelineStep"] = list(
+            chain(
+                self.reads_qc,
+                self.metatranscriptome_annotation,
+                self.metaproteomic_analysis,
+                self.mags_analysis,
+                self.read_based_analysis,
+                self.nom_analysis,
+                self.metabolomics_analysis,
+                self.metatranscriptome,
+                self.metagenome_assembly,
+                self.metatranscriptome_assembly,
+                self.metagenome_annotation,
+            )
         )
+        # Sort by type first, then by ended_at_time descending (newer first).
+        # Items without an ended_at_time are sorted last within their type.
+        all_items.sort(
+            key=lambda item: (
+                item.type,
+                item.ended_at_time is None,
+                -(item.ended_at_time.timestamp() if item.ended_at_time else 0),
+            )
+        )
+        # If the `_exclude_superseded` attribute is set to True,
+        # filter out any items that have been superseded by another item.
+        # This happens when the `include_superseded_workflow_executions` parameter
+        # in the search_biosample query is set to False.
+        if self._exclude_superseded:
+            return (item for item in all_items if not item.superseded_by)
+        return iter(all_items)
 
 
 class DataObject(Base):
@@ -1199,6 +1270,10 @@ class BulkDownload(Base):
 
     # the filter on data objects `List[DataObjectFilter]`
     filter = Column(JSONB, nullable=True)
+
+    # Whether or not to include data objects from older workflow executions
+    # (ones that have been superseded) in the bulk download
+    include_superseded_workflow_executions = Column(Boolean, nullable=False, default=False)
 
     expired = Column(Boolean, nullable=False, default=False)
 
