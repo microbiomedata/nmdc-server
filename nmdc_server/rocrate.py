@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import PurePosixPath
 from typing import Any, cast
 
@@ -194,8 +194,9 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     if not root_data_entity:
         raise ValueError("RO-Crate structure is missing the root data entity with @id './'")
     root_data_entity["datePublished"] = bulk_download.created.isoformat()
+    now = datetime.now(timezone.utc)
     root_data_entity["description"] = (
-        f"Bulk download of data files from the NMDC Data Portal, generated on {datetime.now().strftime("%Y-%m-%d")} at {datetime.now().strftime("%H:%M")}. The files included in the data directory are determined by the `query_conditions` and `selected_file_types` specified for this bulk download."
+        f"Bulk download of data files from the NMDC Data Portal, generated on {now.strftime("%Y-%m-%d")} at {now.strftime('%H:%M:%S%z')}. The files included in the data directory are determined by the `query_conditions` and `selected_file_types` specified for this bulk download."
     )
     query_conditions_property = next(
         (
