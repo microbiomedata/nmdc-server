@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -14,6 +14,7 @@ from sqlalchemy.sql import func
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
+from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 
 # This dict defines the allowed status transitions for submissions based on the role of the editor.
 # The format is:
@@ -514,29 +515,6 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
     return rows
 
 
-def get_related_biosamples_by_data_object_ids(
-    db: Session, data_object_ids: list[str]
-) -> list[dict]:
-    """
-    Take a list of `DataObject` IDs and map each one to its related biosamples.
-    """
-    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
-    statement = (
-        select(
-            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
-            models.BiosampleRelatedDocument.biosample_ids,
-        )
-        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
-        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
-        .order_by(models.BiosampleRelatedDocument.id)
-    )
-    rows = db.execute(statement).all()
-    for row in rows:
-        data_object_id_to_biosample_ids_map[row[0]] = row[1]
-
-    return data_object_id_to_biosample_ids_map
-
-
 def get_documents_by_biosample_ids(
     db: Session,
     biosample_ids_list: list[str],
@@ -627,13 +605,13 @@ def create_bulk_download(
         bulk_download_model = models.BulkDownload(**bulk_download.dict())
         db.add(bulk_download_model)
 
-        has_files = False
+        data_object_ids = []
         for data_object in data_object_query.execute(db):
             if data_object.url is None:
                 logger.warning("Data object url is empty in bulk download")
                 continue
 
-            has_files = True
+            data_object_ids.append(data_object.id)
 
             db.add(
                 models.BulkDownloadDataObject(
@@ -643,10 +621,14 @@ def create_bulk_download(
                 )
             )
 
-        if not has_files:
+        if not data_object_ids:
             db.rollback()
             return None
 
+        db.flush()
+        bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
+            db, bulk_download_model, data_object_ids
+        )
         db.commit()
         return bulk_download_model
 
@@ -736,13 +718,6 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             "zipPath": "metadata/data_objects.json",
         }
     )
-    file_descriptions.append(
-        {
-            "url": f"{base}/api/bulk_download/{id}/metadata/related_biosamples.json",
-            "zipPath": "metadata/related_biosamples.json",
-        }
-    )
-
     zip_file_descriptor["files"] = file_descriptions
 
     bulk_download.expired = True

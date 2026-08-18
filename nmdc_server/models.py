@@ -1202,6 +1202,15 @@ class BulkDownload(Base):
 
     expired = Column(Boolean, nullable=False, default=False)
 
+    rocrate_metadata_cache = Column(
+        JSONB,
+        nullable=True,
+        comment=(
+            "Temporary RO-Crate metadata cache populated when a bulk download is created and "
+            "cleared after ZipStreamer retrieves it"
+        ),
+    )
+
 
 class BulkDownloadDataObject(Base):
     __tablename__ = "bulk_download_data_object"

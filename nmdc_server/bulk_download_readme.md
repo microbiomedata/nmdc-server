@@ -18,7 +18,7 @@ Included at the top level of every download is a file called `ro-crate-metadata.
 
 ## Metadata Folder
 
-At the top level of the download is a folder called `metadata/`. This includes two JSON files that are intended to help you understand more about how each data product file was generated and how to relate them back to `Biosample`s.
+At the top level of the download is a folder called `metadata/`. It contains `data_objects.json`, which helps you understand how each data product file was generated and how to relate it back to `Biosample`s.
 
 ### `data_objects.json`
 
@@ -26,8 +26,4 @@ This file includes a list of JSON objects where each object represents a `DataOb
 
 > An object that primarily consists of symbols that represent information. Files, records, and omics data are examples of data objects.
 
-Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). You can tell which file the ID relates to by looking at the `id` and `name` fields. Each file name in the `data/` folder is prefixed with a sanitized version of the `id`. See the [Data Product Files](#data-product-files) section above.
-
-### `related_biosamples.json`
-
-This file includes a single object whose keys are each of the `DataObject` IDs included in your download. For each `DataObject` ID, there is a list of `Biosample` IDs that are associated with that `DataObject`. This can help you relate your data products back to concrete `Biosample`s.
+Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). The `_bulk_download_path` field contains its complete path from the root of this archive, including the `data/` directory. The `_related_biosample_ids` field lists the IDs of the `Biosample`s associated with that data object.

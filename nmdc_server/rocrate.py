@@ -1,4 +1,11 @@
 from datetime import datetime
+from typing import Any, cast
+
+from sqlalchemy import select
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import Session
+
+from nmdc_server import models
 
 
 def get_rocrate_base_bulk_download():
@@ -8,7 +15,10 @@ def get_rocrate_base_bulk_download():
     See https://www.researchobject.org/ro-crate/specification/1.2/introduction.html
     """
     return {
-        "@context": "https://w3id.org/ro/crate/1.2/context",
+        "@context": [
+            "https://w3id.org/ro/crate/1.2/context",
+            {"nmdc": "https://w3id.org/nmdc/"},
+        ],
         "@graph": [
             {
                 "@id": "ro-crate-metadata.json",
@@ -38,7 +48,6 @@ def get_rocrate_base_bulk_download():
                 "hasPart": [
                     {"@id": "README.md"},
                     {"@id": "metadata/"},
-                    {"@id": "metadata/related_biosamples.json"},
                     {"@id": "metadata/data_objects.json"},
                     {"@id": "data/"},
                 ],
@@ -53,22 +62,13 @@ def get_rocrate_base_bulk_download():
                 "@type": "Dataset",
                 "name": "Metadata Directory",
                 "description": "Metadata files that associate the data files in this bulk download with other NMDC research entities.",
-                "hasPart": [
-                    {"@id": "metadata/related_biosamples.json"},
-                    {"@id": "metadata/data_objects.json"},
-                ],
-            },
-            {
-                "@id": "metadata/related_biosamples.json",
-                "@type": "File",
-                "name": "Related Biosamples Mapping",
-                "description": "A single JSON object whose keys are each of the `DataObject` IDs included in your download. For each `DataObject` ID, there is a list of `Biosample` IDs that are associated with that `DataObject`.",
+                "hasPart": [{"@id": "metadata/data_objects.json"}],
             },
             {
                 "@id": "metadata/data_objects.json",
                 "@type": "File",
                 "name": "Data Object Metadata",
-                "description": "A JSON array where each element represents the metadata for a single `DataObject` included in your download. Each file name in your data directory is prefixed with its corresponding `DataObject` ID which correlates to the IDs in this file.",
+                "description": "A JSON array containing metadata, archive paths, and related Biosample IDs for the DataObjects included in this download.",
             },
             {
                 "@id": "data/",
@@ -85,7 +85,52 @@ def get_root_data_entity(rocrate_dict):
     return next((item for item in rocrate_dict["@graph"] if item["@id"] == "./"), None)
 
 
-def generate_rocrate_for_bulk_download(bulk_download):
+def _get_related_documents(
+    db: Session, ids: list[str]
+) -> dict[str, models.BiosampleRelatedDocument]:
+    rows = db.execute(
+        select(models.BiosampleRelatedDocument).where(
+            models.BiosampleRelatedDocument.id.in_(ids)
+        )
+    ).scalars()
+    return {row.id: row for row in rows}
+
+
+def _references(ids):
+    return [{"@id": id_} for id_ in sorted(dict.fromkeys(ids))]
+
+
+def _overlap(left: list[str], right: list[str]) -> bool:
+    """Return whether two ID lists contain at least one ID in common."""
+    return any(id_ in right for id_ in left)
+
+
+def _document(row: models.BiosampleRelatedDocument) -> dict[str, Any]:
+    return cast(dict[str, Any], row.document)
+
+
+def _get_data_generation_and_workflow_execution_activities(
+    db: Session, output_ids: list[str]
+) -> dict[str, models.BiosampleRelatedDocument]:
+    rows = db.execute(
+        select(models.BiosampleRelatedDocument)
+        .where(
+            models.BiosampleRelatedDocument.high_level_type.in_(
+                ["nmdc:DataGeneration", "nmdc:WorkflowExecution"]
+            )
+        )
+        .where(
+            models.BiosampleRelatedDocument.document["has_output"].op("?|")(
+                postgresql.array(output_ids)  # type: ignore[call-overload]
+            )
+        )
+    ).scalars()
+    return {row.id: row for row in rows}
+
+
+def generate_rocrate_for_bulk_download(  # noqa: C901
+    db: Session, bulk_download: models.BulkDownload, data_object_ids: list[str]
+):
     """Generates an RO-Crate metadata object for a given bulk download record."""
     rocrate_dict = get_rocrate_base_bulk_download()
     root_data_entity = get_root_data_entity(rocrate_dict)
@@ -125,6 +170,137 @@ def generate_rocrate_for_bulk_download(bulk_download):
     if not data_directory_entity:
         raise ValueError("RO-Crate structure is missing the data directory entity with @id 'data/'")
     data_directory_entity["description"] = (
-        f"Directory containing the {len(bulk_download.files)} data files for this bulk download. The file names are generated using the file's corresponding `DataObject` ID and `DataObject` name, where ':' (colons) in the IDs are replaced with '_' (underscore) for file system safety. Each file is prefixed by its sanitized `DataObject` ID, followed by '__' (double underscore), followed by its sanitized `DataObject` name."
+        f"Directory containing the {len(data_object_ids)} data files for this bulk download. "
+        "Files are organized by DataGeneration and WorkflowExecution."
     )
+
+    data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
+    activity_rows: dict[str, models.BiosampleRelatedDocument] = {}
+    pending_output_ids = list(dict.fromkeys(data_object_ids))
+    visited_output_ids: list[str] = []
+    while pending_output_ids:
+        new_activity_rows = _get_data_generation_and_workflow_execution_activities(
+            db, pending_output_ids
+        )
+        activity_rows.update(new_activity_rows)
+        visited_output_ids.extend(
+            id_ for id_ in pending_output_ids if id_ not in visited_output_ids
+        )
+        input_ids = [
+            input_id
+            for row in new_activity_rows.values()
+            for input_id in _document(row).get("has_input", [])
+        ]
+        pending_output_ids = list(
+            dict.fromkeys(id_ for id_ in input_ids if id_ not in visited_output_ids)
+        )
+
+    workflow_rows = {
+        id_: row
+        for id_, row in activity_rows.items()
+        if row.high_level_type == "nmdc:WorkflowExecution"
+    }
+    data_generation_rows = {
+        id_: row
+        for id_, row in activity_rows.items()
+        if row.high_level_type == "nmdc:DataGeneration"
+    }
+
+    related_rows = [
+        *data_object_rows.values(),
+        *activity_rows.values(),
+    ]
+    biosample_ids = list(
+        dict.fromkeys(biosample_id for row in related_rows for biosample_id in row.biosample_ids)
+    )
+    biosample_rows = _get_related_documents(db, biosample_ids)
+    biosample_rows = {
+        id_: row for id_, row in biosample_rows.items() if row.high_level_type == "nmdc:Biosample"
+    }
+
+    study_ids = list(
+        dict.fromkeys(
+            study_id
+            for row in biosample_rows.values()
+            for study_id in _document(row).get("associated_studies", [])
+        )
+    )
+    study_rows = {}
+    pending_study_ids = study_ids
+    while pending_study_ids:
+        new_rows = _get_related_documents(db, pending_study_ids)
+        new_rows = {
+            id_: row for id_, row in new_rows.items() if row.high_level_type == "nmdc:Study"
+        }
+        study_rows.update(new_rows)
+        parent_ids = [
+            parent_id
+            for row in new_rows.values()
+            for parent_id in (_document(row).get("part_of") or [])
+        ]
+        pending_study_ids = list(dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows))
+
+    graph = rocrate_dict["@graph"]
+    for id_, row in sorted(study_rows.items()):
+        parts = [
+            biosample_id
+            for biosample_id, biosample_row in biosample_rows.items()
+            if id_ in _document(biosample_row).get("associated_studies", [])
+        ]
+        parts.extend(
+            child_id
+            for child_id, child_row in study_rows.items()
+            if id_ in (_document(child_row).get("part_of") or [])
+        )
+        node = {"@id": id_, "@type": ["Dataset", "nmdc:Study"]}
+        if parts:
+            node["hasPart"] = _references(parts)
+        parent_studies = _document(row).get("part_of") or []
+        if parent_studies:
+            node["isPartOf"] = _references(parent_studies)
+        graph.append(node)
+    for id_, row in sorted(biosample_rows.items()):
+        node = {"@id": id_, "@type": ["Thing", "nmdc:Biosample"]}
+        associated_studies = _document(row).get("associated_studies", [])
+        if associated_studies:
+            node["isPartOf"] = _references(associated_studies)
+        data_generations = [
+            data_generation_id
+            for data_generation_id, data_generation_row in data_generation_rows.items()
+            if id_ in data_generation_row.biosample_ids
+        ]
+        if data_generations:
+            node["subjectOf"] = _references(data_generations)
+        graph.append(node)
+    for id_, row in sorted(data_generation_rows.items()):
+        node = {"@id": id_, "@type": ["CreateAction", "nmdc:DataGeneration"]}
+        related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
+        if related_biosamples:
+            node["object"] = _references(related_biosamples)
+        workflows = [
+            workflow_id
+            for workflow_id, workflow_row in workflow_rows.items()
+            if _overlap(
+                _document(row).get("has_output", []),
+                _document(workflow_row).get("has_input", []),
+            )
+        ]
+        if workflows:
+            node["result"] = _references(workflows)
+        graph.append(node)
+    for id_, row in sorted(workflow_rows.items()):
+        workflow_type = _document(row).get("type", "nmdc:WorkflowExecution")
+        node = {"@id": id_, "@type": ["CreateAction", workflow_type]}
+        input_ids = _document(row).get("has_input", [])
+        data_generations = [
+            data_generation_id
+            for data_generation_id, data_generation_row in data_generation_rows.items()
+            if _overlap(input_ids, _document(data_generation_row).get("has_output", []))
+        ]
+        if data_generations:
+            node["isBasedOn"] = _references(data_generations)
+        related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
+        if related_biosamples:
+            node["object"] = _references(related_biosamples)
+        graph.append(node)
     return rocrate_dict
