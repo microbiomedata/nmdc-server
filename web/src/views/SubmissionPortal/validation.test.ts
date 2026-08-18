@@ -230,14 +230,14 @@ describe('validateAnalysisTypeMutuallyExclusiveValues', () => {
 
   it('flags an issue when mutually exclusive values are selected', () => {
     const issues = validateAnalysisTypeMutuallyExclusiveValues([
-      { analysis_type: ['metagenomics', 'metatranscriptomics', 'metagenomics_long_read'] },
+      { analysis_type: ['metagenomics', 'metatranscriptomics', 'isolate genome sequencing'] },
     ]);
 
     expect(issues).toEqual([
       {
         row: 0,
         slot: 'analysis_type',
-        message: 'The following values are mutually exclusive and cannot be selected together: metagenomics, metagenomics_long_read',
+        message: 'The following values are mutually exclusive and cannot be selected together: metagenomics, isolate genome sequencing',
       },
     ]);
   });

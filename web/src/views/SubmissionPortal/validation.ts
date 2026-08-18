@@ -208,7 +208,7 @@ export function validateReadUrlsOrInsdcRunIdentifiers(data: DataHarmonizerData, 
 export function validateAnalysisTypeMutuallyExclusiveValues(data: DataHarmonizerData): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const mutuallyExclusiveGroups: string[][] = [
-    ['metagenomics', 'metagenomics_long_read', 'amplicon sequencing assay', 'isolate genome sequencing'],
+    ['metagenomics', 'amplicon sequencing assay', 'isolate genome sequencing'],
     ['metatranscriptomics', 'isolate transcriptome sequencing'],
   ];
 
