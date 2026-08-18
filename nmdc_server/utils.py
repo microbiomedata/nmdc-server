@@ -10,6 +10,11 @@ from nmdc_server.logger import get_logger
 logger = get_logger("nmdc_server")
 
 
+def safe_name(name: str) -> str:
+    """Return a name that is safe for a file or directory in a zip archive."""
+    return name.replace("/", "_").replace("\\", "_").replace(":", "_")
+
+
 def json_serializer(data: Any) -> str:
     def default_(val: Any) -> str:
         if isinstance(val, datetime):

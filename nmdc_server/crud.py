@@ -15,6 +15,7 @@ from nmdc_server import aggregations, bulk_download_schema, models, query, schem
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
 from nmdc_server.rocrate import generate_rocrate_for_bulk_download
+from nmdc_server.utils import safe_name
 
 # This dict defines the allowed status transitions for submissions based on the role of the editor.
 # The format is:
@@ -585,11 +586,6 @@ def create_file_download(
     db.commit()
     db.refresh(db_file_download)
     return db_file_download
-
-
-def safe_name(name: str) -> str:
-    """Return a version of the name that is safe to use as a file name or directory name in a zip file."""
-    return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
 
 def construct_zip_file_path(data_object: models.DataObject) -> str:

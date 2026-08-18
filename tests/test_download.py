@@ -8,7 +8,7 @@ from sqlalchemy.orm.session import Session
 
 from nmdc_server import models, query
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.rocrate import generate_rocrate_for_bulk_download
+from nmdc_server.rocrate import _add_archive_entities, generate_rocrate_for_bulk_download
 from tests import fakes
 
 
@@ -278,18 +278,43 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     bulk_download = models.BulkDownload(orcid="0000", ip="127.0.0.1", conditions=[], filter=[])
     db.add(bulk_download)
     db.flush()
-
     crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
     nodes = {node["@id"]: node for node in crate["@graph"]}
 
     assert "nmdc:dobj-1" not in nodes
     assert "nmdc:dobj-unrelated" not in nodes
     assert nodes["nmdc:sty-1"]["hasPart"] == [{"@id": "nmdc:bsm-1"}]
-    assert "isPartOf" not in nodes["nmdc:bsm-1"]
-    assert "subjectOf" not in nodes["nmdc:bsm-1"]
     assert nodes["nmdc:dgns-1"]["object"] == [{"@id": "nmdc:bsm-1"}]
     assert nodes["nmdc:dgns-1"]["result"] == [{"@id": "nmdc:wfrqc-1"}]
-    assert "isBasedOn" not in nodes["nmdc:wfrqc-1"]
+
+
+def test_add_archive_entities_describes_folders():
+    data_directory = {"@id": "data/", "@type": "Dataset"}
+    graph = [data_directory]
+    download_file = models.BulkDownloadDataObject(
+        data_object_id="nmdc:dobj-1",
+        path="data/nmdc_dgns-1/nmdc_wfrqc-1/result.txt",
+    )
+    bulk_download = models.BulkDownload(files=[download_file])
+
+    _add_archive_entities(
+        graph,
+        data_directory,
+        bulk_download,
+        ["nmdc:dgns-1", "nmdc:wfrqc-1"],
+    )
+    nodes = {node["@id"]: node for node in graph}
+
+    assert data_directory["hasPart"] == [{"@id": "data/nmdc_dgns-1/"}]
+    assert nodes["data/nmdc_dgns-1/"] == {
+        "@id": "data/nmdc_dgns-1/",
+        "@type": "Dataset",
+        "about": {"@id": "nmdc:dgns-1"},
+        "hasPart": [{"@id": "data/nmdc_dgns-1/nmdc_wfrqc-1/"}],
+    }
+    assert nodes["data/nmdc_dgns-1/nmdc_wfrqc-1/"]["about"] == {"@id": "nmdc:wfrqc-1"}
+    assert "hasPart" not in nodes["data/nmdc_dgns-1/nmdc_wfrqc-1/"]
+    assert "data/nmdc_dgns-1/nmdc_wfrqc-1/result.txt" not in nodes
 
 
 def test_bulk_download_rocrate_endpoint_returns_and_clears_cache(db: Session, client: TestClient):

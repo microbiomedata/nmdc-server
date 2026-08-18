@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import PurePosixPath
 from typing import Any, cast
 
 from sqlalchemy import select
@@ -6,7 +7,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
-
+from nmdc_server.utils import safe_name
 
 IDENTIFIER_PREFIX_URL = "https://bioregistry.io"
 
@@ -92,9 +93,7 @@ def _get_related_documents(
     db: Session, ids: list[str]
 ) -> dict[str, models.BiosampleRelatedDocument]:
     rows = db.execute(
-        select(models.BiosampleRelatedDocument).where(
-            models.BiosampleRelatedDocument.id.in_(ids)
-        )
+        select(models.BiosampleRelatedDocument).where(models.BiosampleRelatedDocument.id.in_(ids))
     ).scalars()
     return {row.id: row for row in rows}
 
@@ -110,6 +109,61 @@ def _overlap(left: list[str], right: list[str]) -> bool:
 
 def _document(row: models.BiosampleRelatedDocument) -> dict[str, Any]:
     return cast(dict[str, Any], row.document)
+
+
+def _add_archive_entities(
+    graph: list[dict[str, Any]],
+    data_directory_entity: dict[str, Any],
+    bulk_download: models.BulkDownload,
+    precise_entity_ids: list[str],
+) -> None:
+    """
+    Describe the physical data hierarchy and connect it to NMDC entities.
+    This currently only describes the structure down to the WorkflowExecution directory level.
+    We do this to minimize the RO-Crate size and because DataObject metadata is included in `metadata/data_objects.json`.
+    """
+    id_by_archive_name = {safe_name(id_): id_ for id_ in precise_entity_ids}
+    directories: dict[str, dict[str, Any]] = {}
+
+    for download_file in bulk_download.files:
+        path = PurePosixPath(download_file.path)
+        if len(path.parts) != 4 or path.parts[0] != "data":
+            continue
+
+        _, data_generation_name, workflow_execution_name, _ = path.parts
+        data_generation_dir_id = f"data/{data_generation_name}/"
+        workflow_execution_dir_id = f"{data_generation_dir_id}{workflow_execution_name}/"
+
+        data_generation_dir_node = directories.setdefault(
+            data_generation_dir_id,
+            {"@id": data_generation_dir_id, "@type": "Dataset", "hasPart": []},
+        )
+        workflow_execution_dir_node = directories.setdefault(
+            workflow_execution_dir_id,
+            {"@id": workflow_execution_dir_id, "@type": "Dataset", "hasPart": []},
+        )
+
+        precise_data_generation_id = id_by_archive_name.get(data_generation_name)
+        if precise_data_generation_id is not None:
+            data_generation_dir_node["about"] = {"@id": precise_data_generation_id}
+        precise_workflow_execution_id = id_by_archive_name.get(workflow_execution_name)
+        if precise_workflow_execution_id is not None:
+            workflow_execution_dir_node["about"] = {"@id": precise_workflow_execution_id}
+
+        data_generation_dir_reference = {"@id": data_generation_dir_id}
+        if data_generation_dir_reference not in data_directory_entity.setdefault("hasPart", []):
+            data_directory_entity["hasPart"].append(data_generation_dir_reference)
+        workflow_execution_dir_reference = {"@id": workflow_execution_dir_id}
+        if workflow_execution_dir_reference not in data_generation_dir_node["hasPart"]:
+            data_generation_dir_node["hasPart"].append(workflow_execution_dir_reference)
+
+    for entity in directories.values():
+        if entity["hasPart"]:
+            entity["hasPart"].sort(key=lambda reference: reference["@id"])
+        else:
+            del entity["hasPart"]
+    data_directory_entity.setdefault("hasPart", []).sort(key=lambda reference: reference["@id"])
+    graph.extend(directories[id_] for id_ in sorted(directories))
 
 
 def _get_data_generation_and_workflow_executions(
@@ -182,9 +236,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     pending_output_ids = list(dict.fromkeys(data_object_ids))
     visited_output_ids: list[str] = []
     while pending_output_ids:
-        new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(
-            db, pending_output_ids
-        )
+        new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(db, pending_output_ids)
         dg_and_wfe_rows.update(new_dg_and_wfe_rows)
         visited_output_ids.extend(
             id_ for id_ in pending_output_ids if id_ not in visited_output_ids
@@ -263,7 +315,11 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         node = {"@id": id_, "@type": "nmdc:Biosample", "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
         graph.append(node)
     for id_, row in sorted(data_generation_rows.items()):
-        node = {"@id": id_, "@type": "nmdc:DataGeneration", "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
+        node = {
+            "@id": id_,
+            "@type": "nmdc:DataGeneration",
+            "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}",
+        }
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
@@ -285,4 +341,10 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         if related_biosamples:
             node["object"] = _references(related_biosamples)
         graph.append(node)
+    _add_archive_entities(
+        graph,
+        data_directory_entity,
+        bulk_download,
+        [*data_generation_rows, *workflow_rows],
+    )
     return rocrate_dict
