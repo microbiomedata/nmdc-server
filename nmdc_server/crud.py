@@ -604,18 +604,26 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
             detail="Data object has no associated workflow execution or data generation.",
         )
 
-    data_generation_id = safe_name(omics_processing.id)
+    poolable_replicates_manifest_id = omics_processing.poolable_replicates_manifest_id
+    # If the `poolable_replicates_manifest_id` is different from the `omics_processing.id`,
+    # then the DataGenerations are pooled under a single Manifest ID
+    # and we should use that Manifest ID as the directory name in the zip file instead of the DataGeneration ID.
+    if poolable_replicates_manifest_id != omics_processing.id: 
+        data_generation_or_manifest_dir = safe_name(poolable_replicates_manifest_id)
+    else:
+        data_generation_or_manifest_dir = safe_name(omics_processing.id)
+
     data_object_file_name = safe_name(data_object.name)
 
     if omics_processing.id == was_generated_by.id:
         # The data object was generated directly by the DataGeneration,
         # so we don't need to include the WorkflowExecution ID in the path.
         # This occurs for RawData files.
-        return f"{data_generation_id}/{data_object_file_name}"
+        return f"{data_generation_or_manifest_dir}/{data_object_file_name}"
     
     workflow_execution_id = safe_name(was_generated_by.id)
     
-    return f"{data_generation_id}/{workflow_execution_id}/{data_object_file_name}"
+    return f"{data_generation_or_manifest_dir}/{workflow_execution_id}/{data_object_file_name}"
 
 
 def create_bulk_download(

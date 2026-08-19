@@ -1109,12 +1109,11 @@ class DataObject(Base):
         If this is the case, the first workflow activity found will be returned.
         """
         for omics_processing in self.omics_processings:
-            if self in omics_processing.outputs:  # type: ignore[attr-defined]
-                return omics_processing
             for workflow_activity in omics_processing.omics_data:
-                if self in workflow_activity.outputs:  # type: ignore[attr-defined]
+                if self in workflow_activity.outputs:
                     return workflow_activity
-        return None
+
+        return self.omics_processings[0] if self.omics_processings else None
 
     # Define a property that can be used to shortcut calculating counts.
     # Useful when downstream code can more efficiently determine download
