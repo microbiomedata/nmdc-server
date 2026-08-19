@@ -596,17 +596,26 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
             detail="Data object has no associated omics processings.",
         )
     omics_processing = data_object.omics_processings[0]
-    workflow_activity = data_object.workflow_activity
-    if workflow_activity is None:
+    was_generated_by = data_object.was_generated_by
+
+    if was_generated_by is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data object has no associated workflow activity output.",
+            detail="Data object has no associated workflow execution or data generation.",
         )
 
     data_generation_id = safe_name(omics_processing.id)
-    workflow_activity_id = safe_name(workflow_activity.id)
     data_object_file_name = safe_name(data_object.name)
-    return f"{data_generation_id}/{workflow_activity_id}/{data_object_file_name}"
+
+    if omics_processing.id == was_generated_by.id:
+        # The data object was generated directly by the DataGeneration,
+        # so we don't need to include the WorkflowExecution ID in the path.
+        # This occurs for RawData files.
+        return f"{data_generation_id}/{data_object_file_name}"
+    
+    workflow_execution_id = safe_name(was_generated_by.id)
+    
+    return f"{data_generation_id}/{workflow_execution_id}/{data_object_file_name}"
 
 
 def create_bulk_download(

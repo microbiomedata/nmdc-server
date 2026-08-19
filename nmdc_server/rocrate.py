@@ -119,7 +119,8 @@ def _add_archive_entities(
 ) -> None:
     """
     Describe the physical data hierarchy and connect it to NMDC entities.
-    This currently only describes the structure down to the WorkflowExecution directory level.
+    This describes the DataGeneration directory and, when present, the
+    WorkflowExecution directory level.
     We do this to minimize the RO-Crate size and because DataObject metadata is included in `metadata/data_objects.json`.
     """
     id_by_archive_name = {safe_name(id_): id_ for id_ in precise_entity_ids}
@@ -127,32 +128,38 @@ def _add_archive_entities(
 
     for download_file in bulk_download.files:
         path = PurePosixPath(download_file.path)
-        if len(path.parts) != 4 or path.parts[0] != "data":
+        if len(path.parts) not in (3, 4) or path.parts[0] != "data":
             continue
 
-        _, data_generation_name, workflow_execution_name, _ = path.parts
-        data_generation_dir_id = f"data/{data_generation_name}/"
-        workflow_execution_dir_id = f"{data_generation_dir_id}{workflow_execution_name}/"
+        data_generation_name = path.parts[1]
+        data_generation_dir_id = f"data/{data_generation_name}"
 
         data_generation_dir_node = directories.setdefault(
             data_generation_dir_id,
             {"@id": data_generation_dir_id, "@type": "Dataset", "hasPart": []},
         )
-        workflow_execution_dir_node = directories.setdefault(
-            workflow_execution_dir_id,
-            {"@id": workflow_execution_dir_id, "@type": "Dataset", "hasPart": []},
-        )
 
         precise_data_generation_id = id_by_archive_name.get(data_generation_name)
         if precise_data_generation_id is not None:
             data_generation_dir_node["about"] = {"@id": precise_data_generation_id}
-        precise_workflow_execution_id = id_by_archive_name.get(workflow_execution_name)
-        if precise_workflow_execution_id is not None:
-            workflow_execution_dir_node["about"] = {"@id": precise_workflow_execution_id}
 
         data_generation_dir_reference = {"@id": data_generation_dir_id}
         if data_generation_dir_reference not in data_directory_entity.setdefault("hasPart", []):
             data_directory_entity["hasPart"].append(data_generation_dir_reference)
+
+        if len(path.parts) == 3:
+            continue
+
+        workflow_execution_name = path.parts[2]
+        workflow_execution_dir_id = f"{data_generation_dir_id}/{workflow_execution_name}"
+        workflow_execution_dir_node = directories.setdefault(
+            workflow_execution_dir_id,
+            {"@id": workflow_execution_dir_id, "@type": "Dataset", "hasPart": []},
+        )
+        precise_workflow_execution_id = id_by_archive_name.get(workflow_execution_name)
+        if precise_workflow_execution_id is not None:
+            workflow_execution_dir_node["about"] = {"@id": precise_workflow_execution_id}
+
         workflow_execution_dir_reference = {"@id": workflow_execution_dir_id}
         if workflow_execution_dir_reference not in data_generation_dir_node["hasPart"]:
             data_generation_dir_node["hasPart"].append(workflow_execution_dir_reference)
@@ -228,7 +235,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     if not data_directory_entity:
         raise ValueError("RO-Crate structure is missing the data directory entity with @id 'data/'")
     data_directory_entity["description"] = (
-        f"Directory containing the {len(data_object_ids)} data files for this bulk download. "
+        f"Directory containing the {len(data_object_ids)} data {"file" if len(data_object_ids) == 1 else "files"} for this bulk download. "
         "Files are organized by DataGeneration and WorkflowExecution."
     )
 

@@ -318,6 +318,31 @@ def test_add_archive_entities_describes_folders():
     assert "data/nmdc_dgns-1/nmdc_wfrqc-1/result.txt" not in nodes
 
 
+def test_add_archive_entities_describes_direct_data_generation_output_folder():
+    data_directory: dict[str, Any] = {"@id": "data/", "@type": "Dataset"}
+    graph = [data_directory]
+    download_file = models.BulkDownloadDataObject(
+        data_object_id="nmdc:dobj-raw",
+        path="data/nmdc_dgns-1/reads.fastq.gz",
+    )
+    bulk_download = models.BulkDownload(files=[download_file])
+
+    _add_archive_entities(
+        graph,
+        data_directory,
+        bulk_download,
+        ["nmdc:dgns-1"],
+    )
+    nodes = {node["@id"]: node for node in graph}
+
+    assert data_directory["hasPart"] == [{"@id": "data/nmdc_dgns-1/"}]
+    assert nodes["data/nmdc_dgns-1/"] == {
+        "@id": "data/nmdc_dgns-1/",
+        "@type": "Dataset",
+        "about": {"@id": "nmdc:dgns-1"},
+    }
+
+
 def test_bulk_download_rocrate_endpoint_returns_and_clears_cache(db: Session, client: TestClient):
     bulk_download = models.BulkDownload(
         orcid="0000",

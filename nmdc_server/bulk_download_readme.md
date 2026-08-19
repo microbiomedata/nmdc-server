@@ -12,6 +12,12 @@ The data files can be found in the `data/` folder after unzipping your archive. 
 data/nmdc_omprc-11-uniqueid/nmdc_wfmag-11-uniqueid.1/data-product-file.csv
 ```
 
+In rare cases a `DataIbject` file was generated directly by a `DataGeneration` and does not have a corresponding `WorkflowExecution`. In these cases, the file is nested directly in the `DataGeneration` folder:
+
+```
+data/nmdc_dgms-11-uniqueid/raw-data.csv
+```
+
 Note that some `DataObject` file names include references to other related NMDC identifiers, but this is not an enforced standard.
 
 ## RO-Crate Metadata Document

@@ -1097,13 +1097,20 @@ class DataObject(Base):
     )  # type: ignore
 
     @property
-    def workflow_activity(self) -> Optional["PipelineStep"]:
+    def was_generated_by(self) -> Optional["PipelineStep"]:
         """
-        Return the workflow activity that produced this data object.
-        It is technically possible for a data object to be produced by multiple workflow activities,
-        If it does, the first workflow activity found will be returned.
+        Return the object that generated this DataObject.
+        This is analogous to the `was_generated_by` property in the NMDC schema,
+        but it is not ingested directly from that property.
+        Instead, it is inferred from the `omics_processings` relationship.
+        Usually this will be a WorkflowExecution but in some cases it may be a DataGeneration.
+        It is technically possible in the postgres model for a DataObject to be produced by 
+        multiple workflow activities/executions.
+        If this is the case, the first workflow activity found will be returned.
         """
         for omics_processing in self.omics_processings:
+            if self in omics_processing.outputs:  # type: ignore[attr-defined]
+                return omics_processing
             for workflow_activity in omics_processing.omics_data:
                 if self in workflow_activity.outputs:  # type: ignore[attr-defined]
                     return workflow_activity
