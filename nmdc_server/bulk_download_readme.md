@@ -6,13 +6,19 @@ The following document explains the structure of the archive you have downloaded
 
 ## Data Product Files
 
-The data files can be found in the `data/` folder after unzipping your archive. Each data product file is considered a `DataObject`, as defined in the [NMDC Schema Documentation](https://microbiomedata.github.io/nmdc-schema/DataObject/). The files themselves are split up and nested by `DataGeneration` and `WorkflowExecution`. The `DataGeneration` and `WorkflowExecution` folders are named using a sanitized version of their respective ID, where colons (`:`) are replaced with underscores (`_`). For example, the path to one of the downloaded files in this archive might be:
+The data files can be found in the `data/` folder after unzipping your archive. Each data product file is considered a `DataObject`, as defined in the [NMDC Schema Documentation](https://microbiomedata.github.io/nmdc-schema/DataObject/). The files themselves are split up and nested by `DataGeneration` (or `Manifest`) then `WorkflowExecution`. The `DataGeneration` (or `Manifest`) and `WorkflowExecution` folders are named using a sanitized version of their respective ID, where colons (`:`) are replaced with underscores (`_`). For example, the path to one of the downloaded files in this archive might be:
 
 ```
 data/nmdc_omprc-11-uniqueid/nmdc_wfmag-11-uniqueid.1/data-product-file.csv
 ```
 
-In rare cases a `DataIbject` file was generated directly by a `DataGeneration` and does not have a corresponding `WorkflowExecution`. In these cases, the file is nested directly in the `DataGeneration` folder:
+If a `DataGeneration` is part of a `Manifest`, then the `Manifest` ID is used for the folder instead of the `DataGeneration` ID:
+
+```
+data/nmdc_manif-11-uniqueid/nmdc_wfmag-11-uniqueid.1/data-product-file.csv
+```
+
+In rare cases a `DataObject` file was generated directly by a `DataGeneration` and does not have a corresponding `WorkflowExecution`. In these cases, the file is nested directly in the `DataGeneration` folder:
 
 ```
 data/nmdc_dgms-11-uniqueid/raw-data.csv
