@@ -1262,7 +1262,6 @@ class DataObjectQuerySchema(BaseQuerySchema):
         subquery = (
             self.query(db)
             .filter(models.DataObject.url != None)
-            .filter(models.DataObject.file_size_bytes != None)
             .subquery()
         )
         row = db.query(
