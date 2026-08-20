@@ -326,17 +326,21 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
 
     assert "nmdc:dobj-1" not in nodes
     assert "nmdc:dobj-unrelated" not in nodes
+    assert crate["@context"][1]["prov"] == "http://www.w3.org/ns/prov#"
     assert nodes["nmdc:sty-1"]["hasPart"] == [{"@id": "nmdc:bsm-1"}]
-    assert nodes["nmdc:dgns-1"]["object"] == [{"@id": "nmdc:bsm-1"}]
-    assert nodes["nmdc:dgns-1"]["result"] == [{"@id": "nmdc:wfrqc-1"}]
+    assert nodes["nmdc:dgns-1"]["prov:used"] == [{"@id": "nmdc:bsm-1"}]
     assert nodes["nmdc:manifest-1"] == {
         "@id": "nmdc:manifest-1",
         "@type": "nmdc:Manifest",
         "sameAs": "https://bioregistry.io/nmdc:manifest-1",
         "hasPart": [{"@id": "nmdc:dgns-1"}, {"@id": "nmdc:dgns-2"}],
     }
-    assert nodes["nmdc:dgns-2"]["object"] == [{"@id": "nmdc:bsm-1"}]
-    assert nodes["nmdc:dgns-2"]["result"] == [{"@id": "nmdc:wfrqc-1"}]
+    assert nodes["nmdc:dgns-2"]["prov:used"] == [{"@id": "nmdc:bsm-1"}]
+    assert nodes["nmdc:wfrqc-1"]["prov:wasInformedBy"] == [
+        {"@id": "nmdc:dgns-1"},
+        {"@id": "nmdc:dgns-2"},
+    ]
+    assert "object" not in nodes["nmdc:wfrqc-1"]
     assert "nmdc:dgns-not-downloaded" not in nodes
     assert nodes["data/nmdc_manifest-1/"]["about"] == {"@id": "nmdc:manifest-1"}
 

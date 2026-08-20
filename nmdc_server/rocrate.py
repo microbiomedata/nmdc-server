@@ -21,7 +21,10 @@ def get_rocrate_base_bulk_download():
     return {
         "@context": [
             "https://w3id.org/ro/crate/1.2/context",
-            {"nmdc": "https://w3id.org/nmdc/"},
+            {
+                "nmdc": "https://w3id.org/nmdc/",
+                "prov": "http://www.w3.org/ns/prov#",
+            },
         ],
         "@graph": [
             {
@@ -302,6 +305,12 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
         bulk_download, list(data_generation_rows)
     )
+    informing_data_generations_by_workflow: dict[str, list[str]] = {}
+    for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items():
+        for workflow_id in workflow_ids:
+            informing_data_generations_by_workflow.setdefault(workflow_id, []).append(
+                data_generation_id
+            )
 
     related_rows = [
         *data_object_rows.values(),
@@ -379,16 +388,13 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         }
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
-            node["object"] = _references(related_biosamples)
-        workflows = archived_workflows_by_data_generation.get(id_, [])
-        if workflows:
-            node["result"] = _references(workflows)
+            node["prov:used"] = _references(related_biosamples)
         graph.append(node)
     for id_, row in sorted(workflow_rows.items()):
         workflow_type = _document(row).get("type", "nmdc:WorkflowExecution")
         node = {"@id": id_, "@type": workflow_type, "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}"}
-        related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
-        if related_biosamples:
-            node["object"] = _references(related_biosamples)
+        informing_data_generations = informing_data_generations_by_workflow.get(id_, [])
+        if informing_data_generations:
+            node["prov:wasInformedBy"] = _references(informing_data_generations)
         graph.append(node)
     return rocrate_dict
