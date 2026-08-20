@@ -214,6 +214,20 @@ def test_generate_bulk_download_filtered(
 
 
 def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: Session):
+    data_generation = fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-1",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-2",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-not-downloaded",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    data_object = fakes.DataObjectFactory(id="nmdc:dobj-1")
+    data_generation.outputs.append(data_object)
     documents = [
         models.BiosampleRelatedDocument(
             id="nmdc:sty-1",
@@ -258,6 +272,18 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
             downstream_neighbor_ids=["nmdc:dobj-1"],
         ),
         models.BiosampleRelatedDocument(
+            id="nmdc:dgns-2",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:DataGeneration",
+            document={
+                "id": "nmdc:dgns-2",
+                "type": "nmdc:DataGeneration",
+                "has_input": ["nmdc:bsm-1"],
+                "has_output": ["nmdc:dobj-1"],
+            },
+            downstream_neighbor_ids=[],
+        ),
+        models.BiosampleRelatedDocument(
             id="nmdc:dobj-1",
             biosample_ids=["nmdc:bsm-1"],
             high_level_type="nmdc:DataObject",
@@ -276,7 +302,18 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
         ),
     ]
     db.add_all(documents)
-    bulk_download = models.BulkDownload(orcid="0000", ip="127.0.0.1", conditions=[], filter=[])
+    bulk_download = models.BulkDownload(
+        orcid="0000",
+        ip="127.0.0.1",
+        conditions=[],
+        filter=[],
+        files=[
+            models.BulkDownloadDataObject(
+                data_object=data_object,
+                path="data/nmdc_manifest-1/nmdc_wfrqc-1/result.txt",
+            )
+        ],
+    )
     db.add(bulk_download)
     db.flush()
     crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
@@ -287,6 +324,15 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     assert nodes["nmdc:sty-1"]["hasPart"] == [{"@id": "nmdc:bsm-1"}]
     assert nodes["nmdc:dgns-1"]["object"] == [{"@id": "nmdc:bsm-1"}]
     assert nodes["nmdc:dgns-1"]["result"] == [{"@id": "nmdc:wfrqc-1"}]
+    assert nodes["nmdc:manifest-1"] == {
+        "@id": "nmdc:manifest-1",
+        "@type": "nmdc:Manifest",
+        "sameAs": "https://bioregistry.io/nmdc:manifest-1",
+        "hasPart": [{"@id": "nmdc:dgns-1"}, {"@id": "nmdc:dgns-2"}],
+    }
+    assert nodes["nmdc:dgns-2"]["object"] == [{"@id": "nmdc:bsm-1"}]
+    assert "nmdc:dgns-not-downloaded" not in nodes
+    assert nodes["data/nmdc_manifest-1/"]["about"] == {"@id": "nmdc:manifest-1"}
 
 
 def test_add_archive_entities_describes_folders():

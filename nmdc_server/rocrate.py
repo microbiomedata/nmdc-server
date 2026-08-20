@@ -119,8 +119,8 @@ def _add_archive_entities(
 ) -> None:
     """
     Describe the physical data hierarchy and connect it to NMDC entities.
-    This describes the DataGeneration directory and, when present, the
-    WorkflowExecution directory level.
+    This describes the Manifest or DataGeneration directory and, when present,
+    the WorkflowExecution directory level.
     We do this to minimize the RO-Crate size and because DataObject metadata is included in `metadata/data_objects.json`.
     """
     id_by_archive_name = {safe_name(id_): id_ for id_ in precise_entity_ids}
@@ -131,15 +131,15 @@ def _add_archive_entities(
         if len(path.parts) not in (3, 4) or path.parts[0] != "data":
             continue
 
-        data_generation_name = path.parts[1]
-        data_generation_dir_id = f"data/{data_generation_name}"
+        data_generation_or_manifest_name = path.parts[1]
+        data_generation_dir_id = f"data/{data_generation_or_manifest_name}"
 
         data_generation_dir_node = directories.setdefault(
             data_generation_dir_id,
             {"@id": data_generation_dir_id, "@type": "Dataset", "hasPart": []},
         )
 
-        precise_data_generation_id = id_by_archive_name.get(data_generation_name)
+        precise_data_generation_id = id_by_archive_name.get(data_generation_or_manifest_name)
         if precise_data_generation_id is not None:
             data_generation_dir_node["about"] = {"@id": precise_data_generation_id}
 
@@ -190,6 +190,21 @@ def _get_data_generation_and_workflow_executions(
         )
     ).scalars()
     return {row.id: row for row in rows}
+
+
+def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[str, list[str]]:
+    """Group the specified DataGenerations by their Manifest IDs."""
+    rows = db.execute(
+        select(  # type: ignore[arg-type]
+            models.OmicsProcessing.id,
+            models.OmicsProcessing.poolable_replicates_manifest_id,
+        ).where(models.OmicsProcessing.id.in_(data_generation_ids))
+    )
+    members: dict[str, list[str]] = {}
+    for data_generation_id, manifest_id in rows:
+        if manifest_id is not None and manifest_id != data_generation_id:
+            members.setdefault(manifest_id, []).append(data_generation_id)
+    return {manifest_id: sorted(members[manifest_id]) for manifest_id in sorted(members)}
 
 
 def generate_rocrate_for_bulk_download(  # noqa: C901
@@ -268,6 +283,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         for id_, row in dg_and_wfe_rows.items()
         if row.high_level_type == "nmdc:DataGeneration"
     }
+    manifest_members = _get_manifest_members(db, list(data_generation_rows))
 
     related_rows = [
         *data_object_rows.values(),
@@ -308,8 +324,17 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         graph,
         data_directory_entity,
         bulk_download,
-        [*data_generation_rows, *workflow_rows],
+        [*manifest_members, *data_generation_rows, *workflow_rows],
     )
+    for id_, member_ids in manifest_members.items():
+        graph.append(
+            {
+                "@id": id_,
+                "@type": "nmdc:Manifest",
+                "sameAs": f"{IDENTIFIER_PREFIX_URL}/{id_}",
+                "hasPart": _references(member_ids),
+            }
+        )
     for id_, row in sorted(study_rows.items()):
         parts = [
             biosample_id
