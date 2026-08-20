@@ -329,9 +329,7 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
     nodes = {node["@id"]: node for node in crate["@graph"]}
 
-    properties = {
-        prop["name"]: prop["value"] for prop in nodes["./"]["additionalProperty"]
-    }
+    properties = {prop["name"]: prop["value"] for prop in nodes["./"]["additionalProperty"]}
     assert properties["query_conditions"] == (
         '[{"field": "env_broad_scale", "value": ["soil", "water"]}]'
     )
