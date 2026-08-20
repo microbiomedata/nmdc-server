@@ -218,7 +218,7 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
         id="nmdc:dgns-1",
         poolable_replicates_manifest_id="nmdc:manifest-1",
     )
-    fakes.OmicsProcessingFactory(
+    second_data_generation = fakes.OmicsProcessingFactory(
         id="nmdc:dgns-2",
         poolable_replicates_manifest_id="nmdc:manifest-1",
     )
@@ -228,6 +228,11 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     )
     data_object = fakes.DataObjectFactory(id="nmdc:dobj-1")
     data_generation.outputs.append(data_object)
+    fakes.ReadsQCFactory(
+        id="nmdc:wfrqc-1",
+        outputs=[data_object],
+        was_informed_by=[data_generation, second_data_generation],
+    )
     documents = [
         models.BiosampleRelatedDocument(
             id="nmdc:sty-1",
@@ -331,6 +336,7 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
         "hasPart": [{"@id": "nmdc:dgns-1"}, {"@id": "nmdc:dgns-2"}],
     }
     assert nodes["nmdc:dgns-2"]["object"] == [{"@id": "nmdc:bsm-1"}]
+    assert nodes["nmdc:dgns-2"]["result"] == [{"@id": "nmdc:wfrqc-1"}]
     assert "nmdc:dgns-not-downloaded" not in nodes
     assert nodes["data/nmdc_manifest-1/"]["about"] == {"@id": "nmdc:manifest-1"}
 

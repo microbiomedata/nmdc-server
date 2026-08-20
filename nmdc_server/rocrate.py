@@ -102,11 +102,6 @@ def _references(ids):
     return [{"@id": id_} for id_ in sorted(dict.fromkeys(ids))]
 
 
-def _overlap(left: list[str], right: list[str]) -> bool:
-    """Return whether two ID lists contain at least one ID in common."""
-    return any(id_ in right for id_ in left)
-
-
 def _document(row: models.BiosampleRelatedDocument) -> dict[str, Any]:
     return cast(dict[str, Any], row.document)
 
@@ -132,7 +127,7 @@ def _add_archive_entities(
             continue
 
         data_generation_or_manifest_name = path.parts[1]
-        data_generation_dir_id = f"data/{data_generation_or_manifest_name}"
+        data_generation_dir_id = f"data/{data_generation_or_manifest_name}/"
 
         data_generation_dir_node = directories.setdefault(
             data_generation_dir_id,
@@ -151,7 +146,7 @@ def _add_archive_entities(
             continue
 
         workflow_execution_name = path.parts[2]
-        workflow_execution_dir_id = f"{data_generation_dir_id}/{workflow_execution_name}"
+        workflow_execution_dir_id = f"{data_generation_dir_id}{workflow_execution_name}/"
         workflow_execution_dir_node = directories.setdefault(
             workflow_execution_dir_id,
             {"@id": workflow_execution_dir_id, "@type": "Dataset", "hasPart": []},
@@ -205,6 +200,26 @@ def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[s
         if manifest_id is not None and manifest_id != data_generation_id:
             members.setdefault(manifest_id, []).append(data_generation_id)
     return {manifest_id: sorted(members[manifest_id]) for manifest_id in sorted(members)}
+
+
+def _get_archived_workflows_by_data_generation(
+    bulk_download: models.BulkDownload,
+    data_generation_ids: list[str],
+) -> dict[str, list[str]]:
+    """Group archived WorkflowExecutions by their informing DataGenerations."""
+    associated_data_generation_ids = set(data_generation_ids)
+    workflows: dict[str, list[str]] = {}
+    for download_file in bulk_download.files:
+        workflow = download_file.data_object.was_generated_by
+        if workflow is None or isinstance(workflow, models.OmicsProcessing):
+            continue
+        for data_generation in workflow.was_informed_by:
+            if data_generation.id in associated_data_generation_ids:
+                workflows.setdefault(data_generation.id, []).append(workflow.id)
+    return {
+        data_generation_id: sorted(dict.fromkeys(workflows[data_generation_id]))
+        for data_generation_id in sorted(workflows)
+    }
 
 
 def generate_rocrate_for_bulk_download(  # noqa: C901
@@ -284,6 +299,9 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         if row.high_level_type == "nmdc:DataGeneration"
     }
     manifest_members = _get_manifest_members(db, list(data_generation_rows))
+    archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
+        bulk_download, list(data_generation_rows)
+    )
 
     related_rows = [
         *data_object_rows.values(),
@@ -362,14 +380,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         related_biosamples = [id_ for id_ in row.biosample_ids if id_ in biosample_rows]
         if related_biosamples:
             node["object"] = _references(related_biosamples)
-        workflows = [
-            workflow_id
-            for workflow_id, workflow_row in workflow_rows.items()
-            if _overlap(
-                _document(row).get("has_output", []),
-                _document(workflow_row).get("has_input", []),
-            )
-        ]
+        workflows = archived_workflows_by_data_generation.get(id_, [])
         if workflows:
             node["result"] = _references(workflows)
         graph.append(node)
