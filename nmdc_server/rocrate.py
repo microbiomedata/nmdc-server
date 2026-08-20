@@ -193,8 +193,8 @@ def _get_data_generation_and_workflow_executions(
 def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[str, list[str]]:
     """Group the specified DataGenerations by their Manifest IDs."""
     rows = db.execute(
-        select(  # type: ignore[arg-type]
-            models.OmicsProcessing.id,
+        select(
+            models.OmicsProcessing.id,  # type: ignore[arg-type]
             models.OmicsProcessing.poolable_replicates_manifest_id,
         ).where(models.OmicsProcessing.id.in_(data_generation_ids))
     )
