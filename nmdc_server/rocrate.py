@@ -1,7 +1,9 @@
+import json
 from datetime import datetime, timezone
 from pathlib import PurePosixPath
 from typing import Any, cast
 
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
@@ -44,12 +46,14 @@ def get_rocrate_base_bulk_download():
                     {
                         "@type": "PropertyValue",
                         "name": "query_conditions",
-                        "value": ["autogenerate-me"],
+                        "description": "The query conditions used to select the data files included in this bulk download. Included here as stringified JSON.",
+                        "value": "autogenerate-me",
                     },
                     {
                         "@type": "PropertyValue",
                         "name": "selected_file_types",
-                        "value": ["autogenerate-me"],
+                        "description": "The file types selected for inclusion in this bulk download. Included here as stringified JSON.",
+                        "value": "autogenerate-me",
                     },
                 ],
                 "hasPart": [
@@ -248,7 +252,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     )
     if not query_conditions_property:
         raise ValueError("RO-Crate structure is missing the 'query_conditions' additional property")
-    query_conditions_property["value"] = bulk_download.conditions
+    query_conditions_property["value"] = json.dumps(jsonable_encoder(bulk_download.conditions))
     selected_file_types_property = next(
         (
             prop
@@ -261,7 +265,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         raise ValueError(
             "RO-Crate structure is missing the 'selected_file_types' additional property"
         )
-    selected_file_types_property["value"] = bulk_download.filter
+    selected_file_types_property["value"] = json.dumps(jsonable_encoder(bulk_download.filter))
     data_directory_entity = next(
         (item for item in rocrate_dict["@graph"] if item["@id"] == "data/"), None
     )

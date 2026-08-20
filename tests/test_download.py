@@ -310,8 +310,13 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     bulk_download = models.BulkDownload(
         orcid="0000",
         ip="127.0.0.1",
-        conditions=[],
-        filter=[],
+        conditions=[{"field": "env_broad_scale", "value": ["soil", "water"]}],
+        filter=[
+            {
+                "workflow": WorkflowActivityTypeEnum.reads_qc,
+                "file_type": "fastq",
+            }
+        ],
         files=[
             models.BulkDownloadDataObject(
                 data_object=data_object,
@@ -323,6 +328,16 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     db.flush()
     crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
     nodes = {node["@id"]: node for node in crate["@graph"]}
+
+    properties = {
+        prop["name"]: prop["value"] for prop in nodes["./"]["additionalProperty"]
+    }
+    assert properties["query_conditions"] == (
+        '[{"field": "env_broad_scale", "value": ["soil", "water"]}]'
+    )
+    assert properties["selected_file_types"] == (
+        '[{"workflow": "nmdc:ReadQcAnalysis", "file_type": "fastq"}]'
+    )
 
     assert "nmdc:dobj-1" not in nodes
     assert "nmdc:dobj-unrelated" not in nodes
