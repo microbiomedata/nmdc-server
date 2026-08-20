@@ -1,6 +1,7 @@
 import io
 import json
 import zipfile
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,6 +9,7 @@ from sqlalchemy.orm.session import Session
 
 from nmdc_server import models, query
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
+from nmdc_server.rocrate import _add_archive_entities, generate_rocrate_for_bulk_download
 from tests import fakes
 
 
@@ -209,6 +211,258 @@ def test_generate_bulk_download_filtered(
     # Verify that the bulk download cannot be accessed a second time
     resp = client.get(f"/api/bulk_download/{id_}")
     assert resp.status_code == 410
+
+
+def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: Session):
+    data_generation = fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-1",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    second_data_generation = fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-2",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-not-downloaded",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    data_object = fakes.DataObjectFactory(id="nmdc:dobj-1")
+    data_generation.outputs.append(data_object)
+    fakes.ReadsQCFactory(
+        id="nmdc:wfrqc-1",
+        outputs=[data_object],
+        was_informed_by=[data_generation, second_data_generation],
+    )
+    documents = [
+        models.BiosampleRelatedDocument(
+            id="nmdc:sty-1",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:Study",
+            document={"id": "nmdc:sty-1", "type": "nmdc:Study"},
+            downstream_neighbor_ids=["nmdc:bsm-1"],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:bsm-1",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:Biosample",
+            document={
+                "id": "nmdc:bsm-1",
+                "type": "nmdc:Biosample",
+                "associated_studies": ["nmdc:sty-1"],
+            },
+            downstream_neighbor_ids=["nmdc:dgns-1"],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:dgns-1",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:DataGeneration",
+            document={
+                "id": "nmdc:dgns-1",
+                "type": "nmdc:DataGeneration",
+                "has_input": ["nmdc:bsm-1"],
+                "has_output": ["nmdc:dobj-raw"],
+            },
+            downstream_neighbor_ids=["nmdc:dobj-raw", "nmdc:wfrqc-1"],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:wfrqc-1",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:WorkflowExecution",
+            document={
+                "id": "nmdc:wfrqc-1",
+                "type": "nmdc:ReadQcAnalysis",
+                "has_input": ["nmdc:dobj-raw"],
+                "has_output": ["nmdc:dobj-1"],
+            },
+            downstream_neighbor_ids=["nmdc:dobj-1"],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:dgns-2",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:DataGeneration",
+            document={
+                "id": "nmdc:dgns-2",
+                "type": "nmdc:DataGeneration",
+                "has_input": ["nmdc:bsm-1"],
+                "has_output": ["nmdc:dobj-1"],
+            },
+            downstream_neighbor_ids=[],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:dobj-1",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:DataObject",
+            document={
+                "id": "nmdc:dobj-1",
+                "type": "nmdc:DataObject",
+            },
+            downstream_neighbor_ids=[],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:dobj-unrelated",
+            biosample_ids=[],
+            high_level_type="nmdc:DataObject",
+            document={"id": "nmdc:dobj-unrelated", "type": "nmdc:DataObject"},
+            downstream_neighbor_ids=[],
+        ),
+    ]
+    db.add_all(documents)
+    bulk_download = models.BulkDownload(
+        orcid="0000",
+        ip="127.0.0.1",
+        conditions=[{"field": "env_broad_scale", "value": ["soil", "water"]}],
+        filter=[
+            {
+                "workflow": WorkflowActivityTypeEnum.reads_qc,
+                "file_type": "fastq",
+            }
+        ],
+        files=[
+            models.BulkDownloadDataObject(
+                data_object=data_object,
+                path="data/nmdc_manifest-1/nmdc_wfrqc-1/result.txt",
+            )
+        ],
+    )
+    db.add(bulk_download)
+    db.flush()
+    crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
+    nodes = {node["@id"]: node for node in crate["@graph"]}
+
+    properties = {prop["name"]: prop["value"] for prop in nodes["./"]["additionalProperty"]}
+    assert properties["query_conditions"] == (
+        '[{"field": "env_broad_scale", "value": ["soil", "water"]}]'
+    )
+    assert properties["selected_file_types"] == (
+        '[{"workflow": "nmdc:ReadQcAnalysis", "file_type": "fastq"}]'
+    )
+
+    assert "nmdc:dobj-1" not in nodes
+    assert "nmdc:dobj-unrelated" not in nodes
+    assert crate["@context"][1]["prov"] == "http://www.w3.org/ns/prov#"
+    assert nodes["nmdc:sty-1"]["hasPart"] == [{"@id": "nmdc:bsm-1"}]
+    assert nodes["nmdc:dgns-1"]["prov:used"] == [{"@id": "nmdc:bsm-1"}]
+    assert nodes["nmdc:manifest-1"] == {
+        "@id": "nmdc:manifest-1",
+        "@type": "nmdc:Manifest",
+        "sameAs": "https://bioregistry.io/nmdc:manifest-1",
+        "hasPart": [{"@id": "nmdc:dgns-1"}, {"@id": "nmdc:dgns-2"}],
+    }
+    assert nodes["nmdc:dgns-2"]["prov:used"] == [{"@id": "nmdc:bsm-1"}]
+    assert nodes["nmdc:wfrqc-1"]["prov:wasInformedBy"] == [
+        {"@id": "nmdc:dgns-1"},
+        {"@id": "nmdc:dgns-2"},
+    ]
+    assert "object" not in nodes["nmdc:wfrqc-1"]
+    assert "nmdc:dgns-not-downloaded" not in nodes
+    assert nodes["data/nmdc_manifest-1/"]["about"] == {"@id": "nmdc:manifest-1"}
+
+
+def test_add_archive_entities_describes_folders():
+    data_directory: dict[str, Any] = {"@id": "data/", "@type": "Dataset"}
+    graph = [data_directory]
+    download_file = models.BulkDownloadDataObject(
+        data_object_id="nmdc:dobj-1",
+        path="data/nmdc_dgns-1/nmdc_wfrqc-1/result.txt",
+    )
+    bulk_download = models.BulkDownload(files=[download_file])
+
+    _add_archive_entities(
+        graph,
+        data_directory,
+        bulk_download,
+        ["nmdc:dgns-1", "nmdc:wfrqc-1"],
+    )
+    nodes = {node["@id"]: node for node in graph}
+
+    assert data_directory["hasPart"] == [{"@id": "data/nmdc_dgns-1/"}]
+    assert nodes["data/nmdc_dgns-1/"] == {
+        "@id": "data/nmdc_dgns-1/",
+        "@type": "Dataset",
+        "about": {"@id": "nmdc:dgns-1"},
+        "hasPart": [{"@id": "data/nmdc_dgns-1/nmdc_wfrqc-1/"}],
+    }
+    assert nodes["data/nmdc_dgns-1/nmdc_wfrqc-1/"]["about"] == {"@id": "nmdc:wfrqc-1"}
+    assert "hasPart" not in nodes["data/nmdc_dgns-1/nmdc_wfrqc-1/"]
+    assert "data/nmdc_dgns-1/nmdc_wfrqc-1/result.txt" not in nodes
+
+
+def test_add_archive_entities_describes_direct_data_generation_output_folder():
+    data_directory: dict[str, Any] = {"@id": "data/", "@type": "Dataset"}
+    graph = [data_directory]
+    download_file = models.BulkDownloadDataObject(
+        data_object_id="nmdc:dobj-raw",
+        path="data/nmdc_dgns-1/reads.fastq.gz",
+    )
+    bulk_download = models.BulkDownload(files=[download_file])
+
+    _add_archive_entities(
+        graph,
+        data_directory,
+        bulk_download,
+        ["nmdc:dgns-1"],
+    )
+    nodes = {node["@id"]: node for node in graph}
+
+    assert data_directory["hasPart"] == [{"@id": "data/nmdc_dgns-1/"}]
+    assert nodes["data/nmdc_dgns-1/"] == {
+        "@id": "data/nmdc_dgns-1/",
+        "@type": "Dataset",
+        "about": {"@id": "nmdc:dgns-1"},
+    }
+
+
+def test_bulk_download_rocrate_endpoint_returns_and_clears_cache(db: Session, client: TestClient):
+    bulk_download = models.BulkDownload(
+        orcid="0000",
+        ip="127.0.0.1",
+        conditions=[],
+        filter=[],
+        rocrate_metadata_cache={"@context": "test", "@graph": []},
+    )
+    db.add(bulk_download)
+    db.commit()
+
+    response = client.get(f"/api/bulk_download/{bulk_download.id}/ro-crate-metadata.json")
+
+    assert response.status_code == 200
+    assert response.json() == {"@context": "test", "@graph": []}
+    db.expire_all()
+    assert db.get(models.BulkDownload, bulk_download.id).rocrate_metadata_cache is None  # type: ignore[attr-defined]
+
+
+def test_bulk_download_data_object_metadata_uses_archive_path(db: Session, client: TestClient):
+    data_object = fakes.DataObjectFactory(
+        id="nmdc:dobj-1",
+        name="file.txt",
+        url="https://data.microbiomedata.org/data/file.txt",
+    )
+    bulk_download = models.BulkDownload(orcid="0000", ip="127.0.0.1", conditions=[], filter=[])
+    path = "data/nmdc_dgns-1/nmdc_wfrqc-1/file.txt"
+    db.add(
+        models.BulkDownloadDataObject(
+            bulk_download=bulk_download,
+            data_object=data_object,
+            path=path,
+        )
+    )
+    db.add(
+        models.BiosampleRelatedDocument(
+            id=data_object.id,
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:DataObject",
+            document={"id": data_object.id, "name": data_object.name, "url": data_object.url},
+            downstream_neighbor_ids=[],
+        )
+    )
+    db.commit()
+
+    response = client.get(f"/api/bulk_download/{bulk_download.id}/metadata/data_objects.json")
+
+    assert response.status_code == 200
+    assert response.json()[0]["_bulk_download_path"] == path
+    assert response.json()[0]["_related_biosample_ids"] == ["nmdc:bsm-1"]
+    assert "_bulk_download_filename" not in response.json()[0]
 
 
 @pytest.mark.parametrize(

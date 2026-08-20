@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -14,6 +14,8 @@ from sqlalchemy.sql import func
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
+from nmdc_server.rocrate import generate_rocrate_for_bulk_download
+from nmdc_server.utils import safe_name
 
 # This dict defines the allowed status transitions for submissions based on the role of the editor.
 # The format is:
@@ -509,13 +511,13 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        select(models.BiosampleRelatedDocument.document, models.BiosampleRelatedDocument.biosample_ids)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.id.in_(ids_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
 
     rows = db.execute(statement).all()
-    return [row[0] for row in rows]
+    return rows
 
 
 def get_documents_by_biosample_ids(
@@ -588,36 +590,43 @@ def create_file_download(
 
 def construct_zip_file_path(data_object: models.DataObject) -> str:
     """Return a path inside the zip file for the data object."""
-    # TODO:
-    #   - Users will most likely want more descriptive folder names
-    #   - Add metadata for parent entities in the zip file
-    #   - We probably want to reference the workflow activity but that
-    #     involves a complicated query... need a way to join that information
-    #     in the original query (possibly in the sqlalchemy relationship)
     if not data_object.omics_processings:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Data object has no associated omics processings.",
         )
     omics_processing = data_object.omics_processings[0]
-    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
+    was_generated_by = data_object.was_generated_by
 
-    def safe_name(name: str) -> str:
-        return name.replace("/", "_").replace("\\", "_").replace(":", "_")
+    if was_generated_by is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Data object has no associated workflow execution or data generation.",
+        )
 
-    op_name = safe_name(omics_processing.id)
-
-    if biosamples:
-        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
-        study = biosamples[0].study
+    poolable_replicates_manifest_id = omics_processing.poolable_replicates_manifest_id
+    # If the `poolable_replicates_manifest_id` is different from the `omics_processing.id`,
+    # then the DataGenerations are pooled under a single Manifest ID
+    # and we should use that Manifest ID as the directory name in the zip file instead of the DataGeneration ID.
+    if (
+        poolable_replicates_manifest_id is not None
+        and poolable_replicates_manifest_id != omics_processing.id
+    ):
+        data_generation_or_manifest_dir = safe_name(poolable_replicates_manifest_id)
     else:
-        # Some emsl omics_processing are missing biosamples
-        biosample_name = "unknown"
-        study = omics_processing.study
+        data_generation_or_manifest_dir = safe_name(omics_processing.id)
 
-    study_name = safe_name(study.id)
-    da_name = safe_name(data_object.name)
-    return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
+    data_object_file_name = safe_name(data_object.name)
+
+    if omics_processing.id == was_generated_by.id:
+        # The data object was generated directly by the DataGeneration,
+        # so we don't need to include the WorkflowExecution ID in the path.
+        # This occurs for RawData files.
+        return f"{data_generation_or_manifest_dir}/{data_object_file_name}"
+
+    workflow_execution_id = safe_name(was_generated_by.id)
+
+    return f"{data_generation_or_manifest_dir}/{workflow_execution_id}/{data_object_file_name}"
 
 
 def create_bulk_download(
@@ -632,26 +641,30 @@ def create_bulk_download(
         bulk_download_model = models.BulkDownload(**bulk_download.model_dump())
         db.add(bulk_download_model)
 
-        has_files = False
+        data_object_ids = []
         for data_object in data_object_query.execute(db):
             if data_object.url is None:
                 logger.warning("Data object url is empty in bulk download")
                 continue
 
-            has_files = True
+            data_object_ids.append(data_object.id)
 
             db.add(
                 models.BulkDownloadDataObject(
                     bulk_download=bulk_download_model,
                     data_object=data_object,
-                    path=construct_zip_file_path(data_object),
+                    path=f"data/{construct_zip_file_path(data_object)}",
                 )
             )
 
-        if not has_files:
+        if not data_object_ids:
             db.rollback()
             return None
 
+        db.flush()
+        bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
+            db, bulk_download_model, data_object_ids
+        )
         db.commit()
         return bulk_download_model
 
@@ -725,6 +738,12 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     base = settings.portal_api_internal_url
     file_descriptions.append(
         {
+            "url": f"{base}/api/bulk_download/{id}/ro-crate-metadata.json",
+            "zipPath": "ro-crate-metadata.json",
+        }
+    )
+    file_descriptions.append(
+        {
             "url": f"{base}/api/bulk_download/{id}/README.md",
             "zipPath": "README.md",
         }
@@ -735,13 +754,6 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             "zipPath": "metadata/data_objects.json",
         }
     )
-    file_descriptions.append(
-        {
-            "url": f"{base}/api/bulk_download/{id}/metadata/related_biosamples.json",
-            "zipPath": "metadata/related_biosamples.json",
-        }
-    )
-
     zip_file_descriptor["files"] = file_descriptions
 
     bulk_download.expired = True

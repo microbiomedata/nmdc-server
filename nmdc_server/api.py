@@ -16,8 +16,9 @@ from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
 from nmdc_server import crud, github, models, query, schemas, schemas_submission
@@ -34,7 +35,7 @@ from nmdc_server.crud import (
     replace_nersc_data_url_prefix,
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import get_db
+from nmdc_server.database import SessionLocal, get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
@@ -982,7 +983,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
     # Note: We added these statements to help with debugging when this functionality was new.
-    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    # logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     async with (
         httpx.AsyncClient(timeout=None) as client,
@@ -1020,70 +1021,25 @@ async def get_bulk_download_data_object_metadata(
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
-    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
+    paths_by_data_object_id = {file.data_object.id: file.path for file in bulk_download.files}
+    data_object_ids_list = list(paths_by_data_object_id)
 
     # If there were no files specified, return no documents.
     if len(data_object_ids_list) == 0:
         return []
 
-    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
-
-    return JSONResponse(content=documents)
-
-
-@router.get(
-    "/bulk_download/{bulk_download_id}/metadata/related_biosamples.json",
-    tags=["download"],
-)
-async def get_bulk_download_data_object_to_biosamples_map(
-    bulk_download_id: UUID,
-    db: Session = Depends(get_db),
-):
-    r"""
-    Return a JSON dictionary mapping each data object ID with its associated biosample IDs.
-    Each data object ID corresponds to a different file within the bulk download.
-
-    This endpoint is called by ZipStreamer when it builds the zip archive, so it
-    intentionally does **not** check the `expired` flag on the bulk download.
-    """
-    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
-
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
-    if bulk_download is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Bulk download not found",
+    data_object_documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+    data_objects_json = []
+    for document, biosample_ids in data_object_documents:
+        document = dict(document)
+        document["_bulk_download_path"] = paths_by_data_object_id[document["id"]]
+        document["_related_biosample_ids"] = biosample_ids
+        document["_globus_path"] = document["url"].replace(
+            "https://data.microbiomedata.org/data", ""
         )
+        data_objects_json.append(document)
 
-    # Get the `id` of each `DataObject` corresponding to each file in this `BulkDownload`.
-    data_object_ids = [file.data_object.id for file in bulk_download.files]
-    if len(data_object_ids) == 0:
-        logger.warning(f"No data object IDs found for bulk download '{bulk_download_id}'")
-        return data_object_id_to_biosample_ids_map
-
-    # Get the `id` of each `Biosample` related to any of those `DataObject`s.
-    statement = (
-        select(
-            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
-            models.BiosampleRelatedDocument.biosample_ids,
-        )
-        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
-        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
-        .order_by(models.BiosampleRelatedDocument.id)
-    )
-    rows = db.execute(statement).all()
-    for row in rows:
-        data_object_id_to_biosample_ids_map[row[0]] = row[1]
-
-    if len(data_object_id_to_biosample_ids_map.keys()) == 0:
-        logger.warning(f"No biosample IDs found for bulk download '{bulk_download_id}'")
-
-    # Ensure the dictionary we return accounts for all the `DataObject` `id`s.
-    for data_object_id in data_object_ids:
-        if data_object_id not in data_object_id_to_biosample_ids_map.keys():
-            data_object_id_to_biosample_ids_map[data_object_id] = []
-
-    return JSONResponse(content=data_object_id_to_biosample_ids_map)
+    return JSONResponse(content=data_objects_json)
 
 
 @router.get(
@@ -1109,6 +1065,54 @@ async def get_bulk_download_readme(
     readme_content = readme_path.read_text(encoding="utf-8")
 
     return Response(content=readme_content, media_type="text/markdown")
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/ro-crate-metadata.json",
+    tags=["download"],
+)
+async def get_bulk_download_rocrate(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON object representing the RO-Crate metadata for the bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    if bulk_download.rocrate_metadata_cache is None:
+        raise HTTPException(status_code=404, detail="RO-Crate metadata cache not found")
+
+    cached_rocrate = bulk_download.rocrate_metadata_cache
+    # PostgreSQL JSONB does not preserve object key order. Rebuild the top-level
+    # object so the JSON-LD @context is the first property in the downloaded file.
+    rocrate_dict = {
+        "@context": cached_rocrate["@context"],
+        **{key: value for key, value in cached_rocrate.items() if key != "@context"},
+    }
+
+    def clear_rocrate_metadata_cache():
+        try:
+            with SessionLocal() as cleanup_db:
+                cleanup_bulk_download = cleanup_db.get(models.BulkDownload, bulk_download_id)
+                if cleanup_bulk_download is not None:
+                    cleanup_bulk_download.rocrate_metadata_cache = None
+                    cleanup_db.commit()
+        except Exception:
+            logger.exception(
+                "Failed to clear RO-Crate metadata cache for bulk download %s",
+                bulk_download_id,
+            )
+
+    return JSONResponse(
+        content=rocrate_dict,
+        background=BackgroundTask(clear_rocrate_metadata_cache),
+    )
 
 
 @router.get(
