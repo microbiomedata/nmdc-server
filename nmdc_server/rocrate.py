@@ -295,7 +295,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
             dict.fromkeys(id_ for id_ in input_ids if id_ not in visited_output_ids)
         )
 
-    workflow_rows = {
+    discovered_workflow_rows = {
         id_: row
         for id_, row in dg_and_wfe_rows.items()
         if row.high_level_type == "nmdc:WorkflowExecution"
@@ -309,6 +309,18 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
         bulk_download, list(data_generation_rows)
     )
+    archived_workflow_ids = {
+        workflow_id
+        for workflow_ids in archived_workflows_by_data_generation.values()
+        for workflow_id in workflow_ids
+    }
+    # The recursive lookup above follows inputs back to their DataGeneration. It can
+    # encounter upstream WorkflowExecutions along the way, but those executions do
+    # not describe anything included in this archive. Only emit workflow nodes for
+    # executions that actually generated one of the downloaded files.
+    workflow_rows = {
+        id_: row for id_, row in discovered_workflow_rows.items() if id_ in archived_workflow_ids
+    }
     informing_data_generations_by_workflow: dict[str, list[str]] = {}
     for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items():
         for workflow_id in workflow_ids:
@@ -318,7 +330,8 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
 
     related_rows = [
         *data_object_rows.values(),
-        *dg_and_wfe_rows.values(),
+        *data_generation_rows.values(),
+        *workflow_rows.values(),
     ]
     biosample_ids = list(
         dict.fromkeys(biosample_id for row in related_rows for biosample_id in row.biosample_ids)

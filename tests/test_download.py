@@ -314,6 +314,30 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
             downstream_neighbor_ids=[],
         ),
         models.BiosampleRelatedDocument(
+            id="nmdc:wfrqc-upstream",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:WorkflowExecution",
+            document={
+                "id": "nmdc:wfrqc-upstream",
+                "type": "nmdc:ReadQcAnalysis",
+                "has_input": ["nmdc:dobj-raw"],
+                "has_output": ["nmdc:dobj-intermediate"],
+            },
+            downstream_neighbor_ids=["nmdc:dobj-intermediate"],
+        ),
+        models.BiosampleRelatedDocument(
+            id="nmdc:wfasmb-upstream",
+            biosample_ids=["nmdc:bsm-1"],
+            high_level_type="nmdc:WorkflowExecution",
+            document={
+                "id": "nmdc:wfasmb-upstream",
+                "type": "nmdc:MetagenomeAssembly",
+                "has_input": ["nmdc:dobj-intermediate"],
+                "has_output": ["nmdc:dobj-raw"],
+            },
+            downstream_neighbor_ids=["nmdc:dobj-raw"],
+        ),
+        models.BiosampleRelatedDocument(
             id="nmdc:dobj-1",
             biosample_ids=["nmdc:bsm-1"],
             high_level_type="nmdc:DataObject",
@@ -364,6 +388,8 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
 
     assert "nmdc:dobj-1" not in nodes
     assert "nmdc:dobj-unrelated" not in nodes
+    assert "nmdc:wfrqc-upstream" not in nodes
+    assert "nmdc:wfasmb-upstream" not in nodes
     assert crate["@context"][1]["prov"] == "http://www.w3.org/ns/prov#"
     assert nodes["nmdc:sty-1"]["hasPart"] == [{"@id": "nmdc:bsm-1"}]
     assert nodes["nmdc:dgns-1"]["prov:used"] == [{"@id": "nmdc:bsm-1"}]
