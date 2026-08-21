@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { computed, reactive, ref, Ref, watch } from 'vue';
-import { flattenDeep } from 'lodash';
+import { flattenDeep, uniqBy } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
@@ -185,7 +185,13 @@ function getGroupName(omicsData: {id: string, name: string}): string {
 }
 
 const items = computed(() => flattenDeep(
-  flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p))))
+  // A workflow execution can be informed by more than one data generation (for
+  // example, pooled replicates). The API consequently includes it under each
+  // data generation, but this biosample-wide table should display it only once.
+  uniqBy(
+    flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p)))),
+    (omicsData) => omicsData.id,
+  )
     .map((omics_data) => omics_data.outputs
       .filter((data) => data.file_type && data.file_type_description)
       .map((data_object, i) => ({
