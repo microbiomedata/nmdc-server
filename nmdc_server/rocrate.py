@@ -319,9 +319,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     # not describe anything included in this archive. Only emit workflow nodes for
     # executions that actually generated one of the downloaded files.
     workflow_rows = {
-        id_: row
-        for id_, row in discovered_workflow_rows.items()
-        if id_ in archived_workflow_ids
+        id_: row for id_, row in discovered_workflow_rows.items() if id_ in archived_workflow_ids
     }
     informing_data_generations_by_workflow: dict[str, list[str]] = {}
     for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items():
