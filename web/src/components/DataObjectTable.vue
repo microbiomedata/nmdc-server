@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { computed, reactive, ref, Ref, watch } from 'vue';
-import { flattenDeep, uniqBy } from 'lodash';
+import { flattenDeep, uniq, uniqBy } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
@@ -184,24 +184,39 @@ function getGroupName(omicsData: {id: string, name: string}): string {
   return `${props.omicsType} Analysis ${omicsData.id}`;
 }
 
-const items = computed(() => flattenDeep(
-  // A workflow execution can be informed by more than one data generation (for
-  // example, pooled replicates). The API consequently includes it under each
-  // data generation, but this biosample-wide table should display it only once.
-  uniqBy(
-    flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p)))),
-    (omicsData) => omicsData.id,
-  )
-    .map((omics_data) => omics_data.outputs
-      .filter((data) => data.file_type && data.file_type_description)
-      .map((data_object, i) => ({
-        ...data_object,
-        omics_data,
-        /* TODO Hack to replace metagenome with omics type name */
-        group_name: getGroupName(omics_data),
-        newgroup: i === 0,
-      }))),
-));
+const items = computed(() => {
+  const allOmicsData: any[] = flattenDeep(
+    props.omicsProcessing.map((processing) => getOmicsDataWithInputIds(processing)),
+  );
+  // Concatenate the input IDs for each workflow execution so that we
+  // can display all associated biosample inputs in the table,
+  // even when the workflow execution is shared by multiple data generations.
+  const inputIdsByWorkflow: Record<string, string[]> = {};
+  allOmicsData.forEach((omicsData) => {
+    const inputIds = inputIdsByWorkflow[omicsData.id] ?? [];
+    inputIdsByWorkflow[omicsData.id] = uniq([...inputIds, ...omicsData.inputIds]);
+  });
+
+  return flattenDeep(
+    // A workflow execution can be informed by more than one data generation (for
+    // example, pooled replicates). The API consequently includes it under each
+    // data generation, but this biosample-wide table should display it only once.
+    uniqBy(allOmicsData, (omicsData) => omicsData.id)
+      .map((omicsData) => ({
+        ...omicsData,
+        inputIds: inputIdsByWorkflow[omicsData.id] ?? [],
+      }))
+      .map((omics_data) => omics_data.outputs
+        .filter((data: any) => data.file_type && data.file_type_description)
+        .map((data_object: any, i: number) => ({
+          ...data_object,
+          omics_data,
+          /* TODO Hack to replace metagenome with omics type name */
+          group_name: getGroupName(omics_data),
+          newgroup: i === 0,
+        }))),
+  );
+});
 
 function getRelatedBiosampleIds(omicsData: any) {
   if (!omicsData || !omicsData.inputIds) {
