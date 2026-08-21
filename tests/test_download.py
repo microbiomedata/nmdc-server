@@ -133,6 +133,31 @@ def test_bulk_download_query(db: Session):
     assert data_object_agg_obj.count == 1
 
 
+def test_workflow_summary_deduplicates_data_objects_across_data_generations(
+    db: Session, client: TestClient
+):
+    sample = fakes.BiosampleFactory()
+    op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    op2 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    output = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/shared",
+        file_size_bytes=123,
+        workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
+        file_type="Annotation GFF",
+    )
+    op1.outputs.append(output)
+    op2.outputs.append(output)
+    db.commit()
+
+    response = client.post("/api/data_object/workflow_summary")
+
+    assert response.status_code == 200
+    workflow_summary = response.json()[WorkflowActivityTypeEnum.metagenome_annotation.value]
+    assert workflow_summary["count"] == 1
+    assert workflow_summary["size"] == 123
+    assert workflow_summary["file_types"]["Annotation GFF"] == {"count": 1, "size": 123}
+
+
 def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user):
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
