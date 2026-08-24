@@ -82,6 +82,7 @@ def output_association(table: str) -> Table:
         Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
         Column("data_object_id", String, ForeignKey("data_object.id")),
         UniqueConstraint(f"{table}_id", "data_object_id"),
+        Index(f"ix_{table}_output_dobj_id", "data_object_id"),
     )
 
 

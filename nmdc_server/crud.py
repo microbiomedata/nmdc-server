@@ -1,7 +1,9 @@
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
+from time import perf_counter
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
@@ -629,6 +631,190 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     return f"{data_generation_or_manifest_dir}/{workflow_execution_id}/{data_object_file_name}"
 
 
+@dataclass
+class BulkArchivePathLookup:
+    """Scalar results produced by the archive-path bulk lookup optimization."""
+
+    paths_by_data_object_id: dict[str, str]
+    workflow_ids_by_data_generation_id: dict[str, list[str]]
+
+
+DataGenerationArchiveInfo = tuple[str, Optional[str]]
+WorkflowArchiveCandidate = tuple[str, str, Optional[datetime]]
+
+
+def _get_archive_data_generations(
+    db: Session, data_object_ids: list[str]
+) -> dict[str, DataGenerationArchiveInfo]:
+    """Return each DataObject's DataGeneration ID and optional manifest ID.
+
+    The lookup reads the DataGeneration output association table once for all
+    selected DataObjects. If a DataObject has multiple DataGenerations, the
+    lexicographically first DataGeneration ID is selected deterministically.
+    """
+    data_generation_rows = (
+        db.query(
+            models.omics_processing_output_association.c.data_object_id,
+            models.OmicsProcessing.id,
+            models.OmicsProcessing.poolable_replicates_manifest_id,
+        )
+        .join(
+            models.OmicsProcessing,
+            models.OmicsProcessing.id
+            == models.omics_processing_output_association.c.omics_processing_id,
+        )
+        .filter(models.omics_processing_output_association.c.data_object_id.in_(data_object_ids))
+        .order_by(
+            models.omics_processing_output_association.c.data_object_id,
+            models.OmicsProcessing.id,
+        )
+    )
+    data_generation_by_data_object_id: dict[str, DataGenerationArchiveInfo] = {}
+    for data_object_id, data_generation_id, manifest_id in data_generation_rows:
+        data_generation_by_data_object_id.setdefault(
+            data_object_id, (data_generation_id, manifest_id)
+        )
+    return data_generation_by_data_object_id
+
+
+def _get_archive_workflow_candidates(db: Session, data_object_ids: list[str]) -> tuple[
+    dict[tuple[str, str], list[WorkflowArchiveCandidate]],
+    dict[str, set[str]],
+]:
+    """Bulk-load possible producing workflows for the selected DataObjects.
+
+    Each workflow output association table is queried once. Candidates are keyed
+    by DataObject and informing DataGeneration to match the previous ORM behavior.
+    The second result records every DataGeneration that informed each workflow for
+    reuse when constructing the RO-Crate graph.
+    """
+    workflow_candidates: dict[tuple[str, str], list[WorkflowArchiveCandidate]] = defaultdict(list)
+    informing_data_generations_by_workflow_id: dict[str, set[str]] = defaultdict(set)
+    for workflow_model in models.workflow_activity_types:
+        table_name = workflow_model.__tablename__
+        output_association = workflow_model.outputs.property.secondary  # type: ignore[attr-defined]
+        informed_by_association = models.workflow_activity_to_data_generation_map[table_name]
+        workflow_id_column = output_association.c[f"{table_name}_id"]
+        informed_workflow_id_column = informed_by_association.c[f"{table_name}_id"]
+        rows = (
+            db.query(
+                output_association.c.data_object_id,
+                workflow_model.id,
+                informed_by_association.c.data_generation_id,
+                workflow_model.type,
+                workflow_model.ended_at_time,
+            )
+            .join(workflow_model, workflow_model.id == workflow_id_column)
+            .join(
+                informed_by_association,
+                informed_workflow_id_column == workflow_model.id,
+            )
+            .filter(output_association.c.data_object_id.in_(data_object_ids))
+        )
+        for data_object_id, workflow_id, data_generation_id, workflow_type, ended_at in rows:
+            workflow_candidates[(data_object_id, data_generation_id)].append(
+                (workflow_id, workflow_type, ended_at)
+            )
+            informing_data_generations_by_workflow_id[workflow_id].add(data_generation_id)
+    return workflow_candidates, informing_data_generations_by_workflow_id
+
+
+def _select_archive_workflow_id(candidates: list[WorkflowArchiveCandidate]) -> str:
+    """Select a producing workflow using the ordering from OmicsProcessing.omics_data.
+
+    Workflows sort by type and then newest completion time, with unfinished
+    workflows last. Workflow ID provides deterministic ordering for exact ties.
+    """
+    workflow_id, _, _ = min(
+        candidates,
+        key=lambda candidate: (
+            candidate[1],
+            candidate[2] is None,
+            -(candidate[2].timestamp() if candidate[2] else 0),
+            candidate[0],
+        ),
+    )
+    return workflow_id
+
+
+def _assemble_bulk_archive_path_lookup(
+    data_objects: list[models.DataObject],
+    data_generation_by_data_object_id: dict[str, DataGenerationArchiveInfo],
+    workflow_candidates: dict[tuple[str, str], list[WorkflowArchiveCandidate]],
+    informing_data_generations_by_workflow_id: dict[str, set[str]],
+) -> BulkArchivePathLookup:
+    """Construct archive paths and RO-Crate workflow groupings from scalar IDs.
+
+    This is the non-querying portion of the optimization. It raises the same
+    client error as the previous path builder when a DataObject has no associated
+    DataGeneration.
+    """
+
+    paths_by_data_object_id: dict[str, str] = {}
+    selected_workflow_ids: set[str] = set()
+    for data_object in data_objects:
+        data_generation = data_generation_by_data_object_id.get(data_object.id)
+        if data_generation is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Data object has no associated omics processings.",
+            )
+        data_generation_id, manifest_id = data_generation
+        parent_id = (
+            manifest_id
+            if manifest_id is not None and manifest_id != data_generation_id
+            else data_generation_id
+        )
+        path_parts = [safe_name(parent_id)]
+
+        candidates = workflow_candidates.get((data_object.id, data_generation_id), [])
+        if candidates:
+            workflow_id = _select_archive_workflow_id(candidates)
+            selected_workflow_ids.add(workflow_id)
+            path_parts.append(safe_name(workflow_id))
+
+        path_parts.append(safe_name(data_object.name))
+        paths_by_data_object_id[data_object.id] = "/".join(path_parts)
+
+    workflow_ids_by_data_generation_id: dict[str, list[str]] = defaultdict(list)
+    for workflow_id in selected_workflow_ids:
+        for data_generation_id in informing_data_generations_by_workflow_id[workflow_id]:
+            workflow_ids_by_data_generation_id[data_generation_id].append(workflow_id)
+
+    return BulkArchivePathLookup(
+        paths_by_data_object_id=paths_by_data_object_id,
+        workflow_ids_by_data_generation_id={
+            data_generation_id: sorted(workflow_ids)
+            for data_generation_id, workflow_ids in workflow_ids_by_data_generation_id.items()
+        },
+    )
+
+
+def get_bulk_archive_path_lookup(
+    db: Session, data_objects: list[models.DataObject]
+) -> BulkArchivePathLookup:
+    """Build all archive paths without per-DataObject ORM relationship traversal.
+
+    Archive-path bulk lookup optimization: coordinate the set-based DataGeneration
+    and workflow lookups, then assemble paths entirely from their scalar results.
+    """
+    data_object_ids = [data_object.id for data_object in data_objects]
+    if not data_object_ids:
+        return BulkArchivePathLookup({}, {})
+
+    data_generation_by_data_object_id = _get_archive_data_generations(db, data_object_ids)
+    (
+        workflow_candidates,
+        informing_data_generations_by_workflow_id,
+    ) = _get_archive_workflow_candidates(db, data_object_ids)
+    return _assemble_bulk_archive_path_lookup(
+        data_objects,
+        data_generation_by_data_object_id,
+        workflow_candidates,
+        informing_data_generations_by_workflow_id,
+    )
+
+
 def create_bulk_download(
     db: Session, bulk_download: bulk_download_schema.BulkDownloadCreate
 ) -> Optional[models.BulkDownload]:
@@ -640,22 +826,44 @@ def create_bulk_download(
     try:
         bulk_download_model = models.BulkDownload(**bulk_download.model_dump())
         db.add(bulk_download_model)
+        db.flush()
 
-        data_object_ids = []
+        log_prefix = f"Bulk download {bulk_download_model.id}"
+
+        selection_started = perf_counter()
+        data_objects = []
         for data_object in data_object_query.execute(db):
             if data_object.url is None:
                 logger.warning("Data object url is empty in bulk download")
                 continue
+            data_objects.append(data_object)
+        logger.info(
+            "%s data-object selection: %.3f seconds; selected_count=%d",
+            log_prefix,
+            perf_counter() - selection_started,
+            len(data_objects),
+        )
 
+        archive_paths_started = perf_counter()
+        # Archive-path bulk lookup optimization (separate from the RO-Crate
+        # association-table ancestry lookup optimization).
+        archive_path_lookup = get_bulk_archive_path_lookup(db, data_objects)
+        data_object_ids = []
+        for data_object in data_objects:
             data_object_ids.append(data_object.id)
-
             db.add(
                 models.BulkDownloadDataObject(
                     bulk_download=bulk_download_model,
                     data_object=data_object,
-                    path=f"data/{construct_zip_file_path(data_object)}",
+                    path=f"data/{archive_path_lookup.paths_by_data_object_id[data_object.id]}",
                 )
             )
+        logger.info(
+            "%s archive-path construction: %.3f seconds; file_count=%d",
+            log_prefix,
+            perf_counter() - archive_paths_started,
+            len(data_object_ids),
+        )
 
         if not data_object_ids:
             db.rollback()
@@ -663,9 +871,19 @@ def create_bulk_download(
 
         db.flush()
         bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
-            db, bulk_download_model, data_object_ids
+            db,
+            bulk_download_model,
+            data_object_ids,
+            archived_workflows_by_data_generation=archive_path_lookup.workflow_ids_by_data_generation_id,
         )
+        commit_started = perf_counter()
         db.commit()
+        logger.info(
+            "%s commit: %.3f seconds; file_count=%d",
+            log_prefix,
+            perf_counter() - commit_started,
+            len(data_object_ids),
+        )
         return bulk_download_model
 
     except Exception:

@@ -1,17 +1,19 @@
 import json
 from datetime import datetime, timezone
 from pathlib import PurePosixPath
+from time import perf_counter
 from typing import Any, cast
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import select, union
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
+from nmdc_server.logger import get_logger
 from nmdc_server.utils import safe_name
 
 IDENTIFIER_PREFIX_URL = "https://bioregistry.io"
+logger = get_logger(__name__)
 
 
 def get_rocrate_base_bulk_download():
@@ -178,16 +180,31 @@ def _add_archive_entities(
 def _get_data_generation_and_workflow_executions(
     db: Session, output_ids: list[str]
 ) -> dict[str, models.BiosampleRelatedDocument]:
+    producer_queries = [
+        select(
+            models.omics_processing_output_association.c.omics_processing_id.label("id")  # type: ignore[arg-type]
+        ).where(models.omics_processing_output_association.c.data_object_id.in_(output_ids))
+    ]
+    for workflow_model in models.workflow_activity_types:
+        output_association = workflow_model.outputs.property.secondary  # type: ignore[attr-defined]
+        producer_id = output_association.c[f"{workflow_model.__tablename__}_id"]
+        producer_queries.append(
+            select(producer_id.label("id")).where(
+                output_association.c.data_object_id.in_(output_ids)
+            )
+        )
+
+    producer_ids = union(*producer_queries).alias()
     rows = db.execute(
         select(models.BiosampleRelatedDocument)
         .where(
-            models.BiosampleRelatedDocument.high_level_type.in_(
-                ["nmdc:DataGeneration", "nmdc:WorkflowExecution"]
+            models.BiosampleRelatedDocument.id.in_(
+                select(producer_ids.c.id)  # type: ignore[arg-type]
             )
         )
         .where(
-            models.BiosampleRelatedDocument.document["has_output"].op("?|")(
-                postgresql.array(output_ids)  # type: ignore[call-overload]
+            models.BiosampleRelatedDocument.high_level_type.in_(
+                ["nmdc:DataGeneration", "nmdc:WorkflowExecution"]
             )
         )
     ).scalars()
@@ -230,9 +247,13 @@ def _get_archived_workflows_by_data_generation(
 
 
 def generate_rocrate_for_bulk_download(  # noqa: C901
-    db: Session, bulk_download: models.BulkDownload, data_object_ids: list[str]
+    db: Session,
+    bulk_download: models.BulkDownload,
+    data_object_ids: list[str],
+    archived_workflows_by_data_generation: dict[str, list[str]] | None = None,
 ):
     """Generates an RO-Crate metadata object for a given bulk download record."""
+    log_prefix = f"Bulk download {bulk_download.id}"
     rocrate_dict = get_rocrate_base_bulk_download()
     root_data_entity = get_root_data_entity(rocrate_dict)
     if not root_data_entity:
@@ -276,11 +297,17 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         "Files are organized by DataGeneration and WorkflowExecution."
     )
 
+    related_documents_duration = 0.0
+    related_documents_started = perf_counter()
     data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
+    related_documents_duration += perf_counter() - related_documents_started
     dg_and_wfe_rows: dict[str, models.BiosampleRelatedDocument] = {}
     pending_output_ids = list(dict.fromkeys(data_object_ids))
     visited_output_ids: list[str] = []
+    ancestry_rounds = 0
+    ancestry_started = perf_counter()
     while pending_output_ids:
+        ancestry_rounds += 1
         new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(db, pending_output_ids)
         dg_and_wfe_rows.update(new_dg_and_wfe_rows)
         visited_output_ids.extend(
@@ -306,9 +333,18 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         if row.high_level_type == "nmdc:DataGeneration"
     }
     manifest_members = _get_manifest_members(db, list(data_generation_rows))
-    archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
-        bulk_download, list(data_generation_rows)
-    )
+    if archived_workflows_by_data_generation is None:
+        archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
+            bulk_download, list(data_generation_rows)
+        )
+    else:
+        # Archive-path bulk lookup optimization: create_bulk_download already
+        # resolved these scalar relationships, so avoid traversing the ORM again.
+        archived_workflows_by_data_generation = {
+            data_generation_id: workflow_ids
+            for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items()
+            if data_generation_id in data_generation_rows
+        }
     archived_workflow_ids = {
         workflow_id
         for workflow_ids in archived_workflows_by_data_generation.values()
@@ -321,6 +357,15 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     workflow_rows = {
         id_: row for id_, row in discovered_workflow_rows.items() if id_ in archived_workflow_ids
     }
+    logger.info(
+        "%s ancestry lookup: %.3f seconds; traversal_rounds=%d; "
+        "data_generation_count=%d; workflow_execution_count=%d",
+        log_prefix,
+        perf_counter() - ancestry_started,
+        ancestry_rounds,
+        len(data_generation_rows),
+        len(workflow_rows),
+    )
     informing_data_generations_by_workflow: dict[str, list[str]] = {}
     for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items():
         for workflow_id in workflow_ids:
@@ -336,7 +381,9 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     biosample_ids = list(
         dict.fromkeys(biosample_id for row in related_rows for biosample_id in row.biosample_ids)
     )
+    related_documents_started = perf_counter()
     biosample_rows = _get_related_documents(db, biosample_ids)
+    related_documents_duration += perf_counter() - related_documents_started
     biosample_rows = {
         id_: row for id_, row in biosample_rows.items() if row.high_level_type == "nmdc:Biosample"
     }
@@ -351,7 +398,9 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     study_rows = {}
     pending_study_ids = study_ids
     while pending_study_ids:
+        related_documents_started = perf_counter()
         new_rows = _get_related_documents(db, pending_study_ids)
+        related_documents_duration += perf_counter() - related_documents_started
         new_rows = {
             id_: row for id_, row in new_rows.items() if row.high_level_type == "nmdc:Study"
         }
@@ -363,6 +412,17 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         ]
         pending_study_ids = list(dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows))
 
+    logger.info(
+        "%s related-document lookup: %.3f seconds; data_object_count=%d; "
+        "biosample_count=%d; study_count=%d",
+        log_prefix,
+        related_documents_duration,
+        len(data_object_rows),
+        len(biosample_rows),
+        len(study_rows),
+    )
+
+    assembly_started = perf_counter()
     graph = rocrate_dict["@graph"]
     _add_archive_entities(
         graph,
@@ -414,4 +474,10 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         if informing_data_generations:
             node["prov:wasInformedBy"] = _references(informing_data_generations)
         graph.append(node)
+    logger.info(
+        "%s RO-Crate assembly: %.3f seconds; graph_node_count=%d",
+        log_prefix,
+        perf_counter() - assembly_started,
+        len(graph),
+    )
     return rocrate_dict

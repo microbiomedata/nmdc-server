@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import zipfile
 from typing import Any
 
@@ -190,8 +191,9 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
 
 
 def test_generate_bulk_download_filtered(
-    db: Session, client: TestClient, logged_in_user, patch_zip_stream_service
+    db: Session, client: TestClient, logged_in_user, patch_zip_stream_service, caplog
 ):
+    caplog.set_level(logging.INFO)
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])
@@ -224,6 +226,39 @@ def test_generate_bulk_download_filtered(
     assert resp.json()["id"]
     id_ = resp.json()["id"]
 
+    bulk_download_logs = [
+        record.getMessage()
+        for record in caplog.records
+        if record.getMessage().startswith(f"Bulk download {id_}")
+    ]
+    assert any(
+        "data-object selection:" in message and "selected_count=1" in message
+        for message in bulk_download_logs
+    )
+    assert any(
+        "archive-path construction:" in message and "file_count=1" in message
+        for message in bulk_download_logs
+    )
+    assert any(
+        "ancestry lookup:" in message
+        and "traversal_rounds=1" in message
+        and "data_generation_count=0" in message
+        and "workflow_execution_count=0" in message
+        for message in bulk_download_logs
+    )
+    assert any(
+        "related-document lookup:" in message
+        and "data_object_count=0" in message
+        and "biosample_count=0" in message
+        and "study_count=0" in message
+        for message in bulk_download_logs
+    )
+    assert any(
+        "RO-Crate assembly:" in message and "graph_node_count=8" in message
+        for message in bulk_download_logs
+    )
+    assert any("commit:" in message and "file_count=1" in message for message in bulk_download_logs)
+
     resp = client.post("/api/bulk_download/summary", json={"data_object_filter": filter})
     assert resp.status_code == 200
     assert resp.json()["count"] == 1
@@ -252,7 +287,9 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
         poolable_replicates_manifest_id="nmdc:manifest-1",
     )
     data_object = fakes.DataObjectFactory(id="nmdc:dobj-1")
-    data_generation.outputs.append(data_object)
+    raw_data_object = fakes.DataObjectFactory(id="nmdc:dobj-raw")
+    data_generation.outputs.append(raw_data_object)
+    second_data_generation.outputs.append(data_object)
     fakes.ReadsQCFactory(
         id="nmdc:wfrqc-1",
         outputs=[data_object],
