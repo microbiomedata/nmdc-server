@@ -14,7 +14,6 @@ from sqlalchemy.sql import func
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
-from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 from nmdc_server.utils import safe_name
 
 # This dict defines the allowed status transitions for submissions based on the role of the editor.
@@ -641,13 +640,13 @@ def create_bulk_download(
         bulk_download_model = models.BulkDownload(**bulk_download.model_dump())
         db.add(bulk_download_model)
 
-        data_object_ids = []
+        has_data_objects = False
         for data_object in data_object_query.execute(db):
             if data_object.url is None:
                 logger.warning("Data object url is empty in bulk download")
                 continue
 
-            data_object_ids.append(data_object.id)
+            has_data_objects = True
 
             db.add(
                 models.BulkDownloadDataObject(
@@ -657,14 +656,10 @@ def create_bulk_download(
                 )
             )
 
-        if not data_object_ids:
+        if not has_data_objects:
             db.rollback()
             return None
 
-        db.flush()
-        bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
-            db, bulk_download_model, data_object_ids
-        )
         db.commit()
         return bulk_download_model
 

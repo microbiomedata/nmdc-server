@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import models, query
+from nmdc_server import api, models, query
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.rocrate import _add_archive_entities, generate_rocrate_for_bulk_download
 from tests import fakes
@@ -223,6 +223,10 @@ def test_generate_bulk_download_filtered(
     assert resp.status_code == 201
     assert resp.json()["id"]
     id_ = resp.json()["id"]
+    created_bulk_download = db.get(models.BulkDownload, id_)
+    assert created_bulk_download is not None
+    assert created_bulk_download.rocrate_metadata_cache is None
+    assert [file.data_object_id for file in created_bulk_download.files] == [metag_output.id]
 
     resp = client.post("/api/bulk_download/summary", json={"data_object_filter": filter})
     assert resp.status_code == 200
@@ -463,23 +467,57 @@ def test_add_archive_entities_describes_direct_data_generation_output_folder():
     }
 
 
-def test_bulk_download_rocrate_endpoint_returns_and_clears_cache(db: Session, client: TestClient):
+def test_bulk_download_rocrate_endpoint_generates_metadata_on_demand(
+    db: Session, client: TestClient, monkeypatch: pytest.MonkeyPatch
+):
+    data_objects = [
+        fakes.DataObjectFactory(id="nmdc:dobj-1", url="https://example.com/1"),
+        fakes.DataObjectFactory(id="nmdc:dobj-2", url="https://example.com/2"),
+    ]
     bulk_download = models.BulkDownload(
         orcid="0000",
         ip="127.0.0.1",
         conditions=[],
         filter=[],
-        rocrate_metadata_cache={"@context": "test", "@graph": []},
     )
-    db.add(bulk_download)
+    db.add_all(
+        [
+            models.BulkDownloadDataObject(
+                bulk_download=bulk_download,
+                data_object=data_object,
+                path=f"data/{data_object.id}",
+            )
+            for data_object in data_objects
+        ]
+    )
     db.commit()
+
+    generated_rocrate = {"@context": "test", "@graph": []}
+    generation_calls = []
+
+    def generate_rocrate(db_session, requested_bulk_download, data_object_ids):
+        generation_calls.append((db_session, requested_bulk_download, data_object_ids))
+        return generated_rocrate
+
+    monkeypatch.setattr(api, "generate_rocrate_for_bulk_download", generate_rocrate)
 
     response = client.get(f"/api/bulk_download/{bulk_download.id}/ro-crate-metadata.json")
 
     assert response.status_code == 200
-    assert response.json() == {"@context": "test", "@graph": []}
-    db.expire_all()
-    assert db.get(models.BulkDownload, bulk_download.id).rocrate_metadata_cache is None  # type: ignore[attr-defined]
+    assert response.json() == generated_rocrate
+    assert len(generation_calls) == 1
+    assert generation_calls[0][0] is not None
+    assert generation_calls[0][1].id == bulk_download.id
+    assert generation_calls[0][2] == ["nmdc:dobj-1", "nmdc:dobj-2"]
+
+
+def test_bulk_download_rocrate_endpoint_returns_not_found(client: TestClient):
+    response = client.get(
+        "/api/bulk_download/00000000-0000-0000-0000-000000000000/ro-crate-metadata.json"
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Bulk download not found"}
 
 
 def test_bulk_download_data_object_metadata_uses_archive_path(db: Session, client: TestClient):
