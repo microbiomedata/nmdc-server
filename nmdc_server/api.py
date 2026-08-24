@@ -18,7 +18,6 @@ from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
 from nmdc_server import crud, github, models, query, schemas, schemas_submission
@@ -35,7 +34,7 @@ from nmdc_server.crud import (
     replace_nersc_data_url_prefix,
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import SessionLocal, get_db
+from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
@@ -47,6 +46,7 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 from nmdc_server.storage import BucketName, sanitize_filename, storage
 from nmdc_server.table import Table
 
@@ -1071,7 +1071,7 @@ async def get_bulk_download_readme(
     "/bulk_download/{bulk_download_id}/ro-crate-metadata.json",
     tags=["download"],
 )
-async def get_bulk_download_rocrate(
+def get_bulk_download_rocrate(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
@@ -1080,39 +1080,20 @@ async def get_bulk_download_rocrate(
 
     This endpoint is called by ZipStreamer when it builds the zip archive, so it
     intentionally does **not** check the `expired` flag on the bulk download.
+    Also note that this is where the RO-Crate is generated, which importantly happens 
+    outside of the Cloudflare context (and within the internal docker context) to avoid timeout issues.
     """
     bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
-    if bulk_download.rocrate_metadata_cache is None:
-        raise HTTPException(status_code=404, detail="RO-Crate metadata cache not found")
-
-    cached_rocrate = bulk_download.rocrate_metadata_cache
-    # PostgreSQL JSONB does not preserve object key order. Rebuild the top-level
-    # object so the JSON-LD @context is the first property in the downloaded file.
-    rocrate_dict = {
-        "@context": cached_rocrate["@context"],
-        **{key: value for key, value in cached_rocrate.items() if key != "@context"},
-    }
-
-    def clear_rocrate_metadata_cache():
-        try:
-            with SessionLocal() as cleanup_db:
-                cleanup_bulk_download = cleanup_db.get(models.BulkDownload, bulk_download_id)
-                if cleanup_bulk_download is not None:
-                    cleanup_bulk_download.rocrate_metadata_cache = None
-                    cleanup_db.commit()
-        except Exception:
-            logger.exception(
-                "Failed to clear RO-Crate metadata cache for bulk download %s",
-                bulk_download_id,
-            )
-
-    return JSONResponse(
-        content=rocrate_dict,
-        background=BackgroundTask(clear_rocrate_metadata_cache),
+    data_object_ids = [file.data_object_id for file in bulk_download.files]
+    rocrate_dict = generate_rocrate_for_bulk_download(
+        db,
+        bulk_download,
+        data_object_ids,
     )
+    return JSONResponse(content=rocrate_dict)
 
 
 @router.get(
