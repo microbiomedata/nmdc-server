@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_, select
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.expression import ClauseElement, intersect, union, union_all
+from sqlalchemy.sql.expression import ClauseElement, intersect, union_all
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
@@ -1236,8 +1236,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
             db.query(models.DataObject.id.label("id"))
             .join(
                 models.omics_processing_output_association,
-                models.omics_processing_output_association.c.data_object_id
-                == models.DataObject.id,
+                models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
             )
             .join(
                 op_cte,

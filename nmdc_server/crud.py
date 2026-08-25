@@ -753,6 +753,7 @@ def _assemble_bulk_archive_path_lookup(
     for data_object in data_objects:
         candidates = workflow_candidates.get(data_object.id, [])
         workflow_id: Optional[str] = None
+        data_generation_id: Optional[str] = None
         if candidates:
             workflow_id = _select_archive_workflow_id(candidates)
             selected_workflow_ids.add(workflow_id)
