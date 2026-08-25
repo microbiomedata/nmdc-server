@@ -241,7 +241,6 @@ def test_generate_bulk_download_filtered(
     )
     assert any(
         "ancestry lookup:" in message
-        and "traversal_rounds=1" in message
         and "data_generation_count=0" in message
         and "workflow_execution_count=0" in message
         for message in bulk_download_logs
@@ -412,7 +411,16 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     )
     db.add(bulk_download)
     db.flush()
-    crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
+    crate = generate_rocrate_for_bulk_download(
+        db,
+        bulk_download,
+        ["nmdc:dobj-1"],
+        archived_data_generation_ids=["nmdc:dgns-1", "nmdc:dgns-2"],
+        archived_workflows_by_data_generation={
+            "nmdc:dgns-1": ["nmdc:wfrqc-1"],
+            "nmdc:dgns-2": ["nmdc:wfrqc-1"],
+        },
+    )
     nodes = {node["@id"]: node for node in crate["@graph"]}
 
     properties = {prop["name"]: prop["value"] for prop in nodes["./"]["additionalProperty"]}

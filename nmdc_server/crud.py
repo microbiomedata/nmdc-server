@@ -636,6 +636,7 @@ class BulkArchivePathLookup:
     """Scalar results produced by the archive-path bulk lookup optimization."""
 
     paths_by_data_object_id: dict[str, str]
+    data_generation_ids: list[str]
     workflow_ids_by_data_generation_id: dict[str, list[str]]
 
 
@@ -643,52 +644,49 @@ DataGenerationArchiveInfo = tuple[str, Optional[str]]
 WorkflowArchiveCandidate = tuple[str, str, Optional[datetime]]
 
 
-def _get_archive_data_generations(
-    db: Session, data_object_ids: list[str]
-) -> dict[str, DataGenerationArchiveInfo]:
-    """Return each DataObject's DataGeneration ID and optional manifest ID.
+def _get_archive_data_generations(db: Session, data_object_ids: list[str]) -> dict[str, str]:
+    """Return direct DataGeneration IDs for archived raw DataObjects.
 
-    The lookup reads the DataGeneration output association table once for all
-    selected DataObjects. If a DataObject has multiple DataGenerations, the
-    lexicographically first DataGeneration ID is selected deterministically.
+    DataObject.omics_processing_id is populated from literal DataGeneration.has_output
+    during DataGeneration ingest. It is nullable for workflow outputs, which are
+    resolved separately through workflow output and was_informed_by associations.
     """
-    data_generation_rows = (
-        db.query(
-            models.omics_processing_output_association.c.data_object_id,
-            models.OmicsProcessing.id,
-            models.OmicsProcessing.poolable_replicates_manifest_id,
+    return {
+        data_object_id: data_generation_id
+        for data_object_id, data_generation_id in (
+            db.query(models.DataObject.id, models.DataObject.omics_processing_id)
+            .filter(models.DataObject.id.in_(data_object_ids))
+            .filter(models.DataObject.omics_processing_id.isnot(None))
         )
-        .join(
-            models.OmicsProcessing,
-            models.OmicsProcessing.id
-            == models.omics_processing_output_association.c.omics_processing_id,
-        )
-        .filter(models.omics_processing_output_association.c.data_object_id.in_(data_object_ids))
-        .order_by(
-            models.omics_processing_output_association.c.data_object_id,
-            models.OmicsProcessing.id,
-        )
-    )
-    data_generation_by_data_object_id: dict[str, DataGenerationArchiveInfo] = {}
-    for data_object_id, data_generation_id, manifest_id in data_generation_rows:
-        data_generation_by_data_object_id.setdefault(
-            data_object_id, (data_generation_id, manifest_id)
-        )
-    return data_generation_by_data_object_id
+    }
+
+
+def _get_data_generation_archive_info(
+    db: Session, data_generation_ids: set[str]
+) -> dict[str, DataGenerationArchiveInfo]:
+    """Return IDs and optional manifest IDs for relevant DataGenerations."""
+    rows = db.query(
+        models.OmicsProcessing.id,
+        models.OmicsProcessing.poolable_replicates_manifest_id,
+    ).filter(models.OmicsProcessing.id.in_(data_generation_ids))
+    return {
+        data_generation_id: (data_generation_id, manifest_id)
+        for data_generation_id, manifest_id in rows
+    }
 
 
 def _get_archive_workflow_candidates(db: Session, data_object_ids: list[str]) -> tuple[
-    dict[tuple[str, str], list[WorkflowArchiveCandidate]],
+    dict[str, list[WorkflowArchiveCandidate]],
     dict[str, set[str]],
 ]:
     """Bulk-load possible producing workflows for the selected DataObjects.
 
-    Each workflow output association table is queried once. Candidates are keyed
-    by DataObject and informing DataGeneration to match the previous ORM behavior.
-    The second result records every DataGeneration that informed each workflow for
-    reuse when constructing the RO-Crate graph.
+    Each workflow output association table is queried once. Only workflow outputs
+    are candidates; workflow inputs are never treated as generated objects. The
+    second result records every DataGeneration in each workflow's was_informed_by
+    association for archive paths and RO-Crate provenance.
     """
-    workflow_candidates: dict[tuple[str, str], list[WorkflowArchiveCandidate]] = defaultdict(list)
+    workflow_candidates: dict[str, list[WorkflowArchiveCandidate]] = defaultdict(list)
     informing_data_generations_by_workflow_id: dict[str, set[str]] = defaultdict(set)
     for workflow_model in models.workflow_activity_types:
         table_name = workflow_model.__tablename__
@@ -712,9 +710,7 @@ def _get_archive_workflow_candidates(db: Session, data_object_ids: list[str]) ->
             .filter(output_association.c.data_object_id.in_(data_object_ids))
         )
         for data_object_id, workflow_id, data_generation_id, workflow_type, ended_at in rows:
-            workflow_candidates[(data_object_id, data_generation_id)].append(
-                (workflow_id, workflow_type, ended_at)
-            )
+            workflow_candidates[data_object_id].append((workflow_id, workflow_type, ended_at))
             informing_data_generations_by_workflow_id[workflow_id].add(data_generation_id)
     return workflow_candidates, informing_data_generations_by_workflow_id
 
@@ -739,27 +735,46 @@ def _select_archive_workflow_id(candidates: list[WorkflowArchiveCandidate]) -> s
 
 def _assemble_bulk_archive_path_lookup(
     data_objects: list[models.DataObject],
-    data_generation_by_data_object_id: dict[str, DataGenerationArchiveInfo],
-    workflow_candidates: dict[tuple[str, str], list[WorkflowArchiveCandidate]],
+    direct_data_generation_by_data_object_id: dict[str, str],
+    data_generation_archive_info_by_id: dict[str, DataGenerationArchiveInfo],
+    workflow_candidates: dict[str, list[WorkflowArchiveCandidate]],
     informing_data_generations_by_workflow_id: dict[str, set[str]],
 ) -> BulkArchivePathLookup:
     """Construct archive paths and RO-Crate workflow groupings from scalar IDs.
 
     This is the non-querying portion of the optimization. It raises the same
     client error as the previous path builder when a DataObject has no associated
-    DataGeneration.
+    direct DataGeneration or producing workflow.
     """
 
     paths_by_data_object_id: dict[str, str] = {}
     selected_workflow_ids: set[str] = set()
+    provenance_data_generation_ids: set[str] = set()
     for data_object in data_objects:
-        data_generation = data_generation_by_data_object_id.get(data_object.id)
+        candidates = workflow_candidates.get(data_object.id, [])
+        workflow_id: Optional[str] = None
+        if candidates:
+            workflow_id = _select_archive_workflow_id(candidates)
+            selected_workflow_ids.add(workflow_id)
+            informing_data_generation_ids = informing_data_generations_by_workflow_id[workflow_id]
+            provenance_data_generation_ids.update(informing_data_generation_ids)
+            data_generation_id = min(informing_data_generation_ids)
+        else:
+            data_generation_id = direct_data_generation_by_data_object_id.get(data_object.id)
+
+        if data_generation_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Data object has no associated workflow execution or data generation.",
+            )
+        provenance_data_generation_ids.add(data_generation_id)
+        data_generation = data_generation_archive_info_by_id.get(data_generation_id)
         if data_generation is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Data object has no associated omics processings.",
+                detail="Data object has an unknown associated data generation.",
             )
-        data_generation_id, manifest_id = data_generation
+        _, manifest_id = data_generation
         parent_id = (
             manifest_id
             if manifest_id is not None and manifest_id != data_generation_id
@@ -767,10 +782,7 @@ def _assemble_bulk_archive_path_lookup(
         )
         path_parts = [safe_name(parent_id)]
 
-        candidates = workflow_candidates.get((data_object.id, data_generation_id), [])
-        if candidates:
-            workflow_id = _select_archive_workflow_id(candidates)
-            selected_workflow_ids.add(workflow_id)
+        if workflow_id is not None:
             path_parts.append(safe_name(workflow_id))
 
         path_parts.append(safe_name(data_object.name))
@@ -783,6 +795,7 @@ def _assemble_bulk_archive_path_lookup(
 
     return BulkArchivePathLookup(
         paths_by_data_object_id=paths_by_data_object_id,
+        data_generation_ids=sorted(provenance_data_generation_ids),
         workflow_ids_by_data_generation_id={
             data_generation_id: sorted(workflow_ids)
             for data_generation_id, workflow_ids in workflow_ids_by_data_generation_id.items()
@@ -800,16 +813,23 @@ def get_bulk_archive_path_lookup(
     """
     data_object_ids = [data_object.id for data_object in data_objects]
     if not data_object_ids:
-        return BulkArchivePathLookup({}, {})
+        return BulkArchivePathLookup({}, [], {})
 
-    data_generation_by_data_object_id = _get_archive_data_generations(db, data_object_ids)
+    direct_data_generation_by_data_object_id = _get_archive_data_generations(db, data_object_ids)
     (
         workflow_candidates,
         informing_data_generations_by_workflow_id,
     ) = _get_archive_workflow_candidates(db, data_object_ids)
+    relevant_data_generation_ids = set(direct_data_generation_by_data_object_id.values())
+    for data_generation_ids in informing_data_generations_by_workflow_id.values():
+        relevant_data_generation_ids.update(data_generation_ids)
+    data_generation_archive_info_by_id = _get_data_generation_archive_info(
+        db, relevant_data_generation_ids
+    )
     return _assemble_bulk_archive_path_lookup(
         data_objects,
-        data_generation_by_data_object_id,
+        direct_data_generation_by_data_object_id,
+        data_generation_archive_info_by_id,
         workflow_candidates,
         informing_data_generations_by_workflow_id,
     )
@@ -874,6 +894,7 @@ def create_bulk_download(
             db,
             bulk_download_model,
             data_object_ids,
+            archived_data_generation_ids=archive_path_lookup.data_generation_ids,
             archived_workflows_by_data_generation=archive_path_lookup.workflow_ids_by_data_generation_id,
         )
         commit_started = perf_counter()

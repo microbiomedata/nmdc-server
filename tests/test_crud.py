@@ -29,9 +29,22 @@ def test_bulk_archive_path_lookup_uses_scalar_association_rows(db: Session):
         id="nmdc:dgns-1",
         poolable_replicates_manifest_id="nmdc:manifest-1",
     )
-    raw_data_object = fakes.DataObjectFactory(id="nmdc:dobj-raw", name="reads.fastq.gz")
-    workflow_data_object = fakes.DataObjectFactory(id="nmdc:dobj-1", name="assembly.fna")
+    second_data_generation = fakes.OmicsProcessingFactory(
+        id="nmdc:dgns-2",
+        poolable_replicates_manifest_id="nmdc:manifest-1",
+    )
+    raw_data_object = fakes.DataObjectFactory(
+        id="nmdc:dobj-raw",
+        name="reads.fastq.gz",
+        omics_processing=data_generation,
+    )
+    workflow_data_object = fakes.DataObjectFactory(
+        id="nmdc:dobj-1",
+        name="assembly.fna",
+        omics_processing=None,
+    )
     data_generation.outputs.extend([raw_data_object, workflow_data_object])
+    second_data_generation.outputs.append(workflow_data_object)
     fakes.MetagenomeAssemblyFactory(
         id="nmdc:wfmgas-1",
         outputs=[workflow_data_object],
@@ -45,4 +58,7 @@ def test_bulk_archive_path_lookup_uses_scalar_association_rows(db: Session):
         "nmdc:dobj-raw": "nmdc_manifest-1/reads.fastq.gz",
         "nmdc:dobj-1": "nmdc_manifest-1/nmdc_wfmgas-1/assembly.fna",
     }
+    # The broad output association to dgns-2 must not be mistaken for either a
+    # direct source or a workflow's informing DataGeneration.
+    assert lookup.data_generation_ids == ["nmdc:dgns-1"]
     assert lookup.workflow_ids_by_data_generation_id == {"nmdc:dgns-1": ["nmdc:wfmgas-1"]}

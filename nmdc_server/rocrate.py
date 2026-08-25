@@ -5,7 +5,7 @@ from time import perf_counter
 from typing import Any, cast
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select, union
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
@@ -177,40 +177,6 @@ def _add_archive_entities(
     graph.extend(directories[id_] for id_ in sorted(directories))
 
 
-def _get_data_generation_and_workflow_executions(
-    db: Session, output_ids: list[str]
-) -> dict[str, models.BiosampleRelatedDocument]:
-    producer_queries = [
-        select(
-            models.omics_processing_output_association.c.omics_processing_id.label("id")  # type: ignore[arg-type]
-        ).where(models.omics_processing_output_association.c.data_object_id.in_(output_ids))
-    ]
-    for workflow_model in models.workflow_activity_types:
-        output_association = workflow_model.outputs.property.secondary  # type: ignore[attr-defined]
-        producer_id = output_association.c[f"{workflow_model.__tablename__}_id"]
-        producer_queries.append(
-            select(producer_id.label("id")).where(
-                output_association.c.data_object_id.in_(output_ids)
-            )
-        )
-
-    producer_ids = union(*producer_queries).alias()
-    rows = db.execute(
-        select(models.BiosampleRelatedDocument)
-        .where(
-            models.BiosampleRelatedDocument.id.in_(
-                select(producer_ids.c.id)  # type: ignore[arg-type]
-            )
-        )
-        .where(
-            models.BiosampleRelatedDocument.high_level_type.in_(
-                ["nmdc:DataGeneration", "nmdc:WorkflowExecution"]
-            )
-        )
-    ).scalars()
-    return {row.id: row for row in rows}
-
-
 def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[str, list[str]]:
     """Group the specified DataGenerations by their Manifest IDs."""
     rows = db.execute(
@@ -226,31 +192,13 @@ def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[s
     return {manifest_id: sorted(members[manifest_id]) for manifest_id in sorted(members)}
 
 
-def _get_archived_workflows_by_data_generation(
-    bulk_download: models.BulkDownload,
-    data_generation_ids: list[str],
-) -> dict[str, list[str]]:
-    """Group archived WorkflowExecutions by their informing DataGenerations."""
-    associated_data_generation_ids = set(data_generation_ids)
-    workflows: dict[str, list[str]] = {}
-    for download_file in bulk_download.files:
-        workflow = download_file.data_object.was_generated_by
-        if workflow is None or isinstance(workflow, models.OmicsProcessing):
-            continue
-        for data_generation in workflow.was_informed_by:
-            if data_generation.id in associated_data_generation_ids:
-                workflows.setdefault(data_generation.id, []).append(workflow.id)
-    return {
-        data_generation_id: sorted(dict.fromkeys(workflows[data_generation_id]))
-        for data_generation_id in sorted(workflows)
-    }
-
-
 def generate_rocrate_for_bulk_download(  # noqa: C901
     db: Session,
     bulk_download: models.BulkDownload,
     data_object_ids: list[str],
-    archived_workflows_by_data_generation: dict[str, list[str]] | None = None,
+    *,
+    archived_data_generation_ids: list[str],
+    archived_workflows_by_data_generation: dict[str, list[str]],
 ):
     """Generates an RO-Crate metadata object for a given bulk download record."""
     log_prefix = f"Bulk download {bulk_download.id}"
@@ -301,68 +249,31 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     related_documents_started = perf_counter()
     data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
     related_documents_duration += perf_counter() - related_documents_started
-    dg_and_wfe_rows: dict[str, models.BiosampleRelatedDocument] = {}
-    pending_output_ids = list(dict.fromkeys(data_object_ids))
-    visited_output_ids: list[str] = []
-    ancestry_rounds = 0
     ancestry_started = perf_counter()
-    while pending_output_ids:
-        ancestry_rounds += 1
-        new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(db, pending_output_ids)
-        dg_and_wfe_rows.update(new_dg_and_wfe_rows)
-        visited_output_ids.extend(
-            id_ for id_ in pending_output_ids if id_ not in visited_output_ids
-        )
-        input_ids = [
-            input_id
-            for row in new_dg_and_wfe_rows.values()
-            for input_id in _document(row).get("has_input", [])
-        ]
-        pending_output_ids = list(
-            dict.fromkeys(id_ for id_ in input_ids if id_ not in visited_output_ids)
-        )
-
-    discovered_workflow_rows = {
-        id_: row
-        for id_, row in dg_and_wfe_rows.items()
-        if row.high_level_type == "nmdc:WorkflowExecution"
-    }
-    data_generation_rows = {
-        id_: row
-        for id_, row in dg_and_wfe_rows.items()
-        if row.high_level_type == "nmdc:DataGeneration"
-    }
-    manifest_members = _get_manifest_members(db, list(data_generation_rows))
-    if archived_workflows_by_data_generation is None:
-        archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
-            bulk_download, list(data_generation_rows)
-        )
-    else:
-        # Archive-path bulk lookup optimization: create_bulk_download already
-        # resolved these scalar relationships, so avoid traversing the ORM again.
-        archived_workflows_by_data_generation = {
-            data_generation_id: workflow_ids
-            for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items()
-            if data_generation_id in data_generation_rows
-        }
     archived_workflow_ids = {
         workflow_id
         for workflow_ids in archived_workflows_by_data_generation.values()
         for workflow_id in workflow_ids
     }
-    # The recursive lookup above follows inputs back to their DataGeneration. It can
-    # encounter upstream WorkflowExecutions along the way, but those executions do
-    # not describe anything included in this archive. Only emit workflow nodes for
-    # executions that actually generated one of the downloaded files.
+    dg_and_wfe_rows = _get_related_documents(
+        db, [*archived_data_generation_ids, *archived_workflow_ids]
+    )
     workflow_rows = {
-        id_: row for id_, row in discovered_workflow_rows.items() if id_ in archived_workflow_ids
+        id_: row
+        for id_, row in dg_and_wfe_rows.items()
+        if id_ in archived_workflow_ids and row.high_level_type == "nmdc:WorkflowExecution"
     }
+    data_generation_rows = {
+        id_: row
+        for id_, row in dg_and_wfe_rows.items()
+        if id_ in archived_data_generation_ids and row.high_level_type == "nmdc:DataGeneration"
+    }
+    manifest_members = _get_manifest_members(db, list(data_generation_rows))
     logger.info(
-        "%s ancestry lookup: %.3f seconds; traversal_rounds=%d; "
-        "data_generation_count=%d; workflow_execution_count=%d",
+        "%s ancestry lookup: %.3f seconds; data_generation_count=%d; "
+        "workflow_execution_count=%d",
         log_prefix,
         perf_counter() - ancestry_started,
-        ancestry_rounds,
         len(data_generation_rows),
         len(workflow_rows),
     )

@@ -1304,7 +1304,8 @@ class BulkDownloadDataObject(Base):
     path = Column(String, nullable=False)
 
     bulk_download = relationship(
-        BulkDownload, backref=backref("files", lazy="joined", cascade="all", cascade_backrefs=False)
+        BulkDownload,
+        backref=backref("files", lazy="select", cascade="all", cascade_backrefs=False),
     )
     data_object = relationship(
         DataObject,
