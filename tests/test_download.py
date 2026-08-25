@@ -134,6 +134,30 @@ def test_bulk_download_query(db: Session):
     assert data_object_agg_obj.count == 1
 
 
+def test_bulk_download_query_deduplicates_overlapping_filters_and_associations(db: Session):
+    sample = fakes.BiosampleFactory()
+    op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    op2 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    output = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/shared",
+        workflow_type=WorkflowActivityTypeEnum.raw_data.value,
+        file_type="Shared Type",
+    )
+    op1.outputs.append(output)
+    op2.outputs.append(output)
+    db.commit()
+
+    qs = query.DataObjectQuerySchema(
+        data_object_filter=[
+            {"workflow": "nmdc:RawData"},
+            {"file_type": "Shared Type"},
+        ]
+    )
+
+    assert [row.id for row in qs.execute(db).all()] == [output.id]
+    assert qs.aggregate(db).count == 1
+
+
 def test_workflow_summary_deduplicates_data_objects_across_data_generations(
     db: Session, client: TestClient
 ):
