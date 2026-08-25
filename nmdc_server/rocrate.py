@@ -4,8 +4,7 @@ from pathlib import PurePosixPath
 from typing import Any, cast
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import select, union
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
@@ -183,20 +182,70 @@ def _add_archive_entities(
 def _get_data_generation_and_workflow_executions(
     db: Session, output_ids: list[str]
 ) -> dict[str, models.BiosampleRelatedDocument]:
-    rows = db.execute(
-        select(models.BiosampleRelatedDocument)
-        .where(
-            models.BiosampleRelatedDocument.high_level_type.in_(
-                ["nmdc:DataGeneration", "nmdc:WorkflowExecution"]
-            )
+    """
+    Returns documents representing all the `DataGeneration`s and `WorkflowExecution`s
+    that directly outputted any of the specified `DataObject`s.
+    """
+
+    # If the caller didn't specify any `DataObject`s, return an empty dictionary. No need
+    # to query the database.
+    if len(output_ids) == 0:
+        return dict()
+
+    # Make a CTE (common table expression) that subsequent queries can treat as if
+    # it were a table, without there actually being such a table in the database.
+    # Docs: https://docs.sqlalchemy.org/en/13/core/tutorial.html#common-table-expressions-cte
+    data_object_ids_cte = (
+        select(models.DataObject.id.label("data_object_id"))
+        .where(models.DataObject.id.in_(output_ids))
+        .cte("relevant_data_object_ids")
+    )
+
+    # Make a SELECT statement that selects the ID of each `DataGeneration` that has
+    # any of those `DataObject`s as one of its outputs.
+    data_generation_output_association = models.omics_processing_output_association  # alias
+    data_generation_ids_query = select(
+        data_generation_output_association.c.omics_processing_id.label("id")
+    ).join(
+        data_object_ids_cte,
+        data_generation_output_association.c.data_object_id
+        == data_object_ids_cte.c.data_object_id,
+    )
+
+    # For each kind of `WorkflowExecution`, make a SELECT statement that selects
+    # the ID of that kind of `WorkflowExecution` that has any of those `DataObject`s
+    # as one of its outputs.
+    workflow_execution_ids_queries = [
+        select(workflow_execution_model.id.label("id"))
+        .join(workflow_execution_model.outputs)
+        .join(
+            data_object_ids_cte,
+            models.DataObject.id == data_object_ids_cte.c.data_object_id,
         )
-        .where(
-            models.BiosampleRelatedDocument.document["has_output"].op("?|")(
-                postgresql.array(output_ids)  # type: ignore[call-overload]
-            )
-        )
-    ).scalars()
-    return {row.id: row for row in rows}
+        for workflow_execution_model in models.workflow_activity_types
+    ]
+
+    # Join all of those SELECT statements with UNION statements so that the one query
+    # we eventually submit accounts for all of the above (i.e. `DataGeneration`s and
+    # all kinds of  `WorkflowExecution`s. (Unlike UNION ALL, UNION omits duplicates.)
+    # Docs: https://www.postgresql.org/docs/current/queries-union.html
+    dgen_ids_and_wfe_ids_query = union(
+        data_generation_ids_query, *workflow_execution_ids_queries
+    )
+
+    # Submit the query (composed of multiple SELECT queries UNION-ed together).
+    #
+    # Note: `db.execute()` returns a `Result` object made up of "rows", each of which has a single
+    #       column whose value is the `DataObject` or `WorkflowExecution`'s `id` value. We use
+    #       `.scalars().all()` and an outer `list()` to convert it into a list of those values.
+    #
+    dgen_ids_and_wfe_ids_query_result = db.execute(dgen_ids_and_wfe_ids_query)
+    dgen_ids_and_wfe_ids: list[str] = list(dgen_ids_and_wfe_ids_query_result.scalars().all())
+
+    # Finally, use those `DataGeneration` and `WorkflowExecution` IDs to get the corresponding
+    # documents from the `biosample_related_document` table.
+    data_generations_and_workflow_executions = _get_related_documents(db, dgen_ids_and_wfe_ids)
+    return data_generations_and_workflow_executions
 
 
 def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[str, list[str]]:

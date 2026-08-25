@@ -253,6 +253,7 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     )
     data_object = fakes.DataObjectFactory(id="nmdc:dobj-1")
     data_generation.outputs.append(data_object)
+    second_data_generation.outputs.append(data_object)
     fakes.ReadsQCFactory(
         id="nmdc:wfrqc-1",
         outputs=[data_object],
