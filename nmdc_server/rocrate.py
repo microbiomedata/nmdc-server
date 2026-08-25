@@ -196,7 +196,7 @@ def _get_data_generation_and_workflow_executions(
     # it were a table, without there actually being such a table in the database.
     # Docs: https://docs.sqlalchemy.org/en/13/core/tutorial.html#common-table-expressions-cte
     data_object_ids_cte = (
-        select(models.DataObject.id.label("data_object_id"))
+        select(models.DataObject.id.label("data_object_id"))  # type: ignore[arg-type]
         .where(models.DataObject.id.in_(output_ids))
         .cte("relevant_data_object_ids")
     )
@@ -205,7 +205,7 @@ def _get_data_generation_and_workflow_executions(
     # any of those `DataObject`s as one of its outputs.
     data_generation_output_association = models.omics_processing_output_association  # alias
     data_generation_ids_query = select(
-        data_generation_output_association.c.omics_processing_id.label("id")
+        data_generation_output_association.c.omics_processing_id.label("id")  # type: ignore[arg-type]
     ).join(
         data_object_ids_cte,
         data_generation_output_association.c.data_object_id == data_object_ids_cte.c.data_object_id,
@@ -215,8 +215,8 @@ def _get_data_generation_and_workflow_executions(
     # the ID of that kind of `WorkflowExecution` that has any of those `DataObject`s
     # as one of its outputs.
     workflow_execution_ids_queries = [
-        select(workflow_execution_model.id.label("id"))
-        .join(workflow_execution_model.outputs)
+        select(workflow_execution_model.id.label("id"))  # type: ignore[arg-type]
+        .join(workflow_execution_model.outputs)  # type: ignore[attr-defined]
         .join(
             data_object_ids_cte,
             models.DataObject.id == data_object_ids_cte.c.data_object_id,
