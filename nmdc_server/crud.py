@@ -13,6 +13,7 @@ from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.config import settings
+from nmdc_server.ingest.common import duration_logger
 from nmdc_server.logger import get_logger
 from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 from nmdc_server.utils import safe_name
@@ -642,29 +643,32 @@ def create_bulk_download(
         db.add(bulk_download_model)
 
         data_object_ids = []
-        for data_object in data_object_query.execute(db):
-            if data_object.url is None:
-                logger.warning("Data object url is empty in bulk download")
-                continue
 
-            data_object_ids.append(data_object.id)
+        with duration_logger(logger=logger, task_name="Determine in-archive paths", precision=1):
+            for data_object in data_object_query.execute(db):
+                if data_object.url is None:
+                    logger.warning("Data object url is empty in bulk download")
+                    continue
 
-            db.add(
-                models.BulkDownloadDataObject(
-                    bulk_download=bulk_download_model,
-                    data_object=data_object,
-                    path=f"data/{construct_zip_file_path(data_object)}",
+                data_object_ids.append(data_object.id)
+
+                db.add(
+                    models.BulkDownloadDataObject(
+                        bulk_download=bulk_download_model,
+                        data_object=data_object,
+                        path=f"data/{construct_zip_file_path(data_object)}",
+                    )
                 )
-            )
 
         if not data_object_ids:
             db.rollback()
             return None
 
         db.flush()
-        bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
-            db, bulk_download_model, data_object_ids
-        )
+        with duration_logger(logger=logger, task_name="Generate RO-Crate", precision=1):
+            bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
+                db, bulk_download_model, data_object_ids
+            )
         db.commit()
         return bulk_download_model
 

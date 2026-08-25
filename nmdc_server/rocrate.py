@@ -9,9 +9,14 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
+from nmdc_server.ingest.common import duration_logger
+from nmdc_server.logger import get_logger
 from nmdc_server.utils import safe_name
 
 IDENTIFIER_PREFIX_URL = "https://bioregistry.io"
+
+
+logger = get_logger(__name__)
 
 
 def get_rocrate_base_bulk_download():
@@ -280,20 +285,25 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     dg_and_wfe_rows: dict[str, models.BiosampleRelatedDocument] = {}
     pending_output_ids = list(dict.fromkeys(data_object_ids))
     visited_output_ids: list[str] = []
-    while pending_output_ids:
-        new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(db, pending_output_ids)
-        dg_and_wfe_rows.update(new_dg_and_wfe_rows)
-        visited_output_ids.extend(
-            id_ for id_ in pending_output_ids if id_ not in visited_output_ids
-        )
-        input_ids = [
-            input_id
-            for row in new_dg_and_wfe_rows.values()
-            for input_id in _document(row).get("has_input", [])
-        ]
-        pending_output_ids = list(
-            dict.fromkeys(id_ for id_ in input_ids if id_ not in visited_output_ids)
-        )
+    # TODO: Remove this `duration_logger` context once we've fixed the performance problems.
+    with duration_logger(logger=logger, task_name="Iterate over output IDs", precision=1):
+        while pending_output_ids:
+            with duration_logger(logger=logger, task_name="Get DGENs and WFEs", precision=1):
+                new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(
+                    db, pending_output_ids
+                )
+            dg_and_wfe_rows.update(new_dg_and_wfe_rows)
+            visited_output_ids.extend(
+                id_ for id_ in pending_output_ids if id_ not in visited_output_ids
+            )
+            input_ids = [
+                input_id
+                for row in new_dg_and_wfe_rows.values()
+                for input_id in _document(row).get("has_input", [])
+            ]
+            pending_output_ids = list(
+                dict.fromkeys(id_ for id_ in input_ids if id_ not in visited_output_ids)
+            )
 
     discovered_workflow_rows = {
         id_: row

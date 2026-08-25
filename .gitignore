@@ -2,11 +2,14 @@
 __pycache__/
 *.egg-info/
 .mypy_cache/
+.pytest_cache/
+.ruff_cache/
 .tox/
 .vscode/
 .idea/
 opencode.json
 .venv
+venv/
 vetur.config.js
 **.local**
 build/**
