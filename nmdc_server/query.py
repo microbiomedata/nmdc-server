@@ -1232,7 +1232,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         # shared memory to fail in a constrained container. DISTINCT preserves
         # the old deduplication behavior for overlapping filters and data objects
         # associated with multiple matching DataGenerations.
-        matching_ids_query = (
+        matching_dobj_ids_query = (
             db.query(models.DataObject.id.label("id"))
             .join(
                 models.omics_processing_output_association,
@@ -1246,9 +1246,9 @@ class DataObjectQuerySchema(BaseQuerySchema):
             .filter(or_(*filter_predicates) if filter_predicates else False)
             .distinct()
         )
-        union_query = matching_ids_query.subquery()
+        matching_dobj_ids_subquery = matching_dobj_ids_query.subquery()
         result_query = db.query(models.DataObject).join(
-            union_query, models.DataObject.id == union_query.c.id
+            matching_dobj_ids_subquery, models.DataObject.id == matching_dobj_ids_subquery.c.id
         )
         if not self.include_superseded_workflow_executions:
             superseded_subquery = self._make_superseded_data_object_ids_subquery(db)
