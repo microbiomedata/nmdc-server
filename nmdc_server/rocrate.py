@@ -284,7 +284,7 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
     dg_and_wfe_rows: dict[str, models.BiosampleRelatedDocument] = {}
     pending_output_ids = list(dict.fromkeys(data_object_ids))
-    visited_output_ids: list[str] = []    
+    visited_output_ids: list[str] = []
     while pending_output_ids:
         # TODO: Remove this `duration_logger` context once we've fixed the performance problems.
         with duration_logger(logger=logger, task_name="Get DGENs and WFEs", precision=1):
