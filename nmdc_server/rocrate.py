@@ -208,8 +208,7 @@ def _get_data_generation_and_workflow_executions(
         data_generation_output_association.c.omics_processing_id.label("id")
     ).join(
         data_object_ids_cte,
-        data_generation_output_association.c.data_object_id
-        == data_object_ids_cte.c.data_object_id,
+        data_generation_output_association.c.data_object_id == data_object_ids_cte.c.data_object_id,
     )
 
     # For each kind of `WorkflowExecution`, make a SELECT statement that selects
@@ -229,9 +228,7 @@ def _get_data_generation_and_workflow_executions(
     # we eventually submit accounts for all of the above (i.e. `DataGeneration`s and
     # all kinds of  `WorkflowExecution`s. (Unlike UNION ALL, UNION omits duplicates.)
     # Docs: https://www.postgresql.org/docs/current/queries-union.html
-    dgen_ids_and_wfe_ids_query = union(
-        data_generation_ids_query, *workflow_execution_ids_queries
-    )
+    dgen_ids_and_wfe_ids_query = union(data_generation_ids_query, *workflow_execution_ids_queries)
 
     # Submit the query (composed of multiple SELECT queries UNION-ed together).
     #
