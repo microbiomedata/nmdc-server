@@ -127,24 +127,30 @@ def slot_to_sample_type(slot: str) -> str | None:
     return slug
 
 
+class LimsExportError(Exception):
+    """Raised when a sample set cannot be exported (e.g. its project UUID cannot be resolved)."""
+
+
 def _resolve_project_uuid(project_id: str) -> str:
     """Resolve the EMSL project UUID for a project id via the configured project directory.
 
     Today this hits the EMSL Nexus service (`/projects/lookup?q={id}` -> `[0].uuid`), the same
-    registry the SMS portal and l7-interface-api receiver use. Swappable to PV2 later via config
-    (see project_directory.py). Falls back to a deterministic synthesized UUID only if the
-    directory cannot resolve the id (logged), so a lookup outage does not hard-fail the export.
+    registry the SMS portal and l7-interface-api receiver use. Swappable to PV2 later via config.
+
+    If a real directory (nexus/pv2) cannot resolve the id, we ABORT rather than invent a UUID:
+    proceeding with a fabricated UUID would associate the samples with a project that does not
+    exist in EMSL, turning a transient lookup failure into incorrect LIMS data. Only the offline
+    `synthesize` backend (local testing) deliberately returns a deterministic placeholder.
     """
     project_uuid = get_project_directory().get_project_uuid(project_id)
     if project_uuid:
         return project_uuid
-    fallback = str(uuid.uuid5(uuid.NAMESPACE_URL, f"nmdc-emsl-project:{project_id}"))
-    logger.warning(
-        "Could not resolve project_uuid for project_id %r; using synthesized fallback %s",
-        project_id,
-        fallback,
+    if settings.project_directory_backend == "synthesize":
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f"nmdc-emsl-project:{project_id}"))
+    raise LimsExportError(
+        f"Could not resolve an EMSL project UUID for project_id {project_id!r} "
+        f"via the {settings.project_directory_backend!r} project directory; aborting export."
     )
-    return fallback
 
 
 def _tracking_number(sample_set: models.SubmissionSampleSet) -> str:
