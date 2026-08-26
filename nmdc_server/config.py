@@ -121,6 +121,33 @@ class Settings(BaseSettings):
     max_submission_image_total_size_bytes: int = 1 * 1000 * 1000 * 1000  # 1 GB
     """The maximum total size of all submission image files for a single submission in bytes."""
 
+    # == EMSL LIMS export (SMS -> LIMS reimplementation; see docs/lims_export.md) ==
+    lims_gateway_url: str = "http://host.docker.internal:5006/lims"
+    """Base URL of the L7 LIMS interface API (the `/lims` gateway prefix). One sample is POSTed to
+    `{lims_gateway_url}/sample` per NMDC sample. In real environments this is the consolidation-API
+    external route (`https://api.emsl.pnnl.gov/external/lims`); locally it is the bundled mock."""
+
+    lims_esp_username: str = "nmdc-portal"
+    """ESP service-account username the portal authenticates to the LIMS with (forwarded to the
+    receiver). Portal-held service identity, NOT per-user."""
+
+    lims_esp_token: str = ""
+    """ESP service-account API token. Must be a valid L7 service-account token in real environments."""
+
+    lims_export_enabled: bool = True
+    """Master switch for the LIMS export endpoint. When False the endpoint returns 503."""
+
+    lims_auth_in_header: bool = False
+    """Send the ESP token in the `Authorization: Bearer <token>` header instead of the request body.
+    Flip to True once the upstream lims-interface-api header change lands."""
+
+    # Project directory used to resolve an EMSL project id (multi_omics_form.studyNumber) to its
+    # project UUID. Backends: "nexus" (current EMSL service), "pv2" (future; not implemented),
+    # "synthesize" (offline placeholder for local testing without network).
+    project_directory_backend: str = "nexus"
+    nexus_base_url: str = "https://api.emsl.pnl.gov/nexus"
+    """Base URL of the EMSL Nexus service (no trailing slash)."""
+
     @property
     def orcid_openid_config_url(self) -> str:
         r"""

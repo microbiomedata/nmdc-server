@@ -1533,6 +1533,12 @@ class SubmissionSampleSet(Base):
     sample_data = Column(JSONB, nullable=False)
     submission_metadata = relationship("SubmissionMetadata", viewonly=True)
 
+    # EMSL LIMS export bookkeeping (SMS -> LIMS reimplementation). Populated by the
+    # send-to-LIMS endpoint: per-sample results (entity_id / error) plus the timestamp of the
+    # most recent export attempt. See lims_export.py.
+    lims_export_results = Column(JSONB, nullable=True)
+    lims_exported_at = Column(DateTime, nullable=True)
+
     @property
     def sample_count(self) -> int:
         if not isinstance(self.sample_data, dict):
