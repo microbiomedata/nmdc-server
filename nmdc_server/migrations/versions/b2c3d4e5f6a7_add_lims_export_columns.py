@@ -23,7 +23,9 @@ depends_on: Optional[str] = None
 
 def upgrade():
     op.add_column("submission_sample_set", sa.Column("lims_export_results", JSONB(), nullable=True))
-    op.add_column("submission_sample_set", sa.Column("lims_exported_at", sa.DateTime(), nullable=True))
+    op.add_column(
+        "submission_sample_set", sa.Column("lims_exported_at", sa.DateTime(), nullable=True)
+    )
 
 
 def downgrade():
