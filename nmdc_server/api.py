@@ -2217,6 +2217,12 @@ def send_sample_set_to_lims_endpoint(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="LIMS export is disabled."
         )
+    # Fail fast on misconfiguration rather than making a doomed request to the LIMS.
+    if not settings.lims_gateway_url or not settings.lims_esp_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LIMS export is not configured (missing gateway URL or ESP token).",
+        )
 
     sample_set = crud.get_submission_sample_set_for_user(
         db,
