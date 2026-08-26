@@ -108,9 +108,36 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
             #       and the latter is ingested from the MongoDB database.
             #
             logger.info("Copying dependent data from the portal database to the ingest database.")
-            with duration_logger(logger, "Merging download-related data"):
+            with duration_logger(logger, "Merging download-related data (FileDownload)"):
                 maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
-                maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+            with duration_logger(logger, "Merging download-related data (BulkDownload)"):
+                # Load `bulk_download` rows without automatically joining them with related
+                # `bulk_download_data_object` rows (which would consume memory unnecessarily).
+                #
+                # Note: `BulkDownload.files` is a so-called "back-reference" that gets created as
+                #       part of the `bulk_download` relationship on `BulkDownloadDataObject`. The
+                #       former is configured to use "joined eager loading". That means that, by
+                #       default, whenever we query `BulkDownload`, each `bulk_download` row will
+                #       automatically be JOINed with each `bulk_download_data_object` related to it
+                #       (related via `BulkDownload.files`). Not only does it get _loaded_, it also
+                #       gets _joined_ with the original `bulk_download` row.
+                #
+                #       Once we introduced the `rocrate_metadata_cache` column to the `BulkDownload`
+                #       class (table), that "joining" (which involves duplicating the `bulk_download`
+                #       row) caused memory consumption to increase to the point of crashing ingest.
+                #       To prevent that eager loading/joining, here, we explicitly configure this
+                #       query to use "lazy loading" for that specific relationship.
+                #
+                # Docs:
+                # - https://docs.sqlalchemy.org/en/20/orm/relationship_api.html#sqlalchemy.orm.backref
+                # - https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#joined-eager-loading
+                # - https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#sqlalchemy.orm.lazyload
+                #
+                bulk_download_query = prod_db.query(models.BulkDownload).options(
+                    lazyload(models.BulkDownload.files)
+                )
+                maybe_merge_download_artifact(ingest_db, bulk_download_query)
+            with duration_logger(logger, "Merging download-related data (BulkDownloadDataObject)"):
                 maybe_merge_download_artifact(
                     ingest_db,
                     prod_db.query(models.BulkDownloadDataObject).options(
