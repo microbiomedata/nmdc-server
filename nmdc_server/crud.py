@@ -590,47 +590,6 @@ def create_file_download(
     return db_file_download
 
 
-def construct_zip_file_path(data_object: models.DataObject) -> str:
-    """Return a path inside the zip file for the data object."""
-    if not data_object.omics_processings:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data object has no associated omics processings.",
-        )
-    omics_processing = data_object.omics_processings[0]
-    was_generated_by = data_object.was_generated_by
-
-    if was_generated_by is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data object has no associated workflow execution or data generation.",
-        )
-
-    poolable_replicates_manifest_id = omics_processing.poolable_replicates_manifest_id
-    # If the `poolable_replicates_manifest_id` is different from the `omics_processing.id`,
-    # then the DataGenerations are pooled under a single Manifest ID
-    # and we should use that Manifest ID as the directory name in the zip file instead of the DataGeneration ID.
-    if (
-        poolable_replicates_manifest_id is not None
-        and poolable_replicates_manifest_id != omics_processing.id
-    ):
-        data_generation_or_manifest_dir = safe_name(poolable_replicates_manifest_id)
-    else:
-        data_generation_or_manifest_dir = safe_name(omics_processing.id)
-
-    data_object_file_name = safe_name(data_object.name)
-
-    if omics_processing.id == was_generated_by.id:
-        # The data object was generated directly by the DataGeneration,
-        # so we don't need to include the WorkflowExecution ID in the path.
-        # This occurs for RawData files.
-        return f"{data_generation_or_manifest_dir}/{data_object_file_name}"
-
-    workflow_execution_id = safe_name(was_generated_by.id)
-
-    return f"{data_generation_or_manifest_dir}/{workflow_execution_id}/{data_object_file_name}"
-
-
 @dataclass
 class BulkArchivePathLookup:
     """Scalar results produced by the archive-path bulk lookup optimization."""

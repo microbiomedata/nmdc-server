@@ -1097,25 +1097,6 @@ class DataObject(Base):
         back_populates="outputs",
     )  # type: ignore
 
-    @property
-    def was_generated_by(self) -> Optional["PipelineStep"]:
-        """
-        Return the object that generated this DataObject.
-        This is analogous to the `was_generated_by` property in the NMDC schema,
-        but it is not ingested directly from that property.
-        Instead, it is inferred from the `omics_processings` relationship.
-        Usually this will be a WorkflowExecution but in some cases it may be a DataGeneration.
-        It is technically possible in the postgres model for a DataObject to be produced by
-        multiple workflow activities/executions.
-        If this is the case, the first workflow activity found will be returned.
-        """
-        for omics_processing in self.omics_processings:
-            for workflow_activity in omics_processing.omics_data:
-                if self in workflow_activity.outputs:  # type: ignore[attr-defined]
-                    return workflow_activity
-
-        return self.omics_processings[0] if self.omics_processings else None
-
     # Define a property that can be used to shortcut calculating counts.
     # Useful when downstream code can more efficiently determine download
     # counts for a batch of DataObjects and inject those counts.
