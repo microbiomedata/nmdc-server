@@ -2240,7 +2240,30 @@ def send_sample_set_to_lims_endpoint(
             ),
         )
 
-    summary = lims_export.send_sample_set_to_lims(sample_set)
+    # Facility eligibility: the `emsl` template marks a sample set as EMSL-bound. Without it the set
+    # is headed elsewhere (e.g. JGI-only), and its `ApprovedHeld` status does not imply EMSL.
+    if "emsl" not in (sample_set.templates or []):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Sample set is not EMSL-bound (no 'emsl' template); nothing to export to LIMS.",
+        )
+
+    # Never send test submissions to the real LIMS (mirrors the is_test_submission exclusion used
+    # for GitHub issue creation).
+    if (
+        sample_set.submission_metadata is not None
+        and sample_set.submission_metadata.is_test_submission
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Test submissions cannot be exported to the LIMS.",
+        )
+
+    try:
+        summary = lims_export.send_sample_set_to_lims(sample_set)
+    except lims_export.LimsExportError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
     sample_set.lims_export_results = summary
     sample_set.lims_exported_at = datetime.datetime.now(datetime.UTC)
     db.commit()
