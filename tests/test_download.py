@@ -249,7 +249,7 @@ def test_generate_bulk_download_filtered(
     assert resp.json()["id"]
     id_ = resp.json()["id"]
 
-    bulk_download = db.get(models.BulkDownload, id_)
+    bulk_download = db.get(models.BulkDownload, id_) # type: ignore[attr-defined]
     assert bulk_download is not None
     assert bulk_download.filter == filter
     assert bulk_download.rocrate_metadata_cache is not None
