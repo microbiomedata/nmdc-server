@@ -119,7 +119,9 @@ def test_send_to_lims_happy_path(db: Session, client: TestClient, logged_in_user
     assert refreshed.lims_exported_at is not None
 
 
-def test_send_to_lims_wrong_status_409(db: Session, client: TestClient, logged_in_user, monkeypatch):
+def test_send_to_lims_wrong_status_409(
+    db: Session, client: TestClient, logged_in_user, monkeypatch
+):
     sample_set = _owned_sample_set(db, logged_in_user, status=SubmissionStatusEnum.InProgress.text)
     monkeypatch.setattr(lims_export, "send_sample_set_to_lims", lambda ss: {})
     resp = client.post(f"/api/metadata_submission/sample_set/{sample_set.id}/send-to-lims")
@@ -133,7 +135,9 @@ def test_send_to_lims_disabled_503(db: Session, client: TestClient, logged_in_us
     assert resp.status_code == 503
 
 
-def test_send_to_lims_unconfigured_503(db: Session, client: TestClient, logged_in_user, monkeypatch):
+def test_send_to_lims_unconfigured_503(
+    db: Session, client: TestClient, logged_in_user, monkeypatch
+):
     sample_set = _owned_sample_set(db, logged_in_user)
     monkeypatch.setattr(settings, "lims_esp_token", "")
     resp = client.post(f"/api/metadata_submission/sample_set/{sample_set.id}/send-to-lims")

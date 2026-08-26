@@ -38,9 +38,11 @@ class ProjectDirectory(Protocol):
 
     def get_project(self, project_id: str) -> Optional[dict[str, Any]]:
         """Return a normalized project dict ({"uuid", "project_type", "id", ...}) or None."""
+        ...
 
     def get_project_uuid(self, project_id: str) -> Optional[str]:
         """Return the project UUID for the given EMSL project id, or None if not resolvable."""
+        ...
 
 
 class NexusProjectDirectory:
