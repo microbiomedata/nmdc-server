@@ -1,6 +1,5 @@
 import io
 import json
-import logging
 import zipfile
 from typing import Any
 
@@ -206,7 +205,6 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
     db.commit()
 
     resp = client.post("/api/bulk_download")
-    print(resp.content)
     assert resp.status_code == 400
 
     resp = client.post("/api/bulk_download/summary")
@@ -215,9 +213,8 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
 
 
 def test_generate_bulk_download_filtered(
-    db: Session, client: TestClient, logged_in_user, patch_zip_stream_service, caplog
+    db: Session, client: TestClient, logged_in_user, patch_zip_stream_service
 ):
-    caplog.set_level(logging.INFO)
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])
@@ -229,20 +226,22 @@ def test_generate_bulk_download_filtered(
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
-    metag_output = fakes.DataObjectFactory(
-        url="https://data.microbiomedata.org/data/metag",
+    mags = fakes.MAGsAnalysisFactory(was_informed_by=[op1])
+    mags_output = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/mags",
         omics_processing=op1,
-        workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
+        workflow_type=WorkflowActivityTypeEnum.mags_analysis.value,
+        file_type="Metagenome Bins Info File",
     )
-    metag.outputs.append(metag_output)
-    op1.outputs.append(metag_output)
+    mags.outputs.append(mags_output)
+    op1.outputs.append(mags_output)
 
     db.commit()
 
     filter = [
         {
-            "workflow": "nmdc:MetagenomeAnnotation",
+            "workflow": "nmdc:MagsAnalysis",
+            "file_type": "Metagenome Bins Info File",
         }
     ]
     resp = client.post("/api/bulk_download", json={"data_object_filter": filter})
@@ -250,37 +249,13 @@ def test_generate_bulk_download_filtered(
     assert resp.json()["id"]
     id_ = resp.json()["id"]
 
-    bulk_download_logs = [
-        record.getMessage()
-        for record in caplog.records
-        if record.getMessage().startswith(f"Bulk download {id_}")
-    ]
-    assert any(
-        "data-object selection:" in message and "selected_count=1" in message
-        for message in bulk_download_logs
-    )
-    assert any(
-        "archive-path construction:" in message and "file_count=1" in message
-        for message in bulk_download_logs
-    )
-    assert any(
-        "ancestry lookup:" in message
-        and "data_generation_count=0" in message
-        and "workflow_execution_count=0" in message
-        for message in bulk_download_logs
-    )
-    assert any(
-        "related-document lookup:" in message
-        and "data_object_count=0" in message
-        and "biosample_count=0" in message
-        and "study_count=0" in message
-        for message in bulk_download_logs
-    )
-    assert any(
-        "RO-Crate assembly:" in message and "graph_node_count=8" in message
-        for message in bulk_download_logs
-    )
-    assert any("commit:" in message and "file_count=1" in message for message in bulk_download_logs)
+    bulk_download = db.get(models.BulkDownload, id_)
+    assert bulk_download is not None
+    assert bulk_download.filter == filter
+    assert bulk_download.rocrate_metadata_cache is not None
+    assert len(bulk_download.files) == 1
+    assert bulk_download.files[0].data_object_id == mags_output.id
+    assert bulk_download.files[0].path.startswith("data/")
 
     resp = client.post("/api/bulk_download/summary", json={"data_object_filter": filter})
     assert resp.status_code == 200
