@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from nmdc_server import crud, models
+from nmdc_server import crud
 from tests import fakes
 
 
