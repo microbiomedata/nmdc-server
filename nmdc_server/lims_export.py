@@ -14,18 +14,19 @@ Design mirrors the observed receiver contract (`l7-interface-api/api.py`, `l7esp
     project_uuid / shipment_uuid / shipment_tracking_number are read positionally by the
     receiver and 400 if missing -> we always send them.
 
-GAPS (NMDC has no direct source; values are synthesized and flagged — resolve with EMSL):
-  * project_uuid           -- NMDC carries no EMSL project UUID. Synthesized placeholder.
-  * shipment_tracking_number -- NMDC ships TO the facility and captures no tracking number.
-                              Synthesized placeholder.
-  * sample_type slug       -- NMDC environmental-package slot -> ESP sample-type key mapping is
-                              an assumption (SLOT_TO_SAMPLE_TYPE). Verify against the ESP
-                              sample types registered in `lims-dev`.
-See docs/lims_export.md for the full gap writeup.
+Field resolution (see docs/lims_export.md for the full writeup):
+  * project_uuid           -- resolved from the EMSL project id (multi_omics_form.studyNumber) via the
+                              configured project directory (Nexus today, PV2-swappable). Falls back to
+                              a deterministic synthesized UUID only if the directory can't resolve it.
+  * shipment_tracking_number -- NMDC captures none; sent empty (the receiver still reads the field, so
+                              it must be present). Left off deliberately, not synthesized.
+  * sample_type slug       -- NMDC environmental-package slot -> ESP sample-type key via
+                              SLOT_TO_SAMPLE_TYPE; slots with no known ESP type are skipped, not sent.
 """
 
 from __future__ import annotations
 
+import re
 import time
 import uuid
 from datetime import UTC, datetime
@@ -224,6 +225,17 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
     # directory / Nexus call per sample).
     multi_omics = sample_set.multi_omics_form or {}
     project_id = str(multi_omics.get("studyNumber") or "").strip()
+
+    # An EMSL-bound submission carries a 5-digit EMSL Proposal Number as studyNumber. Without one,
+    # the sample set is not headed to EMSL — sending would produce empty-project_id payloads that
+    # the receiver rejects per sample. Skip entirely (log) rather than send junk.
+    if not re.fullmatch(r"\d{5}", project_id):
+        logger.warning(
+            "Sample set %s has no valid EMSL project number (studyNumber=%r); not exporting to LIMS",
+            sample_set.id, project_id,
+        )
+        return []
+
     project_uuid = _resolve_project_uuid(project_id)
 
     companions = _companion_metadata_by_name(data)
@@ -309,7 +321,17 @@ def send_sample_set_to_lims(
                     continue
 
                 if resp.status_code == 200:
-                    body = resp.json()
+                    try:
+                        body = resp.json()
+                    except ValueError:
+                        # 200 with a non-JSON body: treat as a failed, retryable attempt rather
+                        # than letting json() raise and abort the whole export.
+                        last_error = f"HTTP 200 with non-JSON body: {resp.text[:200]}"
+                        logger.warning(
+                            "LIMS send %s attempt %d/%d: %s",
+                            sample_name, attempt, max_retries, last_error,
+                        )
+                        continue
                     outcome = {
                         "sample_name": sample_name,
                         "sample_type": payload["sample_type"],
