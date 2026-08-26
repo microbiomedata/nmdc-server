@@ -66,9 +66,21 @@ _ENV_SLOTS = set(ENVIRONMENTAL_DATA_SLOTS)
 
 # ESP sample-type slugs that actually exist in the LIMS (from emsl_sample_types.yml).
 VALID_ESP_SAMPLE_TYPES: set[str] = {
-    "aerosol-arm", "aerosol", "soil", "monet-soil", "sediment", "plant",
-    "culture-environmental", "terraform", "field-deployed-terraform", "pure-culture",
-    "mixed-culture", "commercially-purchased", "synthesized-material", "water", "other-undescribed",
+    "aerosol-arm",
+    "aerosol",
+    "soil",
+    "monet-soil",
+    "sediment",
+    "plant",
+    "culture-environmental",
+    "terraform",
+    "field-deployed-terraform",
+    "pure-culture",
+    "mixed-culture",
+    "commercially-purchased",
+    "synthesized-material",
+    "water",
+    "other-undescribed",
     "misc-envs",  # dedicated schema authored 2026-08-24 (analysisapi data/misc-envs) — deploy + reseed lims
 }
 
@@ -129,7 +141,8 @@ def _resolve_project_uuid(project_id: str) -> str:
     fallback = str(uuid.uuid5(uuid.NAMESPACE_URL, f"nmdc-emsl-project:{project_id}"))
     logger.warning(
         "Could not resolve project_uuid for project_id %r; using synthesized fallback %s",
-        project_id, fallback,
+        project_id,
+        fallback,
     )
     return fallback
 
@@ -217,13 +230,13 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
     ...) are merged into each sample by samp_name rather than sent as their own (bogus) samples.
     """
     data = (
-        sample_set.sample_data.get("data", {})
-        if isinstance(sample_set.sample_data, dict)
-        else {}
+        sample_set.sample_data.get("data", {}) if isinstance(sample_set.sample_data, dict) else {}
     )
     # Resolve project id/uuid ONCE per sample set (constant across all samples; avoids a project
     # directory / Nexus call per sample).
-    multi_omics = sample_set.multi_omics_form or {}
+    multi_omics = (
+        sample_set.multi_omics_form if isinstance(sample_set.multi_omics_form, dict) else {}
+    )
     project_id = str(multi_omics.get("studyNumber") or "").strip()
 
     # An EMSL-bound submission carries a 5-digit EMSL Proposal Number as studyNumber. Without one,
@@ -232,7 +245,8 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
     if not re.fullmatch(r"\d{5}", project_id):
         logger.warning(
             "Sample set %s has no valid EMSL project number (studyNumber=%r); not exporting to LIMS",
-            sample_set.id, project_id,
+            sample_set.id,
+            project_id,
         )
         return []
 
@@ -258,8 +272,12 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
                 if extra:
                     enriched = {**extra, **row}
             payload = build_payload(
-                sample_set, slot, enriched,
-                project_id=project_id, project_uuid=project_uuid, sample_type=sample_type,
+                sample_set,
+                slot,
+                enriched,
+                project_id=project_id,
+                project_uuid=project_uuid,
+                sample_type=sample_type,
             )
             if payload is not None:
                 payloads.append(payload)
@@ -268,6 +286,91 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
 
 def _sample_url() -> str:
     return f"{settings.lims_gateway_url.rstrip('/')}/sample"
+
+
+def _send_one_sample(
+    client: httpx.Client,
+    url: str,
+    payload: dict[str, Any],
+    headers: dict[str, str] | None,
+    max_retries: int,
+) -> dict[str, Any]:
+    """POST one sample payload to the LIMS, retrying on network/5xx errors.
+
+    Returns a per-sample result dict with keys: sample_name, sample_type, status, and either
+    entity_id/entity_url (on success) or error (on failure).
+    """
+    sample_name = payload["sample_data"]["sample_name"]
+    last_error: str | None = None
+    outcome: dict[str, Any] | None = None
+
+    for attempt in range(1, max_retries + 1):
+        if attempt > 1:
+            # Bounded exponential backoff between retries (0.5s, 1s, 2s, ... capped 5s).
+            time.sleep(min(0.5 * 2 ** (attempt - 2), 5.0))
+        try:
+            resp = client.post(url, json=payload, headers=headers)
+        except httpx.HTTPError as e:
+            last_error = f"network error: {e}"
+            logger.warning(
+                "LIMS send %s attempt %d/%d failed: %s",
+                sample_name,
+                attempt,
+                max_retries,
+                last_error,
+            )
+            continue
+
+        if resp.status_code == 200:
+            try:
+                body = resp.json()
+            except ValueError:
+                # 200 with a non-JSON body: treat as a failed, retryable attempt rather
+                # than letting json() raise and abort the whole export.
+                last_error = f"HTTP 200 with non-JSON body: {resp.text[:200]}"
+                logger.warning(
+                    "LIMS send %s attempt %d/%d: %s",
+                    sample_name,
+                    attempt,
+                    max_retries,
+                    last_error,
+                )
+                continue
+            outcome = {
+                "sample_name": sample_name,
+                "sample_type": payload["sample_type"],
+                "status": "ok",
+                "entity_id": body.get("entity_id"),
+                "entity_url": body.get("entity_url"),
+                "attempts": attempt,
+            }
+            break
+
+        # 4xx are deterministic (bad contract) — do not retry; 5xx retry.
+        try:
+            detail = resp.json().get("error")
+        except Exception:
+            detail = resp.text
+        last_error = f"HTTP {resp.status_code}: {detail}"
+        if 400 <= resp.status_code < 500:
+            logger.warning("LIMS send %s rejected (no retry): %s", sample_name, last_error)
+            break
+        logger.warning(
+            "LIMS send %s attempt %d/%d server error: %s",
+            sample_name,
+            attempt,
+            max_retries,
+            last_error,
+        )
+
+    if outcome is None:
+        outcome = {
+            "sample_name": sample_name,
+            "sample_type": payload["sample_type"],
+            "status": "error",
+            "error": last_error or "unknown error",
+        }
+    return outcome
 
 
 def send_sample_set_to_lims(
@@ -293,7 +396,7 @@ def send_sample_set_to_lims(
 
     # Auth transport: by default the ESP token rides in the body (current contract). When
     # lims_auth_in_header is enabled (after the upstream header change lands), send it as an
-    # Authorization: Bearer header instead and drop it from the body. esp_username stays in the body.
+    # Authorization: ****** instead and drop it from the body. esp_username stays in the body.
     headers: dict[str, str] | None = None
     if settings.lims_auth_in_header:
         headers = {"Authorization": f"Bearer {settings.lims_esp_token}"}
@@ -302,68 +405,7 @@ def send_sample_set_to_lims(
 
     with httpx.Client(timeout=timeout) as client:
         for payload in payloads:
-            sample_name = payload["sample_data"]["sample_name"]
-            last_error: str | None = None
-            outcome: dict[str, Any] | None = None
-
-            for attempt in range(1, max_retries + 1):
-                if attempt > 1:
-                    # Bounded exponential backoff between retries (0.5s, 1s, 2s, ... capped 5s).
-                    time.sleep(min(0.5 * 2 ** (attempt - 2), 5.0))
-                try:
-                    resp = client.post(url, json=payload, headers=headers)
-                except httpx.HTTPError as e:
-                    last_error = f"network error: {e}"
-                    logger.warning(
-                        "LIMS send %s attempt %d/%d failed: %s",
-                        sample_name, attempt, max_retries, last_error,
-                    )
-                    continue
-
-                if resp.status_code == 200:
-                    try:
-                        body = resp.json()
-                    except ValueError:
-                        # 200 with a non-JSON body: treat as a failed, retryable attempt rather
-                        # than letting json() raise and abort the whole export.
-                        last_error = f"HTTP 200 with non-JSON body: {resp.text[:200]}"
-                        logger.warning(
-                            "LIMS send %s attempt %d/%d: %s",
-                            sample_name, attempt, max_retries, last_error,
-                        )
-                        continue
-                    outcome = {
-                        "sample_name": sample_name,
-                        "sample_type": payload["sample_type"],
-                        "status": "ok",
-                        "entity_id": body.get("entity_id"),
-                        "entity_url": body.get("entity_url"),
-                        "attempts": attempt,
-                    }
-                    break
-
-                # 4xx are deterministic (bad contract) — do not retry; 5xx retry.
-                try:
-                    detail = resp.json().get("error")
-                except Exception:
-                    detail = resp.text
-                last_error = f"HTTP {resp.status_code}: {detail}"
-                if 400 <= resp.status_code < 500:
-                    logger.warning("LIMS send %s rejected (no retry): %s", sample_name, last_error)
-                    break
-                logger.warning(
-                    "LIMS send %s attempt %d/%d server error: %s",
-                    sample_name, attempt, max_retries, last_error,
-                )
-
-            if outcome is None:
-                outcome = {
-                    "sample_name": sample_name,
-                    "sample_type": payload["sample_type"],
-                    "status": "error",
-                    "error": last_error or "unknown error",
-                }
-
+            outcome = _send_one_sample(client, url, payload, headers, max_retries)
             if outcome["status"] == "ok":
                 sent += 1
             else:
@@ -381,6 +423,9 @@ def send_sample_set_to_lims(
     }
     logger.info(
         "LIMS export for sample set %s: %d/%d sent, %d failed",
-        sample_set.id, sent, len(payloads), failed,
+        sample_set.id,
+        sent,
+        len(payloads),
+        failed,
     )
     return summary
