@@ -73,6 +73,21 @@ def test_build_payloads_skips_when_not_emsl_bound(monkeypatch):
     assert lims_export.build_lims_payloads(ss) == []
 
 
+def test_resolve_project_uuid_aborts_instead_of_synthesizing(monkeypatch):
+    class _FakeDir:
+        def get_project_uuid(self, pid):
+            return None
+
+    monkeypatch.setattr(lims_export, "get_project_directory", lambda: _FakeDir())
+    # Real backend that can't resolve -> abort (do not fabricate a UUID).
+    monkeypatch.setattr(settings, "project_directory_backend", "nexus")
+    with pytest.raises(lims_export.LimsExportError):
+        lims_export._resolve_project_uuid("61258")
+    # Offline synthesize backend deliberately returns a deterministic placeholder.
+    monkeypatch.setattr(settings, "project_directory_backend", "synthesize")
+    assert lims_export._resolve_project_uuid("61258")
+
+
 def test_slot_to_sample_type_known_and_unknown():
     assert lims_export.slot_to_sample_type("soil_data") == "soil"
     assert lims_export.slot_to_sample_type("misc_envs_data") == "misc-envs"
@@ -82,8 +97,17 @@ def test_slot_to_sample_type_known_and_unknown():
 # --------------------------------------------------------------------------- endpoint
 
 
-def _owned_sample_set(db, user, *, status=SubmissionStatusEnum.ApprovedHeld.text):
-    submission = fakes.SubmissionMetadataFactory(author=user, author_orcid=user.orcid)
+def _owned_sample_set(
+    db,
+    user,
+    *,
+    status=SubmissionStatusEnum.ApprovedHeld.text,
+    templates=("emsl",),
+    is_test_submission=False,
+):
+    submission = fakes.SubmissionMetadataFactory(
+        author=user, author_orcid=user.orcid, is_test_submission=is_test_submission
+    )
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
@@ -91,7 +115,7 @@ def _owned_sample_set(db, user, *, status=SubmissionStatusEnum.ApprovedHeld.text
         role=SubmissionEditorRole.owner,
     )
     sample_set = fakes.SubmissionSampleSetFactory(
-        submission_metadata_id=submission.id, status=status
+        submission_metadata_id=submission.id, status=status, templates=list(templates)
     )
     db.commit()
     return sample_set
@@ -142,6 +166,25 @@ def test_send_to_lims_unconfigured_503(
     monkeypatch.setattr(settings, "lims_esp_token", "")
     resp = client.post(f"/api/metadata_submission/sample_set/{sample_set.id}/send-to-lims")
     assert resp.status_code == 503
+
+
+def test_send_to_lims_not_emsl_bound_409(
+    db: Session, client: TestClient, logged_in_user, monkeypatch
+):
+    # ApprovedHeld but no `emsl` template -> not EMSL-bound.
+    sample_set = _owned_sample_set(db, logged_in_user, templates=("soil",))
+    monkeypatch.setattr(lims_export, "send_sample_set_to_lims", lambda ss: {})
+    resp = client.post(f"/api/metadata_submission/sample_set/{sample_set.id}/send-to-lims")
+    assert resp.status_code == 409
+
+
+def test_send_to_lims_test_submission_409(
+    db: Session, client: TestClient, logged_in_user, monkeypatch
+):
+    sample_set = _owned_sample_set(db, logged_in_user, is_test_submission=True)
+    monkeypatch.setattr(lims_export, "send_sample_set_to_lims", lambda ss: {})
+    resp = client.post(f"/api/metadata_submission/sample_set/{sample_set.id}/send-to-lims")
+    assert resp.status_code == 409
 
 
 def test_send_to_lims_forbidden_for_non_member(
