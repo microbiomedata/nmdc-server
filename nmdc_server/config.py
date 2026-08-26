@@ -138,8 +138,9 @@ class Settings(BaseSettings):
     """Master switch for the LIMS export endpoint. When False the endpoint returns 503."""
 
     lims_auth_in_header: bool = False
-    """Send the ESP token in the `Authorization: Bearer <token>` header instead of the request body.
-    Flip to True once the upstream lims-interface-api header change lands."""
+    """When True, send the ESP token to the LIMS in an HTTP `Authorization: Bearer <token>` header
+    instead of in the JSON request body. Default False (token in body, current contract); flip to True
+    once the upstream lims-interface-api header change lands."""
 
     # Project directory used to resolve an EMSL project id (multi_omics_form.studyNumber) to its
     # project UUID. Backends: "nexus" (current EMSL service), "pv2" (future; not implemented),

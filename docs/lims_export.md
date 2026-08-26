@@ -13,8 +13,9 @@ LIMS via the unchanged `l7-interface-api` (`POST {gateway}/lims/sample`, one req
   "send to LIMS" button. Requires the sample set to be in `ApprovedHeld` status and the caller to be
   an owner/reviewer of the submission (or a site admin). Persists results to
   `submission_sample_set.lims_export_results` / `lims_exported_at`.
-- Config (`nmdc_server/config.py`): `lims_gateway_url`, `lims_esp_username`, `lims_esp_token`,
-  `lims_export_enabled` (env-prefixed `NMDC_`).
+- Config (`nmdc_server/config.py`, env-prefixed `NMDC_`): `lims_gateway_url`, `lims_esp_username`,
+  `lims_esp_token`, `lims_export_enabled`, `lims_auth_in_header` (token in `Authorization` header vs
+  body), `project_directory_backend` (`nexus` | `pv2` | `synthesize`), `nexus_base_url`.
 
 ## Wire contract
 
@@ -22,10 +23,10 @@ Body per sample (mirrors the SMS portal / `l7-interface-api`):
 
 ```json
 {
-  "esp_token": "...", "esp_username": "nmdc-portal",
-  "project_id": "61258", "project_uuid": "<uuid>",
-  "shipment_uuid": "<sample_set id>", "shipment_tracking_number": "<...>",
-  "sample_type": "monet-soil", "shipment_name": "<sample set name>",
+  "esp_token": "...", "esp_username": "svcnmdcuser",
+  "project_id": "61258", "project_uuid": "<uuid from Nexus>",
+  "shipment_uuid": "<sample_set id>", "shipment_tracking_number": "",
+  "sample_type": "soil", "shipment_name": "<sample set name>",
   "sample_data": { "sample_name": "61258_2_C4", "...": "MIxS snake_case slots" }
 }
 ```
@@ -39,20 +40,33 @@ NMDC sample rows already use MIxS snake_case slot names that, after the receiver
 `field.replace('_',' ').title()`, match the ESP sample-type field names. The only rename needed is
 `samp_name` → `sample_name`.
 
+- **Slot → sample type** (`SLOT_TO_SAMPLE_TYPE`): `soil_data`→`soil`, `water_data`→`water`,
+  `sediment_data`→`sediment`, `plant_associated_data`→`plant`, `air_data`→`aerosol`,
+  `misc_envs_data`→`misc-envs`. Slots with no known ESP type (or non-environmental companion tabs like
+  `emsl_data`/`jgi_mg_data`) are **skipped**, not sent — mirrors EMSL SMS and avoids receiver 500-storms.
+- **Companion metadata**: `emsl_data` (and other non-env tabs) are merged into each environmental
+  sample by `samp_name` (EMSL logistics fields like `analysis_type` ride along), not sent as samples.
+- **project_uuid**: resolved from `studyNumber` (the 5-digit EMSL Proposal Number) via the project
+  directory (`nexus` backend today). Sample sets without a valid 5-digit `studyNumber` are not
+  EMSL-bound and are skipped.
+
 ## Trigger / delivery
 
 - Manual button (this endpoint), gated on `ApprovedHeld`.
 - Automatic fire on the status transition is a documented follow-up (gate on a date cutoff +
   `is_test_submission is False`); the hook point is `update_submission_sample_set_status`. Not wired.
 
-## Open gaps (confirm with EMSL before non-local use)
+## Resolved decisions / open confirmations
 
-- `project_uuid` — NMDC has no EMSL project UUID; currently a deterministic UUID5 placeholder.
-- `shipment_tracking_number` — NMDC captures none; currently `nmdc-sampleset:{id}` placeholder.
-- `sample_type` slug — `SLOT_TO_SAMPLE_TYPE` is an assumption; verify each NMDC env package maps to the
-  right ESP slug in `lims-dev/content/monet/inventory/emsl_sample_types.yml`.
-- `project_id` — assumed to be `multi_omics_form.studyNumber` (the "EMSL ID"); confirm it resolves in
-  Nexus as the numeric EMSL project id.
+- `project_id` = `multi_omics_form.studyNumber` — confirmed: it's the 5-digit EMSL Proposal Number,
+  resolves in Nexus. Sample sets without one are treated as not EMSL-bound and skipped.
+- `project_uuid` — resolved from `project_id` via the project directory (`nexus` backend;
+  `/projects/lookup?q={id}` → `[0].uuid`). Falls back to a deterministic synthesized UUID only if the
+  directory can't resolve it. Switchable to PV2 later via `project_directory_backend`.
+- `shipment_tracking_number` — NMDC captures none; sent empty (the receiver requires the field to be
+  present). Not synthesized.
+- `sample_type` slug mapping — evidence-based (NMDC generic MIxS → generic ESP type); confirm with EMSL,
+  esp. `soil`→`soil` (not `monet-soil`) and `misc_envs`→`misc-envs` (a dedicated schema was authored).
 
 ## Local end-to-end testing
 
