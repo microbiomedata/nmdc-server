@@ -138,7 +138,8 @@ def test_send_to_lims_happy_path(db: Session, client: TestClient, logged_in_user
 
     assert resp.status_code == 200
     assert resp.json()["sent"] == 1
-    refreshed = db.get(models.SubmissionSampleSet, sample_set.id)
+    db.expire_all()
+    refreshed = db.get(models.SubmissionSampleSet, sample_set.id)  # type: ignore[attr-defined]
     assert refreshed.lims_export_results == summary
     assert refreshed.lims_exported_at is not None
 
