@@ -284,7 +284,7 @@ watch(
                 <v-btn
                   class="mt-3"
                   variant="outlined"
-                  :disabled="!!downloadProductsDisabledTooltip"
+                  :disabled="bulkDownloadSelected.length === 0"
                   @click="bulkDownloadSelected = []"
                 >
                   Clear selection
@@ -346,7 +346,7 @@ watch(
               <v-btn
                 class="mt-3"
                 variant="outlined"
-                :disabled="!!downloadMetadataDisabledTooltip"
+                :disabled="metadataDownloadSelected.length === 0"
                 @click="metadataDownloadSelected = []"
               >
                 Clear selection
