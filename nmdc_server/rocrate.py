@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
+from nmdc_server.ingest.common import duration_logger
 from nmdc_server.logger import get_logger
 from nmdc_server.utils import safe_name
 
@@ -244,15 +245,25 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         "Files are organized by DataGeneration and WorkflowExecution."
     )
 
-    data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather DataObjects",
+        precision=1,
+    ):
+        data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
     archived_workflow_ids = {
         workflow_id
         for workflow_ids in archived_workflows_by_data_generation.values()
         for workflow_id in workflow_ids
     }
-    dg_and_wfe_rows = _get_related_documents(
-        db, [*archived_data_generation_ids, *archived_workflow_ids]
-    )
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather DataGenerations and WorkflowExecutions",
+        precision=1,
+    ):
+        dg_and_wfe_rows = _get_related_documents(
+            db, [*archived_data_generation_ids, *archived_workflow_ids]
+        )
     workflow_rows = {
         id_: row
         for id_, row in dg_and_wfe_rows.items()
@@ -280,7 +291,12 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     biosample_ids = list(
         dict.fromkeys(biosample_id for row in related_rows for biosample_id in row.biosample_ids)
     )
-    biosample_rows = _get_related_documents(db, biosample_ids)
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather Biosamples",
+        precision=1,
+    ):
+        biosample_rows = _get_related_documents(db, biosample_ids)
     biosample_rows = {
         id_: row for id_, row in biosample_rows.items() if row.high_level_type == "nmdc:Biosample"
     }
@@ -292,20 +308,27 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
             for study_id in _document(row).get("associated_studies", [])
         )
     )
-    study_rows = {}
-    pending_study_ids = study_ids
-    while pending_study_ids:
-        new_rows = _get_related_documents(db, pending_study_ids)
-        new_rows = {
-            id_: row for id_, row in new_rows.items() if row.high_level_type == "nmdc:Study"
-        }
-        study_rows.update(new_rows)
-        parent_ids = [
-            parent_id
-            for row in new_rows.values()
-            for parent_id in (_document(row).get("part_of") or [])
-        ]
-        pending_study_ids = list(dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows))
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather Studies",
+        precision=1,
+    ):
+        study_rows = {}
+        pending_study_ids = study_ids
+        while pending_study_ids:
+            new_rows = _get_related_documents(db, pending_study_ids)
+            new_rows = {
+                id_: row for id_, row in new_rows.items() if row.high_level_type == "nmdc:Study"
+            }
+            study_rows.update(new_rows)
+            parent_ids = [
+                parent_id
+                for row in new_rows.values()
+                for parent_id in (_document(row).get("part_of") or [])
+            ]
+            pending_study_ids = list(
+                dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows)
+            )
 
     graph = rocrate_dict["@graph"]
     _add_archive_entities(
