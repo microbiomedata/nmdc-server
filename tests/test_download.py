@@ -133,6 +133,30 @@ def test_bulk_download_query(db: Session):
     assert data_object_agg_obj.count == 1
 
 
+def test_bulk_download_query_deduplicates_overlapping_filters_and_associations(db: Session):
+    sample = fakes.BiosampleFactory()
+    op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    op2 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    output = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/shared",
+        workflow_type=WorkflowActivityTypeEnum.raw_data.value,
+        file_type="Shared Type",
+    )
+    op1.outputs.append(output)
+    op2.outputs.append(output)
+    db.commit()
+
+    qs = query.DataObjectQuerySchema(
+        data_object_filter=[
+            {"workflow": "nmdc:RawData"},
+            {"file_type": "Shared Type"},
+        ]
+    )
+
+    assert [row.id for row in qs.execute(db).all()] == [output.id]
+    assert qs.aggregate(db).count == 1
+
+
 def test_workflow_summary_deduplicates_data_objects_across_data_generations(
     db: Session, client: TestClient
 ):
@@ -181,7 +205,6 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
     db.commit()
 
     resp = client.post("/api/bulk_download")
-    print(resp.content)
     assert resp.status_code == 400
 
     resp = client.post("/api/bulk_download/summary")
@@ -203,26 +226,36 @@ def test_generate_bulk_download_filtered(
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
-    metag_output = fakes.DataObjectFactory(
-        url="https://data.microbiomedata.org/data/metag",
+    mags = fakes.MAGsAnalysisFactory(was_informed_by=[op1])
+    mags_output = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/mags",
         omics_processing=op1,
-        workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
+        workflow_type=WorkflowActivityTypeEnum.mags_analysis.value,
+        file_type="Metagenome Bins Info File",
     )
-    metag.outputs.append(metag_output)
-    op1.outputs.append(metag_output)
+    mags.outputs.append(mags_output)
+    op1.outputs.append(mags_output)
 
     db.commit()
 
     filter = [
         {
-            "workflow": "nmdc:MetagenomeAnnotation",
+            "workflow": "nmdc:MagsAnalysis",
+            "file_type": "Metagenome Bins Info File",
         }
     ]
     resp = client.post("/api/bulk_download", json={"data_object_filter": filter})
     assert resp.status_code == 201
     assert resp.json()["id"]
     id_ = resp.json()["id"]
+
+    bulk_download = db.get(models.BulkDownload, id_)  # type: ignore[attr-defined]
+    assert bulk_download is not None
+    assert bulk_download.filter == filter
+    assert bulk_download.rocrate_metadata_cache is not None
+    assert len(bulk_download.files) == 1
+    assert bulk_download.files[0].data_object_id == mags_output.id
+    assert bulk_download.files[0].path.startswith("data/")
 
     resp = client.post("/api/bulk_download/summary", json={"data_object_filter": filter})
     assert resp.status_code == 200
@@ -252,7 +285,9 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
         poolable_replicates_manifest_id="nmdc:manifest-1",
     )
     data_object = fakes.DataObjectFactory(id="nmdc:dobj-1")
-    data_generation.outputs.append(data_object)
+    raw_data_object = fakes.DataObjectFactory(id="nmdc:dobj-raw")
+    data_generation.outputs.append(raw_data_object)
+    second_data_generation.outputs.append(data_object)
     fakes.ReadsQCFactory(
         id="nmdc:wfrqc-1",
         outputs=[data_object],
@@ -375,7 +410,16 @@ def test_generate_rocrate_for_bulk_download_includes_compact_related_graph(db: S
     )
     db.add(bulk_download)
     db.flush()
-    crate = generate_rocrate_for_bulk_download(db, bulk_download, ["nmdc:dobj-1"])
+    crate = generate_rocrate_for_bulk_download(
+        db,
+        bulk_download,
+        ["nmdc:dobj-1"],
+        archived_data_generation_ids=["nmdc:dgns-1", "nmdc:dgns-2"],
+        archived_workflows_by_data_generation={
+            "nmdc:dgns-1": ["nmdc:wfrqc-1"],
+            "nmdc:dgns-2": ["nmdc:wfrqc-1"],
+        },
+    )
     nodes = {node["@id"]: node for node in crate["@graph"]}
 
     properties = {prop["name"]: prop["value"] for prop in nodes["./"]["additionalProperty"]}

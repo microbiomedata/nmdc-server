@@ -26,8 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_, select
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.expression import ClauseElement, intersect, union, union_all
-from sqlalchemy.sql.selectable import CTE
+from sqlalchemy.sql.expression import ClauseElement, intersect, union_all
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
@@ -1212,15 +1211,43 @@ class DataObjectQuerySchema(BaseQuerySchema):
         omics_processing_qs = OmicsProcessingQuerySchema(conditions=self.conditions)
         op_cte = omics_processing_qs.query(db).cte()
 
-        subqueries = [
-            self._data_object_filter_subquery(db, f, op_cte) for f in self.data_object_filter
-        ]
-        union_query = union(
-            db.query(models.DataObject.id.label("id")).filter(False),  # type: ignore
-            *subqueries,  # type: ignore
-        ).subquery()
+        filter_predicates = []
+        for data_object_filter in self.data_object_filter:
+            predicate = models.DataObject.url != None  # noqa: E711
+            if data_object_filter.workflow:
+                predicate = and_(
+                    predicate,
+                    models.DataObject.workflow_type == data_object_filter.workflow.value,
+                )
+            if data_object_filter.file_type:
+                predicate = and_(
+                    predicate,
+                    models.DataObject.file_type == data_object_filter.file_type,
+                )
+            filter_predicates.append(predicate)
+
+        # Keep this as one query instead of UNION-ing one nearly identical query
+        # per selected file type. Large bulk-download filters can contain dozens
+        # of entries, and PostgreSQL's UNION deduplication may require enough
+        # shared memory to fail in a constrained container. DISTINCT preserves
+        # the old deduplication behavior for overlapping filters and data objects
+        # associated with multiple matching DataGenerations.
+        matching_dobj_ids_query = (
+            db.query(models.DataObject.id.label("id"))
+            .join(
+                models.omics_processing_output_association,
+                models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
+            )
+            .join(
+                op_cte,
+                models.omics_processing_output_association.c.omics_processing_id == op_cte.c.id,
+            )
+            .filter(or_(*filter_predicates) if filter_predicates else False)
+            .distinct()
+        )
+        matching_dobj_ids_subquery = matching_dobj_ids_query.subquery()
         result_query = db.query(models.DataObject).join(
-            union_query, models.DataObject.id == union_query.c.id
+            matching_dobj_ids_subquery, models.DataObject.id == matching_dobj_ids_subquery.c.id
         )
         if not self.include_superseded_workflow_executions:
             superseded_subquery = self._make_superseded_data_object_ids_subquery(db)
@@ -1231,31 +1258,6 @@ class DataObjectQuerySchema(BaseQuerySchema):
 
     def execute(self, db: Session) -> Query:
         return self.query(db)
-
-    # WARNING: This logic is duplicated in the DataObject.is_selected method.
-    def _data_object_filter_subquery(
-        self, db: Session, filter: DataObjectFilter, op_cte: CTE
-    ) -> Query:
-        """Create a subquery that selects from a data object filter condition."""
-        query = (
-            db.query(models.DataObject.id.label("id"))
-            .join(
-                models.omics_processing_output_association,
-                models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
-            )
-            .join(
-                op_cte,
-                models.omics_processing_output_association.c.omics_processing_id == op_cte.c.id,
-            )
-        )
-        if filter.workflow:
-            query = query.filter(models.DataObject.workflow_type == filter.workflow.value)
-
-        if filter.file_type:
-            query = query.filter(models.DataObject.file_type == filter.file_type)
-
-        query = query.filter(models.DataObject.url != None)  # noqa
-        return query
 
     def aggregate(self, db: Session) -> DataObjectAggregation:
         """Return the number of files and total size of matched data objects."""

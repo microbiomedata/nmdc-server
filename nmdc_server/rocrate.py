@@ -5,13 +5,15 @@ from typing import Any, cast
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
-from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
+from nmdc_server.ingest.common import duration_logger
+from nmdc_server.logger import get_logger
 from nmdc_server.utils import safe_name
 
 IDENTIFIER_PREFIX_URL = "https://bioregistry.io"
+logger = get_logger(__name__)
 
 
 def get_rocrate_base_bulk_download():
@@ -175,25 +177,6 @@ def _add_archive_entities(
     graph.extend(directories[id_] for id_ in sorted(directories))
 
 
-def _get_data_generation_and_workflow_executions(
-    db: Session, output_ids: list[str]
-) -> dict[str, models.BiosampleRelatedDocument]:
-    rows = db.execute(
-        select(models.BiosampleRelatedDocument)
-        .where(
-            models.BiosampleRelatedDocument.high_level_type.in_(
-                ["nmdc:DataGeneration", "nmdc:WorkflowExecution"]
-            )
-        )
-        .where(
-            models.BiosampleRelatedDocument.document["has_output"].op("?|")(
-                postgresql.array(output_ids)  # type: ignore[call-overload]
-            )
-        )
-    ).scalars()
-    return {row.id: row for row in rows}
-
-
 def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[str, list[str]]:
     """Group the specified DataGenerations by their Manifest IDs."""
     rows = db.execute(
@@ -209,30 +192,16 @@ def _get_manifest_members(db: Session, data_generation_ids: list[str]) -> dict[s
     return {manifest_id: sorted(members[manifest_id]) for manifest_id in sorted(members)}
 
 
-def _get_archived_workflows_by_data_generation(
-    bulk_download: models.BulkDownload,
-    data_generation_ids: list[str],
-) -> dict[str, list[str]]:
-    """Group archived WorkflowExecutions by their informing DataGenerations."""
-    associated_data_generation_ids = set(data_generation_ids)
-    workflows: dict[str, list[str]] = {}
-    for download_file in bulk_download.files:
-        workflow = download_file.data_object.was_generated_by
-        if workflow is None or isinstance(workflow, models.OmicsProcessing):
-            continue
-        for data_generation in workflow.was_informed_by:
-            if data_generation.id in associated_data_generation_ids:
-                workflows.setdefault(data_generation.id, []).append(workflow.id)
-    return {
-        data_generation_id: sorted(dict.fromkeys(workflows[data_generation_id]))
-        for data_generation_id in sorted(workflows)
-    }
-
-
 def generate_rocrate_for_bulk_download(  # noqa: C901
-    db: Session, bulk_download: models.BulkDownload, data_object_ids: list[str]
+    db: Session,
+    bulk_download: models.BulkDownload,
+    data_object_ids: list[str],
+    *,
+    archived_data_generation_ids: list[str],
+    archived_workflows_by_data_generation: dict[str, list[str]],
 ):
     """Generates an RO-Crate metadata object for a given bulk download record."""
+
     rocrate_dict = get_rocrate_base_bulk_download()
     root_data_entity = get_root_data_entity(rocrate_dict)
     if not root_data_entity:
@@ -276,51 +245,37 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         "Files are organized by DataGeneration and WorkflowExecution."
     )
 
-    data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
-    dg_and_wfe_rows: dict[str, models.BiosampleRelatedDocument] = {}
-    pending_output_ids = list(dict.fromkeys(data_object_ids))
-    visited_output_ids: list[str] = []
-    while pending_output_ids:
-        new_dg_and_wfe_rows = _get_data_generation_and_workflow_executions(db, pending_output_ids)
-        dg_and_wfe_rows.update(new_dg_and_wfe_rows)
-        visited_output_ids.extend(
-            id_ for id_ in pending_output_ids if id_ not in visited_output_ids
-        )
-        input_ids = [
-            input_id
-            for row in new_dg_and_wfe_rows.values()
-            for input_id in _document(row).get("has_input", [])
-        ]
-        pending_output_ids = list(
-            dict.fromkeys(id_ for id_ in input_ids if id_ not in visited_output_ids)
-        )
-
-    discovered_workflow_rows = {
-        id_: row
-        for id_, row in dg_and_wfe_rows.items()
-        if row.high_level_type == "nmdc:WorkflowExecution"
-    }
-    data_generation_rows = {
-        id_: row
-        for id_, row in dg_and_wfe_rows.items()
-        if row.high_level_type == "nmdc:DataGeneration"
-    }
-    manifest_members = _get_manifest_members(db, list(data_generation_rows))
-    archived_workflows_by_data_generation = _get_archived_workflows_by_data_generation(
-        bulk_download, list(data_generation_rows)
-    )
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather DataObjects",
+        precision=1,
+    ):
+        data_object_rows = _get_related_documents(db, list(dict.fromkeys(data_object_ids)))
     archived_workflow_ids = {
         workflow_id
         for workflow_ids in archived_workflows_by_data_generation.values()
         for workflow_id in workflow_ids
     }
-    # The recursive lookup above follows inputs back to their DataGeneration. It can
-    # encounter upstream WorkflowExecutions along the way, but those executions do
-    # not describe anything included in this archive. Only emit workflow nodes for
-    # executions that actually generated one of the downloaded files.
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather DataGenerations and WorkflowExecutions",
+        precision=1,
+    ):
+        dg_and_wfe_rows = _get_related_documents(
+            db, [*archived_data_generation_ids, *archived_workflow_ids]
+        )
     workflow_rows = {
-        id_: row for id_, row in discovered_workflow_rows.items() if id_ in archived_workflow_ids
+        id_: row
+        for id_, row in dg_and_wfe_rows.items()
+        if id_ in archived_workflow_ids and row.high_level_type == "nmdc:WorkflowExecution"
     }
+    data_generation_rows = {
+        id_: row
+        for id_, row in dg_and_wfe_rows.items()
+        if id_ in archived_data_generation_ids and row.high_level_type == "nmdc:DataGeneration"
+    }
+    manifest_members = _get_manifest_members(db, list(data_generation_rows))
+
     informing_data_generations_by_workflow: dict[str, list[str]] = {}
     for data_generation_id, workflow_ids in archived_workflows_by_data_generation.items():
         for workflow_id in workflow_ids:
@@ -336,7 +291,12 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
     biosample_ids = list(
         dict.fromkeys(biosample_id for row in related_rows for biosample_id in row.biosample_ids)
     )
-    biosample_rows = _get_related_documents(db, biosample_ids)
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather Biosamples",
+        precision=1,
+    ):
+        biosample_rows = _get_related_documents(db, biosample_ids)
     biosample_rows = {
         id_: row for id_, row in biosample_rows.items() if row.high_level_type == "nmdc:Biosample"
     }
@@ -348,20 +308,27 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
             for study_id in _document(row).get("associated_studies", [])
         )
     )
-    study_rows = {}
-    pending_study_ids = study_ids
-    while pending_study_ids:
-        new_rows = _get_related_documents(db, pending_study_ids)
-        new_rows = {
-            id_: row for id_, row in new_rows.items() if row.high_level_type == "nmdc:Study"
-        }
-        study_rows.update(new_rows)
-        parent_ids = [
-            parent_id
-            for row in new_rows.values()
-            for parent_id in (_document(row).get("part_of") or [])
-        ]
-        pending_study_ids = list(dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows))
+    with duration_logger(
+        logger=logger,
+        task_name=f"[{bulk_download.id}] Gather Studies",
+        precision=1,
+    ):
+        study_rows = {}
+        pending_study_ids = study_ids
+        while pending_study_ids:
+            new_rows = _get_related_documents(db, pending_study_ids)
+            new_rows = {
+                id_: row for id_, row in new_rows.items() if row.high_level_type == "nmdc:Study"
+            }
+            study_rows.update(new_rows)
+            parent_ids = [
+                parent_id
+                for row in new_rows.values()
+                for parent_id in (_document(row).get("part_of") or [])
+            ]
+            pending_study_ids = list(
+                dict.fromkeys(id_ for id_ in parent_ids if id_ not in study_rows)
+            )
 
     graph = rocrate_dict["@graph"]
     _add_archive_entities(
@@ -414,4 +381,5 @@ def generate_rocrate_for_bulk_download(  # noqa: C901
         if informing_data_generations:
             node["prov:wasInformedBy"] = _references(informing_data_generations)
         graph.append(node)
+
     return rocrate_dict
