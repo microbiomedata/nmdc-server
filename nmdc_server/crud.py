@@ -3,7 +3,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
-from time import perf_counter
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
@@ -14,6 +13,7 @@ from sqlalchemy.orm import Query, Session, selectinload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
+from nmdc_server.ingest.common import duration_logger
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
 from nmdc_server.rocrate import generate_rocrate_for_bulk_download
@@ -808,63 +808,54 @@ def create_bulk_download(
         db.add(bulk_download_model)
         db.flush()
 
-        log_prefix = f"Bulk download {bulk_download_model.id}"
+        with duration_logger(
+            logger=logger,
+            task_name=f"[{bulk_download_model.id}] Gather DataObjects",
+            precision=1,
+        ):
+            data_objects = []
+            for data_object in data_object_query.execute(db):
+                if data_object.url is None:
+                    logger.warning("Data object url is empty in bulk download")
+                    continue
+                data_objects.append(data_object)
 
-        selection_started = perf_counter()
-        data_objects = []
-        for data_object in data_object_query.execute(db):
-            if data_object.url is None:
-                logger.warning("Data object url is empty in bulk download")
-                continue
-            data_objects.append(data_object)
-        logger.info(
-            "%s data-object selection: %.3f seconds; selected_count=%d",
-            log_prefix,
-            perf_counter() - selection_started,
-            len(data_objects),
-        )
-
-        archive_paths_started = perf_counter()
-        # Archive-path bulk lookup optimization (separate from the RO-Crate
-        # association-table ancestry lookup optimization).
-        archive_path_lookup = get_bulk_archive_path_lookup(db, data_objects)
-        data_object_ids = []
-        for data_object in data_objects:
-            data_object_ids.append(data_object.id)
-            db.add(
-                models.BulkDownloadDataObject(
-                    bulk_download=bulk_download_model,
-                    data_object=data_object,
-                    path=f"data/{archive_path_lookup.paths_by_data_object_id[data_object.id]}",
+        with duration_logger(
+            logger=logger,
+            task_name=f"[{bulk_download_model.id}] Determine in-archive paths",
+            precision=1,
+        ):
+            archive_path_lookup = get_bulk_archive_path_lookup(db, data_objects)
+            data_object_ids = []
+            for data_object in data_objects:
+                data_object_ids.append(data_object.id)
+                db.add(
+                    models.BulkDownloadDataObject(
+                        bulk_download=bulk_download_model,
+                        data_object=data_object,
+                        path=f"data/{archive_path_lookup.paths_by_data_object_id[data_object.id]}",
+                    )
                 )
-            )
-        logger.info(
-            "%s archive-path construction: %.3f seconds; file_count=%d",
-            log_prefix,
-            perf_counter() - archive_paths_started,
-            len(data_object_ids),
-        )
 
         if not data_object_ids:
             db.rollback()
             return None
 
         db.flush()
-        bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
-            db,
-            bulk_download_model,
-            data_object_ids,
-            archived_data_generation_ids=archive_path_lookup.data_generation_ids,
-            archived_workflows_by_data_generation=archive_path_lookup.workflow_ids_by_data_generation_id,
-        )
-        commit_started = perf_counter()
+        with duration_logger(
+            logger=logger,
+            task_name=f"[{bulk_download_model.id}] Generate RO-Crate",
+            precision=1,
+        ):
+            bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
+                db,
+                bulk_download_model,
+                data_object_ids,
+                archived_data_generation_ids=archive_path_lookup.data_generation_ids,
+                archived_workflows_by_data_generation=archive_path_lookup.workflow_ids_by_data_generation_id,
+            )
+
         db.commit()
-        logger.info(
-            "%s commit: %.3f seconds; file_count=%d",
-            log_prefix,
-            perf_counter() - commit_started,
-            len(data_object_ids),
-        )
         return bulk_download_model
 
     except Exception:
