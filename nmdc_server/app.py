@@ -96,7 +96,7 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
             # Note: We commented out the SQLAlchemyPanel because it would crash the FastAPI whenever
             #       it tried to format SQL queries that were larger than `sqlparse` could handle.
             #       This happens when we were adding RO-Crate functionality to the bulk downloader.
-            ##panels=["nmdc_server.database.SQLAlchemyPanel"],
+            # #panels=["nmdc_server.database.SQLAlchemyPanel"],
             # Uncheck the profiling feature since it doesn't work for AJAX requests
             disable_panels=["debug_toolbar.panels.profiling.ProfilingPanel"],
         )
