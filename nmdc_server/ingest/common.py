@@ -163,10 +163,14 @@ def maybe_merge_download_artifact(ingest_db: Session, query):
 
 
 @contextmanager
-def duration_logger(logger: logging.Logger, task_name: str = "Task"):
+def duration_logger(logger: logging.Logger, task_name: str = "Task", precision: int | None = None):
     """
     Context manager that developers can use (via `with`) to measure how long a task takes to perform
     and print that duration via the specified logger (e.g. to print it to the console).
+
+    You can use the `precision` argument to say how many digits you want there to be after the
+    decimal point. By default, there are none (and there is no decimal point; e.g. "5 seconds").
+    You can pass in `precision=3`, for example, to get "5.123 seconds" instead of "5 seconds".
 
     Example usage:
     ```
@@ -185,4 +189,4 @@ def duration_logger(logger: logging.Logger, task_name: str = "Task"):
     finally:
         end_time = perf_counter()
         duration_sec = end_time - start_time
-        logger.info(f"{task_name}: Finished in {round(duration_sec)} seconds.")
+        logger.info(f"{task_name}: Finished in {round(duration_sec, ndigits=precision)} seconds.")
