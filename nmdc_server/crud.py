@@ -13,8 +13,8 @@ from sqlalchemy.orm import Query, Session, selectinload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
-from nmdc_server.ingest.common import duration_logger
 from nmdc_server.config import settings
+from nmdc_server.ingest.common import duration_logger
 from nmdc_server.logger import get_logger
 from nmdc_server.rocrate import generate_rocrate_for_bulk_download
 from nmdc_server.utils import safe_name
