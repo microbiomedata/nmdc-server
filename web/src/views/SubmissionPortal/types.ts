@@ -93,6 +93,12 @@ export const HARMONIZER_TEMPLATES = {
     sampleDataSlot: 'water_data',
     status: 'published',
   },
+  'wastewater sludge': {
+    displayName: 'wastewater sludge',
+    schemaClass: 'WastewaterSludgeInterface',
+    sampleDataSlot: 'wastewater_sludge_data',
+    status: 'published',
+  },
   isolate: {
     displayName: 'isolate',
     schemaClass: 'IsolateInterface',
