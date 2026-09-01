@@ -5,6 +5,7 @@ import os
 import signal
 import subprocess
 import sys
+import traceback
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -172,6 +173,20 @@ def send_slack_message(text: str) -> bool:
     return is_sent
 
 
+def format_exception_for_notification(error: BaseException) -> str:
+    r"""
+    Returns the "exception" (i.e. not stack trace) part of the specified exception.
+
+    Note: I think of this as the one-liner _following_ the stack trace in the normal exception dump.
+
+    Docs: https://docs.python.org/3/library/traceback.html#traceback.format_exception_only
+
+    >>> format_exception_for_notification(ValueError("Invalid value"))
+    'ValueError: Invalid value'
+    """
+    return "".join(traceback.format_exception_only(error)).strip()
+
+
 def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
     r"""
     Formats all bullets from all reports into a single string.
@@ -180,7 +195,7 @@ def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
     ...     "biosamples": ETLReport(plural_subject="Biosamples"),
     ...     "studies": ETLReport(plural_subject="Studies"),
     ... })
-    '• Biosamples: extracted `0`, loaded `0`\n• Studies: extracted `0`, loaded `0`'
+    '• Biosamples: extracted and loaded `0`\n• Studies: extracted and loaded `0`'
     """
 
     all_bullets = []
@@ -304,7 +319,7 @@ def ingest(
                 f"❌ Ingest failed.\n"
                 f"• Environment: `{settings.environment_name_for_ingester}`\n"
                 f"• Start time: `{ingest_start_datetime_str}`\n"
-                f"• Error message: {e}"
+                f"• Error message: {format_exception_for_notification(e)}"
             )
 
             # Now that we've processed the Exception at this level, propagate it.
