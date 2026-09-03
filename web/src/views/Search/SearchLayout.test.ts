@@ -35,20 +35,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   setConditions([]);
   server.use(
-    http.get('/api/summary', () => HttpResponse.json({})),
-    http.get('/api/settings', () => HttpResponse.json({
-      portal_banner_title: null,
-      portal_banner_message: null,
-      disable_bulk_data_product_download: false,
-      disable_individual_data_product_download: false,
-    })),
     http.post('/api/study/search', () => HttpResponse.json(mockStudySearchResponse)),
     http.post('/api/biosample/search', () => HttpResponse.json({
       count: 13,
       results: [],
     })),
-    http.post('/api/data_object/workflow_summary', () => HttpResponse.json({})),
-    http.post('/api/bulk_download/summary', () => HttpResponse.json({ count: 0, size: 0 })),
   );
 });
 

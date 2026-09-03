@@ -1,3 +1,7 @@
+/**
+ * This file contains minimal api response mocks for API endpoints used in tests.
+ * Some tests will override these responses if they need a more complex response to accurately test component behavior.
+ */
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [
