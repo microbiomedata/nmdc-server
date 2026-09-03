@@ -1,98 +1,63 @@
-<script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 
-import OrcidId from '@/components/Presentation/OrcidId.vue';
-
-import { stateRefs } from '@/store';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
-import {
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
-  getSubmissionLockedBy,
-  incrementalSaveRecordRequest
-} from './store';
 import { unlockSubmission } from './store/api';
-import SubmissionPermissionBanner from '@/views/SubmissionPortal/Components/SubmissionPermissionBanner.vue';
-import StatusAlert from '@/views/SubmissionPortal/Components/StatusAlert.vue';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
+import { useEventListener } from '@vueuse/core';
+import { useSubmissionStore } from './store';
 
-export default defineComponent({
-  components: {SaveErrorSnackbar, StatusAlert, SubmissionPermissionBanner, SubmissionNavigationSidebar, OrcidId },
+const props = defineProps<{
+  id: string | null;
+  sampleSetId: string | null;
+}>();
 
-  props: {
-    id: {
-      type: String as PropType<string | null>,
-      default: null,
-    },
-  },
+useEventListener('beforeunload', () => {
+  if (props.id) {
+    unlockSubmission(props.id);
+  }
+})
 
-  setup(props) {
-    const loggedInUserHasLock = computed(() => {
-      const lockedByUser = getSubmissionLockedBy();
-      if (!lockedByUser) {
-        return true;
-      }
-      if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
-        return true;
-      }
-      return false;
-    });
+const store = useSubmissionStore();
+const route = useRoute();
 
-    const isEditingSubmission = computed(() => props.id !== null);
-    const showPermissionBanner = computed(() => canEditSubmissionByStatus() && !canEditSubmissionMetadata());
-    const showStatusAlert = computed(() => !canEditSubmissionByStatus());
-
-    window.addEventListener('beforeunload', () => {
-      if (isEditingSubmission.value) {
-        if (props.id) {
-          unlockSubmission(props.id);
-        }
-      }
-    });
-
-    return {
-      loggedInUserHasLock,
-      getSubmissionLockedBy,
-      isEditingSubmission,
-      showPermissionBanner,
-      showStatusAlert,
-      incrementalSaveRecordRequest
-    };
-  },
-
-});
+// Sample-set route data is ready once no request is in progress and either no
+// sample set was requested or the loaded record matches the requested ID.
+// Checking the ID prevents the route component from mounting in the gap between
+// the request settling and the store being hydrated, when SubmissionForm could
+// erroneously validate the default values.
+const sampleSetReady = computed(() =>
+  !store.sampleSet.requests.loading.loading &&
+  (props.sampleSetId === null || store.sampleSet.record?.id === props.sampleSetId)
+);
+const sampleSetError = computed(() => store.sampleSet.requests.loading.error);
+const useFullWidthLayout = computed(() => route.meta.fullWidth === true);
 </script>
 
 <template>
-  <div class="position-relative">
-    <v-progress-linear
-      :active="incrementalSaveRecordRequest.loading.value"
-      absolute
-      indeterminate
-      color="primary"
-    />
-    <SaveErrorSnackbar />
-    <SubmissionNavigationSidebar class="mx-0" />
-    <div v-if="loggedInUserHasLock || !isEditingSubmission">
-      <SubmissionPermissionBanner v-if="showPermissionBanner" />
-      <StatusAlert v-if="showStatusAlert" />
-      <v-container>
-        <router-view />
-      </v-container>
-    </div>
-    <v-alert v-else>
-      <p class="text-h5">
-        This submission is currently being edited by:
-      </p>
-      <orcid-id
-        v-if="getSubmissionLockedBy()"
-        :orcid-id="getSubmissionLockedBy()?.orcid || ''"
-        :name="getSubmissionLockedBy()?.name"
-        :authenticated="true"
-      />
-      <router-link :to="'/submission/home'">
-        Return to submission list
-      </router-link>
+  <!-- Common elements that are always shown -->
+  <SaveErrorSnackbar />
+  <SubmissionNavigationSidebar />
+
+  <!-- If the sample set failed to load, show an error message in a v-container -->
+  <v-container v-if="sampleSetError">
+    <v-alert
+      type="error"
+    >
+      <div class="text-h6">
+        Error loading sample set
+      </div>
+      {{ sampleSetError }}
     </v-alert>
-  </div>
+  </v-container>
+
+  <!-- Once sample-set route data is ready, render the router view directly if the
+       route requested a full-width layout; otherwise wrap it in a v-container. -->
+  <router-view
+    v-else-if="sampleSetReady && useFullWidthLayout"
+  />
+  <v-container v-else-if="!useFullWidthLayout">
+    <router-view v-if="sampleSetReady" />
+  </v-container>
 </template>

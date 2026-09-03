@@ -98,6 +98,25 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
     return schemas.TableSummary(total=count, attributes=attributes)
 
 
+def make_superseded_wfe_outputs_subquery(db: Session) -> Any:
+    r"""
+    Returns a subquery containing all distinct `DataObject` `id` values that are
+    outputs of superseded `WorkflowExecution`s (i.e., those with `superseded_by`
+    set to a non-NULL value).
+    """
+    superseded_queries = []
+    for wfe_model in models.workflow_activity_types:
+        wfe_superseded_query: Query = (
+            db.query(models.DataObject.id)
+            .select_from(wfe_model)
+            .join(getattr(wfe_model, "outputs"))
+            .filter(wfe_model.superseded_by != None)  # noqa: E711
+        )
+        superseded_queries.append(wfe_superseded_query.statement)
+    all_superseded_subquery: Selectable = union_all(*superseded_queries).alias()
+    return db.query(all_superseded_subquery).distinct().subquery()
+
+
 def make_all_wfe_outputs_subquery(db: Session) -> Alias:
     r"""
     Returns a subquery that gets all of the distinct `DataObject` `id` values
@@ -244,76 +263,74 @@ def get_geospatial_aggregation(
 def get_data_object_aggregation(
     db: Session,
     conditions: List[query.ConditionSchema],
+    include_superseded_workflow_executions: bool = True,
 ) -> schemas.DataObjectAggregation:
+    """
+    Aggregate data objects by workflow type and file type,
+    optionally excluding outputs of superseded workflow executions.
+    """
     subquery = query.OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
-    rows = (
-        db.query(
-            models.DataObject.workflow_type,
-            models.DataObject.file_type,
-            func.count(models.DataObject.id),
-            func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)),
-        )
-        .join(
-            models.omics_processing_output_association,
-            models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
-        )
-        .filter(
-            models.DataObject.workflow_type != None,
-            models.DataObject.file_type != None,
-            subquery.c.id == models.omics_processing_output_association.c.omics_processing_id,
-            models.DataObject.url != None,
-        )
-        .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
-    )
+    if not include_superseded_workflow_executions:
+        superseded_subquery = make_superseded_wfe_outputs_subquery(db)
+        superseded_dobj_ids_subquery = select(superseded_subquery.c.id)
     agg: schemas.DataObjectAggregation = {
         workflow.value: schemas.DataObjectAggregationElement()
         for workflow in WorkflowActivityTypeEnum
     }
 
-    # TODO: we could join this into one query with a union, but it might not be worthwhile
-    # aggregate workflows
-    rows = (
+    # A data object can be associated with multiple matching data generations
+    # (notably when a workflow is informed by pooled replicates). Deduplicate at
+    # the data object level before aggregating so both counts and byte totals are
+    # accurate.
+    data_objects_query = (
         db.query(
-            models.DataObject.workflow_type,
-            func.count(models.DataObject.id),
-            func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)),
-        )
-        .join(
-            models.omics_processing_output_association,
-            models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
-        )
-        .filter(
-            models.DataObject.workflow_type != None,
-            subquery.c.id == models.omics_processing_output_association.c.omics_processing_id,
-            models.DataObject.url != None,
-        )
-        .group_by(models.DataObject.workflow_type)
-    )
-    for row in rows:
-        agg[row[0]].count = row[1]
-        agg[row[0]].size = row[2]
-
-    # aggregate file_types
-    rows = (
-        db.query(
+            models.DataObject.id,
             models.DataObject.workflow_type,
             models.DataObject.file_type,
-            func.count(models.DataObject.id),
-            func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)),
+            models.DataObject.file_size_bytes,
         )
         .join(
             models.omics_processing_output_association,
             models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
         )
-        .filter(
-            models.DataObject.workflow_type != None,
-            models.DataObject.file_type != None,
+        .join(
+            subquery,
             subquery.c.id == models.omics_processing_output_association.c.omics_processing_id,
-            models.DataObject.url != None,
         )
-        .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
+        .filter(
+            models.DataObject.workflow_type != None,  # noqa: E711
+            models.DataObject.url != None,  # noqa: E711
+        )
     )
-    for row in rows:
+    if not include_superseded_workflow_executions:
+        data_objects_query = data_objects_query.filter(
+            models.DataObject.id.notin_(superseded_dobj_ids_subquery)
+        )
+    data_objects = data_objects_query.distinct().subquery()
+
+    # TODO: we could join this into one query with a union, but it might not be worthwhile
+    # aggregate workflows
+    workflow_rows_query = db.query(
+        data_objects.c.workflow_type,
+        func.count(data_objects.c.id),
+        func.sum(func.coalesce(data_objects.c.file_size_bytes, 0)),
+    )
+    for row in workflow_rows_query.group_by(data_objects.c.workflow_type):
+        agg[row[0]].count = int(row[1] or 0)
+        agg[row[0]].size = int(row[2] or 0)
+
+    # aggregate file_types
+    file_type_rows_query = db.query(
+        data_objects.c.workflow_type,
+        data_objects.c.file_type,
+        func.count(data_objects.c.id),
+        func.sum(func.coalesce(data_objects.c.file_size_bytes, 0)),
+    ).filter(
+        data_objects.c.file_type != None,  # noqa: E711
+    )
+    for row in file_type_rows_query.group_by(
+        data_objects.c.workflow_type, data_objects.c.file_type
+    ):
         agg[row[0]].file_types[row[1]] = schemas.DataObjectAggregationNode(
             count=row[2], size=row[3]
         )

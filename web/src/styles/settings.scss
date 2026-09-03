@@ -24,6 +24,24 @@
   color: inherit;
 }
 
+a:not(.v-btn, .v-list-item),
+.v-theme--light a:not(.v-btn, .v-list-item) {
+  color: rgb(var(--v-theme-link));
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+a:hover:not(.v-btn, .v-list-item),
+.v-theme--light a:hover:not(.v-btn, .v-list-item) {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+a:visited:not(.v-btn, .v-list-item),
+.v-theme--light a:visited:not(.v-btn, .v-list-item) {
+  color: rgb(var(--v-theme-visited));
+}
+
 // Utilities
 .stack-sm {
   display: flex;

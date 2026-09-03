@@ -5,10 +5,18 @@ import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from '@microbiomedata/data-harmonizer';
 import {
   CellData,
-  HARMONIZER_TEMPLATES,
-  MetadataSuggestionRequest,
   ColumnHelpInfo,
+  HarmonizerTemplateInfo,
+  MetadataSuggestionRequest,
+  TemplateName,
 } from '@/views/SubmissionPortal/types';
+import {
+  type DataHarmonizerData, validateAnalysisTypeMutuallyExclusiveValues,
+  validatePlateWellsForJgi,
+  validateReadUrlsOrInsdcRunIdentifiers,
+} from '@/views/SubmissionPortal/validation';
+// @ts-ignore
+import colors from '@/colors';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -33,6 +41,8 @@ const GOLD_FIELDS = {
     downstream: [],
   },
 };
+
+export type InvalidCells = Record<number, Record<number, string>>;
 
 export default class HarmonizerApi {
   schemaSectionNames: Ref<Record<string, string>>;
@@ -67,20 +77,6 @@ export default class HarmonizerApi {
   async init(r: HTMLElement, schema: any, templateName: string | undefined, goldEcosystemTree: any) {
     this.schema = schema;
     this.goldEcosystemTree = goldEcosystemTree;
-
-    // Attempt to find each template's underlying schema class, pull the excel_worksheet_name annotation from it
-    // and add it to the template object.
-    Object.values(HARMONIZER_TEMPLATES).forEach((template) => {
-      if (!template.schemaClass) {
-        return;
-      }
-      const classDefinition = schema.classes[template.schemaClass];
-      if (!classDefinition) {
-        return;
-      }
-
-      template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
-    });
 
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
@@ -140,7 +136,22 @@ export default class HarmonizerApi {
   }
 
   _getFieldSettings() {
-    const fieldSettings: any = {};
+    const fieldSettings: any = {
+      isolate_ribosomal_seq: {
+        getColumn: (_: any, col: {[key: string]: any}) => {
+          const newCol = { ...col };
+          newCol.width = 180;
+          return newCol;
+        }
+      },
+      isolate_second_ribosomal_seq: {
+        getColumn: (_: any, col: {[key: string]: any}) => {
+          const newCol = { ...col };
+          newCol.width = 180;
+          return newCol;
+        }
+      },
+    };
     const fieldNames = Object.keys(GOLD_FIELDS);
     for (let i = 0; i < fieldNames.length; i += 1) {
       const field = fieldNames[i] as keyof typeof GOLD_FIELDS;
@@ -196,6 +207,9 @@ export default class HarmonizerApi {
     }, 200, { leading: true }));
     this.dh.hot.updateSettings({
       search: true,
+      comments: {
+        readOnly: true,
+      },
       customBorders: true,
       height: '100%',
       width: '100%',
@@ -224,7 +238,11 @@ export default class HarmonizerApi {
     if (!this.ready.value) {
       return;
     }
-    await this.dh.loadDataObjects(data);
+    // Handsontable's comments plugin gets confused if the initial data is an empty array because it doesn't know how
+    // many columns there are. To work around that, we load a single empty object if the data is empty, which
+    // DataHarmonizer will expand into a single row with the correct number of columns. All cells of that row will be
+    // empty, so it doesn't change what the user sees, but it allows the comments plugin to work correctly.
+    await this.dh.loadDataObjects(data.length === 0 ? [{}] : data);
     await this.dh.hot.render();
     this.refreshState();
   }
@@ -257,26 +275,57 @@ export default class HarmonizerApi {
     return results;
   }
 
-  highlight(row?: number, col?: number) {
-    const borders = this.dh.hot.getPlugin('customBorders');
-    nextTick(() => borders.clearBorders());
-    if (row !== undefined && col !== undefined) {
-      nextTick(() => borders.setBorders([[row, col, row, col]], {
+highlight(row?: number, col?: number) {
+  const borders = this.dh.hot.getPlugin('customBorders');
+  nextTick(() => borders.clearBorders());
+
+  if (row !== undefined && col !== undefined) {
+    const hot = this.dh.hot;
+    const totalRows = hot.countRows();
+    const totalCols = hot.countCols();
+
+    // Create border definitions for the entire row and column
+    const cellsToHighlight: number[][] = [];
+
+    // Add all cells in the row
+    for (let c = 0; c < totalCols; c++) {
+      cellsToHighlight.push([row, c, row, c]);
+    }
+
+    // Add all cells in the column
+    for (let r = 0; r < totalRows; r++) {
+      cellsToHighlight.push([r, col, r, col]);
+    }
+
+    nextTick(() => {
+      // Apply a background to row and column
+      borders.setBorders(cellsToHighlight, {
+        left: { hide: false, width: 1, color: colors.purpleLightest },
+        right: { hide: false, width: 1, color: colors.purpleLightest },
+        top: { hide: false, width: 1, color: colors.purpleLightest },
+        bottom: { hide: false, width: 1, color: colors.purpleLightest },
+      });
+
+      // Highlight the target cell itself with a stronger border
+      borders.setBorders([[row, col, row, col]], {
         left: { hide: false, width: 2, color: 'magenta' },
         right: { hide: false, width: 2, color: 'magenta' },
         top: { hide: false, width: 2, color: 'magenta' },
         bottom: { hide: false, width: 2, color: 'magenta' },
-      }));
-    }
+      });
+
+      hot.render();
+    });
   }
+}
 
   getCellData(row: number, col: number): CellData {
     const text = this.dh.hot.getDataAtCell(row, col);
     return { row, col, text };
   }
 
-  setCellData(data: CellData[]) {
-    this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]));
+  setCellData(data: CellData[], source?: string) {
+    this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]), source);
   }
 
   /**
@@ -338,8 +387,100 @@ export default class HarmonizerApi {
     this.dh.setupTemplate(folder);
   }
 
-  async validate() {
+  /**
+   * Mark a cell as invalid by adding an entry to the `invalid_cells` object in the DataHarmonizer instance.
+   *
+   * @param row
+   * @param slot
+   * @param message
+   * @private
+   */
+  private setInvalidCell(row: number, slot: string, message: string) {
+    if (!this.dh.invalid_cells[row]) {
+      this.dh.invalid_cells[row] = {};
+    }
+    const slotInfo = this.slotInfo.get(slot);
+    if (!slotInfo) {
+      console.warn(`Attempted to add invalid cell for unknown slot ${slot}`);
+      return;
+    }
+    const col = slotInfo.columnIndex;
+    this.dh.invalid_cells[row][col] = message;
+  }
+
+  /**
+   * Private method to clear comments from all cells that are currently marked as invalid in the DataHarmonizer
+   * instance. This method should be called before any operation that may change the validity of cells.
+   *
+   * @private
+   */
+  private clearCommentsForInvalidCells() {
+    const commentsPlugin = this.dh.hot.getPlugin('comments');
+    Object.entries(this.dh.invalid_cells as InvalidCells).forEach(([rowStr, cols]) => {
+      const row = parseInt(rowStr, 10);
+      Object.entries(cols).forEach(([colStr, _]) => {
+        const col = parseInt(colStr, 10);
+        // `false` here means "don't re-render after removing the comment." We'll do a single render at the end.
+        commentsPlugin.removeCommentAtCell(row, col, false);
+      });
+    });
+    this.dh.hot.render();
+  }
+
+  /**
+   * Private method to set comments on all cells that are currently marked as invalid in the DataHarmonizer instance,
+   * with the comment text set to the corresponding error message. This method should be called after any operation
+   * that may have changed the validity of cells, and after `_clearCommentsForInvalidCells` has been called to clear
+   * out old comments.
+   *
+   * @private
+   */
+  private setCommentsForInvalidCells() {
+    const commentsPlugin = this.dh.hot.getPlugin('comments');
+    Object.entries(this.dh.invalid_cells as InvalidCells).forEach(([rowStr, cols]) => {
+      const row = parseInt(rowStr, 10);
+      Object.entries(cols).forEach(([colStr, message]) => {
+        const col = parseInt(colStr, 10);
+        commentsPlugin.updateCommentMeta(row, col, { value: message, readOnly: true });
+      });
+    });
+    this.dh.hot.render();
+  }
+
+  /**
+   * Private method to perform custom validation logic on the data in the DataHarmonizer instance. This method should be
+   * called as part of the overall validation process after the DataHarmonizer's built-in validation has been performed.
+   *
+   * @param template The template to validate
+   * @private
+   */
+  private doCustomValidation(template: TemplateName) {
+    const data: DataHarmonizerData = this.dh.getDataObjects();
+    const issues = validatePlateWellsForJgi(data);
+    if (template === 'data_mg' || template === 'data_mt') {
+      const readSlots = ['read_1_url', 'read_2_url'];
+      issues.push(...validateReadUrlsOrInsdcRunIdentifiers(data, readSlots));
+    }
+    if (template === 'data_mg_interleaved' || template === 'data_mt_interleaved') {
+      const readSlots = ['interleaved_url'];
+      issues.push(...validateReadUrlsOrInsdcRunIdentifiers(data, readSlots));
+    }
+    issues.push(...validateAnalysisTypeMutuallyExclusiveValues(data));
+    issues.forEach((issue) => {
+      this.setInvalidCell(issue.row, issue.slot, issue.message);
+    });
+  }
+
+
+  /**
+   * Validate the data in the DataHarmonizer instance by applying both the DataHarmonizer's built-in validation logic
+   * and any custom validation logic.
+   */
+  async validate(template: TemplateName) {
+    this.clearCommentsForInvalidCells();
     await this.dh.validate();
+    this.doCustomValidation(template);
+    this.setCommentsForInvalidCells();
     this.refreshState();
     return this.dh.invalid_cells;
   }
@@ -399,8 +540,11 @@ export default class HarmonizerApi {
     hot.updateSettings({ columns });
   }
 
-  setTableReadOnly() {
-    this.dh.hot.updateSettings({ readOnly: true });
+  setTableReadOnly(options: { readOnly: boolean }) {
+    if (!this.dh || !this.dh.hot || !this.ready.value) {
+      return;
+    }
+    this.dh.hot.updateSettings(options);
     this.dh.hot.render();
   }
 
@@ -409,7 +553,9 @@ export default class HarmonizerApi {
   }
 
   setInvalidCells(invalidCells: Record<number, Record<number, string>>) {
+    this.clearCommentsForInvalidCells();
     this.dh.invalid_cells = invalidCells;
+    this.setCommentsForInvalidCells();
     this.dh.hot.render();
   }
 
@@ -482,6 +628,18 @@ export default class HarmonizerApi {
         return [key, unflattenedValue];
       }),
     ));
+  }
+
+  getExcelWorksheetName(template: HarmonizerTemplateInfo) {
+    if (!template.schemaClass) {
+      return;
+    }
+    const classDefinition = this.schema.classes[template.schemaClass];
+    if (!classDefinition) {
+      return;
+    }
+
+    return classDefinition.annotations?.excel_worksheet_name?.value || template.displayName;
   }
 
   static flattenArrayValues(tableData: Record<string, any>[]) {

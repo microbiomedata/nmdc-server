@@ -16,6 +16,16 @@ from nmdc_server.schemas import StudyCreate
 
 logger = get_logger(__name__)
 
+# Define how long we want `requests` to wait (a) to establish a connection to the remote server,
+# and (b) for the remote server to send the first (or any subsequent) byte of the response.
+# Docs: https://docs.python-requests.org/en/latest/user/advanced/#timeouts
+requests_timeout_for_connection: float = 5.0  # in seconds
+requests_timeout_for_next_byte_of_response: float = 20.0  # in seconds
+requests_timeout: tuple[float, float] = (
+    requests_timeout_for_connection,
+    requests_timeout_for_next_byte_of_response,
+)
+
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
     pi = db.query(PrincipalInvestigator).filter_by(name=name).first()
@@ -25,7 +35,7 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
     image_data = None
     if url:
         try:
-            r = requests.get(url)
+            r = requests.get(url, timeout=requests_timeout)
             r.raise_for_status()
         except Exception as e:
             logger.error(f"Failed to download image for {name} from {url} : {e}")
@@ -53,10 +63,25 @@ def transform_doi(doi: str) -> str:
 
 
 def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
+    """
+    Fetches and returns the data (bytes) from the URL in the "url" field of the first dictionary,
+    if any, in the `image_urls` list. If the list is empty or the request fails, returns `None`.
+
+    Note: If the first list item lacks a "url" field, this function raises a `KeyError`. I don't
+          know what's special about the first list item—that was the original behavior and I am not
+          prepared to modify it.
+    """
+
     if image_urls:
-        r = requests.get(image_urls[0]["url"])
-        if r.ok:
-            return r.content
+        url = image_urls[0]["url"]
+        try:
+            response = requests.get(url, timeout=requests_timeout)
+            response.raise_for_status()
+            return response.content
+        # Note: `requests.RequestException` accounts for not only `requests.HTTPError`, but also
+        #       `requests.Timeout` (which we've encountered in production) and other exceptions.
+        except requests.RequestException as e:
+            logger.error(f"Failed to download image from '{url}': {e}")
     return None
 
 

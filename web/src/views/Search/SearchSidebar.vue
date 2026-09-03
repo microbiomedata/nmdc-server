@@ -2,20 +2,21 @@
 import {
   ref, watch,
 } from 'vue';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
-import { geneFunctionTables, types } from '@/encoding';
 import {
   api, AttributeSummary, Condition, DatabaseSummaryResponse, EntityType,
 } from '@/data/api';
+import { geneFunctionTables } from '@/encoding';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
 
-import MenuContent from '@/components/MenuContent.vue';
 import FacetedSearch, { SearchFacet } from '@/components/FacetedSearch.vue';
+import MenuContent from '@/components/MenuContent.vue';
 
 import {
-  stateRefs, removeConditions, setConditions, toggleConditions,
+  removeConditions, setConditions,
+  stateRefs,
+  toggleConditions,
 } from '@/store';
 import { event } from 'vue-gtag';
 
@@ -122,18 +123,9 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
 ];
 
-withDefaults(defineProps<{
-  resultsCount?: number;
-  isLoading?: boolean;
-}>(), {
-  resultsCount: 0,
-  isLoading: false,
-});
-
 const filterText = ref('');
 const textSearchResults = ref([] as Condition[]);
 const dbSummary = ref({} as DatabaseSummaryResponse);
-const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
 const conditions = stateRefs.conditions;
 
 api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
@@ -213,8 +205,11 @@ watch(stateRefs.conditions, trackFilterConditions);
     permanent
     width="320"
   >
-    <template #prepend>
-      <div class="mx-3 my-2">
+    <template
+      v-if="conditions.length > 0"
+      #prepend
+    >
+      <div class="mx-3 mt-3">
         <div
           v-if="conditions.length"
           class="text-subtitle-2 text-primary d-flex align-center"
@@ -241,12 +236,11 @@ watch(stateRefs.conditions, trackFilterConditions);
           </v-tooltip>
         </div>
       </div>
-
       <ConditionChips
         v-if="conditions.length"
         :conditions="conditions"
         :db-summary="dbSummary"
-        class="ma-3"
+        class="mx-3"
         style="max-height: 50vh; overflow: auto;"
         @remove="removeConditions([$event])"
       >
@@ -265,37 +259,7 @@ watch(stateRefs.conditions, trackFilterConditions);
           />
         </template>
       </ConditionChips>
-
-      <div class="font-weight-bold text-subtitle-2 text-primary mx-3">
-        <span v-if="isLoading">
-          Loading results...
-        </span>
-        <span
-          v-else
-          class="d-flex align-center"
-        >
-          <span>Found {{ resultsCount }} samples.</span>
-          <v-tooltip
-            location="bottom"
-            open-delay="600"
-          >
-            <template #activator="{ props }">
-              <v-btn
-                icon
-                variant="text"
-                size="small"
-                v-bind="props"
-                density="comfortable"
-              >
-                <v-icon>mdi-help-circle</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ biosampleDescription }}</span>
-          </v-tooltip>
-        </span>
-      </div>
-
-      <v-divider class="my-3" />
+      <v-divider class="mt-3" />
     </template>
 
     <FacetedSearch

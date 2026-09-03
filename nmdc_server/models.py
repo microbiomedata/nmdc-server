@@ -21,12 +21,21 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    column,
     event,
+    func,
+    update,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session, backref, query_expression, relationship
+from sqlalchemy.orm import (  # type: ignore[attr-defined]
+    Session,
+    backref,
+    declared_attr,
+    query_expression,
+    relationship,
+)
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
 
@@ -73,6 +82,7 @@ def output_association(table: str) -> Table:
         Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
         Column("data_object_id", String, ForeignKey("data_object.id")),
         UniqueConstraint(f"{table}_id", "data_object_id"),
+        Index(f"ix_{table}_output_dobj_id", "data_object_id"),
     )
 
 
@@ -141,7 +151,10 @@ class EnvoTerm(Base):
 # query all ancestor terms with a recursive query.
 class EnvoAncestor(Base):
     __tablename__ = "envo_ancestor"
-    __table_args__ = (UniqueConstraint("id", "ancestor_id"),)
+    __table_args__ = (
+        UniqueConstraint("id", "ancestor_id"),
+        Index("idx_envo_ancestor_ancestor_id", "ancestor_id"),
+    )
 
     id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
     ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
@@ -357,8 +370,38 @@ class AnnotatedModel:
     annotations = Column(JSONB, nullable=False, default=dict)
 
 
+# -- Updating Full Text Search (FTS) --
+# To update the fields that are included and indexed for FTS, update the following:
+# 1. The arguments in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
+# 2. The columns in the SELECT statements in the `nmdc_study_fts` and `nmdc_biosample_fts` SQL functions defined in `database.py`.
+# 3. The columns included in the `__table_args__` Index definitions in the `Study` model below.
+# 4. The columns included in the `__ts_vector__` assignment after the `Study` model definition below.
+# 5. The columns included in the `__table_args__` Index definitions in the `Biosample` model below.
+# 6. The columns included in the `__ts_vector__` assignment after the `Biosample` model definition below.
+# 7. Update the Text Search section of the Data Portal User Guide documentation (https://github.com/microbiomedata/docs/blob/main/content/home/src/howto_guides/portal_guide.md#text-search).
+
+
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
+
+    # Study Index Creation (for FTS) Part 1:
+    __table_args__ = (
+        Index(
+            "ix_study_fts",
+            func.nmdc_study_fts(
+                column("id"),
+                column("name"),
+                column("description"),
+                column("gold_name"),
+                column("gold_description"),
+                column("scientific_objective"),
+                column("annotations"),
+                column("part_of"),
+                column("children"),
+            ),
+            postgresql_using="gin",
+        ),
+    )
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
@@ -428,6 +471,19 @@ class Study(Base, AnnotatedModel):
         return doi_info
 
 
+# Study Index Creation (for FTS) Part 2:
+Study.__ts_vector__ = func.nmdc_study_fts(
+    Study.id,
+    Study.name,
+    Study.description,
+    Study.gold_name,
+    Study.gold_description,
+    Study.scientific_objective,
+    Study.annotations,
+    Study.part_of,
+    Study.children,
+)
+
 biosample_input_association = Table(
     "biosample_input_association",
     Base.metadata,
@@ -438,6 +494,33 @@ biosample_input_association = Table(
 
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
+
+    # Biosample Index Creation (for FTS) Part 1:
+    __table_args__ = (
+        Index(
+            "ix_biosample_fts",
+            func.nmdc_biosample_fts(
+                column("id"),
+                column("name"),
+                column("description"),
+                column("study_id"),
+                column("env_broad_scale_id"),
+                column("env_local_scale_id"),
+                column("env_medium_id"),
+                column("ecosystem"),
+                column("ecosystem_category"),
+                column("ecosystem_type"),
+                column("ecosystem_subtype"),
+                column("specific_ecosystem"),
+                column("annotations"),
+                column("alternate_identifiers"),
+            ),
+            postgresql_using="gin",
+        ),
+        Index("idx_biosample_env_broad_scale_id", "env_broad_scale_id"),
+        Index("idx_biosample_env_local_scale_id", "env_local_scale_id"),
+        Index("idx_biosample_env_medium_id", "env_medium_id"),
+    )
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
@@ -498,6 +581,25 @@ class Biosample(Base, AnnotatedModel):
         db.commit()
 
 
+# Biosample Index Creation (for FTS) Part 2:
+Biosample.__ts_vector__ = func.nmdc_biosample_fts(
+    Biosample.id,
+    Biosample.name,
+    Biosample.description,
+    Biosample.study_id,
+    Biosample.env_broad_scale_id,
+    Biosample.env_local_scale_id,
+    Biosample.env_medium_id,
+    Biosample.ecosystem,
+    Biosample.ecosystem_category,
+    Biosample.ecosystem_type,
+    Biosample.ecosystem_subtype,
+    Biosample.specific_ecosystem,
+    Biosample.annotations,
+    Biosample.alternate_identifiers,
+)
+
+
 class BiosampleRelatedDocument(Base):
     """
     Table containing JSON documents (typically ingested from a MongoDB database)
@@ -506,19 +608,57 @@ class BiosampleRelatedDocument(Base):
 
     __tablename__ = "biosample_related_document"
 
-    id = Column(String, primary_key=True)
-    biosample_ids = Column(ARRAY(String), nullable=False, default=list)
-    high_level_type = Column(String, nullable=False)
-    document = Column(JSONB, nullable=False)
-    downstream_neighbor_ids = Column(ARRAY(String), nullable=False, default=list)
+    id = Column(String, primary_key=True, comment="The value in the document's 'id' field")
+    biosample_ids = Column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+        comment="The IDs of all biosamples downstream of, upstream of, or representing the document",
+    )
+    high_level_type = Column(
+        String,
+        nullable=False,
+        comment="High-level type of the document (e.g., 'nmdc:WorkflowExecution')",
+    )
+    document = Column(
+        JSONB,
+        nullable=False,
+        comment="NMDC Schema-compliant document downstream of, upstream of, or representing the subject biosample",
+    )
+    downstream_neighbor_ids = Column(
+        ARRAY(String),
+        nullable=False,
+        default=list,
+        comment="IDs of documents that are immediately downstream of the document",
+    )
+
+
+Index(
+    "ix_biosample_related_document_biosample_ids",
+    BiosampleRelatedDocument.biosample_ids,
+    postgresql_using="gin",
+)
+Index(
+    "ix_biosample_related_document_high_level_type",
+    BiosampleRelatedDocument.high_level_type,
+)
+Index(
+    "ix_biosample_related_document_document_type",
+    BiosampleRelatedDocument.document["type"].astext,
+)
+Index(
+    "ix_biosample_related_document_downstream_neighbor_ids",
+    BiosampleRelatedDocument.downstream_neighbor_ids,
+    postgresql_using="gin",
+)
 
 
 omics_processing_output_association = output_association("omics_processing")
 
 
 # This is a base class for all workflow processing activities.
-# https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
-# TODO : does this exist anymore?
+# https://microbiomedata.github.io/nmdc-schema/WorkflowExecution/
+# The term, "PipelineStep", is equivalent to "WorkflowExecution" in the NMDC schema.
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
@@ -529,6 +669,22 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=True)
+
+    @declared_attr
+    def superseded_by(cls):
+        """
+        Foreign key column referencing another record in the same table
+        for which this record is superseded by.
+        """
+        return Column(String, ForeignKey(f"{cls.__tablename__}.id"), nullable=True)
+
+    @declared_attr
+    def supersedes(cls):
+        """
+        Foreign key column referencing another record in the same table
+        for which this record supersedes (takes precedence over).
+        """
+        return relationship(cls.__name__, foreign_keys=f"[{cls.__name__}.superseded_by]")  # type: ignore[attr-defined]
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
@@ -784,11 +940,16 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
 
+# The term, "OmicsProcessing", has been updated to the term, "DataGeneration""
 class OmicsProcessing(Base, AnnotatedModel):
     __tablename__ = "omics_processing"
 
+    _exclude_superseded: bool = False
+    """Optionally set to True to exclude superseded workflow executions from the `omics_data` property."""
+
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
+
     biosample_inputs = relationship(
         "Biosample",
         secondary=biosample_input_association,
@@ -866,25 +1027,43 @@ class OmicsProcessing(Base, AnnotatedModel):
     )
 
     # This property injects information in the omics_processing result
-    # regarding output data from workflow processing runs.  Because there
+    # regarding output data from workflow processing runs. Because there
     # are no filters that filter out individual processing runs, this
-    # can be done outside of the main query.  For this reason, it does
+    # can be done outside of the main query. For this reason, it does
     # not have to be added as a `query_expression`.
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
-        return chain(
-            self.reads_qc,
-            self.metatranscriptome_annotation,
-            self.metaproteomic_analysis,
-            self.mags_analysis,
-            self.read_based_analysis,
-            self.nom_analysis,
-            self.metabolomics_analysis,
-            self.metatranscriptome,
-            self.metagenome_assembly,
-            self.metatranscriptome_assembly,
-            self.metagenome_annotation,
+        all_items: list["PipelineStep"] = list(
+            chain(
+                self.reads_qc,
+                self.metatranscriptome_annotation,
+                self.metaproteomic_analysis,
+                self.mags_analysis,
+                self.read_based_analysis,
+                self.nom_analysis,
+                self.metabolomics_analysis,
+                self.metatranscriptome,
+                self.metagenome_assembly,
+                self.metatranscriptome_assembly,
+                self.metagenome_annotation,
+            )
         )
+        # Sort by type first, then by ended_at_time descending (newer first).
+        # Items without an ended_at_time are sorted last within their type.
+        all_items.sort(
+            key=lambda item: (
+                item.type,
+                item.ended_at_time is None,
+                -(item.ended_at_time.timestamp() if item.ended_at_time else 0),
+            )
+        )
+        # If the `_exclude_superseded` attribute is set to True,
+        # filter out any items that have been superseded by another item.
+        # This happens when the `include_superseded_workflow_executions` parameter
+        # in the search_biosample query is set to False.
+        if self._exclude_superseded:
+            return (item for item in all_items if not item.superseded_by)
+        return iter(all_items)
 
 
 class DataObject(Base):
@@ -1080,7 +1259,20 @@ class BulkDownload(Base):
     # the filter on data objects `List[DataObjectFilter]`
     filter = Column(JSONB, nullable=True)
 
+    # Whether or not to include data objects from older workflow executions
+    # (ones that have been superseded) in the bulk download
+    include_superseded_workflow_executions = Column(Boolean, nullable=False, default=False)
+
     expired = Column(Boolean, nullable=False, default=False)
+
+    rocrate_metadata_cache = Column(
+        JSONB,
+        nullable=True,
+        comment=(
+            "Temporary RO-Crate metadata cache populated when a bulk download is created and "
+            "cleared after ZipStreamer retrieves it"
+        ),
+    )
 
 
 class BulkDownloadDataObject(Base):
@@ -1093,7 +1285,8 @@ class BulkDownloadDataObject(Base):
     path = Column(String, nullable=False)
 
     bulk_download = relationship(
-        BulkDownload, backref=backref("files", lazy="joined", cascade="all", cascade_backrefs=False)
+        BulkDownload,
+        backref=backref("files", lazy="select", cascade="all", cascade_backrefs=False),
     )
     data_object = relationship(
         DataObject,
@@ -1192,11 +1385,9 @@ class SubmissionMetadata(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
-    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
-    metadata_submission = Column(JSONB, nullable=False)
+    study_form = Column(JSONB, nullable=True)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)
-    templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
     nmdc_study_id = Column(String, nullable=True)
@@ -1205,7 +1396,7 @@ class SubmissionMetadata(Base):
         nullable=False,
         default=lambda: datetime.now(UTC),
     )
-    submission_issue = Column(String, nullable=True)
+    github_issue = Column(String, nullable=True)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.
@@ -1248,6 +1439,9 @@ class SubmissionMetadata(Base):
     )
     study_images = relationship(
         SubmissionImagesObject, secondary=submission_study_image_association
+    )
+    sample_sets = relationship(
+        "SubmissionSampleSet", cascade="all, delete-orphan", cascade_backrefs=False
     )
 
     @property
@@ -1293,11 +1487,44 @@ class SubmissionMetadata(Base):
 
     @property
     def sample_count(self) -> int:
-        if not self.metadata_submission or not isinstance(self.metadata_submission, dict):
+        if not self.sample_sets:
             return 0
-        sample_data = self.metadata_submission.get("sampleData", {})
+
+        return sum(sample_set.sample_count for sample_set in self.sample_sets)
+
+
+class SubmissionSampleSet(Base):
+    __tablename__ = "submission_sample_set"
+
+    id = Column(type_=UUID(as_uuid=True), primary_key=True, default=uuid4)
+    submission_metadata_id = Column(
+        UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), nullable=False
+    )
+    name = Column(String, nullable=False)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    date_last_modified = Column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+    )
+    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
+    github_issue = Column(String, nullable=True)
+    templates = Column(JSONB, nullable=False)
+    sample_environment_form = Column(JSONB, nullable=False)
+    sender_shipping_info_form = Column(JSONB, nullable=False)
+    multi_omics_form = Column(JSONB, nullable=False)
+    sample_data = Column(JSONB, nullable=False)
+    submission_metadata = relationship("SubmissionMetadata", viewonly=True)
+
+    @property
+    def sample_count(self) -> int:
+        if not isinstance(self.sample_data, dict):
+            return 0
+
+        sample_data = self.sample_data.get("data", {})
         if not sample_data:
             return 0
+
         count = 0
         for slot in sample_data:
             if slot in ENVIRONMENTAL_DATA_SLOTS:
@@ -1360,3 +1587,44 @@ def update_submission_metadata_date(mapper, _connection, target):
             if history.has_changes():
                 target.date_last_modified = datetime.now(UTC)
                 return
+
+
+SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS = {
+    "name",
+    "status",
+    "templates",
+    "sample_environment_form",
+    "sender_shipping_info_form",
+    "multi_omics_form",
+    "sample_data",
+}
+
+
+@event.listens_for(Session, "before_flush")
+def update_submission_sample_set_timestamps(session: Session, _flush_context, _instances) -> None:
+    """Keep sample set and parent submission timestamps in sync before flush."""
+    now = datetime.now(UTC)
+
+    for obj in session.new.union(session.dirty):
+        if not isinstance(obj, SubmissionSampleSet):
+            continue
+
+        is_new = obj in session.new
+        # The "new" incoming sample set already has a date_last_modified timestamp. This is an
+        # expected scenario during ingest where existing sample sets are copied from one database
+        # to the other. Do not update the sample set or parent submission timestamps in this case.
+        if is_new and obj.date_last_modified is not None:
+            continue
+
+        if not is_new and not any(
+            get_history(obj, column_name).has_changes()
+            for column_name in SUBMISSION_SAMPLE_SET_MUTABLE_COLUMNS
+        ):
+            continue
+
+        obj.date_last_modified = now
+        session.execute(
+            update(SubmissionMetadata.__table__)
+            .where(SubmissionMetadata.id == obj.submission_metadata_id)
+            .values(date_last_modified=now)
+        )

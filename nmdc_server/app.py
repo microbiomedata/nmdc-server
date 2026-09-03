@@ -18,6 +18,8 @@ from nmdc_server.database import after_cursor_execute, before_cursor_execute, li
 from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,11 +34,9 @@ async def lifespan(app: FastAPI):
     > [It will be] executed once, after [the application has] handled possibly many requests.
     """
 
-    # Print the active/portal database name to the console.
-    # TODO: Print this via `logging` (instead of `print`) so it is treated the same way as other
-    #       log entries. When testing using `logging`, keep in mind your log level/threshold.
+    # Log the active/portal database name to the console.
     portal_database_name = get_database_name_safely_for_logging(settings.database_uri)
-    print(f"Portal database: {portal_database_name}")
+    logger.info(f"Portal database: {portal_database_name}")
 
     yield
 
@@ -93,7 +93,10 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     if settings.environment == "development":
         app.add_middleware(
             DebugToolbarMiddleware,
-            panels=["nmdc_server.database.SQLAlchemyPanel"],
+            # Note: We commented out the SQLAlchemyPanel because it would crash the FastAPI whenever
+            #       it tried to format SQL queries that were larger than `sqlparse` could handle.
+            #       This happens when we were adding RO-Crate functionality to the bulk downloader.
+            # #panels=["nmdc_server.database.SQLAlchemyPanel"],
             # Uncheck the profiling feature since it doesn't work for AJAX requests
             disable_panels=["debug_toolbar.panels.profiling.ProfilingPanel"],
         )

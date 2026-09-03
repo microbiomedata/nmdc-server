@@ -4,7 +4,7 @@ from typing import Any, Dict
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import fakes
+from tests import fakes
 
 _link_re = re.compile('<(?P<url>[^>]*)>; rel="(?P<name>[^ ]*)"')
 

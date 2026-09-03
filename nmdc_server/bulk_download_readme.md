@@ -6,23 +6,35 @@ The following document explains the structure of the archive you have downloaded
 
 ## Data Product Files
 
-Each file you have downloaded is nested inside of a series of folders that organize the files by their associated counterparts. The hierarchy uses the following structure:
+The data files can be found in the `data/` folder after unzipping your archive. Each data product file is considered a `DataObject`, as defined in the [NMDC Schema Documentation](https://microbiomedata.github.io/nmdc-schema/DataObject/). The files themselves are split up and nested by `DataGeneration` (or `Manifest`) then `WorkflowExecution`. The `DataGeneration` (or `Manifest`) and `WorkflowExecution` folders are named using a sanitized version of their respective ID, where colons (`:`) are replaced with underscores (`_`). For example, the path to one of the downloaded files in this archive might be:
 
-- `Study`
-  - `Biosample`
-    - `DataGeneration`
-      - Data Product File
+```
+data/nmdc_omprc-11-uniqueid/nmdc_wfmag-11-uniqueid.1/data-product-file.csv
+```
 
-The name of each folder is a sanitized version of the object's ID (`:` replaced by `_`). For example:
+If a `DataGeneration` is part of a `Manifest`, then the `Manifest` ID is used for the folder instead of the `DataGeneration` ID:
 
-- `nmdc_sty-11-8ws97026`
-  - `nmdc_bsm-11-127y7152`
-    - `nmdc_dgms-11-5fd4qm69`
-      - `nmdc_dobj-11-dhdvdf46_kaiko_QC_metrics.tsv`
+```
+data/nmdc_manif-11-uniqueid/nmdc_wfmag-11-uniqueid.1/data-product-file.csv
+```
 
-## Metadata
+In rare cases a `DataObject` file was generated directly by a `DataGeneration` and does not have a corresponding `WorkflowExecution`. In these cases, the file is nested directly in the `DataGeneration` folder:
 
-At the top level of the download is a folder called `metadata`. This includes two JSON files that are intended to help you understand more about how each data product file was generated and how to relate them back to `Biosample`s.
+```
+data/nmdc_dgms-11-uniqueid/raw-data.csv
+```
+
+Note that some `DataObject` file names include references to other related NMDC identifiers, but this is not an enforced standard.
+
+## RO-Crate Metadata Document
+
+Included at the top level of every download is a file called `ro-crate-metadata.json`. This is a machine-readable document that describes the contents of this archive as well its relevant relationships as it relates to the data's provenance. To learn more about RO-Crate, check out the [RO-Crate specification docs](https://www.researchobject.org/ro-crate/specification/1.2/introduction.html).
+
+The RO-Crate `@graph` array contains nodes for every folder in the zip, every metadata file, and every associated NMDC `Biosample`, `Study`, `DataGeneration`, and `WorkflowExecution`. The RO-Crate intentionally only contains nodes down to the `WorkflowExecution` level to minimize the size of the JSON file. The full `DataObject` metadata is included in `metadata/data_objects.json` (explained in the next section).
+
+## Metadata Folder
+
+At the top level of the download is a folder called `metadata/`. It contains `data_objects.json`, which helps you understand how each data product file was generated and how to relate it back to `Biosample`s.
 
 ### `data_objects.json`
 
@@ -30,8 +42,4 @@ This file includes a list of JSON objects where each object represents a `DataOb
 
 > An object that primarily consists of symbols that represent information. Files, records, and omics data are examples of data objects.
 
-Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). You can tell which file the ID relates to by looking at the `name` field. The `name` value is equal to the name of the data product file (e.g. `nmdc_dobj-11-xmvv4977_nmdc_dobj-11-f6nr5w60_QC_metrics.tsv`).
-
-### `related_biosamples.json`
-
-This file includes a single object whose keys are each of the `DataObject` IDs included in your download. For each `DataObject` ID, there is a list of `Biosample` IDs that are associated with that `DataObject`. This can help you relate your data products back to concrete `Biosample`s.
+Each data product file included in your download has an associated `DataObject` ID (e.g. `nmdc:dobj-11-zvr19844`). The `_bulk_download_path` field contains its complete path from the root of this archive, including the `data/` folder. The `_related_biosample_ids` field lists the IDs of the `Biosample`s associated with that data object. The `_globus_path` field contains the complete path to the `DataObject` file in the NMDC [Globus](https://www.globus.org/) collection.

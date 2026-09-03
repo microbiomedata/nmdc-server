@@ -79,7 +79,10 @@ class BaseFilter:
         target_table: Table,
     ) -> Query:
         """Get a query representing unique id's of the target table matching the conditions."""
-        query = db.query(func.distinct(target_table.model.id).label("id"))
+        # Note that select_from is necessary to avoid ambiguity when the target_table.model is an AliasedClass
+        query = db.query(func.distinct(target_table.model.id).label("id")).select_from(
+            target_table.model
+        )
         return self._apply_conditions(query, target_table)
 
     def _apply_conditions(
@@ -271,6 +274,13 @@ class WorkflowExecutionFilter(OmicsProcessingFilter):
         ).join(model, model.id == association_table.c[f"{self.table.value}_id"])
         return q
 
+    # Override join_self because the workflow execution tables do not have a
+    # direct relationship with OmicsProcessing, so we need to use the association table.
+    def join_self(self, query: Query, parent: Table) -> Query:
+        if self.table == parent:
+            return query
+        return self.join_omics_processing(query)
+
 
 workflow_filter_classes: List[Type[WorkflowExecutionFilter]] = []
 for table in workflow_execution_tables:
@@ -430,6 +440,13 @@ class MetaproteomicAnalysisFilter(OmicsProcessingFilter):
             models.MetaproteomicAnalysis,
             models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
         )
+
+    # Override join_self because the metaproteomic_analysis table does not have a
+    # direct relationship with OmicsProcessing, so we need to use the association table.
+    def join_self(self, query: Query, parent: Table) -> Query:
+        if self.table == parent:
+            return query
+        return self.join_omics_processing(query)
 
     def join_biosample(self, query: Query) -> Query:
         association_table = models.metaproteomic_analysis_data_generation_association

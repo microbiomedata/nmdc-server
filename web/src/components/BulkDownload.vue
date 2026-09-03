@@ -40,7 +40,12 @@ const {
   downloadSummary,
   downloadOptions,
   download,
-} = useBulkDownload(stateRefs.conditions, dataObjectFilter);
+} = useBulkDownload(stateRefs.conditions, dataObjectFilter, stateRefs.includeSupersededWorkflowExecutions);
+
+const disableBulkDataProductDownload = ref(true);
+api.getAppSettings().then((appSettings) => {
+  disableBulkDataProductDownload.value = appSettings.disable_bulk_data_product_download;
+});
 
 function createLabelString(label: string, count: number, size: number): string {
   const labelString = `${label} (${count}`;
@@ -94,8 +99,8 @@ async function createAndDownload() {
     bulkTermsDialog.value = false;
     const val = await download();
     if (val) window.location.assign(val.url);
-  } catch (error) {
-    console.error('Failed to create bulk download:', error);
+  } catch (err) {
+    console.error('Failed to create bulk download:', err);
     errorDialog.value = true;
   }
 }
@@ -110,7 +115,7 @@ async function downloadMetadata() {
     metadataDownloadLoading.value = true;
     metadataTermsDialog.value = false;
     const endpoints = metadataDownloadSelected.value;
-    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints);
+    const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints, stateRefs.includeSupersededWorkflowExecutions.value);
     downloadBlob(blob, 'metadata.zip');
   } catch (error) {
     console.error('Failed to download metadata:', error);
@@ -234,6 +239,17 @@ watch(
       >
         <v-tabs-window-item value="data-products">
           <v-sheet
+            v-if="disableBulkDataProductDownload"
+            class="pa-3 d-flex flex-column"
+          >
+            <span
+              class="text-caption font-weight-bold"
+            >
+              Bulk downloading data products is temporarily disabled.
+            </span>
+          </v-sheet>
+          <v-sheet
+            v-if="!disableBulkDataProductDownload"
             class="pa-3 d-flex flex-column"
           >
             <span
@@ -264,38 +280,48 @@ watch(
                   @close="treeMenuOpen = false"
                 />
               </div>
-              <v-dialog
-                v-model="bulkTermsDialog"
-                :width="400"
-              >
-                <template #activator="{ props: dialogProps }">
-                  <v-tooltip
-                    :disabled="!downloadProductsDisabledTooltip"
-                    location="top"
-                  >
-                    <template #activator="{ props: tooltipProps }">
-                      <span v-bind="tooltipProps">
-                        <v-btn
-                          class="mt-3"
-                          color="white"
-                          :disabled="!!downloadProductsDisabledTooltip"
-                          v-bind="dialogProps"
-                        >
-                          <v-icon class="pr-3">
-                            mdi-download
-                          </v-icon>
-                          Download Data Products Zip
-                        </v-btn>
-                      </span>
-                    </template>
-                    <span>{{ downloadProductsDisabledTooltip }}</span>
-                  </v-tooltip>
-                </template>
-                <DownloadDialog
-                  :loading="loading"
-                  @clicked="createAndDownload"
-                />
-              </v-dialog>
+              <div class="d-flex flex-row justify-space-between">
+                <v-btn
+                  class="mt-3"
+                  variant="outlined"
+                  :disabled="bulkDownloadSelected.length === 0"
+                  @click="bulkDownloadSelected = []"
+                >
+                  Clear selection
+                </v-btn>
+                <v-dialog
+                  v-model="bulkTermsDialog"
+                  :width="400"
+                >
+                  <template #activator="{ props: dialogProps }">
+                    <v-tooltip
+                      :disabled="!downloadProductsDisabledTooltip"
+                      location="top"
+                    >
+                      <template #activator="{ props: tooltipProps }">
+                        <span v-bind="tooltipProps">
+                          <v-btn
+                            class="mt-3"
+                            color="primary"
+                            :disabled="!!downloadProductsDisabledTooltip"
+                            v-bind="dialogProps"
+                          >
+                            <v-icon class="pr-3">
+                              mdi-download
+                            </v-icon>
+                            Download Data Products Zip
+                          </v-btn>
+                        </span>
+                      </template>
+                      <span>{{ downloadProductsDisabledTooltip }}</span>
+                    </v-tooltip>
+                  </template>
+                  <DownloadDialog
+                    :loading="loading"
+                    @clicked="createAndDownload"
+                  />
+                </v-dialog>
+              </div>
             </div>
           </v-sheet>
         </v-tabs-window-item>
@@ -316,38 +342,48 @@ watch(
                 @close="treeMenuOpen = false"
               />
             </div>
-            <v-dialog
-              v-model="metadataTermsDialog"
-              :width="400"
-            >
-              <template #activator="{ props: dialogProps }">
-                <v-tooltip
-                  :disabled="!downloadMetadataDisabledTooltip"
-                  location="top"
-                >
-                  <template #activator="{ props: tooltipProps }">
-                    <span v-bind="tooltipProps">
-                      <v-btn
-                        class="mt-3"
-                        color="white"
-                        :disabled="!!downloadMetadataDisabledTooltip"
-                        v-bind="dialogProps"
-                      >
-                        <v-icon class="pr-3">
-                          mdi-download
-                        </v-icon>
-                        Download Metadata Zip
-                      </v-btn>
-                    </span>
-                  </template>
-                  <span>{{ downloadMetadataDisabledTooltip }}</span>
-                </v-tooltip>
-              </template>
-              <DownloadDialog
-                :loading="metadataDownloadLoading"
-                @clicked="downloadMetadata"
-              />
-            </v-dialog>
+            <div class="d-flex flex-row justify-space-between">
+              <v-btn
+                class="mt-3"
+                variant="outlined"
+                :disabled="metadataDownloadSelected.length === 0"
+                @click="metadataDownloadSelected = []"
+              >
+                Clear selection
+              </v-btn>
+              <v-dialog
+                v-model="metadataTermsDialog"
+                :width="400"
+              >
+                <template #activator="{ props: dialogProps }">
+                  <v-tooltip
+                    :disabled="!downloadMetadataDisabledTooltip"
+                    location="top"
+                  >
+                    <template #activator="{ props: tooltipProps }">
+                      <span v-bind="tooltipProps">
+                        <v-btn
+                          class="mt-3"
+                          color="primary"
+                          :disabled="!!downloadMetadataDisabledTooltip"
+                          v-bind="dialogProps"
+                        >
+                          <v-icon class="pr-3">
+                            mdi-download
+                          </v-icon>
+                          Download Metadata Zip
+                        </v-btn>
+                      </span>
+                    </template>
+                    <span>{{ downloadMetadataDisabledTooltip }}</span>
+                  </v-tooltip>
+                </template>
+                <DownloadDialog
+                  :loading="metadataDownloadLoading"
+                  @clicked="downloadMetadata"
+                />
+              </v-dialog>
+            </div>
           </v-sheet>
         </v-tabs-window-item>
       </v-tabs-window>
@@ -384,12 +420,30 @@ watch(
   />
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .download-menu {
   width: 550px;
 }
 
 .vue3-treeselect {
   z-index: 2001;
+
+  :deep(.vue3-treeselect__control) {
+    display: flex;
+    height: auto;
+    max-height: 100px !important;
+    min-height: 36px;
+    overflow-y: auto;
+    align-items: center;
+  }
+
+  :deep(.vue3-treeselect__control-arrow-container) {
+    display: flex;
+    align-items: center;
+  }
+
+  :deep(.vue3-treeselect__placeholder) {
+    line-height: unset;
+  }
 }
 </style>

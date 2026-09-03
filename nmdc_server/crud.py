@@ -1,19 +1,23 @@
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, selectinload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.config import settings
+from nmdc_server.ingest.common import duration_logger
 from nmdc_server.logger import get_logger
+from nmdc_server.rocrate import generate_rocrate_for_bulk_download
+from nmdc_server.utils import safe_name
 
 # This dict defines the allowed status transitions for submissions based on the role of the editor.
 # The format is:
@@ -328,7 +332,9 @@ def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermT
     term = query.replace(pathway_prefix, "map") if pathway_prefix else query
     q = (
         db.query(models.KoTermText)
-        .filter(models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(term))
+        .filter(
+            models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(f"%{term}%")
+        )
         .order_by(models.KoTermText.term)
         .limit(limit)
     )
@@ -484,9 +490,13 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
 
 
 def aggregate_data_object_by_workflow(
-    db: Session, conditions: List[query.ConditionSchema]
+    db: Session,
+    conditions: List[query.ConditionSchema],
+    include_superseded_workflow_executions: bool = True,
 ) -> schemas.DataObjectAggregation:
-    return aggregations.get_data_object_aggregation(db, conditions)
+    return aggregations.get_data_object_aggregation(
+        db, conditions, include_superseded_workflow_executions
+    )
 
 
 def search_data_objects(
@@ -503,13 +513,13 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        select(models.BiosampleRelatedDocument.document, models.BiosampleRelatedDocument.biosample_ids)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.id.in_(ids_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
 
     rows = db.execute(statement).all()
-    return [row[0] for row in rows]
+    return rows
 
 
 def get_documents_by_biosample_ids(
@@ -517,6 +527,7 @@ def get_documents_by_biosample_ids(
     biosample_ids_list: list[str],
     high_level_type: str,
     batch_size: int = 1000,
+    include_superseded_workflow_executions: bool = True,
 ) -> Iterator[dict]:
     """
     Yield documents of type, `high_level_type`, related to any of the specified `Biosample`s.
@@ -540,8 +551,22 @@ def get_documents_by_biosample_ids(
         select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
-        .order_by(models.BiosampleRelatedDocument.id)
-        .execution_options(stream_results=True, yield_per=batch_size)
+    )
+
+    if not include_superseded_workflow_executions:
+        if high_level_type == "nmdc:DataObject":
+            superseded_outputs = aggregations.make_superseded_wfe_outputs_subquery(db)
+            statement = statement.where(
+                models.BiosampleRelatedDocument.id.notin_(select(superseded_outputs.c.id))
+            )
+        elif high_level_type == "nmdc:WorkflowExecution":
+            # JSONB `->>` produces SQL NULL for both an absent key and a JSON null.
+            statement = statement.where(
+                models.BiosampleRelatedDocument.document["superseded_by"].astext.is_(None)
+            )
+
+    statement = statement.order_by(models.BiosampleRelatedDocument.id).execution_options(
+        stream_results=True, yield_per=batch_size
     )
     for row in db.execute(statement):
         yield row[0]
@@ -565,38 +590,209 @@ def create_file_download(
     return db_file_download
 
 
-def construct_zip_file_path(data_object: models.DataObject) -> str:
-    """Return a path inside the zip file for the data object."""
-    # TODO:
-    #   - Users will most likely want more descriptive folder names
-    #   - Add metadata for parent entities in the zip file
-    #   - We probably want to reference the workflow activity but that
-    #     involves a complicated query... need a way to join that information
-    #     in the original query (possibly in the sqlalchemy relationship)
-    if not data_object.omics_processings:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Data object has no associated omics processings.",
+@dataclass
+class BulkArchivePathLookup:
+    """Scalar results produced by the archive-path bulk lookup optimization."""
+
+    paths_by_data_object_id: dict[str, str]
+    data_generation_ids: list[str]
+    workflow_ids_by_data_generation_id: dict[str, list[str]]
+
+
+DataGenerationArchiveInfo = tuple[str, Optional[str]]
+WorkflowArchiveCandidate = tuple[str, str, Optional[datetime]]
+
+
+def _get_archive_data_generations(db: Session, data_object_ids: list[str]) -> dict[str, str]:
+    """Return direct DataGeneration IDs for archived raw DataObjects.
+
+    DataObject.omics_processing_id is populated from literal DataGeneration.has_output
+    during DataGeneration ingest. It is nullable for workflow outputs, which are
+    resolved separately through workflow output and was_informed_by associations.
+    """
+    return {
+        data_object_id: data_generation_id
+        for data_object_id, data_generation_id in (
+            db.query(models.DataObject.id, models.DataObject.omics_processing_id)
+            .filter(models.DataObject.id.in_(data_object_ids))
+            .filter(models.DataObject.omics_processing_id.isnot(None))
         )
-    omics_processing = data_object.omics_processings[0]
-    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
+    }
 
-    def safe_name(name: str) -> str:
-        return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
-    op_name = safe_name(omics_processing.id)
+def _get_data_generation_archive_info(
+    db: Session, data_generation_ids: set[str]
+) -> dict[str, DataGenerationArchiveInfo]:
+    """Return IDs and optional manifest IDs for relevant DataGenerations."""
+    rows = db.query(
+        models.OmicsProcessing.id,
+        models.OmicsProcessing.poolable_replicates_manifest_id,
+    ).filter(models.OmicsProcessing.id.in_(data_generation_ids))
+    return {
+        data_generation_id: (data_generation_id, manifest_id)
+        for data_generation_id, manifest_id in rows
+    }
 
-    if biosamples:
-        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
-        study = biosamples[0].study
-    else:
-        # Some emsl omics_processing are missing biosamples
-        biosample_name = "unknown"
-        study = omics_processing.study
 
-    study_name = safe_name(study.id)
-    da_name = safe_name(data_object.name)
-    return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
+def _get_archive_workflow_candidates(db: Session, data_object_ids: list[str]) -> tuple[
+    dict[str, list[WorkflowArchiveCandidate]],
+    dict[str, set[str]],
+]:
+    """Bulk-load possible producing workflows for the selected DataObjects.
+
+    Each workflow output association table is queried once. Only workflow outputs
+    are candidates; workflow inputs are never treated as generated objects. The
+    second result records every DataGeneration in each workflow's was_informed_by
+    association for archive paths and RO-Crate provenance.
+    """
+    workflow_candidates: dict[str, list[WorkflowArchiveCandidate]] = defaultdict(list)
+    informing_data_generations_by_workflow_id: dict[str, set[str]] = defaultdict(set)
+    for workflow_model in models.workflow_activity_types:
+        table_name = workflow_model.__tablename__
+        output_association = workflow_model.outputs.property.secondary  # type: ignore[attr-defined]
+        informed_by_association = models.workflow_activity_to_data_generation_map[table_name]
+        workflow_id_column = output_association.c[f"{table_name}_id"]
+        informed_workflow_id_column = informed_by_association.c[f"{table_name}_id"]
+        rows = (
+            db.query(
+                output_association.c.data_object_id,
+                workflow_model.id,
+                informed_by_association.c.data_generation_id,
+                workflow_model.type,
+                workflow_model.ended_at_time,
+            )
+            .join(workflow_model, workflow_model.id == workflow_id_column)
+            .join(
+                informed_by_association,
+                informed_workflow_id_column == workflow_model.id,
+            )
+            .filter(output_association.c.data_object_id.in_(data_object_ids))
+        )
+        for data_object_id, workflow_id, data_generation_id, workflow_type, ended_at in rows:
+            workflow_candidates[data_object_id].append((workflow_id, workflow_type, ended_at))
+            informing_data_generations_by_workflow_id[workflow_id].add(data_generation_id)
+    return workflow_candidates, informing_data_generations_by_workflow_id
+
+
+def _select_archive_workflow_id(candidates: list[WorkflowArchiveCandidate]) -> str:
+    """Select a producing workflow using the ordering from OmicsProcessing.omics_data.
+
+    Workflows sort by type and then newest completion time, with unfinished
+    workflows last. Workflow ID provides deterministic ordering for exact ties.
+    """
+    workflow_id, _, _ = min(
+        candidates,
+        key=lambda candidate: (
+            candidate[1],
+            candidate[2] is None,
+            -(candidate[2].timestamp() if candidate[2] else 0),
+            candidate[0],
+        ),
+    )
+    return workflow_id
+
+
+def _assemble_bulk_archive_path_lookup(
+    data_objects: list[models.DataObject],
+    direct_data_generation_by_data_object_id: dict[str, str],
+    data_generation_archive_info_by_id: dict[str, DataGenerationArchiveInfo],
+    workflow_candidates: dict[str, list[WorkflowArchiveCandidate]],
+    informing_data_generations_by_workflow_id: dict[str, set[str]],
+) -> BulkArchivePathLookup:
+    """Construct archive paths and RO-Crate workflow groupings from scalar IDs.
+
+    This is the non-querying portion of the optimization. It raises the same
+    client error as the previous path builder when a DataObject has no associated
+    direct DataGeneration or producing workflow.
+    """
+
+    paths_by_data_object_id: dict[str, str] = {}
+    selected_workflow_ids: set[str] = set()
+    provenance_data_generation_ids: set[str] = set()
+    for data_object in data_objects:
+        candidates = workflow_candidates.get(data_object.id, [])
+        workflow_id: Optional[str] = None
+        data_generation_id: Optional[str] = None
+        if candidates:
+            workflow_id = _select_archive_workflow_id(candidates)
+            selected_workflow_ids.add(workflow_id)
+            informing_data_generation_ids = informing_data_generations_by_workflow_id[workflow_id]
+            provenance_data_generation_ids.update(informing_data_generation_ids)
+            data_generation_id = min(informing_data_generation_ids)
+        else:
+            data_generation_id = direct_data_generation_by_data_object_id.get(data_object.id)
+
+        if data_generation_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Data object has no associated workflow execution or data generation.",
+            )
+        provenance_data_generation_ids.add(data_generation_id)
+        data_generation = data_generation_archive_info_by_id.get(data_generation_id)
+        if data_generation is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Data object has an unknown associated data generation.",
+            )
+        _, manifest_id = data_generation
+        parent_id = (
+            manifest_id
+            if manifest_id is not None and manifest_id != data_generation_id
+            else data_generation_id
+        )
+        path_parts = [safe_name(parent_id)]
+
+        if workflow_id is not None:
+            path_parts.append(safe_name(workflow_id))
+
+        path_parts.append(safe_name(data_object.name))
+        paths_by_data_object_id[data_object.id] = "/".join(path_parts)
+
+    workflow_ids_by_data_generation_id: dict[str, list[str]] = defaultdict(list)
+    for workflow_id in selected_workflow_ids:
+        for data_generation_id in informing_data_generations_by_workflow_id[workflow_id]:
+            workflow_ids_by_data_generation_id[data_generation_id].append(workflow_id)
+
+    return BulkArchivePathLookup(
+        paths_by_data_object_id=paths_by_data_object_id,
+        data_generation_ids=sorted(provenance_data_generation_ids),
+        workflow_ids_by_data_generation_id={
+            data_generation_id: sorted(workflow_ids)
+            for data_generation_id, workflow_ids in workflow_ids_by_data_generation_id.items()
+        },
+    )
+
+
+def get_bulk_archive_path_lookup(
+    db: Session, data_objects: list[models.DataObject]
+) -> BulkArchivePathLookup:
+    """Build all archive paths without per-DataObject ORM relationship traversal.
+
+    Archive-path bulk lookup optimization: coordinate the set-based DataGeneration
+    and workflow lookups, then assemble paths entirely from their scalar results.
+    """
+    data_object_ids = [data_object.id for data_object in data_objects]
+    if not data_object_ids:
+        return BulkArchivePathLookup({}, [], {})
+
+    direct_data_generation_by_data_object_id = _get_archive_data_generations(db, data_object_ids)
+    (
+        workflow_candidates,
+        informing_data_generations_by_workflow_id,
+    ) = _get_archive_workflow_candidates(db, data_object_ids)
+    relevant_data_generation_ids = set(direct_data_generation_by_data_object_id.values())
+    for data_generation_ids in informing_data_generations_by_workflow_id.values():
+        relevant_data_generation_ids.update(data_generation_ids)
+    data_generation_archive_info_by_id = _get_data_generation_archive_info(
+        db, relevant_data_generation_ids
+    )
+    return _assemble_bulk_archive_path_lookup(
+        data_objects,
+        direct_data_generation_by_data_object_id,
+        data_generation_archive_info_by_id,
+        workflow_candidates,
+        informing_data_generations_by_workflow_id,
+    )
 
 
 def create_bulk_download(
@@ -605,30 +801,59 @@ def create_bulk_download(
     data_object_query = query.DataObjectQuerySchema(
         conditions=bulk_download.conditions,
         data_object_filter=bulk_download.filter,
+        include_superseded_workflow_executions=bulk_download.include_superseded_workflow_executions,
     )
     try:
-        bulk_download_model = models.BulkDownload(**bulk_download.dict())
+        bulk_download_model = models.BulkDownload(**bulk_download.model_dump())
         db.add(bulk_download_model)
+        db.flush()
 
-        has_files = False
-        for data_object in data_object_query.execute(db):
-            if data_object.url is None:
-                logger.warning("Data object url is empty in bulk download")
-                continue
+        with duration_logger(
+            logger=logger,
+            task_name=f"[{bulk_download_model.id}] Gather DataObjects",
+            precision=1,
+        ):
+            data_objects = []
+            for data_object in data_object_query.execute(db):
+                if data_object.url is None:
+                    logger.warning("Data object url is empty in bulk download")
+                    continue
+                data_objects.append(data_object)
 
-            has_files = True
-
-            db.add(
-                models.BulkDownloadDataObject(
-                    bulk_download=bulk_download_model,
-                    data_object=data_object,
-                    path=construct_zip_file_path(data_object),
+        with duration_logger(
+            logger=logger,
+            task_name=f"[{bulk_download_model.id}] Determine in-archive paths",
+            precision=1,
+        ):
+            archive_path_lookup = get_bulk_archive_path_lookup(db, data_objects)
+            data_object_ids = []
+            for data_object in data_objects:
+                data_object_ids.append(data_object.id)
+                db.add(
+                    models.BulkDownloadDataObject(
+                        bulk_download=bulk_download_model,
+                        data_object=data_object,
+                        path=f"data/{archive_path_lookup.paths_by_data_object_id[data_object.id]}",
+                    )
                 )
-            )
 
-        if not has_files:
+        if not data_object_ids:
             db.rollback()
             return None
+
+        db.flush()
+        with duration_logger(
+            logger=logger,
+            task_name=f"[{bulk_download_model.id}] Generate RO-Crate",
+            precision=1,
+        ):
+            bulk_download_model.rocrate_metadata_cache = generate_rocrate_for_bulk_download(
+                db,
+                bulk_download_model,
+                data_object_ids,
+                archived_data_generation_ids=archive_path_lookup.data_generation_ids,
+                archived_workflows_by_data_generation=archive_path_lookup.workflow_ids_by_data_generation_id,
+            )
 
         db.commit()
         return bulk_download_model
@@ -703,6 +928,12 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     base = settings.portal_api_internal_url
     file_descriptions.append(
         {
+            "url": f"{base}/api/bulk_download/{id}/ro-crate-metadata.json",
+            "zipPath": "ro-crate-metadata.json",
+        }
+    )
+    file_descriptions.append(
+        {
             "url": f"{base}/api/bulk_download/{id}/README.md",
             "zipPath": "README.md",
         }
@@ -713,13 +944,6 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             "zipPath": "metadata/data_objects.json",
         }
     )
-    file_descriptions.append(
-        {
-            "url": f"{base}/api/bulk_download/{id}/metadata/related_biosamples.json",
-            "zipPath": "metadata/related_biosamples.json",
-        }
-    )
-
     zip_file_descriptor["files"] = file_descriptions
 
     bulk_download.expired = True
@@ -882,6 +1106,35 @@ contributors_edit_roles = [
 ]
 
 
+def raise_for_insufficient_submission_role(
+    db: Session,
+    submission: models.SubmissionMetadata,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> None:
+    """Check if the requesting user has one of the allowed roles on the submission, and raise an
+    HTTPException if not.
+
+    :raise HTTPException: If the user does not have one of the allowed roles on the submission.
+
+    :param db: The database session.
+    :param submission: The submission to check permissions for.
+    :param requester: The user requesting access to the submission.
+    :param allowed_roles: A list of allowed roles that the user must have on the submission. If
+        None, no role check is performed.
+    """
+    if allowed_roles and not requester.is_admin:
+        # If the user is not an admin, check if they have one of the allowed roles
+        # on the submission.
+        role = get_submission_role(db, submission.id, requester.orcid)
+        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permission to complete this action",
+            )
+
+
 def get_submission_for_user(
     db: Session,
     submission_id: str,
@@ -906,16 +1159,40 @@ def get_submission_for_user(
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    if allowed_roles and not requester.is_admin:
-        # If the user is not an admin, check if they have one of the allowed roles
-        # on the submission.
-        role = get_submission_role(db, submission_id, requester.orcid)
-        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permission to complete this action",
-            )
+    raise_for_insufficient_submission_role(db, submission, requester, allowed_roles=allowed_roles)
     return submission
+
+
+def get_submission_sample_set_for_user(
+    db: Session,
+    sample_set_id: str,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> models.SubmissionSampleSet:
+    """Get a submission sample set by ID and additionally check if the requesting user has one of the
+    allowed roles on the parent submission.
+
+    :raise HTTPException: If the submission sample set does not exist or if the user does not have
+        one of the allowed roles on the parent submission.
+
+    :param db: The database session.
+    :param sample_set_id: The ID of the submission sample set to retrieve.
+    :param requester: The user requesting the submission sample set.
+    :param allowed_roles: A list of allowed roles that the user must have on the parent submission. If
+        None, no role check is performed.
+    """
+    sample_set: Optional[models.SubmissionSampleSet] = db.get(  # type: ignore
+        models.SubmissionSampleSet, sample_set_id
+    )
+    if sample_set is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission sample set not found"
+        )
+    raise_for_insufficient_submission_role(
+        db, sample_set.submission_metadata, requester, allowed_roles=allowed_roles
+    )
+    return sample_set
 
 
 def get_submission_role(
@@ -981,21 +1258,37 @@ def get_submissions_for_user(
     search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
-    column = (
-        models.User.name
-        if column_sort == "author.name"
-        else getattr(models.SubmissionMetadata, column_sort)
-    )
-
     all_submissions = (
         db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+    )
+
+    column: Any
+    if column_sort == "author.name":
+        column = models.User.name
+    elif column_sort == "status":
+        # TODO: This sort path assumes the compatibility model where each submission has
+        # exactly one relevant sample set. Once the API/UI expose multiple sample sets,
+        # sorting submissions by "status" must define which sample set status is used,
+        # or move the sort to sample-set-aware endpoints.
+        all_submissions = all_submissions.outerjoin(
+            models.SubmissionSampleSet,
+            models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
+        )
+        column = models.SubmissionSampleSet.status
+    else:
+        column = getattr(models.SubmissionMetadata, column_sort)
+
+    all_submissions = (
+        all_submissions
         # Primary sort by requested column
         .order_by(column.asc() if order == "asc" else column.desc())
         # Secondary sorts to ensure consistent order since primary sort may have ties
         # (e.g. multiple submissions from the same author)
-        .order_by(models.SubmissionMetadata.study_name.asc())
-        .order_by(models.SubmissionMetadata.id.asc())
+        .order_by(models.SubmissionMetadata.study_name.asc()).order_by(
+            models.SubmissionMetadata.id.asc()
+        )
     )
 
     if is_test_submission_filter != None:
@@ -1028,21 +1321,38 @@ def get_query_for_all_submissions(db: Session):
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    all_submissions = db.query(models.SubmissionMetadata).order_by(
-        models.SubmissionMetadata.created.desc()
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .options(selectinload(models.SubmissionMetadata.sample_sets))
+        .order_by(models.SubmissionMetadata.created.desc())
     )
     return all_submissions
 
 
-def get_query_for_submitted_pending_review_submissions(db: Session):
+def get_query_for_all_submission_sample_sets(db: Session):
+    r"""Returns a SQLAlchemy query that can be used to retrieve all submission sample sets."""
+    all_submission_sample_sets = (
+        db.query(models.SubmissionSampleSet)
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
+        .order_by(models.SubmissionSampleSet.created.desc())
+    )
+    return all_submission_sample_sets
+
+
+def get_query_for_submitted_pending_review_sample_sets(db: Session):
     r"""
-    Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
+    Returns a SQLAlchemy query that can be used to retrieve submission sample sets pending
+    review.
 
     Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
-    submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
+    submitted_pending_review = (
+        db.query(models.SubmissionSampleSet)
+        .options(selectinload(models.SubmissionSampleSet.submission_metadata))
+        .filter(
+            models.SubmissionSampleSet.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        )
     )
     return submitted_pending_review
 

@@ -133,7 +133,7 @@ export default defineComponent({
         .attr('y1', (d, i) => y(i) + y.step() / 2)
         .attr('y2', (d, i) => y(i) + y.step() / 2)
         .attr('stroke-width', 3)
-        .attr('stroke', colors.blue);
+        .attr('stroke', colors.visualization);
 
       svg.selectAll('circle')
         .data(setMembers)
@@ -141,7 +141,7 @@ export default defineComponent({
         .attr('cx', (d) => membershipX(d.set))
         .attr('cy', (d) => y(d.index) + y.step() / 2)
         .attr('r', 5)
-        .attr('fill', colors.blue);
+        .attr('fill', colors.visualization);
 
       uniqueCounts.forEach((count, _i) => {
         const barX = scaleLinear()
@@ -166,7 +166,7 @@ export default defineComponent({
               .attr('y', (d, i) => y(i))
               .attr('width', (d) => barX(d.counts[count]))
               .attr('height', y.bandwidth())
-              .attr('fill', colors.blue)
+              .attr('fill', colors.visualization)
               .classed('upset-bar-clickable', true)
               .on('click', selectSamples);
             parent.append('text')

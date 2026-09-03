@@ -1,12 +1,13 @@
 import re
-from typing import Any, Dict, Iterable, List, Set, cast
+from typing import Any, Dict, Iterable, List, Protocol, Set, TypedDict, cast
 
 from pymongo.collection import Collection
+from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
-from typing_extensions import Protocol
 
 from nmdc_server import models, schemas
+from nmdc_server.database import Base
 from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.errors import missing as missing_
 from nmdc_server.logger import get_logger
@@ -215,6 +216,14 @@ load_mt_annotation_base = generate_pipeline_loader(
 )
 
 
+class SupersessionDescriptor(TypedDict):
+    superseded_record_table_name: str
+    """Name of the table containing the superseded record."""
+
+    superseding_record_id: str
+    """ID of the superseding record."""
+
+
 # This is a generic function for load workflow execution objects.  Some workflow types require
 # custom processing arguments that get passed in as kwargs.
 # flake8: noqa: C901
@@ -227,10 +236,15 @@ def load(
 ):
     logger = get_logger(__name__)
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
+    # Collect superseded_by values separately to avoid self-referential FK violations.
+    # Records are inserted with superseded_by=None, then updated in a second pass
+    # after all records of this type are committed (guaranteeing the referenced IDs exist).
+    superseded_by_map: Dict[str, SupersessionDescriptor] = {}
 
     for obj in cursor:
         inputs = obj.pop("has_input", [])
         outputs = obj.pop("has_output", [])
+        superseded_by = obj.pop("superseded_by", None)
 
         if workflow_type is not None:
             # unset the type, override it with the schema's default type
@@ -268,6 +282,16 @@ def load(
 
         id_ = pipeline.id
         table_name = pipeline.__tablename__
+
+        # If this workflow execution is superseded by anything, record that fact in the map.
+        # Note: This function is designed to process workflow executions of a single type,
+        #       so storing the table name per-record (like this) is currently overkill.
+        if isinstance(superseded_by, str):
+            own_id = str(id_)
+            superseded_by_map[own_id] = SupersessionDescriptor(
+                superseded_record_table_name=table_name,
+                superseding_record_id=superseded_by,
+            )
 
         input_association = getattr(models, f"{table_name}_input_association")
         output_association = getattr(models, f"{table_name}_output_association")
@@ -321,3 +345,15 @@ def load(
             assert output
             output.workflow_type = workflow_type
             db.add(output)
+
+    # Second pass: update superseded_by now that all records of this type are committed,
+    # so the self-referential FK constraint is satisfied for every value.
+    if len(superseded_by_map.keys()) > 0:
+        for own_id, supersession_descriptor in superseded_by_map.items():
+            table_name = supersession_descriptor["superseded_record_table_name"]
+            table = Base.metadata.tables[table_name]
+            superseded_by = supersession_descriptor["superseding_record_id"]
+            db.execute(
+                update(table).where(table.c.id == own_id).values(superseded_by=superseded_by)
+            )
+        db.commit()

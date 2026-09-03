@@ -9,7 +9,7 @@ import {
   Condition,
   DoiInfo,
   LabelLink,
-  StudySearchResults,
+  StudySearchResult,
 } from '@/data/api';
 import { setConditions, setUniqueCondition } from '@/store';
 import AppBanner from '@/components/AppBanner.vue';
@@ -52,14 +52,14 @@ export default defineComponent({
 
   setup(props) {
     const { smAndDown } = useDisplay();
-    const study = ref<StudySearchResults | null>(null);
+    const study = ref<StudySearchResult | null>(null);
     const studyDownloadDialog = ref(false);
     const studyDownloadLoading = ref(false);
     const errorDialog = ref(false);
     const sampleCount = ref(0);
     const omicsProcessingCounts = ref<Record<string, number> | null>(null);
 
-    const parentStudies = ref<StudySearchResults[]>([]);
+    const parentStudies = ref<StudySearchResult[]>([]);
     const conditions = ref<Condition[]>([]);
     const biosampleSearchEnabled = ref(false);
 
@@ -106,7 +106,7 @@ export default defineComponent({
       if (_study.omics_processing_counts !== null) {
         const counts: Record<string, number> = {};
         _study.omics_processing_counts.forEach(({type, count}) => {
-          if (type.toLowerCase() !== 'lipidomics' && count > 0) {
+          if (count > 0) {
             counts[type] = count;
           }
         });
@@ -152,7 +152,7 @@ export default defineComponent({
         value: _study.id,
       }];
       if (_study.children.length > 0) {
-        _study.children.forEach((child: StudySearchResults) => {
+        _study.children.forEach((child: StudySearchResult) => {
           conditions.value.push({
             value: child.id,
             table: 'study',

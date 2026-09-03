@@ -117,7 +117,7 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
     with duration_logger(logger, "Loading omics processing"):
         omics_processing.load(
             db,
-            mongodb["data_generation_set"].find(),
+            paginate_cursor(mongodb["data_generation_set"]),
             mongodb,
         )
         db.commit()

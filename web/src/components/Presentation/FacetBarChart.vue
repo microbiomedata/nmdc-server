@@ -95,11 +95,11 @@ const chartData = computed(() => {
             true,
             count > 0 ? (
               ecosystems.find((e) => e.name === facet.facet)
-              || { color: theme.current.value.colors.primary }
+              || { color: theme.current.value.colors.visualization }
             ).color : 'lightgray',
             excludedCount,
             false,
-            excludedCount > 0 ? 'lightgray' : theme.current.value.colors.primary,
+            excludedCount > 0 ? 'lightgray' : theme.current.value.colors.visualization,
             count > 0 ? `${count}` : 'No match',
           ];
         },

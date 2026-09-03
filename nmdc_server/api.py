@@ -1,4 +1,5 @@
 import csv
+import datetime
 import json
 import time
 import zipfile
@@ -9,18 +10,18 @@ from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
-import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, models, query, schemas, schemas_submission
+from nmdc_server import crud, github, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -29,10 +30,12 @@ from nmdc_server.crud import (
     DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
+    metadata_edit_roles,
+    read_roles,
     replace_nersc_data_url_prefix,
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import get_db
+from nmdc_server.database import SessionLocal, get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
@@ -89,7 +92,8 @@ def get_health(
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
     return {
-        "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
+        "disable_bulk_data_product_download": settings.disable_bulk_data_product_download,
+        "disable_individual_data_product_download": settings.disable_individual_data_product_download,
         "portal_banner_message": settings.portal_banner_message,
         "portal_banner_title": settings.portal_banner_title,
     }
@@ -317,8 +321,12 @@ async def search_biosample(
     # As a side effect, track all relevant data object IDs for this query.
     # They will be used to get download counts for all data objects in one
     # query.
-    def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+    def insert_selected(biosample: models.Biosample) -> models.Biosample:
         for op in biosample.omics_processing:
+            # If the query parameter `include_superseded_workflow_executions` is False (the default),
+            # then filter out any workflow executions that have been superseded by another.
+            if not query.include_superseded_workflow_executions:
+                op._exclude_superseded = True
             for da in op.outputs:
                 data_object_ids.add(da.id)
                 da.selected = schemas.DataObject.is_selected(
@@ -496,7 +504,12 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                 if filename is None:
                     continue
 
-                with zf.open(f"{filename}.json", "w") as jf:
+                zinfo = zipfile.ZipInfo(
+                    filename=f"{filename}.json",
+                    date_time=datetime.datetime.now().timetuple()[:6],  # default is 1980-01-01
+                )
+                zinfo.compress_type = zipfile.ZIP_DEFLATED
+                with zf.open(zinfo, "w") as jf:
                     if not biosample_ids:
                         # Write an empty list if there are no biosamples matching the query
                         jf.write(b"[]")
@@ -505,7 +518,10 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                         jf.write(b"[\n")
                         first = True
                         for doc in crud.get_documents_by_biosample_ids(
-                            db, biosample_ids, high_level_type
+                            db,
+                            biosample_ids,
+                            high_level_type,
+                            include_superseded_workflow_executions=q.include_superseded_workflow_executions,
                         ):
                             if not first:
                                 # Write a comma before all but the first document to maintain valid JSON list syntax.
@@ -901,7 +917,9 @@ def data_object_aggregation(
     query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
     db: Session = Depends(get_db),
 ):
-    return crud.aggregate_data_object_by_workflow(db, query.conditions)
+    return crud.aggregate_data_object_by_workflow(
+        db, query.conditions, query.include_superseded_workflow_executions
+    )
 
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
@@ -936,6 +954,7 @@ async def create_bulk_download(
             orcid=user.orcid,
             conditions=query.conditions,
             filter=query.data_object_filter,
+            include_superseded_workflow_executions=query.include_superseded_workflow_executions,
         ),
     )
     if bulk_download is None:
@@ -964,7 +983,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
     # Note: We added these statements to help with debugging when this functionality was new.
-    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    # logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     async with (
         httpx.AsyncClient(timeout=None) as client,
@@ -1002,70 +1021,25 @@ async def get_bulk_download_data_object_metadata(
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
-    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
+    paths_by_data_object_id = {file.data_object.id: file.path for file in bulk_download.files}
+    data_object_ids_list = list(paths_by_data_object_id)
 
     # If there were no files specified, return no documents.
     if len(data_object_ids_list) == 0:
         return []
 
-    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
-
-    return JSONResponse(content=documents)
-
-
-@router.get(
-    "/bulk_download/{bulk_download_id}/metadata/related_biosamples.json",
-    tags=["download"],
-)
-async def get_bulk_download_data_object_to_biosamples_map(
-    bulk_download_id: UUID,
-    db: Session = Depends(get_db),
-):
-    r"""
-    Return a JSON dictionary mapping each data object ID with its associated biosample IDs.
-    Each data object ID corresponds to a different file within the bulk download.
-
-    This endpoint is called by ZipStreamer when it builds the zip archive, so it
-    intentionally does **not** check the `expired` flag on the bulk download.
-    """
-    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
-
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
-    if bulk_download is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Bulk download not found",
+    data_object_documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+    data_objects_json = []
+    for document, biosample_ids in data_object_documents:
+        document = dict(document)
+        document["_bulk_download_path"] = paths_by_data_object_id[document["id"]]
+        document["_related_biosample_ids"] = biosample_ids
+        document["_globus_path"] = document["url"].replace(
+            "https://data.microbiomedata.org/data", ""
         )
+        data_objects_json.append(document)
 
-    # Get the `id` of each `DataObject` corresponding to each file in this `BulkDownload`.
-    data_object_ids = [file.data_object.id for file in bulk_download.files]
-    if len(data_object_ids) == 0:
-        logger.warning(f"No data object IDs found for bulk download '{bulk_download_id}'")
-        return data_object_id_to_biosample_ids_map
-
-    # Get the `id` of each `Biosample` related to any of those `DataObject`s.
-    statement = (
-        select(
-            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
-            models.BiosampleRelatedDocument.biosample_ids,
-        )
-        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
-        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
-        .order_by(models.BiosampleRelatedDocument.id)
-    )
-    rows = db.execute(statement).all()
-    for row in rows:
-        data_object_id_to_biosample_ids_map[row[0]] = row[1]
-
-    if len(data_object_id_to_biosample_ids_map.keys()) == 0:
-        logger.warning(f"No biosample IDs found for bulk download '{bulk_download_id}'")
-
-    # Ensure the dictionary we return accounts for all the `DataObject` `id`s.
-    for data_object_id in data_object_ids:
-        if data_object_id not in data_object_id_to_biosample_ids_map.keys():
-            data_object_id_to_biosample_ids_map[data_object_id] = []
-
-    return JSONResponse(content=data_object_id_to_biosample_ids_map)
+    return JSONResponse(content=data_objects_json)
 
 
 @router.get(
@@ -1091,6 +1065,54 @@ async def get_bulk_download_readme(
     readme_content = readme_path.read_text(encoding="utf-8")
 
     return Response(content=readme_content, media_type="text/markdown")
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/ro-crate-metadata.json",
+    tags=["download"],
+)
+async def get_bulk_download_rocrate(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON object representing the RO-Crate metadata for the bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    if bulk_download.rocrate_metadata_cache is None:
+        raise HTTPException(status_code=404, detail="RO-Crate metadata cache not found")
+
+    cached_rocrate = bulk_download.rocrate_metadata_cache
+    # PostgreSQL JSONB does not preserve object key order. Rebuild the top-level
+    # object so the JSON-LD @context is the first property in the downloaded file.
+    rocrate_dict = {
+        "@context": cached_rocrate["@context"],
+        **{key: value for key, value in cached_rocrate.items() if key != "@context"},
+    }
+
+    def clear_rocrate_metadata_cache():
+        try:
+            with SessionLocal() as cleanup_db:
+                cleanup_bulk_download = cleanup_db.get(models.BulkDownload, bulk_download_id)
+                if cleanup_bulk_download is not None:
+                    cleanup_bulk_download.rocrate_metadata_cache = None
+                    cleanup_db.commit()
+        except Exception:
+            logger.exception(
+                "Failed to clear RO-Crate metadata cache for bulk download %s",
+                bulk_download_id,
+            )
+
+    return JSONResponse(
+        content=rocrate_dict,
+        background=BackgroundTask(clear_rocrate_metadata_cache),
+    )
 
 
 @router.get(
@@ -1132,13 +1154,14 @@ async def get_metadata_submissions_mixs(
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
-    # Get the submissions from the database.
-    q = crud.get_query_for_submitted_pending_review_submissions(db)
-    submissions = q.all()
+    # Get the sample sets from the database.
+    q = crud.get_query_for_submitted_pending_review_sample_sets(db)
+    sample_sets = q.all()
 
     # Iterate through the submissions, building the data rows for the report.
     header_row = [
         "Submission ID",
+        "Sample Set Name",
         "Status",
         "Sample Name",
         "Environmental Package/Extension",
@@ -1155,11 +1178,15 @@ async def get_metadata_submissions_mixs(
     schema = fetch_nmdc_submission_schema()
 
     data_rows = []
-    for s in submissions:
+    for sample_set in sample_sets:
+        submission = sample_set.submission_metadata
 
-        metadata = s.metadata_submission  # creates a concise alias
-        sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_pkg = metadata.get("packageName", "")
+        sample_data = (
+            sample_set.sample_data["data"]
+            if sample_set.sample_data and "data" in sample_set.sample_data
+            else {}
+        )
+        env_pkg = sample_set.sample_environment_form.get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -1201,8 +1228,9 @@ async def get_metadata_submissions_mixs(
 
                 # Append each sample as new row (with env data)
                 data_row = [
-                    s.id,
-                    s.status,
+                    submission.id,
+                    sample_set.name,
+                    sample_set.status,
                     sample_name,
                     env_pkg,
                     env_broad_scale,
@@ -1333,8 +1361,8 @@ async def get_metadata_submissions_report(
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
-    q = crud.get_query_for_all_submissions(db)
-    submissions = q.all()
+    q = crud.get_query_for_all_submission_sample_sets(db)
+    sample_sets = q.all()
 
     # Iterate through the submissions, building the data rows for the report.
     header_row = [
@@ -1347,40 +1375,53 @@ async def get_metadata_submissions_report(
         "Source Client",
         "Status",
         "Is Test Submission",
+        "Sample Set Name",
         "Date Last Modified",
         "Date Created",
         "Number of Samples",
+        "Award",
     ]
     data_rows = []
-    for s in submissions:
-        sample_count = 0
-        metadata = s.metadata_submission  # creates a concise alias
-        # find the number of samples in the submission
-        # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
-        #       and values are lists of samples of that type.
-        # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
-        sample_data = metadata["sampleData"]
-        for sample_type in sample_data:
-            sample_count += len(sample_data[sample_type])
+    for sample_set in sample_sets:
+        submission = sample_set.submission_metadata
 
-        author_user = s.author  # note: `s.author` is a `models.User` instance
-        study_form = metadata["studyForm"] if "studyForm" in metadata else {}
+        # Get the award information from the submission.
+        #
+        # Note: On the submission portal, this value is solicited from the user by prompting
+        #       them for the "kind of project you have been awarded". When the user marks the
+        #       "Other" radio button (in which case, "OTHER" gets stored in the `award` field),
+        #       the user can enter a custom string, which gets stored in the `otherAward` field.
+        #
+        sentinel_value_for_other = "OTHER"
+        multi_omics_form = sample_set.multi_omics_form
+        predefined_award = multi_omics_form.get("award", "")
+        custom_award = multi_omics_form.get("otherAward", "")
+        award = ""
+        if isinstance(predefined_award, str) and predefined_award != sentinel_value_for_other:
+            award = predefined_award
+        elif isinstance(custom_award, str):
+            award = custom_award
+
+        author_user = submission.author  # note: `s.author` is a `models.User` instance
+        study_form = submission.study_form
         study_name = study_form["studyName"] if "studyName" in study_form else ""
         pi_name = study_form["piName"] if "piName" in study_form else ""
         pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
         data_row = [
-            s.id,
-            s.author_orcid,
+            submission.id,
+            submission.author_orcid,
             author_user.name,
             study_name,
             pi_name,
             pi_email,
-            s.source_client,
-            s.status,
-            s.is_test_submission,
-            s.date_last_modified,
-            s.created,
-            sample_count,
+            submission.source_client,
+            sample_set.status,
+            submission.is_test_submission,
+            sample_set.name,
+            sample_set.date_last_modified,
+            sample_set.created,
+            sample_set.sample_count,
+            award,
         ]
         data_rows.append(data_row)
 
@@ -1482,7 +1523,6 @@ async def get_submission(
             submission
         )
         submission_metadata_schema.permission_level = permission_level
-
         return submission_metadata_schema
 
     raise HTTPException(status_code=403, detail="Must have access.")
@@ -1492,18 +1532,16 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     """Compare a patch payload with what the user can actually save."""
     metadata_contributor_fields = {
         "sampleData",
-        "validationState",
         "metadata_submission",
     }
     editor_fields = {
-        "packageName",
+        "sampleEnvironmentForm",
         "contextForm",
-        "addressForm",
+        "senderShippingInfoForm",
         "templates",
         "studyForm",
         "multiOmicsForm",
         "sampleData",
-        "validationState",
         "field_notes_metadata",
         "metadata_submission",
     }
@@ -1542,20 +1580,7 @@ async def update_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.get(SubmissionMetadata, id)  # type: ignore
-    body_dict = body.dict(exclude_unset=True)
-    if submission is None:
-        raise HTTPException(status_code=404, detail="Submission not found")
-
-    current_user_role = crud.get_submission_role(db, id, user.orcid)
-    if not (
-        user.is_admin
-        or (
-            current_user_role
-            and can_save_submission(current_user_role, body_dict, submission.status)
-        )
-    ):
-        raise HTTPException(403, detail="Must have access.")
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
@@ -1564,115 +1589,29 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
-    if submission.status == SubmissionStatusEnum.UpdatesRequired.text:
-        submission.status = SubmissionStatusEnum.InProgress.text
-
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
 
-    # Merge the submission metadata dicts
-    submission.metadata_submission = (
-        submission.metadata_submission | body_dict["metadata_submission"]
-    )
-    # TODO: remove the child properties "studyName" and "templates" in favor of the top-
-    # level property. Requires some coordination between this API and its clients.
-    if "studyForm" in body_dict["metadata_submission"]:
-        submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
-    if "templates" in body_dict["metadata_submission"]:
-        submission.templates = body_dict["metadata_submission"]["templates"]
+    if body.study_form is not None:
+        submission.study_form = body.study_form.model_dump()
+        submission.study_name = body.study_form.studyName
 
     # Update permissions if the user is an "owner" or "admin"
     # TODO: consider whether this can be refactored into a separate endpoint
-    new_permissions = body_dict.get("permissions", None)
+    current_user_role = crud.get_submission_role(db, id, user.orcid)
     can_update_permissions = user.is_admin or (
         current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
     )
-    if new_permissions is not None and can_update_permissions:
-        crud.update_submission_contributor_roles(db, submission, new_permissions)
+    if body.permissions is not None and can_update_permissions:
+        crud.update_submission_contributor_roles(db, submission, body.permissions)
 
     crud.update_submission_lock(db, submission.id)
-
     return submission
 
 
 @router.get("/status_transitions", name="Get the `Status` transitions allowed by user role")
 async def get_transitions():
     return ALLOWED_TRANSITIONS
-
-
-@router.patch(
-    "/metadata_submission/{id}/status",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-    response_model=schemas_submission.SubmissionMetadataSchema,
-)
-async def update_submission_status(
-    id: str,
-    body: schemas_submission.SubmissionMetadataStatusPatch,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-) -> models.SubmissionMetadata:
-    """Update submission status and create/update GitHub issue as needed."""
-    submission = get_submission_for_user(
-        db, id, user, allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer]
-    )
-    current_status = submission.status
-
-    # Admins can change to any status
-    if user.is_admin:
-        submission.status = body.status
-
-    # Non-admin users need to follow allowed transitions based on role
-    else:
-
-        # Owner transitions
-        if user.orcid in submission.owners:
-            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.owner]
-
-        # Reviewer transitions
-        elif user.orcid in submission.reviewers:
-            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.reviewer]
-
-        # Apply restricted transitions
-        if (
-            transitions
-            and current_status in transitions
-            and body.status in transitions[current_status]
-        ):
-            submission.status = body.status
-
-        # Any other transitions not allowed
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Invalid status transition.",
-            )
-    db.commit()
-
-    # If the new status is "Submitted - Pending Review", create or update the GitHub issue
-    if (
-        body.status == SubmissionStatusEnum.SubmittedPendingReview.text
-        and submission.is_test_submission is False
-    ):
-        if submission.submission_issue is None:
-            try:
-                submission.submission_issue = create_github_issue(submission, user)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to create GitHub issue: {str(e)}",
-                )
-            db.commit()
-        else:
-            try:
-                update_github_issue_for_resubmission(submission.submission_issue, user)
-            except Exception as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to update GitHub issue: {str(e)}",
-                )
-    return submission
 
 
 @router.post(
@@ -1729,139 +1668,6 @@ async def remove_submission_role(
     crud.remove_submission_role(db, submission, orcid)
 
     return submission
-
-
-def create_github_issue(submission_model: SubmissionMetadata, user):
-    """
-    Create a Github issue for the submission.
-    Return the issue number.
-    """
-    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    gh_url = str(settings.github_issue_url)
-    token = settings.github_authentication_token
-    assignee = settings.github_issue_assignee
-
-    # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url is None or token is None:
-        return None
-
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-
-    # Gathering the fields we want to display in the issue
-    study_form = submission.metadata_submission.studyForm
-    multiomics_form = submission.metadata_submission.multiOmicsForm
-    pi_name = study_form.piName
-    pi_orcid = study_form.piOrcid
-    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
-    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
-    sample_types = ", ".join(submission.metadata_submission.templates)
-    num_samples = submission.sample_count
-
-    # some variable data to supply depending on if data has been generated or not
-    id_dict = {
-        "NCBI ID: ": study_form.NCBIBioProjectId,
-        "GOLD ID: ": study_form.GOLDStudyId,
-        "JGI ID: ": multiomics_form.JGIStudyId,
-        "EMSL ID: ": multiomics_form.studyNumber,
-        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
-    }
-    valid_ids = []
-    for key, value in id_dict.items():
-        if str(value) != "":
-            valid_ids.append(key + value)
-
-    # assemble the body of the API request
-    body_lis = [
-        f"Issue created from host: {settings.host}",
-        f"Submitter: {user.name}, {user.orcid}",
-        f"Submission ID: {submission.id}",
-        f"Has data been generated: {data_generated}",
-        f"PI name: {pi_name}",
-        f"PI orcid: {pi_orcid}",
-        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
-        f"Data types: {omics_processing_types}",
-        f"Sample type: {sample_types}",
-        f"Number of samples: {num_samples}",
-    ] + valid_ids
-    body_string = " \n ".join(body_lis)
-    payload_dict = {
-        "title": f"NMDC Submission: {submission.id}",
-        "body": body_string,
-        "assignees": [assignee],
-    }
-
-    payload = json.dumps(payload_dict)
-
-    res = requests.post(url=gh_url, data=payload, headers=headers)
-    if res.status_code != 201:
-        raise HTTPException(
-            status_code=res.status_code,
-            detail=f"Github issue creation failed: {res.reason}",
-        )
-
-    return res.json()["number"]
-
-
-def update_github_issue_for_resubmission(existing_issue, user):
-    """
-    Update an existing GitHub issue to note that the submission was resubmitted.
-    Adds a comment and reopens the issue if it was closed.
-    Return nothing.
-    """
-
-    # Create a comment noting the resubmission
-    from datetime import datetime
-
-    gh_url = str(settings.github_issue_url)
-    issue_url = f"{gh_url}/{existing_issue}"
-    token = settings.github_authentication_token
-
-    # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url is None or token is None:
-        return None
-
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-
-    # Make comment
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    comment_body = f"""
-## 🔄 Submission Resubmitted
-
-**Resubmitted by:** {user.name} ({user.orcid})
-**Timestamp:** {timestamp}
-**Status:** {SubmissionStatusEnum.SubmittedPendingReview.text}
-
-The submission has been updated and resubmitted for review.
-    """.strip()
-
-    # Add comment to the issue
-    comment_url = f"{issue_url}/comments"
-    comment_payload = {"body": comment_body}
-    comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
-    if comment_response.status_code != 201:
-        raise HTTPException(
-            status_code=comment_response.status_code,
-            detail=f"Failed to add comment to GitHub issue: {comment_response.reason}",
-        )
-
-    # If the issue is closed, reopen it
-    res = requests.get(url=issue_url, headers=headers)
-    if res.status_code != 200:
-        raise HTTPException(
-            status_code=res.status_code,
-            detail=f"Failed to fetch GitHub issue: {res.reason}",
-        )
-    existing_issue = res.json()
-    if existing_issue.get("state") == "closed":
-        reopen_payload = {"state": "open", "state_reason": "reopened"}
-        reopen_response = requests.patch(
-            issue_url, headers=headers, data=json.dumps(reopen_payload)
-        )
-        if reopen_response.status_code != 200:
-            raise HTTPException(
-                status_code=reopen_response.status_code,
-                detail=f"Failed to reopen GitHub issue: {reopen_response.reason}",
-            )
 
 
 @router.delete(
@@ -1966,71 +1772,28 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Old versions of the Field Notes app will continue to use the pre-v1.6.0 submission format
-    # (before certain fields were moved from the multi-omics form to the study form) until its
-    # next release. This is a temporary shim layer that can be removed later.
-    multi_omics_form_extras = body.metadata_submission.multiOmicsForm.__pydantic_extra__ or {}
-    if body.metadata_submission.studyForm.GOLDStudyId is None:
-        body.metadata_submission.studyForm.GOLDStudyId = multi_omics_form_extras.get(
-            "GOLDStudyId", ""
-        )
-    if body.metadata_submission.studyForm.NCBIBioProjectId is None:
-        body.metadata_submission.studyForm.NCBIBioProjectId = multi_omics_form_extras.get(
-            "NCBIBioProjectId", ""
-        )
-    if body.metadata_submission.studyForm.alternativeNames is None:
-        body.metadata_submission.studyForm.alternativeNames = multi_omics_form_extras.get(
-            "alternativeNames", []
-        )
-    if body.metadata_submission.multiOmicsForm.facilities is None:
-        body.metadata_submission.multiOmicsForm.facilities = []
-
     submission = SubmissionMetadata(
-        **body.dict(),
+        **body.model_dump(),
+        author_id=user.id,
         author_orcid=user.orcid,
+        study_name=body.study_form.studyName,
     )
-    submission.author_id = user.id
-    submission.study_name = body.metadata_submission.studyForm.studyName
-    submission.templates = body.metadata_submission.templates
 
     db.add(submission)
     db.commit()
     owner_role = SubmissionRole(
-        **{
-            "submission_id": submission.id,
-            "user_orcid": user.orcid,
-            "role": SubmissionEditorRole.owner,
-        }
+        submission_id=submission.id,
+        user_orcid=user.orcid,
+        role=SubmissionEditorRole.owner,
     )
     db.add(owner_role)
     db.commit()
     crud.try_get_submission_lock(db, submission.id, user.id)
-    return submission
-
-
-@router.post(
-    "/metadata_submission/{id}/study-suggest",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-)
-def suggest_meta_from_study(
-    id: str,
-    db: Session = Depends(get_db),
-    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
-    user: models.User = Depends(get_current_user),
-) -> List[schemas_submission.MetadataSuggestion]:
-    submission_model = get_submission_for_user(
-        db,
-        id,
-        user,
-        allowed_roles=[
-            SubmissionEditorRole.owner,
-            SubmissionEditorRole.editor,
-            SubmissionEditorRole.metadata_contributor,
-        ],
+    submission_metadata_schema = schemas_submission.SubmissionMetadataSchema.model_validate(
+        submission
     )
-    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    return suggester.get_suggestions_from_study_information(submission)
+    submission_metadata_schema.permission_level = models.SubmissionEditorRole.owner.value
+    return submission_metadata_schema
 
 
 @router.post(
@@ -2063,7 +1826,7 @@ async def generate_signed_upload_url(
     # Don't accept files larger than the configured limit (default is 25 MB)
     if body.file_size > settings.max_submission_image_file_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="File size exceeds limit"
         )
 
     # Ensure the requested submission exists and the user has permission to edit it
@@ -2073,7 +1836,7 @@ async def generate_signed_upload_url(
     potential_max_size = submission.study_images_total_size + body.file_size
     if potential_max_size > settings.max_submission_image_total_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Submission quota exceeded",
         )
 
@@ -2086,11 +1849,11 @@ async def generate_signed_upload_url(
 
 
 @router.post(
-    "/metadata_submission/{id}/finalize",
+    "/metadata_submission/{submission_id}/finalize",
     response_model=schemas.SubmissionFinalizeResponse,
 )
 async def finalize_submission(
-    id: str,
+    submission_id: str,
     body: schemas.SubmissionFinalizeRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -2100,7 +1863,6 @@ async def finalize_submission(
     The following operations are performed as part of finalization:
         - making images public
         - setting the NMDC study ID
-        - changing the submission status to "Released"
 
     This operation is only allowed for admin users. It is intended to be called as part of the
     process of translating submission data into nmdc-schema compatible data.
@@ -2112,11 +1874,10 @@ async def finalize_submission(
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
-    submission = get_submission_for_user(db, id, user)
+    submission = get_submission_for_user(db, submission_id, user)
 
-    # Update the NMDC study ID and status
+    # Update the NMDC study ID
     submission.nmdc_study_id = body.study_id
-    submission.status = SubmissionStatusEnum.Released.text
     db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
@@ -2127,7 +1888,7 @@ async def finalize_submission(
             image.name,
             from_bucket=BucketName.SUBMISSION_IMAGES,
             to_bucket=BucketName.PUBLIC_IMAGES,
-            new_name=image.name.replace(id, body.study_id),
+            new_name=image.name.replace(submission_id, body.study_id),
         )
         return public_object.public_url
 
@@ -2187,6 +1948,7 @@ async def set_submission_image(
 
 @router.delete(
     "/metadata_submission/{id}/image/{image_type}",
+    response_model=schemas_submission.SubmissionMetadataSchema,
 )
 async def delete_submission_image(
     id: str,
@@ -2196,7 +1958,7 @@ async def delete_submission_image(
     image_name: Optional[str] = Query(
         None, description="Image name for study_images, not needed for single image fields"
     ),
-):
+) -> models.SubmissionMetadata:
     submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     if image_type == ImageType.STUDY_IMAGES:
@@ -2232,7 +1994,271 @@ async def delete_submission_image(
             setattr(submission, image_type, None)
 
     db.commit()
+    return submission
+
+
+@router.get(
+    "/metadata_submission/{submission_id}/sample_set",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=List[schemas_submission.SubmissionSampleSetListItem],
+)
+def get_submission_sample_set_list(
+    submission_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.SubmissionSampleSetListItem]:
+    submission = get_submission_for_user(db, submission_id, user, allowed_roles=read_roles)
+    return submission.sample_sets
+
+
+@router.get(
+    "/metadata_submission/sample_set/{sample_set_id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def get_submission_sample_set(
+    sample_set_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas_submission.SubmissionSampleSet:
+    # Then query for the sample set directly
+    sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    # Verify that the user has access to the submission that this sample set belongs to
+    crud.raise_for_insufficient_submission_role(
+        db, sample_set.submission_metadata, user, allowed_roles=read_roles
+    )
+
+    return sample_set
+
+
+@router.post(
+    "/metadata_submission/{submission_id}/sample_set",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+    status_code=201,
+)
+def create_submission_sample_set(
+    submission_id: str,
+    body: schemas_submission.SubmissionSampleSetCreate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas_submission.SubmissionSampleSet:
+    submission = get_submission_for_user(db, submission_id, user, allowed_roles=context_edit_roles)
+    sample_set = models.SubmissionSampleSet(**body.model_dump())
+    submission.sample_sets.append(sample_set)
+    db.commit()
+    return sample_set
+
+
+@router.patch(
+    "/metadata_submission/sample_set/{sample_set_id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def update_submission_sample_set(
+    sample_set_id: str,
+    body: schemas_submission.SubmissionSampleSetPatch,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas_submission.SubmissionSampleSet:
+    sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sample set not found")
+
+    if sample_set.status not in [
+        SubmissionStatusEnum.InProgress.text,
+        SubmissionStatusEnum.UpdatesRequired.text,
+    ]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sample set is in read-only status",
+        )
+
+    submission = sample_set.submission_metadata
+    role = crud.get_submission_role(db, submission.id, user.orcid)
+    # User must have at least a metadata contributor role to edit a sample set. Some fields require
+    # an editor role, but that will be checked later.
+    user_can_edit = user.is_admin or (role and role.role in metadata_edit_roles)
+    if not user_can_edit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Must have edit access to the submission"
+        )
+
+    for field, value in body.model_dump(exclude_unset=True).items():
+        # If anything other than the sample_data field is being updated, the user must have an editor role
+        user_can_edit = (
+            user.is_admin or field == "sample_data" or (role and role.role in context_edit_roles)
+        )
+        if not user_can_edit:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Must have editor access to perform this update",
+            )
+        setattr(sample_set, field, value)
+
+    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
+    if sample_set.status == SubmissionStatusEnum.UpdatesRequired.text:
+        sample_set.status = SubmissionStatusEnum.InProgress.text
+
+    db.commit()
+    return sample_set
+
+
+@router.patch(
+    "/metadata_submission/sample_set/{sample_set_id}/status",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionSampleSet,
+)
+def update_submission_sample_set_status(
+    sample_set_id: str,
+    body: schemas_submission.SubmissionSampleSetStatusPatch,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionSampleSet:
+    """Update sample set status and create/update GitHub issue as needed."""
+    sample_set = crud.get_submission_sample_set_for_user(
+        db,
+        sample_set_id,
+        user,
+        allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer],
+    )
+    current_status = sample_set.status
+    submission = sample_set.submission_metadata
+
+    # Admins can change to any status
+    if user.is_admin:
+        sample_set.status = body.status
+
+    # Non-admin users need to follow allowed transitions based on role
+    else:
+        # Owner transitions
+        if user.orcid in submission.owners:
+            transitions = ALLOWED_TRANSITIONS.get(SubmissionEditorRole.owner)
+
+        # Reviewer transitions
+        elif user.orcid in submission.reviewers:
+            transitions = ALLOWED_TRANSITIONS.get(SubmissionEditorRole.reviewer)
+
+        # Shouldn't be able to reach here based on the allowed_roles passed to
+        # get_submission_sample_set_for_user, but just in case this will disallow
+        # any transition changes
+        else:
+            transitions = None
+
+        # Apply restricted transitions
+        if (
+            transitions is not None
+            and current_status in transitions
+            and body.status in transitions[current_status]
+        ):
+            sample_set.status = body.status
+
+        # Any other transitions not allowed
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Invalid status transition.",
+            )
+
+    # If the new status is "Submitted - Pending Review", create or update the GitHub issue(s)
+    if (
+        body.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and submission.is_test_submission is False
+    ):
+        try:
+            if submission.github_issue is None:
+                # No existing submission issue, create one
+                submission.github_issue = github.create_submission_issue(submission, user)
+
+            # Create or update the sample set issue
+            if sample_set.github_issue is None:
+                sample_set.github_issue = github.create_sample_set_issue(sample_set, user)
+            else:
+                github.add_sample_set_resubmit_comment(sample_set, user)
+
+        except github.MissingCredentialsError:
+            # Log this as a warning because local development instances may not have GitHub
+            # credentials configured (expected).
+            logger.warning(
+                "GitHub credentials not found. Skipping submission and sample set issue processing "
+                f"for submission {submission.id} and sample set {sample_set.id}."
+            )
+
+    db.commit()
+    return sample_set
+
+
+@router.delete(
+    "/metadata_submission/sample_set/{sample_set_id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+def delete_submission_sample_set(
+    sample_set_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    sample_set = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    submission = sample_set.submission_metadata
+    crud.raise_for_insufficient_submission_role(
+        db, submission, user, allowed_roles=context_edit_roles
+    )
+
+    db.delete(sample_set)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/metadata_submission/sample_set/{sample_set_id}/study-suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+def suggest_meta_from_study(
+    sample_set_id: str,
+    interface_tab: str,
+    sample_data_slot: str,
+    db: Session = Depends(get_db),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    sample_set_model = db.get(models.SubmissionSampleSet, sample_set_id)  # type: ignore[attr-defined]
+    if sample_set_model is None:
+        raise HTTPException(status_code=404, detail="Sample set not found")
+
+    submission_model = sample_set_model.submission_metadata
+    crud.raise_for_insufficient_submission_role(
+        db,
+        submission_model,
+        user,
+        allowed_roles=[
+            SubmissionEditorRole.owner,
+            SubmissionEditorRole.editor,
+            SubmissionEditorRole.metadata_contributor,
+        ],
+    )
+
+    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
+    sample_set = schemas_submission.SubmissionSampleSet.model_validate(sample_set_model)
+
+    suggestions = suggester.get_suggestions_from_study_information(
+        interface_tab=interface_tab,
+        sample_data_slot=sample_data_slot,
+        submission=submission,
+        sample_set=sample_set,
+    )
+    return suggestions
 
 
 @router.get(

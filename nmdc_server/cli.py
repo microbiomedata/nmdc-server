@@ -2,8 +2,10 @@ import datetime
 import logging
 import math
 import os
+import signal
 import subprocess
 import sys
+import traceback
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -20,6 +22,32 @@ from nmdc_server.ingest.common import ETLReport
 from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage
+
+
+class TerminationRequested(BaseException):
+    """
+    Custom Exception type that can be used to report that we received a request to terminate
+    ourselves (i.e. we received a `SIGTERM` signal).
+
+    Note: If ingest is running and Kubernetes wants to terminate it prematurely (e.g. to free up
+          resources on an existing node; which can happen when a higher-priority pod has nowhere
+          to run), Kubernetes will send it a `SIGTERM` signal.
+          Docs: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination
+
+    Note: This is one of the rare situations where I think inheriting from `BaseException` (as
+          opposed to `Exception`) is warranted. I do not want to spend the time going through all
+          the existing `except Exception` statements in the ingest code and try to infer which
+          exception types their author intended to catch. I will leave a TODO for that.
+          TODO: Update existing `except Exception` statements to be more specific, then
+                update this class to inherit from `Exception` instead of `BaseException`.
+    """
+
+    pass
+
+
+def on_receive_sigterm_signal(signal_number: int, frame) -> None:
+    """Signal handler that raises an exception."""
+    raise TerminationRequested("Received SIGTERM signal.")
 
 
 def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: str) -> None:
@@ -124,22 +152,39 @@ def send_slack_message(text: str) -> bool:
     # Check whether a Slack Incoming Webhook URL is defined.
     if isinstance(settings.slack_webhook_url_for_ingester, str):
         click.echo(f"Sending Slack message having text: {text}")
-        response = requests.post(
-            settings.slack_webhook_url_for_ingester,
-            json={"text": text},
-            headers={"Content-type": "application/json"},
-        )
-
-        # Check whether the message was sent successfully.
-        if response.status_code == 200:
-            click.echo("Sent Slack message.")
-            is_sent = True
-        else:
-            click.echo("Failed to send Slack message.", err=True)
+        try:
+            response = requests.post(
+                settings.slack_webhook_url_for_ingester,
+                json={"text": text},
+                headers={"Content-type": "application/json"},
+                timeout=15,
+            )
+            # Check whether the message was sent successfully.
+            if response.status_code == 200:
+                click.echo("Sent Slack message.")
+                is_sent = True
+            else:
+                click.echo("Failed to send Slack message.", err=True)
+        except requests.RequestException as e:
+            click.echo(f"Failed to send Slack message. Error: {e}", err=True)
     else:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
 
     return is_sent
+
+
+def format_exception_for_notification(error: BaseException) -> str:
+    r"""
+    Returns the "exception" (i.e. not stack trace) part of the specified exception.
+
+    Note: I think of this as the one-liner _following_ the stack trace in the normal exception dump.
+
+    Docs: https://docs.python.org/3/library/traceback.html#traceback.format_exception_only
+
+    >>> format_exception_for_notification(ValueError("Invalid value"))
+    'ValueError: Invalid value'
+    """
+    return "".join(traceback.format_exception_only(error)).strip()
 
 
 def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
@@ -150,7 +195,7 @@ def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
     ...     "biosamples": ETLReport(plural_subject="Biosamples"),
     ...     "studies": ETLReport(plural_subject="Studies"),
     ... })
-    '• Biosamples: extracted `0`, loaded `0`\n• Studies: extracted `0`, loaded `0`'
+    '• Biosamples: extracted and loaded `0`\n• Studies: extracted and loaded `0`'
     """
 
     all_bullets = []
@@ -247,6 +292,10 @@ def ingest(
         level = logging.DEBUG
     logging.basicConfig(level=level, format="%(message)s")
 
+    # Register a signal handler for the `SIGTERM` signal.
+    # Docs: https://docs.python.org/3/library/signal.html#signal.signal
+    signal.signal(signal.SIGTERM, on_receive_sigterm_signal)
+
     # Get the current time as a human-readable string that indicates the timezone.
     ingest_start_datetime = datetime.datetime.now(datetime.timezone.utc)
     ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
@@ -265,12 +314,12 @@ def ingest(
     if not skip_etl:
         try:
             reports = jobs.do_ingest(function_limit, skip_annotation)
-        except Exception as e:
+        except (Exception, TerminationRequested) as e:
             send_slack_message(
                 f"❌ Ingest failed.\n"
                 f"• Environment: `{settings.environment_name_for_ingester}`\n"
                 f"• Start time: `{ingest_start_datetime_str}`\n"
-                f"• Error message: {e}"
+                f"• Error message: {format_exception_for_notification(e)}"
             )
 
             # Now that we've processed the Exception at this level, propagate it.

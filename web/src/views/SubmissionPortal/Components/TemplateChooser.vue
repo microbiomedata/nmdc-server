@@ -1,41 +1,51 @@
-<script lang="ts">
-import { computed, defineComponent } from 'vue';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
-import {
-  canEditSubmissionByStatus,
-  canEditSubmissionMetadata,
-  packageName,
-  templateHasData,
-  templateList,
-  validationState,
-} from '../store';
+<script setup lang="ts">
+import { computed, useTemplateRef } from 'vue';
+import { HARMONIZER_TEMPLATES, TemplateName } from '@/views/SubmissionPortal/types';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
+import SubmissionUneditableBanner from '@/views/SubmissionPortal/Components/SubmissionUneditableBanner.vue';
+import { useSubmissionStore } from '../store';
 
-export default defineComponent({
-  components: { SubmissionForm, SubmissionDocsLink, PageTitle },
-  setup() {
-    const templateListDisplayNames = computed(() => templateList.value
-      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
-      .join(' + '));
+const store = useSubmissionStore();
+const { templateHasData } = store;
+const sampleEnvironmentForm = computed(() => store.sampleSet.forms.sampleEnvironmentForm);
 
-    return {
-      packageName,
-      HARMONIZER_TEMPLATES,
-      templates: Object.entries(HARMONIZER_TEMPLATES),
-      templateListDisplayNames,
-      canEditSubmissionMetadata,
-      templateHasData,
-      canEditSubmissionByStatus,
-      validationState,
-    };
-  },
+const templates = Object.entries(HARMONIZER_TEMPLATES);
+
+const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
+const templateListDisplayNames = computed(() => store.templateList
+  .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
+  .join(' + '));
+
+const checkboxDisabledReason = computed<Record<string, string | null>>(() => {
+  const notes = {} as Record<TemplateName, string | null>;
+  Object.keys(HARMONIZER_TEMPLATES).forEach((key) => {
+    const templateName = key as TemplateName;
+    if (templateHasData(templateName)) {
+      notes[templateName] = 'This template cannot be deselected because there is data present in the Sample Metadata tab for this template.';
+    } else if (templateName === 'isolate' && (
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-genome') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-genome-jgi') ||
+      store.sampleSet.forms.multiOmicsForm.omicsProcessingTypes.includes('isolate-transcriptome-jgi')
+    )) {
+      notes[templateName] = 'This template cannot be deselected because an isolate omics processing type is selected on the Multi-omics Data page.';
+    } else {
+      notes[templateName] = null;
+    }
+  });
+  return notes;
 });
 </script>
 
 <template>
   <div>
+    <SubmissionUneditableBanner
+      :allowed-roles="['owner', 'editor']"
+      in-sample-set-context
+      edge-to-edge
+    />
     <PageTitle
       title="Sample Environment"
     >
@@ -49,35 +59,47 @@ export default defineComponent({
           target="_blank"
           rel="noopener noreferrer"
         >MIxS Extension</a>
-        for your samples.
+        for your samples. If isolation was performed, select the "isolate" option. If isolates were obtained from a
+        provider, select only the "isolate" option.
       </template>
     </PageTitle>
     <SubmissionForm
-      @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
+      ref="formRef"
+      in-sample-set-context
+      @valid-state-changed="(state) => sampleEnvironmentForm.validation = state"
     >
       <v-input
-        :model-value="packageName"
+        :model-value="sampleEnvironmentForm.packageName"
         validate-on="input eager"
         :rules="[(v) => (!!v && v.length > 0) || 'Please select at least one template.']"
       >
         <template #default>
           <fieldset class="border-0">
-            <v-checkbox
+            <template
               v-for="option in templates.filter((v) => v[1].status === 'published')"
               :key="option[0]"
-              v-model="packageName"
-              hide-details
-              :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
-              :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
-              :value="option[0]"
-            />
+            >
+              <v-checkbox
+                v-model="sampleEnvironmentForm.packageName"
+                hide-details
+                :disabled="formRef?.isDisabled || checkboxDisabledReason[option[0]] !== null"
+                :label="HARMONIZER_TEMPLATES[option[0] as TemplateName]?.displayName"
+                :value="option[0]"
+              />
+              <div
+                v-if="checkboxDisabledReason[option[0]]"
+                class="ml-8 text-caption"
+              >
+                {{ checkboxDisabledReason[option[0]] }}
+              </div>
+            </template>
           </fieldset>
         </template>
       </v-input>
     </SubmissionForm>
-    <template v-if="canEditSubmissionByStatus()">
+    <template v-if="formRef && !formRef.isDisabled">
       <v-alert
-        v-if="!templateHasData('all')"
+        v-if="!templateHasData('ANY')"
         color="grey lighten-2"
         class="my-3"
       >
@@ -85,7 +107,7 @@ export default defineComponent({
           Sample Metadata Template Choice
         </p>
         <template
-          v-if="packageName.length!=0"
+          v-if="sampleEnvironmentForm.packageName.length!=0"
         >
           Your Sample Metadata template is "{{ templateListDisplayNames }}".
         </template>
@@ -109,7 +131,7 @@ export default defineComponent({
       </v-alert>
     </template>
     <v-alert
-      v-if="!canEditSubmissionByStatus() && packageName.length > 0"
+      v-if="formRef?.isDisabled && sampleEnvironmentForm.packageName.length > 0"
       color="grey lighten-2"
       class="my-3"
     >

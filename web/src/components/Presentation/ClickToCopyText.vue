@@ -1,30 +1,29 @@
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 
 /**
  * ClickToCopyText provides a container that copies its text content to the clipboard when clicked.
  */
-export default defineComponent({
-  setup() {
-    const isTooltipVisible = ref(false);
-    const containerRef = ref<HTMLElement | null>(null);
-
-    const handleClick = () => {
-      const text = containerRef.value?.innerText || '';
-      navigator.clipboard.writeText(text.trim());
-      isTooltipVisible.value = true;
-      setTimeout(() => {
-        isTooltipVisible.value = false;
-      }, 2000);
-    };
-
-    return {
-      containerRef,
-      handleClick,
-      isTooltipVisible,
-    };
-  },
+withDefaults(defineProps<{
+  /** Valid CSS color string to give the copy button a specific background color */
+  backgroundColor?: string;
+  /** If true, the copy icon will be overlaid on the right edge of the text instead of appearing to the right of it. */
+  iconOverlay?: boolean;
+}>(), {
+  backgroundColor: 'inherit',
+  iconOverlay: false,
 });
+const isTooltipVisible = ref(false);
+const containerRef = ref<HTMLElement | null>(null);
+
+const handleClick = () => {
+  const text = containerRef.value?.innerText || '';
+  navigator.clipboard.writeText(text.trim());
+  isTooltipVisible.value = true;
+  setTimeout(() => {
+    isTooltipVisible.value = false;
+  }, 2000);
+};
 </script>
 
 <template>
@@ -42,13 +41,20 @@ export default defineComponent({
             <button
               v-bind="hoverProps"
               ref="containerRef"
-              class="slot-container"
+              class="slot-container position-relative"
               @click="handleClick"
             >
               <slot />
               <v-icon
                 v-if="isHovering"
-                class="ml-1"
+                class="ml-1 position-absolute"
+                :style="{
+                  backgroundColor: backgroundColor || 'inherit',
+                  top: '50%',
+                  right: iconOverlay ? 0 : '-20px',
+                  transform: 'translateY(-50%)',
+                  zIndex: 100
+                }"
                 size="inherit"
               >
                 mdi-content-copy

@@ -1,7 +1,7 @@
 import {
   watch, Ref, computed, shallowReactive,
 } from 'vue';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,
 } from '@/data/api';
@@ -33,6 +33,8 @@ export default function usePaginatedResult<T>(
   dataObjectFilter?: Ref<DataObjectFilter[]>,
   limit = 15,
   enabled: Ref<boolean> = computed(() => true),
+  /** Search params to that are conditionally included in the fetch  */
+  extraParams?: Ref<Partial<SearchParams>>,
 ): PaginatedResult<T> {
   const data = shallowReactive({
     results: { count: 0, results: [] } as SearchResponse<T>,
@@ -69,6 +71,7 @@ export default function usePaginatedResult<T>(
         sortOrder: data.sortOrder,
         conditions: conditions.value,
         data_object_filter: dataObjectFilter?.value,
+        ...extraParams?.value,
       });
       data.pageSync = Math.floor(data.offset / data.limit) + 1;
     });
@@ -76,16 +79,18 @@ export default function usePaginatedResult<T>(
 
   const debouncedFetchResults = debounce(fetchResults, 500);
 
-  watch([conditions], () => {
-    const doFetch = data.offset === 0;
+  // If conditions change, reset to page 1 and fetch results
+  watch([conditions], (newValues, oldValues) => {
+    if (isEqual(newValues, oldValues)) return;
     data.offset = 0;
-    if (doFetch) {
-      debouncedFetchResults();
-    }
+    debouncedFetchResults();
   });
 
   if (dataObjectFilter !== undefined) {
     watch(dataObjectFilter, debouncedFetchResults, { deep: true });
+  }
+  if (extraParams !== undefined) {
+    watch(extraParams, debouncedFetchResults, { deep: true });
   }
   debouncedFetchResults();
   // ENDTODO

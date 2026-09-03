@@ -14,12 +14,14 @@ let router: Router | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
+  includeSupersededWorkflowExecutions: false,
   userLoading: false,
   user: null as User | null,
   hasAcceptedTerms: false,
   treeData: null as EnvoTree | null,
   bannerTitle: null as string | null,
   bannerMessage: null as string | null,
+  collapsedWorkflowExecutions: {} as Record<string, boolean>,
 });
 const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,
@@ -31,7 +33,7 @@ const unreactive = {
  */
 function persistState() {
   /* If the user is browsing anonymously, stash their state in case they log in */
-  if (!state.user) {
+  if (!state.user && router && router.currentRoute.value.name === 'Search') {
     setQueryState({
       conditions: state.conditions,
       bulkDownloadSelected: state.bulkDownloadSelected,
@@ -48,8 +50,9 @@ function setConditions(conditions: Condition[], push = false) {
       && a.op === b.op
       && a.table === b.table);
   if (router) {
+    const { conditions, q, code, ...rest } = router.currentRoute.value.query;
     // @ts-ignore
-    router[push ? 'push' : 'replace']({ query: { conditions: state.conditions }, name: 'Search' }).catch(noop);
+    router[push ? 'push' : 'replace']({ query: { ...rest, conditions: state.conditions }, name: 'Search' }).catch(noop);
   }
 }
 
@@ -114,7 +117,6 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
     state.bannerTitle = appSettings.portal_banner_title;
     state.bannerMessage = appSettings.portal_banner_message;
   } catch (exception) {
-     
     console.error(exception);
   }
   router = _router;

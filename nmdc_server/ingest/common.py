@@ -4,7 +4,10 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Set, Union
 
+import requests
+from fastapi import status
 from pydantic import BaseModel
+from requests.adapters import HTTPAdapter, Retry
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import Session
 
@@ -28,6 +31,43 @@ EXCLUDED_FIELDS = {
 }
 
 
+def make_requests_session() -> requests.Session:
+    """
+    Returns a `requests.Session` configured to retry HTTP requests.
+    Docs: https://docs.python-requests.org/en/latest/user/advanced/#example-automatic-retries
+    """
+    retry_strategy = Retry(
+        # Note: With `total=6` and `backoff_factor=1`, the HTTP requests would be sent at the
+        #       following start times (if the responses were to arrive immediately, which is not
+        #       realistic, but is a useful condition for explaining what those two parameters do):
+        #       00:00 - Request #1
+        #       00:00 - Request #2 (i.e. "Retry #1") after waiting 0s
+        #       00:02 - Request #3 (i.e. "Retry #2") after waiting 2s
+        #       00:06 - Request #4 (i.e. "Retry #3") after waiting 4s
+        #       00:14 - Request #5 (i.e. "Retry #4") after waiting 8s
+        #       00:30 - Request #6 (i.e. "Retry #5") after waiting 16s
+        #       01:02 - Request #7 (i.e. "Retry #6") after waiting 32s
+        total=6,
+        backoff_factor=1,
+        allowed_methods=Retry.DEFAULT_ALLOWED_METHODS,
+        status_forcelist=[
+            status.HTTP_502_BAD_GATEWAY,
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            status.HTTP_504_GATEWAY_TIMEOUT,
+            status.HTTP_429_TOO_MANY_REQUESTS,
+        ],
+    )
+    http_adapter = HTTPAdapter(max_retries=retry_strategy)
+    requests_session = requests.Session()
+    requests_session.mount("http://", http_adapter)
+    requests_session.mount("https://", http_adapter)
+    return requests_session
+
+
+# Make a `requests.Session` the ingester can use to submit HTTP requests, with automatic retries.
+requests_session = make_requests_session()
+
+
 class ETLReport:
     """A report about the ETL process."""
 
@@ -37,7 +77,14 @@ class ETLReport:
         self.num_loaded: int = 0
 
     def __str__(self) -> str:
-        """Get a single-line representation of the ETL report."""
+        """
+        Get a single-line representation of the ETL report.
+
+        >>> etl_report = ETLReport()
+        >>> str(etl_report)
+        'Things: extracted 0, loaded 0.'
+        """
+
         return (
             f"{self.plural_subject}: "
             f"extracted {self.num_extracted}, "
@@ -45,9 +92,25 @@ class ETLReport:
         )
 
     def get_bullets(self) -> List[str]:
-        """Get a list of bullet points representing the ETL report."""
+        """
+        Get a list of bullet points representing the ETL report.
+
+        >>> etl_report = ETLReport()
+        >>> etl_report.get_bullets()[0]
+        '• Things: extracted and loaded `0`'
+        >>> etl_report.num_extracted += 1
+        >>> etl_report.get_bullets()[0]
+        '• Things: extracted `1`, loaded `0` ⚠️'
+        """
+
+        # Build a concise body if the numbers are the same; otherwise, build a verbose body.
+        if self.num_extracted == self.num_loaded:
+            body = f"extracted and loaded `{self.num_loaded}`"
+        else:
+            body = f"extracted `{self.num_extracted}`, loaded `{self.num_loaded}` ⚠️"
+
         return [
-            f"• {self.plural_subject}: extracted `{self.num_extracted}`, loaded `{self.num_loaded}`",
+            f"• {self.plural_subject}: {body}",
         ]
 
 
@@ -100,10 +163,14 @@ def maybe_merge_download_artifact(ingest_db: Session, query):
 
 
 @contextmanager
-def duration_logger(logger: logging.Logger, task_name: str = "Task"):
+def duration_logger(logger: logging.Logger, task_name: str = "Task", precision: int | None = None):
     """
     Context manager that developers can use (via `with`) to measure how long a task takes to perform
     and print that duration via the specified logger (e.g. to print it to the console).
+
+    You can use the `precision` argument to say how many digits you want there to be after the
+    decimal point. By default, there are none (and there is no decimal point; e.g. "5 seconds").
+    You can pass in `precision=3`, for example, to get "5.123 seconds" instead of "5 seconds".
 
     Example usage:
     ```
@@ -122,4 +189,4 @@ def duration_logger(logger: logging.Logger, task_name: str = "Task"):
     finally:
         end_time = perf_counter()
         duration_sec = end_time - start_time
-        logger.info(f"{task_name}: Finished in {round(duration_sec)} seconds.")
+        logger.info(f"{task_name}: Finished in {round(duration_sec, ndigits=precision)} seconds.")

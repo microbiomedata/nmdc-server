@@ -8,26 +8,25 @@ from datetime import datetime
 from enum import Enum
 from itertools import groupby
 from typing import (
+    Annotated,
     Any,
     Dict,
     Generic,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Tuple,
-    TypedDict,
     TypeVar,
     Union,
 )
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
-from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_, select
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.expression import ClauseElement, intersect, union
-from sqlalchemy.sql.selectable import CTE
-from typing_extensions import Annotated, Literal
+from sqlalchemy.sql.expression import ClauseElement, intersect, union_all
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
@@ -167,63 +166,6 @@ class NmdcTypecode(Enum):
     read_qc_analysis = "wfrqc"
 
 
-class WorkflowTypecodeEntry(TypedDict):
-    workflow_activity_model: Any
-    data_generation_association_table: Any
-
-
-# Maps each NMDC workflow typecode to the workflow activity model and its data generation
-# association table, used to join back to Biosample via OmicsProcessing.
-# An NMDC workflow typecode are all that start with "wf".
-# See https://microbiomedata.github.io/nmdc-schema/typecode-to-class-map/
-_WORKFLOW_TYPECODE_MAP: Dict[NmdcTypecode, WorkflowTypecodeEntry] = {
-    NmdcTypecode.read_qc_analysis: {
-        "workflow_activity_model": models.ReadsQC,
-        "data_generation_association_table": models.reads_qc_data_generation_association,
-    },
-    NmdcTypecode.metagenome_assembly: {
-        "workflow_activity_model": models.MetagenomeAssembly,
-        "data_generation_association_table": models.metagenome_assembly_data_generation_association,
-    },
-    NmdcTypecode.metatranscriptome_assembly: {
-        "workflow_activity_model": models.MetatranscriptomeAssembly,
-        "data_generation_association_table": models.metatranscriptome_assembly_data_generation_association,
-    },
-    NmdcTypecode.metagenome_annotation: {
-        "workflow_activity_model": models.MetagenomeAnnotation,
-        "data_generation_association_table": models.metagenome_annotation_data_generation_association,
-    },
-    NmdcTypecode.metatranscriptome_annotation: {
-        "workflow_activity_model": models.MetatranscriptomeAnnotation,
-        "data_generation_association_table": models.metatranscriptome_annotation_data_generation_association,
-    },
-    NmdcTypecode.metaproteomics_analysis: {
-        "workflow_activity_model": models.MetaproteomicAnalysis,
-        "data_generation_association_table": models.metaproteomic_analysis_data_generation_association,
-    },
-    NmdcTypecode.mags_analysis: {
-        "workflow_activity_model": models.MAGsAnalysis,
-        "data_generation_association_table": models.mags_analysis_data_generation_association,
-    },
-    NmdcTypecode.read_based_taxonomy_analysis: {
-        "workflow_activity_model": models.ReadBasedAnalysis,
-        "data_generation_association_table": models.read_based_analysis_data_generation_association,
-    },
-    NmdcTypecode.nom_analysis: {
-        "workflow_activity_model": models.NOMAnalysis,
-        "data_generation_association_table": models.nom_analysis_data_generation_association,
-    },
-    NmdcTypecode.metabolomics_analysis: {
-        "workflow_activity_model": models.MetabolomicsAnalysis,
-        "data_generation_association_table": models.metabolomics_analysis_data_generation_association,
-    },
-    NmdcTypecode.metatranscriptome_expression_analysis: {
-        "workflow_activity_model": models.Metatranscriptome,
-        "data_generation_association_table": models.metatranscriptome_data_generation_association,
-    },
-}
-
-
 _NMDC_TYPECODE_BY_VALUE: Dict[str, NmdcTypecode] = {tc.value: tc for tc in NmdcTypecode}
 
 
@@ -242,31 +184,6 @@ def _extract_nmdc_typecode(term: str) -> Optional[NmdcTypecode]:
     return _NMDC_TYPECODE_BY_VALUE.get(typecode_str)
 
 
-def _biosample_ids_via_workflow(
-    db: Session,
-    activity_model: Any,
-    data_generation_assoc: Any,
-    workflow_id: str,
-) -> Query:
-    """
-    Return biosample IDs linked to a workflow activity whose ID starts with `workflow_id`.
-    Join path: biosample_input_association > {activity}_data_generation_association,
-    matched on their shared omics_processing_id / data_generation_id column.
-    """
-    table_name = activity_model.__tablename__
-    activity_id_col = data_generation_assoc.c[f"{table_name}_id"]
-    return (
-        db.query(models.biosample_input_association.c.biosample_id.label("id"))
-        .join(
-            data_generation_assoc,
-            data_generation_assoc.c.data_generation_id
-            == models.biosample_input_association.c.omics_processing_id,
-        )
-        .filter(activity_id_col.like(f"{workflow_id}%"))
-        .distinct()
-    )
-
-
 class GoldTreeValue(BaseModel):
     ecosystem: Optional[str] = None
     ecosystem_category: Optional[str] = None
@@ -279,6 +196,7 @@ ConditionValue = Union[schemas.AnnotationValue, RangeValue, List[GoldTreeValue]]
 
 
 class BaseConditionSchema(BaseModel):
+    op: Any
     field: str
     value: ConditionValue
     table: Table
@@ -481,6 +399,24 @@ class BaseQuerySchema(BaseModel):
             "Table.pfam_function:id",
             "Table.go_function:id",
         ]
+        # When filtering on study_id, always automatically include its child studies in the search.
+        if condition.key in ["Table.study:id", "Table.study.study_id"] and condition.op in [
+            Operation.equal,
+            Operation.like,
+        ]:
+            child_studies = db.query(models.Study.id).filter(
+                models.Study.part_of.contains([condition.value])
+            )
+            child_conditions = [
+                SimpleConditionSchema(
+                    op="==",
+                    field=condition.field,
+                    value=study.id,
+                    table=condition.table,
+                )
+                for study in child_studies
+            ]
+            return [condition, *child_conditions]
         if condition.key in gene_search_keys and type(condition.value) is str:
             if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
                 prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]
@@ -889,7 +825,6 @@ class StudyQuerySchema(BaseQuerySchema):
                     "type", table_name, "count", getattr(omics_subquery.c, f"{table_name}_count")
                 )
             )
-
         # Here we only insert filter conditions that are actually relevant for
         # this aggregation.  This reduces the complexity of subquery greatly.
         op_filter_conditions = [
@@ -919,9 +854,13 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def query(self, db: Session):
         study_query = super().query(db)
-        fts_condition_exists = any(
-            isinstance(c, FullTextSearchConditionSchema) for c in self.conditions
-        )
+        fts_condition_value = None
+        fts_condition_exists = False
+        for c in self.conditions:
+            if isinstance(c, FullTextSearchConditionSchema):
+                fts_condition_value = c.value
+                fts_condition_exists = True
+                break
         biosample_condition_exists = any(
             [condition.table == Table.biosample for condition in self.conditions]
         )
@@ -932,12 +871,20 @@ class StudyQuerySchema(BaseQuerySchema):
             biosample_ids_subquery = (
                 BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
             )
+            # Find all study IDs linked to biosamples matching the conditions
             study_ids_from_biosamples = (
                 db.query(models.Biosample.study_id)
                 .join(biosample_ids_subquery, models.Biosample.id == biosample_ids_subquery.c.id)
                 .distinct()
             )
-            study_query = study_query.filter(self.table.model.id.in_(study_ids_from_biosamples))
+            # Ensure the study query finds all studies linked to matching biosamples,
+            # and also, if there is a non-empty full-text search condition, any studies matching the FTS on their own fields.
+            study_id_filter = self.table.model.id.in_(study_ids_from_biosamples)
+            if fts_condition_exists and fts_condition_value:
+                study_id_filter = study_id_filter | models.Study.__ts_vector__.op("@@")(
+                    func.plainto_tsquery("simple", fts_condition_value)
+                )
+            study_query = study_query.filter(study_id_filter)
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
             studies_from_omics_query = omics_query.with_entities(
@@ -1035,6 +982,8 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
+    include_superseded_workflow_executions: bool = False
+    """If True, include workflow executions that have been superseded by other ones."""
 
     @property
     def table(self) -> Table:
@@ -1050,120 +999,58 @@ class BiosampleQuerySchema(BaseQuerySchema):
         """
         typecode = _extract_nmdc_typecode(term)
 
+        # Biosample ID searches
         if typecode == NmdcTypecode.biosample:
             return db.query(models.Biosample.id.label("id")).filter(
                 models.Biosample.id.like(f"{term}%")
             )
 
+        # Study ID searches
         if typecode == NmdcTypecode.study:
-            return (
+            # Direct biosamples of a study whose ID matches the search term.
+            direct_query = (
                 db.query(models.Biosample.id.label("id"))
                 .join(models.Study, models.Biosample.study_id == models.Study.id)
                 .filter(models.Study.id.like(f"{term}%"))
             )
-
-        if typecode in (
-            NmdcTypecode.omics_processing,
-            NmdcTypecode.mass_spectrometry,
-            NmdcTypecode.nucleotide_sequencing,
-        ):
-            return (
-                db.query(models.biosample_input_association.c.biosample_id.label("id"))
-                .join(
-                    models.OmicsProcessing,
-                    models.OmicsProcessing.id
-                    == models.biosample_input_association.c.omics_processing_id,
-                )
-                .filter(models.OmicsProcessing.id.like(f"{term}%"))
-                .distinct()
+            # Also include biosamples from child studies whose part_of field references
+            # this study.  Study.__ts_vector__ indexes part_of, so an FTS match here
+            # will find studies that list the searched ID as a parent.
+            child_study_query = (
+                db.query(models.Biosample.id.label("id"))
+                .join(models.Study, models.Biosample.study_id == models.Study.id)
+                .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
             )
+            return direct_query.union(child_study_query)
 
-        if typecode == NmdcTypecode.data_object:
-            return (
-                db.query(models.biosample_input_association.c.biosample_id.label("id"))
-                .join(
-                    models.omics_processing_output_association,
-                    models.omics_processing_output_association.c.omics_processing_id
-                    == models.biosample_input_association.c.omics_processing_id,
-                )
-                .join(
-                    models.DataObject,
-                    models.DataObject.id
-                    == models.omics_processing_output_association.c.data_object_id,
-                )
-                .filter(models.DataObject.id.like(f"{term}%"))
-                .distinct()
-            )
-
-        # Handle workflow ID searches
+        # All other NMDC ID searches
+        # This uses the BiosampleRelatedDocument table which links biosamples to most NMDC IDs.
+        # There are some NMDC ID types that exist in `NmdcTypecode` but don't exist in BiosampleRelatedDocument table.
+        # These searches will return 0 results.
         if typecode is not None:
-            entry = _WORKFLOW_TYPECODE_MAP.get(typecode)
-            if entry is not None:
-                return _biosample_ids_via_workflow(
-                    db,
-                    entry["workflow_activity_model"],
-                    entry["data_generation_association_table"],
-                    term,
+            brd_subquery = (
+                db.query(
+                    func.unnest(models.BiosampleRelatedDocument.biosample_ids).label("biosample_id")
                 )
-
-        # Fallback: tsvector full-text search on biosample fields
-        envo_broad_scale = aliased(models.EnvoTerm)
-        envo_local_scale = aliased(models.EnvoTerm)
-        envo_medium = aliased(models.EnvoTerm)
-
-        biosample_search_fields = func.concat_ws(
-            " ",
-            models.Biosample.id,
-            models.Biosample.name,
-            models.Biosample.description,
-            models.Biosample.alternate_identifiers,
-            models.Biosample.annotations,
-            models.Biosample.collection_date,
-            models.Biosample.study_id,
-            models.Biosample.env_broad_scale_id,
-            envo_broad_scale.label,
-            models.Biosample.env_local_scale_id,
-            envo_local_scale.label,
-            models.Biosample.env_medium_id,
-            envo_medium.label,
-            models.Biosample.ecosystem,
-            models.Biosample.ecosystem_category,
-            models.Biosample.ecosystem_type,
-            models.Biosample.ecosystem_subtype,
-            models.Biosample.specific_ecosystem,
-        )
-        biosample_fts_query = (
-            db.query(models.Biosample.id.label("id"))
-            .outerjoin(envo_broad_scale, envo_broad_scale.id == models.Biosample.env_broad_scale_id)
-            .outerjoin(envo_local_scale, envo_local_scale.id == models.Biosample.env_local_scale_id)
-            .outerjoin(envo_medium, envo_medium.id == models.Biosample.env_medium_id)
-            .filter(
-                func.to_tsvector("simple", biosample_search_fields).op("@@")(
-                    func.plainto_tsquery("simple", term)
-                )
+                .filter(models.BiosampleRelatedDocument.id.like(f"{term}%"))
+                .subquery()
             )
+            return (
+                db.query(models.Biosample.id.label("id"))
+                .join(brd_subquery, models.Biosample.id == brd_subquery.c.biosample_id)
+                .distinct()
+            )
+
+        # Fallback: tsvector full-text search on biosample fields.
+        biosample_fts_query = db.query(models.Biosample.id.label("id")).filter(
+            models.Biosample.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term))
         )
 
-        # Also search study fields and return all biosamples belonging to matching studies
-        study_search_fields = func.concat_ws(
-            " ",
-            models.Study.id,
-            models.Study.name,
-            models.Study.description,
-            models.Study.gold_name,
-            models.Study.gold_description,
-            models.Study.scientific_objective,
-            models.Study.annotations,
-            models.Study.alternate_identifiers,
-        )
+        # Also search study fields and return all biosamples belonging to matching studies.
         study_fts_query = (
             db.query(models.Biosample.id.label("id"))
             .join(models.Study, models.Biosample.study_id == models.Study.id)
-            .filter(
-                func.to_tsvector("simple", study_search_fields).op("@@")(
-                    func.plainto_tsquery("simple", term)
-                )
-            )
+            .filter(models.Study.__ts_vector__.op("@@")(func.plainto_tsquery("simple", term)))
         )
 
         return biosample_fts_query.union(study_fts_query)
@@ -1298,6 +1185,25 @@ class DataObjectAggregation(BaseModel):
 
 class DataObjectQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
+    include_superseded_workflow_executions: bool = False
+    """If True, include workflow executions that have been superseded by other ones."""
+
+    def _make_superseded_data_object_ids_subquery(self, db: Session):
+        r"""
+        Returns a subquery of DataObject ids that are outputs of superseded
+        WorkflowExecutions (those with superseded_by IS NOT NULL).
+        """
+        superseded_queries = []
+        for wfe_model in models.workflow_activity_types:
+            q = (
+                db.query(models.DataObject.id)
+                .select_from(wfe_model)
+                .join(getattr(wfe_model, "outputs"))
+                .filter(wfe_model.superseded_by != None)  # noqa: E711
+            )
+            superseded_queries.append(q.statement)
+        combined = union_all(*superseded_queries).alias()
+        return db.query(combined).distinct().subquery()
 
     # Perform the normal query operation, but adds in an additional filter on
     # entities from data_object_filter.
@@ -1305,26 +1211,28 @@ class DataObjectQuerySchema(BaseQuerySchema):
         omics_processing_qs = OmicsProcessingQuerySchema(conditions=self.conditions)
         op_cte = omics_processing_qs.query(db).cte()
 
-        subqueries = [
-            self._data_object_filter_subquery(db, f, op_cte) for f in self.data_object_filter
-        ]
-        union_query = union(
-            db.query(models.DataObject.id.label("id")).filter(False),  # type: ignore
-            *subqueries,  # type: ignore
-        ).subquery()
-        return db.query(models.DataObject).join(
-            union_query, models.DataObject.id == union_query.c.id
-        )
+        filter_predicates = []
+        for data_object_filter in self.data_object_filter:
+            predicate = models.DataObject.url != None  # noqa: E711
+            if data_object_filter.workflow:
+                predicate = and_(
+                    predicate,
+                    models.DataObject.workflow_type == data_object_filter.workflow.value,
+                )
+            if data_object_filter.file_type:
+                predicate = and_(
+                    predicate,
+                    models.DataObject.file_type == data_object_filter.file_type,
+                )
+            filter_predicates.append(predicate)
 
-    def execute(self, db: Session) -> Query:
-        return self.query(db)
-
-    # WARNING: This logic is duplicated in the DataObject.is_selected method.
-    def _data_object_filter_subquery(
-        self, db: Session, filter: DataObjectFilter, op_cte: CTE
-    ) -> Query:
-        """Create a subquery that selects from a data object filter condition."""
-        query = (
+        # Keep this as one query instead of UNION-ing one nearly identical query
+        # per selected file type. Large bulk-download filters can contain dozens
+        # of entries, and PostgreSQL's UNION deduplication may require enough
+        # shared memory to fail in a constrained container. DISTINCT preserves
+        # the old deduplication behavior for overlapping filters and data objects
+        # associated with multiple matching DataGenerations.
+        matching_dobj_ids_query = (
             db.query(models.DataObject.id.label("id"))
             .join(
                 models.omics_processing_output_association,
@@ -1334,24 +1242,26 @@ class DataObjectQuerySchema(BaseQuerySchema):
                 op_cte,
                 models.omics_processing_output_association.c.omics_processing_id == op_cte.c.id,
             )
+            .filter(or_(*filter_predicates) if filter_predicates else False)
+            .distinct()
         )
-        if filter.workflow:
-            query = query.filter(models.DataObject.workflow_type == filter.workflow.value)
+        matching_dobj_ids_subquery = matching_dobj_ids_query.subquery()
+        result_query = db.query(models.DataObject).join(
+            matching_dobj_ids_subquery, models.DataObject.id == matching_dobj_ids_subquery.c.id
+        )
+        if not self.include_superseded_workflow_executions:
+            superseded_subquery = self._make_superseded_data_object_ids_subquery(db)
+            result_query = result_query.filter(
+                models.DataObject.id.notin_(select(superseded_subquery.c.id))
+            )
+        return result_query
 
-        if filter.file_type:
-            query = query.filter(models.DataObject.file_type == filter.file_type)
-
-        query = query.filter(models.DataObject.url != None)  # noqa
-        return query
+    def execute(self, db: Session) -> Query:
+        return self.query(db)
 
     def aggregate(self, db: Session) -> DataObjectAggregation:
         """Return the number of files and total size of matched data objects."""
-        subquery = (
-            self.query(db)
-            .filter(models.DataObject.url != None)
-            .filter(models.DataObject.file_size_bytes != None)
-            .subquery()
-        )
+        subquery = self.query(db).filter(models.DataObject.url != None).subquery()
         row = db.query(
             func.count(subquery.c.id),
             func.sum(func.coalesce(subquery.c.file_size_bytes, 0)),
@@ -1383,6 +1293,8 @@ class SearchQuery(BaseModel):
 
 class MultiSearchQuery(SearchQuery):
     endpoints: List[str] = []
+    include_superseded_workflow_executions: bool = False
+    """If True, include workflow executions superseded by newer ones and their outputs."""
 
 
 class ConditionResultSchema(SimpleConditionSchema):
@@ -1395,6 +1307,12 @@ class FacetQuery(SearchQuery):
 
 class BiosampleSearchQuery(SearchQuery):
     data_object_filter: List[DataObjectFilter] = []
+    """
+    A list of filters to apply to the data objects associated with the biosamples.
+    Each filter specifies a workflow type and/or file type to include in the results.
+    """
+    include_superseded_workflow_executions: bool = False
+    """If True, include workflow executions that have been superseded by other ones."""
 
 
 class BinnedRangeFacetQuery(FacetQuery):
