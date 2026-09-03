@@ -1375,6 +1375,7 @@ ENVIRONMENTAL_DATA_SLOTS = [
     "plant_associated_data",
     "sediment_data",
     "soil_data",
+    "wastewater_sludge_data",
     "water_data",
 ]
 
