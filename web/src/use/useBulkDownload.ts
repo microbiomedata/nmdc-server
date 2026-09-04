@@ -36,26 +36,34 @@ export default function useBulkDownload(
     return val;
   }
 
-  async function getSummary() {
-    downloadSummary.value = await api.getBulkDownloadAggregateSummary(
+  watch([conditions, dataObjectFilter, includeSupersededWorkflowExecutions], async (_value, _oldValue, onCleanup) => {
+    let stale = false;
+    onCleanup(() => {
+      stale = true;
+    });
+    const summary = await api.getBulkDownloadAggregateSummary(
       conditions.value,
       dataObjectFilter.value,
       includeSupersededWorkflowExecutions.value,
     );
-  }
+    if (!stale) {
+      downloadSummary.value = summary;
+    }
+  }, { immediate: true });
 
-  async function getDownloadOptions() {
-    downloadOptions.value = await api.getBulkDownloadSummary(
+  watch([conditions, includeSupersededWorkflowExecutions], async (_value, _oldValue, onCleanup) => {
+    let stale = false;
+    onCleanup(() => {
+      stale = true;
+    });
+    const options = await api.getBulkDownloadSummary(
       conditions.value,
       includeSupersededWorkflowExecutions.value,
     );
-  }
-
-  watch([conditions, dataObjectFilter, includeSupersededWorkflowExecutions], getSummary);
-  watch([conditions, includeSupersededWorkflowExecutions], getDownloadOptions);
-
-  getDownloadOptions();
-  getSummary();
+    if (!stale) {
+      downloadOptions.value = options;
+    }
+  }, { immediate: true });
 
   return {
     bulkDownloads,

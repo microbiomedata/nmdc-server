@@ -101,9 +101,25 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
   }));
 
 /**
+ * Initialize router-dependent search state before search components mount.
+ */
+function initializeRouteState(
+  _router: Router,
+  loginState = '' as string | (string | null)[],
+) {
+  router = _router;
+  if (loginState !== 'submission') {
+    // @ts-ignore
+    state.conditions = router.currentRoute.value.query.conditions || [];
+  }
+}
+
+/**
  * load the current user on app start
  */
 async function init(_router: Router, loadUser = true, loginState = '' as string | (string | null)[]) {
+  initializeRouteState(_router, loginState);
+
   if (loadUser) {
     state.userLoading = true;
     try {
@@ -119,16 +135,13 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
   } catch (exception) {
     console.error(exception);
   }
-  router = _router;
   // Handle the login state
   switch (loginState) {
     case 'submission':
-      router.push('submission/home');
+      _router.push('submission/home');
       break;
     default:
       // Login normally
-      // @ts-ignore
-      state.conditions = router.currentRoute.value.query.conditions || [];
       if (state.user) {
         restoreState();
       }
@@ -226,6 +239,7 @@ export {
   acceptTerms,
   getTreeData,
   init,
+  initializeRouteState,
   removeConditions,
   setUniqueCondition,
   setConditions,

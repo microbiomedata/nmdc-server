@@ -35,14 +35,6 @@ const myConditions = computed(() =>
   props.conditions.filter((c) => (c.field === props.field) && (c.table === props.table))
 );
 
-// Fetch facet summary based on conditions
-const fetchFacetSummary = async () => {
-  const conditions = otherConditions.value.concat(
-    props.useAllConditions ? myConditions.value : []
-  );
-  facetSummary.value = await conditionalRequest.request(() => api.getFacetSummary(props.table, props.field, conditions));
-};
-
 // Fetch unconditional facet summary
 const fetchFacetSummaryUnconditional = async () => {
   facetSummaryUnconditional.value = await unconditionalRequest.request(() => api.getFacetSummary(props.table, props.field, []));
@@ -79,8 +71,20 @@ const facetSummaryAggregate = computed(() => {
 // Watch for changes in conditions with deep: true
 watch(
   [otherConditions, myConditions, () => props.useAllConditions],
-  () => {
-    fetchFacetSummary();
+  async (_value, _oldValue, onCleanup) => {
+    let stale = false;
+    onCleanup(() => {
+      stale = true;
+    });
+    const conditions = otherConditions.value.concat(
+      props.useAllConditions ? myConditions.value : []
+    );
+    const summary = await conditionalRequest.request(
+      () => api.getFacetSummary(props.table, props.field, conditions),
+    );
+    if (!stale) {
+      facetSummary.value = summary;
+    }
   },
   { immediate: true }
 );
