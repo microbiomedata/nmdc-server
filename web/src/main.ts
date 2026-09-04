@@ -6,6 +6,8 @@
 import { createApp } from 'vue'
 import * as Sentry from "@sentry/vue";
 import { registerPlugins } from '@/plugins'
+import router from '@/router'
+import { initializeRouteState } from '@/store'
 import App from './App.vue'
 import 'unfonts.css'
 
@@ -25,4 +27,10 @@ if (typeof sentryDsn === "string" && sentryDsn.length > 0) {
   });
 }
 
-app.mount('#app')
+// Wait until the initial URL (including the encoded q parameter) has been parsed, then hydrate
+// the store before mounting any search components. Their immediate watchers can now make their
+// first requests with the correct conditions.
+router.isReady().then(() => {
+  initializeRouteState(router)
+  app.mount('#app')
+})
