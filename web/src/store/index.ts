@@ -118,8 +118,6 @@ function initializeRouteState(
  * load the current user on app start
  */
 async function init(_router: Router, loadUser = true, loginState = '' as string | (string | null)[]) {
-  initializeRouteState(_router, loginState);
-
   if (loadUser) {
     state.userLoading = true;
     try {
