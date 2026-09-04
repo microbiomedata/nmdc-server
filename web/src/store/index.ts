@@ -107,6 +107,7 @@ function initializeRouteState(
   _router: Router,
   loginState = '' as string | (string | null)[],
 ) {
+  // Retain the router so later condition changes can be synchronized back to the URL.
   router = _router;
   if (loginState !== 'submission') {
     // @ts-ignore
@@ -136,7 +137,7 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
   // Handle the login state
   switch (loginState) {
     case 'submission':
-      _router.push('submission/home');
+      router?.push('submission/home');
       break;
     default:
       // Login normally
