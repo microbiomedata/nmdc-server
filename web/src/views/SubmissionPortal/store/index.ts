@@ -930,47 +930,6 @@ export const useSubmissionStore = defineStore('submission', () => {
       return;
     }
 
-// Add PI as contributor with editor role access when added via piOrcid. 
-// If the PI changes, remove the previously auto-added entry.
-watch(
-  () => studyForm.piOrcid,
-  (newPiOrcid: string, oldPiOrcid: string) => {
-    if (oldPiOrcid) {
-      const idx = studyForm.contributors.findIndex(
-        (c: { orcid: string; roles: string[] }) => c.orcid === oldPiOrcid && c.roles.length === 0,
-      );
-      if (idx !== -1) {
-        studyForm.contributors.splice(idx, 1);
-      }
-    }
-    if (newPiOrcid && !studyForm.contributors.some((c: { orcid: string }) => c.orcid === newPiOrcid)) {
-      studyForm.contributors.push({
-        name: studyForm.piName,
-        orcid: newPiOrcid,
-        roles: [],
-        permissionLevel: 'editor' as SubmissionEditorRole,
-      });
-    }
-  }
-);
-
-// Keep the PI contributor name in sync too
-watch(
-  () => studyForm.piName,
-  (newName: string) => {
-    if (!studyForm.piOrcid) return;
-    const piContributor = studyForm.contributors.find(
-      (c: { orcid: string }) => c.orcid === studyForm.piOrcid
-    );
-    if (piContributor) {
-      piContributor.name = newName;
-    }
-  }
-);
-
-function mergeSampleData(key: string | undefined, data: any[]) {
-  if (!key) {
-    return;
     if (submission.record.nmdc_study_id) {
       return 'already_submitted';
     }
