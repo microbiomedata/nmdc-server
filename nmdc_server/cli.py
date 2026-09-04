@@ -319,7 +319,7 @@ def ingest(
                 f"❌ Ingest failed.\n"
                 f"• Environment: `{settings.environment_name_for_ingester}`\n"
                 f"• Start time: `{ingest_start_datetime_str}`\n"
-                f"• Error message: {format_exception_for_notification(e)}"
+                f"• Error message: `{format_exception_for_notification(e)}`"
             )
 
             # Now that we've processed the Exception at this level, propagate it.
