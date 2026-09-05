@@ -556,6 +556,36 @@ export const useSubmissionStore = defineStore('submission', () => {
     }
   });
 
+  // Auto-add PI as contributor with editor role access when added via piOrcid.
+  // If the PI changes, remove the previously auto-added entry.
+  watch(() => submission.forms.studyForm.piOrcid, (newOrcid, oldOrcid) => {
+    const { contributors } = submission.forms.studyForm;
+    if (oldOrcid) {
+      const idx = contributors.findIndex((c) => c.orcid === oldOrcid && c.roles.length ===0);
+      if (idx !== -1) {
+        contributors.splice(idx, 1);
+      }
+    }
+    if (newOrcid && !contributors.some((c) => c.orcid === newOrcid)) {
+      contributors.push({
+        name: submission.forms.studyForm.piName,
+        orcid: newOrcid,
+        roles: [],
+        permissionLevel: 'editor',
+      });
+    }
+  });
+
+  // Keep PI's name in sync as well
+  watch(() => submission.forms.studyForm.piName, (newName) => {
+    const { piOrcid, contributors } = submission.forms.studyForm;
+    if (!piOrcid) return
+    const piContributor = contributors.find((c) => c.orcid === piOrcid);
+    if (piContributor) {
+      piContributor.name = newName;
+    }
+  });
+
   /* HELPERS */
   /**
    * Save current submission list filters to session storage that they can be persisted through page transitions
