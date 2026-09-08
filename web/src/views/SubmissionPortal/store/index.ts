@@ -558,10 +558,11 @@ export const useSubmissionStore = defineStore('submission', () => {
 
   // Auto-add PI as contributor with editor role access when added via piOrcid.
   // If the PI changes, remove the previously auto-added entry.
+  const AUTO_ADD_PI_ROLE = ['Principal Investigator'];
   watch(() => submission.forms.studyForm.piOrcid, (newOrcid, oldOrcid) => {
     const { contributors } = submission.forms.studyForm;
     if (oldOrcid) {
-      const idx = contributors.findIndex((c) => c.orcid === oldOrcid && c.roles.length ===0);
+      const idx = contributors.findIndex((c) => c.orcid === oldOrcid && isEqual(c.roles, AUTO_ADD_PI_ROLE));
       if (idx !== -1) {
         contributors.splice(idx, 1);
       }
@@ -570,7 +571,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       contributors.push({
         name: submission.forms.studyForm.piName,
         orcid: newOrcid,
-        roles: [],
+        roles: [...AUTO_ADD_PI_ROLE],
         permissionLevel: 'editor',
       });
     }
