@@ -28,6 +28,11 @@ interface MetadataSuggesterProps {
    * The schema class name for the active template.
    */
   schemaClassName: string;
+  /**
+   * Callback to fetch study-info-based suggestions. Called after row-based suggestions complete so
+   * the two operations are sequenced and don't overwrite each other.
+   */
+  fetchStudyInfoSuggestions: () => Promise<void>;
 }
 
 const store = useSubmissionStore();
@@ -72,9 +77,6 @@ function getSuggestionKey(suggestion: MetadataSuggestion) {
 }
 
 const props = defineProps<MetadataSuggesterProps>();
-const emit = defineEmits<{
-  'fetch-study-info-suggestions': [];
-}>();
 
 const rejectedSuggestions = ref([] as string[]);
 
@@ -324,11 +326,14 @@ function handleRejectAllSuggestions() {
  * elevation), then marks suggestion as started.
  */
 async function handleStartSuggestion() {
-  emit('fetch-study-info-suggestions');
   suggestionStarted.value = true;
+  // Run rule-based suggestions first (e.g. elevation), then AI suggestions so they don't
+  // overwrite each other — loadSuggestionsFromSampleRows drops all suggestions for each
+  // processed row, so it must finish before loadSuggestionsFromStudyInfo merges its results.
   const allRows = props.harmonizerApi.exportJson().map((_: any, i: number) => i);
   const allRowData = props.harmonizerApi.getDataByRows(allRows);
   await loadSuggestionsFromSampleRows(props.schemaClassName, allRowData);
+  await props.fetchStudyInfoSuggestions();
 }
 
 /**

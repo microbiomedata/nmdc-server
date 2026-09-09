@@ -36,6 +36,10 @@ interface HarmonizerSidebarProps {
    * Whether to show the badge on the Metadata Suggester tab icon.
    */
   showSuggesterBadge?: boolean;
+  /**
+   * Callback to fetch study-info-based suggestions, passed through to MetadataSuggester.
+   */
+  fetchStudyInfoSuggestions: () => Promise<void>;
 }
 
 withDefaults(defineProps<HarmonizerSidebarProps>(), {
@@ -48,7 +52,6 @@ const emit = defineEmits<{
   'export-xlsx': [];
   'import-xlsx': [file: File];
   'clear-suggester-badge': [];
-  'fetch-study-info-suggestions': [];
 }>();
 
 const tabModel = ref(0);
@@ -140,7 +143,7 @@ const handleImport = (file: File) => {
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
           :schema-class-name="harmonizerTemplate.schemaClass || ''"
-          @fetch-study-info-suggestions="emit('fetch-study-info-suggestions')"
+          :fetch-study-info-suggestions="fetchStudyInfoSuggestions"
         />
       </v-window-item>
       <v-window-item>
