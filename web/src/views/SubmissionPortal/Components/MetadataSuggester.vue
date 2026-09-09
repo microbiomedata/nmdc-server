@@ -111,7 +111,7 @@ const pendingSuggestions = computed(() => (
       })
 ));
 
-// If suggestions already exist when the component mounts (e.g. navigating back to this tab), show them
+// If suggestions already exist when the component mounts, show them
 // immediately without requiring the user to click "Suggest Metadata" again.
 watch(pendingSuggestions, (suggestions) => {
   if (suggestions.length > 0) {
