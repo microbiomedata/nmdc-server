@@ -2,7 +2,7 @@
 /**
  * Component to display metadata suggestions and allow users to accept or reject them.
  */
-import { computed, ref, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import {
   CellData,
   MetadataSuggestion,
@@ -110,6 +110,14 @@ const pendingSuggestions = computed(() => (
         return a.slot.localeCompare(b.slot);
       })
 ));
+
+// If suggestions already exist when the component mounts (e.g. navigating back to this tab), show them
+// immediately without requiring the user to click "Suggest Metadata" again.
+watch(pendingSuggestions, (suggestions) => {
+  if (suggestions.length > 0) {
+    suggestionStarted.value = true;
+  }
+}, { immediate: true });
 
 const filteredSuggestions = computed(() => {
   let suggestions = pendingSuggestions.value;
