@@ -219,8 +219,8 @@ export const useSubmissionStore = defineStore('submission', () => {
     },
   });
   const ui = reactive<UiState>({
-    suggestionFills: new Set(Object.values(SuggestionFill)),
-    suggestionTypes: new Set([SuggestionType.ADDITIONS, SuggestionType.REPLACEMENTS]),
+    suggestionFills: new Set<SuggestionFill>(),
+    suggestionTypes: new Set<SuggestionType>(),
     pendingImageUploads: new Set(),
   });
   const submissionListFilters = reactive<SubmissionListFilterState>({

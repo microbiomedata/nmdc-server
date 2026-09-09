@@ -51,12 +51,9 @@ const allFilterOptions = [
 ];
 
 const filterSelectionLabel = computed(() => {
-  const fillsAll = store.ui.suggestionFills.size === 0 || store.ui.suggestionFills.size === scopeOptions.length;
-  const typesAll = store.ui.suggestionTypes.size === 0 || store.ui.suggestionTypes.size === suggestionTypeOptions.length;
-  if (fillsAll && typesAll) return 'All';
   const parts = [
-    ...(typesAll ? [] : Array.from(store.ui.suggestionTypes).map((t) => suggestionTypeOptions.find((o) => o.value === t)?.label)),
-    ...(fillsAll ? [] : Array.from(store.ui.suggestionFills).map((f) => scopeOptions.find((o) => o.value === f)?.label)),
+    ...Array.from(store.ui.suggestionTypes).map((t) => suggestionTypeOptions.find((o) => o.value === t)?.label),
+    ...Array.from(store.ui.suggestionFills).map((f) => scopeOptions.find((o) => o.value === f)?.label),
   ].filter(Boolean);
   return parts.join(', ');
 });
@@ -426,9 +423,10 @@ function getSlotTitle(slot: string) {
               item-title="label"
               item-value="value"
               label="Filter"
+              placeholder="All"
+              persistent-placeholder
               hide-details
               clearable
-              persistent-placeholder
               multiple
               @update:model-value="onFilterUpdate"
             >
