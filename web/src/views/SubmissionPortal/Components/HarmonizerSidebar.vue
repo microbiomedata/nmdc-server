@@ -39,7 +39,7 @@ interface HarmonizerSidebarProps {
   /**
    * Callback to fetch study-info-based suggestions, passed through to MetadataSuggester.
    */
-  fetchStudyInfoSuggestions: () => Promise<void>;
+  fetchStudyInfoSuggestions: () => Promise<unknown>;
 }
 
 withDefaults(defineProps<HarmonizerSidebarProps>(), {

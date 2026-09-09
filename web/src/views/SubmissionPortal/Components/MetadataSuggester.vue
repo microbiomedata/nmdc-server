@@ -32,7 +32,7 @@ interface MetadataSuggesterProps {
    * Callback to fetch study-info-based suggestions. Called after row-based suggestions complete so
    * the two operations are sequenced and don't overwrite each other.
    */
-  fetchStudyInfoSuggestions: () => Promise<void>;
+  fetchStudyInfoSuggestions: () => Promise<unknown>;
 }
 
 const store = useSubmissionStore();
