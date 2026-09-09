@@ -80,7 +80,6 @@ const emit = defineEmits<{
 }>();
 
 const rejectedSuggestions = ref([] as string[]);
-const onDemandSuggestionsLoading = ref(false);
 
 // When the route or schema class name changes (because of changing the active template tab), update the rejected
 // suggestions list from local storage.
@@ -316,34 +315,15 @@ function handleRejectAllSuggestions() {
 /**
  * Handle clicking the "Suggest Metadata" button.
  *
- * Fetches suggestions from study info, then marks suggestion as started.
+ * Fetches suggestions from study info and from all sample rows (for rule-based suggesters like
+ * elevation), then marks suggestion as started.
  */
-function handleStartSuggestion() {
+async function handleStartSuggestion() {
   emit('fetch-study-info-suggestions');
   suggestionStarted.value = true;
-}
-
-async function _handleSuggestForSelectedRows() {
-  onDemandSuggestionsLoading.value = true;
-  const selectedRanges = props.harmonizerApi.getSelectedCells();
-  // selectedRanges is an array of arrays, representing all (possibly discontinuous) ranges of selected cells. Each
-  // inner array is [startRow, startCol, endRow, endCol]. Reduce this to a flat array of row numbers contained in
-  // the selected ranges.
-  const rows = selectedRanges.reduce((acc, range) => {
-    if (range[0] === undefined || range[2] === undefined) {
-      return acc;
-    }
-    for (let i = range[0]; i <= range[2]; i += 1) {
-      acc.push(i);
-    }
-    return acc;
-  }, [] as number[]);
-  const changedRowData = props.harmonizerApi.getDataByRows(rows);
-  try {
-    await loadSuggestionsFromSampleRows(props.schemaClassName, changedRowData);
-  } finally {
-    onDemandSuggestionsLoading.value = false;
-  }
+  const allRows = props.harmonizerApi.exportJson().map((_: any, i: number) => i);
+  const allRowData = props.harmonizerApi.getDataByRows(allRows);
+  await loadSuggestionsFromSampleRows(props.schemaClassName, allRowData);
 }
 
 /**
