@@ -162,14 +162,6 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
                   {{ snakeToSentenceCase(badge) }}
                 </v-chip>
               </span>
-              <!-- <ul>
-                <li
-                  v-for="badge in (result as BiosampleSearchResult).badges"
-                  :key="badge"
-                >
-                  {{ snakeToSentenceCase(badge) }}
-                </li>
-              </ul> -->
             </span>
           </v-tooltip>
           <v-icon>

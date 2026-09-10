@@ -118,6 +118,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   latitude: number | null;
   add_date: string;
   mod_date: string;
+  collection_date: string;
   open_in_gold: string;
   env_broad_scale: {
     id: string;

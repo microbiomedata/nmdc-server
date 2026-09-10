@@ -40,6 +40,7 @@ declare module 'vue' {
     FilterSankeyTree: typeof import('./components/FilterSankeyTree.vue')['default']
     FilterTree: typeof import('./components/FilterTree.vue')['default']
     HelpWrapper: typeof import('./components/HelpWrapper.vue')['default']
+    LabelValueTable: typeof import('./components/Presentation/LabelValueTable.vue')['default']
     LoadingOverlay: typeof import('./components/LoadingOverlay.vue')['default']
     MenuContent: typeof import('./components/MenuContent.vue')['default']
     OrcidId: typeof import('./components/Presentation/OrcidId.vue')['default']
