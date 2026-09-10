@@ -262,7 +262,7 @@ async function addReviewer() {
                 :to="{ name: 'Submission Summary', params: { id: item.id } }"
                 class="text-primary text-decoration-none"
               >
-                {{ item.study_name }}
+                {{ item.study_name || "No Study Name Provided"}}
               </router-link>
               <v-chip
                 v-if="item.is_test_submission"
