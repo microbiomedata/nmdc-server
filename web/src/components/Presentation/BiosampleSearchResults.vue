@@ -138,29 +138,38 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
         >
           <v-tooltip
             v-if="(result as BiosampleSearchResult).badges.length > 0"
-            max-width="300px"
+            max-width="340px"
           >
             <template #activator="{ props }">
               <div
                 class="d-flex align-center mr-2"
                 v-bind="props"
               >
-                <v-icon>
+                <v-icon size="small">
                   mdi-medal
                 </v-icon>
-                <div>{{ (result as BiosampleSearchResult).badges.length }}</div>
+                <div class="text-body-2">{{ (result as BiosampleSearchResult).badges.length }}</div>
               </div>
             </template>
-            <span>
-              <div>This biosample has earned {{ (result as BiosampleSearchResult).badges.length }} metadata quality badges:</div>
-              <ul>
+            <span class="d-flex flex-wrap">
+              <span>This biosample has {{ (result as BiosampleSearchResult).badges.length }} metadata quality badges:</span>
+              <span class="d-inline-flex ga-1 mt-2 mb-1 flex-wrap">
+                <v-chip
+                  v-for="badge in (result as BiosampleSearchResult).badges"
+                  :key="badge"
+                  size="small"
+                >
+                  {{ snakeToSentenceCase(badge) }}
+                </v-chip>
+              </span>
+              <!-- <ul>
                 <li
                   v-for="badge in (result as BiosampleSearchResult).badges"
                   :key="badge"
                 >
                   {{ snakeToSentenceCase(badge) }}
                 </li>
-              </ul>
+              </ul> -->
             </span>
           </v-tooltip>
           <v-icon>
