@@ -9,6 +9,7 @@ import { types } from '@/encoding';
 import { PaginatedResult } from '@/use/usePaginatedResults';
 import { BiosampleSearchResult, DataObjectFilter } from '@/data/api';
 import { stateRefs } from '@/store';
+import { snakeToSentenceCase } from '@/data/utils';
 
 const { biosampleSearch, dataObjectFilter } = defineProps<{
   biosampleSearch: PaginatedResult<BiosampleSearchResult>;
@@ -132,8 +133,36 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
           icon
           variant="plain"
           size="large"
+          class="justify-end"
           :to="{ name: 'Sample', params: { id: result.id } }"
         >
+          <v-tooltip
+            v-if="(result as BiosampleSearchResult).badges.length > 0"
+            max-width="300px"
+          >
+            <template #activator="{ props }">
+              <div
+                class="d-flex align-center mr-2"
+                v-bind="props"
+              >
+                <v-icon>
+                  mdi-medal
+                </v-icon>
+                <div>{{ (result as BiosampleSearchResult).badges.length }}</div>
+              </div>
+            </template>
+            <span>
+              <div>This biosample has earned {{ (result as BiosampleSearchResult).badges.length }} metadata quality badges:</div>
+              <ul>
+                <li
+                  v-for="badge in (result as BiosampleSearchResult).badges"
+                  :key="badge"
+                >
+                  {{ snakeToSentenceCase(badge) }}
+                </li>
+              </ul>
+            </span>
+          </v-tooltip>
           <v-icon>
             mdi-chevron-right
           </v-icon>

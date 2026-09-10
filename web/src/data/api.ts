@@ -136,6 +136,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   };
   omics_processing: OmicsProcessingResult[];
   emsl_biosample_identifiers: string[];
+  badges: string[];
 }
 
 export interface NmdcValue {

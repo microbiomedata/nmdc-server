@@ -59,3 +59,7 @@ a:visited:not(.v-btn, .v-list-item),
 div[id^="google-visualization-errors"] {
   display: none !important;
 }
+
+.v-tooltip ul, .v-tooltip ol {
+  padding-left: 2rem;
+}
