@@ -27,9 +27,9 @@ export default defineComponent({
 <template>
   <div class="mb-8">
     <div class="d-flex align-center">
-      <div class="text-h4">
+      <h1 class="text-h4 font-weight-bold">
         {{ title }}
-      </div>
+      </h1>
 
       <div class="text-body-1">
         <div v-if="help || $slots.help">

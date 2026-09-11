@@ -110,70 +110,93 @@ watchEffect(() => {
       <ErrorDialog
         v-model:show="errorDialog"
       />
-      <v-card variant="outlined">
-        <LabelValueTable
-          :rows="[
-            { label: 'Sample ID', value: biosample.id, iconString: 'mdi-barcode' },
-            { label: 'Sample Name', value: biosample.name, iconString: 'mdi-text-box' },
-            { label: 'Study ID', value: biosample.study_id, iconString: 'mdi-dna' },
-            // TODO: add study_name to biosample model
-            { label: 'Study Name', value: biosample.study_name, iconString: 'mdi-dna' },
-            { label: 'Collection Date', value: biosample.collection_date, iconString: 'mdi-calendar' },
-            { label: 'Location', value: biosample.annotations.geo_loc_name as string, iconString: 'mdi-map-marker' },
-            { label: 'Latitude', value: biosample.latitude, iconString: 'mdi-map-marker-radius' },
-            { label: 'Longitude', value: biosample.longitude, iconString: 'mdi-map-marker-radius' },
-            { label: 'Depth', value: formatBiosampleDepth(biosample.annotations?.depth as object | null, biosample.depth as number | null), iconString: 'mdi-arrow-down-bold-circle-outline' },
-            { label: 'Ecosystem', value: biosample.ecosystem, iconString: 'mdi-leaf' },
-            { label: 'Ecosystem Category', value: biosample.ecosystem_category, iconString: 'mdi-leaf' },
-            { label: 'Ecosystem Type', value: biosample.ecosystem_type, iconString: 'mdi-leaf' },
-            { label: 'Ecosystem Subtype', value: biosample.ecosystem_subtype, iconString: 'mdi-leaf' },
-            { label: 'Specific Ecosystem', value: biosample.specific_ecosystem, iconString: 'mdi-leaf' },
-            { label: 'Broad Scale Environment', value: biosample.env_broad_scale, iconString: 'mdi-earth' },
-            { label: 'Local Scale Environment', value: biosample.env_local_scale, iconString: 'mdi-earth' },
-            { label: 'Environmental Medium', value: biosample.env_medium, iconString: 'mdi-earth' },
-          ]"
-        />
-      </v-card>
-      <div
-        v-if="alternateIdentifiers?.length > 0"
-        class="d-flex ga-1 align-center"
-      >
-        <v-card
-          v-for="identifier in alternateIdentifiers"
-          :key="identifier.name"
-          variant="outlined"
-          :href="identifier.target"
-          target="_blank"
-          rel="noopener noreferrer"
+      <v-row>
+        <v-col
+          xl="6" 
+          lg="12"
+          md="12"
+          sm="12"
+          xs="12"
         >
-          <div class="d-flex align-center pa-2 ga-2">
-            <img
-              v-if="identifier.image"
-              :src="identifier.image"
-              width="160px"
-              class="pr-2"
-              alt="Logo"
+          <PageSection heading="Metadata">
+            <v-card variant="outlined">
+              <LabelValueTable
+                :rows="[
+                  { label: 'Sample ID', value: biosample.id, iconString: 'mdi-barcode' },
+                  { label: 'Sample Name', value: biosample.name, iconString: 'mdi-text-box' },
+                  { label: 'Study ID', value: biosample.study_id, iconString: 'mdi-dna' },
+                  // TODO: add study_name to biosample model
+                  { label: 'Study Name', value: biosample.study_name, iconString: 'mdi-dna' },
+                  { label: 'Collection Date', value: biosample.collection_date, iconString: 'mdi-calendar' },
+                  { label: 'Location', value: biosample.annotations.geo_loc_name as string, iconString: 'mdi-map-marker' },
+                  { label: 'Latitude', value: biosample.latitude, iconString: 'mdi-map-marker-radius' },
+                  { label: 'Longitude', value: biosample.longitude, iconString: 'mdi-map-marker-radius' },
+                  { label: 'Depth', value: formatBiosampleDepth(biosample.annotations?.depth as object | null, biosample.depth as number | null), iconString: 'mdi-arrow-down-bold-circle-outline' },
+                  { label: 'Ecosystem', value: biosample.ecosystem, iconString: 'mdi-leaf' },
+                  { label: 'Ecosystem Category', value: biosample.ecosystem_category, iconString: 'mdi-leaf' },
+                  { label: 'Ecosystem Type', value: biosample.ecosystem_type, iconString: 'mdi-leaf' },
+                  { label: 'Ecosystem Subtype', value: biosample.ecosystem_subtype, iconString: 'mdi-leaf' },
+                  { label: 'Specific Ecosystem', value: biosample.specific_ecosystem, iconString: 'mdi-leaf' },
+                  { label: 'Broad Scale Environment', value: biosample.env_broad_scale, iconString: 'mdi-earth' },
+                  { label: 'Local Scale Environment', value: biosample.env_local_scale, iconString: 'mdi-earth' },
+                  { label: 'Environmental Medium', value: biosample.env_medium, iconString: 'mdi-earth' },
+                ]"
+              />
+            </v-card>
+          </PageSection>
+        </v-col>
+        <v-col
+          xl="6" 
+          lg="12"
+          md="12"
+          sm="12"
+          xs="12"
+        >
+          <PageSection heading="Alternate Identifiers">
+            <div
+              v-if="alternateIdentifiers?.length > 0"
+              class="d-flex flex-column ga-2 align-center"
             >
-            <v-icon
-              v-else
-              class="mr-4"
-              color="grey-darken-4"
-              size="small"
-            >
-              mdi-link
-            </v-icon>
-            <span>
-              {{ identifier.name }}
-            </span>
-            <v-icon
-              class="mr-2"
-              size="small"
-            >
-              mdi-open-in-new
-            </v-icon>
-          </div>
-        </v-card>
-      </div>
+              <v-card
+                v-for="identifier in alternateIdentifiers"
+                :key="identifier.name"
+                class="w-100"
+                variant="outlined"
+                :href="identifier.target"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div class="d-flex align-center pa-2 ga-2">
+                  <img
+                    v-if="identifier.image"
+                    :src="identifier.image"
+                    width="160px"
+                    class="pr-2"
+                    alt="Logo"
+                  >
+                  <v-icon
+                    v-else
+                    class="mr-4"
+                    color="grey-darken-4"
+                    size="small"
+                  >
+                    mdi-link
+                  </v-icon>
+                  <span class="flex-fill">
+                    {{ identifier.name }}
+                  </span>
+                  <v-icon
+                    class="mr-2"
+                    size="small"
+                  >
+                    mdi-open-in-new
+                  </v-icon>
+                </div>
+              </v-card>
+            </div>
+          </PageSection>
+        </v-col>
+      </v-row>
     </ResponsiveContainer>
   </v-main>
 </template>
