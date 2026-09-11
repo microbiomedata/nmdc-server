@@ -53,10 +53,10 @@ watchEffect(() => {
 <template>
   <v-main>
     <AppBanner />
-    <v-container v-if="loading">
+    <ResponsiveContainer v-if="loading">
       <v-skeleton-loader type="article" />
-    </v-container>
-    <v-container v-if="!loading && biosample !== null">
+    </ResponsiveContainer>
+    <ResponsiveContainer v-if="!loading && biosample">
       <BreadcrumbList
         :items="[
           { text: 'Data Portal Home', to: { name: 'Search' } },
@@ -174,6 +174,6 @@ watchEffect(() => {
           </div>
         </v-card>
       </div>
-    </v-container>
+    </ResponsiveContainer>
   </v-main>
 </template>
