@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, github, models, query, schemas, schemas_submission
+from nmdc_server import crud, github, lims_export, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -2194,6 +2194,80 @@ def update_submission_sample_set_status(
 
     db.commit()
     return sample_set
+
+
+@router.post(
+    "/metadata_submission/sample_set/{sample_set_id}/send-to-lims",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+def send_sample_set_to_lims_endpoint(
+    sample_set_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Export a sample set's samples to the EMSL L7|ESP LIMS (manual "send to LIMS").
+
+    Reimplements the SMS portal's send-to-LIMS step for NMDC. Gated on the sample set being in the
+    ``ApprovedHeld`` status (ready for the EMSL user facility) and on the caller being an
+    owner/reviewer of the submission (or a site admin). One request is POSTed per sample; results
+    (entity_id / error) are persisted on the sample set.
+    """
+    if not settings.lims_export_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="LIMS export is disabled."
+        )
+    # Fail fast on misconfiguration rather than making a doomed request to the LIMS.
+    if not settings.lims_gateway_url or not settings.lims_esp_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LIMS export is not configured (missing gateway URL or ESP token).",
+        )
+
+    sample_set = crud.get_submission_sample_set_for_user(
+        db,
+        sample_set_id,
+        user,
+        allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer],
+    )
+
+    if sample_set.status != SubmissionStatusEnum.ApprovedHeld.text:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Sample set must be in the 'ApprovedHeld' status to export to LIMS "
+                f"(current status: '{sample_set.status}')."
+            ),
+        )
+
+    # Facility eligibility: the `emsl` template marks a sample set as EMSL-bound. Without it the set
+    # is headed elsewhere (e.g. JGI-only), and its `ApprovedHeld` status does not imply EMSL.
+    if "emsl" not in (sample_set.templates or []):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Sample set is not EMSL-bound (no 'emsl' template); nothing to export to LIMS.",
+        )
+
+    # Never send test submissions to the real LIMS (mirrors the is_test_submission exclusion used
+    # for GitHub issue creation).
+    if (
+        sample_set.submission_metadata is not None
+        and sample_set.submission_metadata.is_test_submission
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Test submissions cannot be exported to the LIMS.",
+        )
+
+    try:
+        summary = lims_export.send_sample_set_to_lims(sample_set)
+    except lims_export.LimsExportError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+    sample_set.lims_export_results = summary
+    sample_set.lims_exported_at = datetime.datetime.now(datetime.UTC)
+    db.commit()
+    return summary
 
 
 @router.delete(
