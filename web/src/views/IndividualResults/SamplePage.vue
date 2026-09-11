@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson } from '@/utils';
+import { downloadJson, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
@@ -19,6 +19,15 @@ const loading = getBiosampleRequest.loading;
 const sampleDownloadDialog = ref(false);
 const sampleDownloadLoading = ref(false);
 const errorDialog = ref(false);
+const alternateIdentifiers = computed(() => {
+  if (biosample.value) {
+    return biosample.value.alternate_identifiers.map((id) => {
+      return { name: id, target: `https://identifiers.org/${id}`, image: getIdentifierImage(id) };
+    });
+  }
+
+  return [];
+});
 
 async function downloadSampleMetadata() {
   try {
@@ -125,6 +134,46 @@ watchEffect(() => {
           ]"
         />
       </v-card>
+      <div
+        v-if="alternateIdentifiers?.length > 0"
+        class="d-flex ga-1 align-center"
+      >
+        <v-card
+          v-for="identifier in alternateIdentifiers"
+          :key="identifier.name"
+          variant="outlined"
+          :href="identifier.target"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <div class="d-flex align-center pa-2 ga-2">
+            <img
+              v-if="identifier.image"
+              :src="identifier.image"
+              width="160px"
+              class="pr-2"
+              alt="Logo"
+            >
+            <v-icon
+              v-else
+              class="mr-4"
+              color="grey-darken-4"
+              size="small"
+            >
+              mdi-link
+            </v-icon>
+            <span>
+              {{ identifier.name }}
+            </span>
+            <v-icon
+              class="mr-2"
+              size="small"
+            >
+              mdi-open-in-new
+            </v-icon>
+          </div>
+        </v-card>
+      </div>
     </v-container>
   </v-main>
 </template>

@@ -63,3 +63,8 @@ div[id^="google-visualization-errors"] {
 .v-tooltip ul, .v-tooltip ol {
   padding-left: 2rem;
 }
+
+// Cards that are links should not have underlines on hover
+a.v-card--link:hover {
+  text-decoration: none;
+}

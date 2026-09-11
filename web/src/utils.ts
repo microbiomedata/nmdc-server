@@ -3,6 +3,9 @@ import protobufjs from 'protobufjs';
 
 import { Condition } from '@/data/api';
 import descriptor from '@/data/protobuf-descriptor.json';
+import gold from '@/assets/GOLD.png';
+import img from '@/assets/IMG.png';
+import emsl from '@/assets/EMSL.png';
 
 const QueryParams = protobufjs.Root.fromJSON(descriptor).lookupType('nmdc.QueryParams');
 
@@ -106,4 +109,18 @@ export function downloadBlob(blob: Blob, filename: string) {
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
   window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Get the logo image for a given identifier name.
+ */
+export function getIdentifierImage(name: string) {
+  if (name.startsWith('gold')) {
+    return gold;
+  } else if (name.startsWith('img')) {
+    return img;
+  } else if (name.startsWith('emsl')) {
+    return emsl;
+  }
+  return null;
 }
