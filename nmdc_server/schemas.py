@@ -14,6 +14,8 @@ from typing import Annotated, Any, Dict, List, Optional, Union
 from urllib.parse import quote
 from uuid import UUID
 
+from linkml_runtime.linkml_model.meta import PermissibleValue
+from nmdc_schema.nmdc import MetadataBadgeEnum
 from pint import Unit
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo, field_validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
@@ -29,6 +31,10 @@ DateType = Union[datetime, date]
 # back to ordinary strings.  Also, we never want numeric types
 # to be interpreted as dates.
 AnnotationValue = Union[float, int, datetime, str, dict, list, None]
+
+METADATA_BADGE_VALUES: List[str] = [
+    value.text for value in vars(MetadataBadgeEnum).values() if isinstance(value, PermissibleValue)
+]
 
 
 class ErrorSchema(BaseModel):
@@ -319,6 +325,7 @@ class Study(StudyBase):
 # biosample
 class BiosampleBase(AnnotatedBase):
     study_id: str
+    badges: List[str] = Field(default_factory=list, max_length=3)
     depth: Optional[float] = None
     env_broad_scale_id: Optional[str] = None
     env_local_scale_id: Optional[str] = None
@@ -336,6 +343,16 @@ class BiosampleBase(AnnotatedBase):
     ecosystem_subtype: Optional[str] = None
     specific_ecosystem: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("badges")
+    @classmethod
+    def validate_badges(cls, badges: List[str]) -> List[str]:
+        invalid_badges = set(badges) - set(METADATA_BADGE_VALUES)
+        if invalid_badges:
+            raise ValueError(f"Invalid metadata badges: {sorted(invalid_badges)}")
+        if len(badges) != len(set(badges)):
+            raise ValueError("Metadata badges must be unique")
+        return badges
 
 
 class BiosampleCreate(BiosampleBase):

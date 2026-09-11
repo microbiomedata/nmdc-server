@@ -30,6 +30,11 @@ export default defineComponent({
     <PageTitle
       :title="item.annotations.title || item.name"
     >
+      <template #actions>
+        <div v-if="$slots.subtitle">
+          <slot name="actions" />
+        </div>
+      </template>
       <template #subtitle>
         <div v-if="$slots.subtitle">
           <slot name="subtitle" />
