@@ -27,15 +27,17 @@ export default defineComponent({
 <template>
   <div class="mb-8">
     <div class="d-flex align-center">
-      <h1 class="text-h4 font-weight-bold">
+      <h1 class="text-h4 font-weight-bold flex-fill">
         {{ title }}
       </h1>
-
       <div class="text-body-1">
         <div v-if="help || $slots.help">
           <slot name="help" />
           {{ help }}
         </div>
+      </div>
+      <div v-if="help || $slots.actions">
+        <slot name="actions" />
       </div>
     </div>
 

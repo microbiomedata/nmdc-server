@@ -71,6 +71,8 @@ watchEffect(() => {
           >
             {{ biosample.description }}
           </div>
+        </template>
+        <template #actions>
           <v-dialog
             v-model="sampleDownloadDialog"
             max-width="400"
@@ -152,6 +154,25 @@ watchEffect(() => {
           sm="12"
           xs="12"
         >
+          <PageSection heading="Metadata Quality">
+            <v-card
+              v-if="biosample.badges?.length > 0"
+              class="pa-2" 
+              variant="outlined"
+            >
+              <div class="d-flex flex-wrap ga-2">
+                <div
+                  v-for="badge in biosample.badges"
+                  :key="badge"
+                >
+                  {{ badge }}
+                </div>
+              </div>
+            </v-card>
+            <div v-else>
+              This sample has not earned any metadata quality badges.
+            </div>
+          </PageSection>
           <PageSection heading="Alternate Identifiers">
             <div
               v-if="alternateIdentifiers?.length > 0"
@@ -193,6 +214,9 @@ watchEffect(() => {
                   </v-icon>
                 </div>
               </v-card>
+            </div>
+            <div v-else>
+              No alternate identifiers available for this sample.
             </div>
           </PageSection>
         </v-col>
