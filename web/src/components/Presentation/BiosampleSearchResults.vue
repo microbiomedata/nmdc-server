@@ -9,7 +9,7 @@ import { types } from '@/encoding';
 import { PaginatedResult } from '@/use/usePaginatedResults';
 import { BiosampleSearchResult, DataObjectFilter } from '@/data/api';
 import { stateRefs } from '@/store';
-import { snakeToSentenceCase } from '@/data/utils';
+import { snakeToSentenceCase } from '@/utils';
 
 const { biosampleSearch, dataObjectFilter } = defineProps<{
   biosampleSearch: PaginatedResult<BiosampleSearchResult>;

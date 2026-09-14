@@ -124,3 +124,9 @@ export function getIdentifierImage(name: string) {
   }
   return null;
 }
+
+export function snakeToSentenceCase(snakeCase: string): string {
+  const words = snakeCase.split('_');
+  const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+  return capitalizedWords.join(' ');
+}

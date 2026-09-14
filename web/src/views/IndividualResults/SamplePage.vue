@@ -8,6 +8,7 @@ import { formatBiosampleDepth } from '@/util';
 
 import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
+import { BadgeKey } from '@/components/Presentation/MetadataBadge.vue';
 
 const props = defineProps<{
   id: string;
@@ -124,24 +125,24 @@ watchEffect(() => {
             <v-card variant="outlined">
               <LabelValueTable
                 :rows="[
-                  { label: 'Sample ID', value: biosample.id, iconString: 'mdi-barcode' },
-                  { label: 'Sample Name', value: biosample.name, iconString: 'mdi-text-box' },
-                  { label: 'Study ID', value: biosample.study_id, iconString: 'mdi-dna' },
+                  { label: 'Sample ID', value: biosample.id, iconString: 'mdi-key' },
+                  { label: 'Sample Name', value: biosample.name, iconString: 'mdi-test-tube' },
+                  { label: 'Study ID', value: biosample.study_id, iconString: 'mdi-key-link' },
                   // TODO: add study_name to biosample model
-                  { label: 'Study Name', value: biosample.study_name, iconString: 'mdi-dna' },
+                  { label: 'Study Name', value: biosample.study_name, iconString: 'mdi-book-outline' },
                   { label: 'Collection Date', value: biosample.collection_date, iconString: 'mdi-calendar' },
-                  { label: 'Location', value: biosample.annotations.geo_loc_name as string, iconString: 'mdi-map-marker' },
+                  { label: 'Location', value: biosample.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
                   { label: 'Latitude', value: biosample.latitude, iconString: 'mdi-map-marker-radius' },
                   { label: 'Longitude', value: biosample.longitude, iconString: 'mdi-map-marker-radius' },
-                  { label: 'Depth', value: formatBiosampleDepth(biosample.annotations?.depth as object | null, biosample.depth as number | null), iconString: 'mdi-arrow-down-bold-circle-outline' },
-                  { label: 'Ecosystem', value: biosample.ecosystem, iconString: 'mdi-leaf' },
-                  { label: 'Ecosystem Category', value: biosample.ecosystem_category, iconString: 'mdi-leaf' },
-                  { label: 'Ecosystem Type', value: biosample.ecosystem_type, iconString: 'mdi-leaf' },
-                  { label: 'Ecosystem Subtype', value: biosample.ecosystem_subtype, iconString: 'mdi-leaf' },
-                  { label: 'Specific Ecosystem', value: biosample.specific_ecosystem, iconString: 'mdi-leaf' },
-                  { label: 'Broad Scale Environment', value: biosample.env_broad_scale, iconString: 'mdi-earth' },
-                  { label: 'Local Scale Environment', value: biosample.env_local_scale, iconString: 'mdi-earth' },
-                  { label: 'Environmental Medium', value: biosample.env_medium, iconString: 'mdi-earth' },
+                  { label: 'Depth', value: formatBiosampleDepth(biosample.annotations?.depth as object | null, biosample.depth as number | null), iconString: 'mdi-tape-measure' },
+                  { label: 'Ecosystem', value: biosample.ecosystem, iconString: 'mdi-pine-tree' },
+                  { label: 'Ecosystem Category', value: biosample.ecosystem_category, iconString: 'mdi-pine-tree' },
+                  { label: 'Ecosystem Type', value: biosample.ecosystem_type, iconString: 'mdi-pine-tree' },
+                  { label: 'Ecosystem Subtype', value: biosample.ecosystem_subtype, iconString: 'mdi-pine-tree' },
+                  { label: 'Specific Ecosystem', value: biosample.specific_ecosystem, iconString: 'mdi-pine-tree' },
+                  { label: 'Broad Scale Environment', value: biosample.env_broad_scale, iconString: 'mdi-link' },
+                  { label: 'Local Scale Environment', value: biosample.env_local_scale, iconString: 'mdi-link' },
+                  { label: 'Environmental Medium', value: biosample.env_medium, iconString: 'mdi-link' },
                 ]"
               />
             </v-card>
@@ -160,14 +161,17 @@ watchEffect(() => {
               class="pa-2" 
               variant="outlined"
             >
-              <div class="d-flex flex-wrap ga-2">
-                <div
+              <v-row>
+                <v-col
                   v-for="badge in biosample.badges"
                   :key="badge"
+                  class="text-center"
                 >
-                  {{ badge }}
-                </div>
-              </div>
+                  <MetadataBadge
+                    :badge="badge as BadgeKey"
+                  />
+                </v-col>
+              </v-row>
             </v-card>
             <div v-else>
               This sample has not earned any metadata quality badges.

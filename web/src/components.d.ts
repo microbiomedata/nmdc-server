@@ -43,6 +43,7 @@ declare module 'vue' {
     LabelValueTable: typeof import('./components/Presentation/LabelValueTable.vue')['default']
     LoadingOverlay: typeof import('./components/LoadingOverlay.vue')['default']
     MenuContent: typeof import('./components/MenuContent.vue')['default']
+    MetadataBadge: typeof import('./components/Presentation/MetadataBadge.vue')['default']
     OrcidId: typeof import('./components/Presentation/OrcidId.vue')['default']
     PageSection: typeof import('./components/Presentation/PageSection.vue')['default']
     PageTitle: typeof import('./components/Presentation/PageTitle.vue')['default']
