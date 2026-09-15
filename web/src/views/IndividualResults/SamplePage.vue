@@ -29,6 +29,25 @@ const alternateIdentifiers = computed(() => {
 
   return [];
 });
+const relatedBiosamples = computed(() => {
+  const relatedBiosampleIds = new Set();
+  const relatedBiosampleInfo: any[] | Set<unknown> = [];
+  if (biosample.value?.omics_processing.length) {
+    biosample.value.omics_processing.forEach((omicsProcessing: any) => {
+      if (omicsProcessing.biosample_inputs) {
+        omicsProcessing.biosample_inputs.forEach((biosampleInput: BiosampleSearchResult) => {
+          if (biosampleInput.id && biosampleInput.id !== biosample.value?.id) {
+            if (!relatedBiosampleIds.has(biosampleInput.id)) {
+              relatedBiosampleInfo.push({ id: biosampleInput.id, name: biosampleInput.name });
+              relatedBiosampleIds.add(biosampleInput.id);
+            }
+          }
+        });
+      }
+    });
+  }
+  return relatedBiosampleInfo;
+});
 
 async function downloadSampleMetadata() {
   try {
@@ -158,7 +177,7 @@ watchEffect(() => {
           <PageSection heading="Metadata Quality">
             <v-card
               v-if="biosample.badges?.length > 0"
-              class="pa-2" 
+              class="pa-4" 
               variant="outlined"
             >
               <v-row>
@@ -221,6 +240,35 @@ watchEffect(() => {
             </div>
             <div v-else>
               No alternate identifiers available for this sample.
+            </div>
+          </PageSection>
+          <PageSection
+            v-if="relatedBiosamples?.length > 0"
+            heading="Related Biosamples"
+          >
+            <div
+              class="d-flex flex-column ga-2 align-center"
+            >
+              <v-card
+                v-for="relatedSample in relatedBiosamples"
+                :key="relatedSample.id"
+                class="w-100"
+                variant="outlined"
+                :href="'/details/sample/' + relatedSample.id"
+              >
+                <div class="d-flex align-center pa-2 ga-2">
+                  <v-icon
+                    class="mr-4"
+                    color="grey-darken-4"
+                    size="small"
+                  >
+                    mdi-test-tube
+                  </v-icon>
+                  <span class="flex-fill">
+                    {{ relatedSample.name }}
+                  </span>
+                </div>
+              </v-card>
             </div>
           </PageSection>
         </v-col>

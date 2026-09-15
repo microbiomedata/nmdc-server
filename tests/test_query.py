@@ -181,9 +181,7 @@ def test_badge_conditions_are_combined_as_required_constraints(db: Session):
     assert {sample.id for sample in has_first_lacks_second.execute(db)} == {"first"}
 
     lacks_first = query.BiosampleQuerySchema(
-        conditions=[
-            {"table": "biosample", "field": "badges", "op": "lacks", "value": badge_a}
-        ]
+        conditions=[{"table": "biosample", "field": "badges", "op": "lacks", "value": badge_a}]
     )
     assert {sample.id for sample in lacks_first.execute(db)} == {"second", "neither"}
 

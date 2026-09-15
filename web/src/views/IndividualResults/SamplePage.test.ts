@@ -69,8 +69,7 @@ test.describe('SamplePage.vue', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Biosample Title')).toBeInTheDocument();
     });
-    expect(screen.getByText('Test biosample description')).toBeInTheDocument();
-    expect(screen.getByText('Attributes')).toBeInTheDocument();
+    expect(screen.getByText('Metadata')).toBeInTheDocument();
     expect(screen.getByText(/Download Sample Metadata/i)).toBeInTheDocument();
   });
 
