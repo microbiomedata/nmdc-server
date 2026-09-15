@@ -3,6 +3,7 @@ export interface LabelValuePair {
   iconString?: string;
   label: string;
   value?: string | number | null;
+  href?: string;
 }
 
 /**
@@ -67,7 +68,13 @@ withDefaults(defineProps<{
             :row="row"
             :index="index"
           >
-            {{ row.value || '-' }}
+            <a
+              v-if="row.href"
+              :href="row.href"
+            >
+              {{ row.value || '-' }}
+            </a>
+            <span v-else>{{ row.value || '-' }}</span>
           </slot>
         </td>
       </tr>

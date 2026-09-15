@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson, getIdentifierImage } from '@/utils';
+import { downloadJson, formatEnvItem, getEnvUrl, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
@@ -20,6 +20,34 @@ const loading = getBiosampleRequest.loading;
 const sampleDownloadDialog = ref(false);
 const sampleDownloadLoading = ref(false);
 const errorDialog = ref(false);
+const metadataRows = computed(() => {
+  if (!biosample.value) {
+    return [];
+  }
+
+  const rows = [
+    { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-key' },
+    { label: 'Sample Name', value: biosample.value.name, iconString: 'mdi-test-tube' },
+    { label: 'Study ID', value: biosample.value.study_id, iconString: 'mdi-key-link', href: biosample.value.study_id ? `/details/study/${biosample.value.study_id}` : undefined },
+    // TODO: add study_name to biosample model
+    { label: 'Study Name', value: biosample.value.study_name, iconString: 'mdi-book-outline' },
+    { label: 'Collection Date', value: biosample.value.collection_date, iconString: 'mdi-calendar' },
+    { label: 'Location', value: biosample.value.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
+    { label: 'Latitude', value: biosample.value.latitude, iconString: 'mdi-map-marker-radius' },
+    { label: 'Longitude', value: biosample.value.longitude, iconString: 'mdi-map-marker-radius' },
+    { label: 'Depth', value: formatBiosampleDepth(biosample.value.annotations?.depth as object | null, biosample.value.depth as number | null), iconString: 'mdi-tape-measure' },
+    { label: 'Ecosystem', value: biosample.value.ecosystem, iconString: 'mdi-pine-tree' },
+    { label: 'Ecosystem Category', value: biosample.value.ecosystem_category, iconString: 'mdi-pine-tree' },
+    { label: 'Ecosystem Type', value: biosample.value.ecosystem_type, iconString: 'mdi-pine-tree' },
+    { label: 'Ecosystem Subtype', value: biosample.value.ecosystem_subtype, iconString: 'mdi-pine-tree' },
+    { label: 'Specific Ecosystem', value: biosample.value.specific_ecosystem, iconString: 'mdi-pine-tree' },
+    { label: 'Broad Scale Environment', value: formatEnvItem(biosample.value.env_broad_scale), iconString: 'mdi-link', href: biosample.value.env_broad_scale ? getEnvUrl(biosample.value.env_broad_scale.id) : undefined },
+    { label: 'Local Scale Environment', value: formatEnvItem(biosample.value.env_local_scale), iconString: 'mdi-link', href: biosample.value.env_local_scale ? getEnvUrl(biosample.value.env_local_scale.id) : undefined },
+    { label: 'Environmental Medium', value: formatEnvItem(biosample.value.env_medium), iconString: 'mdi-link', href: biosample.value.env_medium ? getEnvUrl(biosample.value.env_medium.id) : undefined },
+  ];
+
+  return rows;
+});
 const alternateIdentifiers = computed(() => {
   if (biosample.value) {
     return biosample.value.alternate_identifiers.map((id) => {
@@ -143,26 +171,7 @@ watchEffect(() => {
           <PageSection heading="Metadata">
             <v-card variant="outlined">
               <LabelValueTable
-                :rows="[
-                  { label: 'Sample ID', value: biosample.id, iconString: 'mdi-key' },
-                  { label: 'Sample Name', value: biosample.name, iconString: 'mdi-test-tube' },
-                  { label: 'Study ID', value: biosample.study_id, iconString: 'mdi-key-link' },
-                  // TODO: add study_name to biosample model
-                  { label: 'Study Name', value: biosample.study_name, iconString: 'mdi-book-outline' },
-                  { label: 'Collection Date', value: biosample.collection_date, iconString: 'mdi-calendar' },
-                  { label: 'Location', value: biosample.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
-                  { label: 'Latitude', value: biosample.latitude, iconString: 'mdi-map-marker-radius' },
-                  { label: 'Longitude', value: biosample.longitude, iconString: 'mdi-map-marker-radius' },
-                  { label: 'Depth', value: formatBiosampleDepth(biosample.annotations?.depth as object | null, biosample.depth as number | null), iconString: 'mdi-tape-measure' },
-                  { label: 'Ecosystem', value: biosample.ecosystem, iconString: 'mdi-pine-tree' },
-                  { label: 'Ecosystem Category', value: biosample.ecosystem_category, iconString: 'mdi-pine-tree' },
-                  { label: 'Ecosystem Type', value: biosample.ecosystem_type, iconString: 'mdi-pine-tree' },
-                  { label: 'Ecosystem Subtype', value: biosample.ecosystem_subtype, iconString: 'mdi-pine-tree' },
-                  { label: 'Specific Ecosystem', value: biosample.specific_ecosystem, iconString: 'mdi-pine-tree' },
-                  { label: 'Broad Scale Environment', value: biosample.env_broad_scale, iconString: 'mdi-link' },
-                  { label: 'Local Scale Environment', value: biosample.env_local_scale, iconString: 'mdi-link' },
-                  { label: 'Environmental Medium', value: biosample.env_medium, iconString: 'mdi-link' },
-                ]"
+                :rows="metadataRows"
               />
             </v-card>
           </PageSection>

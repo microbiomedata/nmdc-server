@@ -130,3 +130,27 @@ export function snakeToSentenceCase(snakeCase: string): string {
   const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   return capitalizedWords.join(' ');
 }
+
+/**
+ * Get the URL for an ENVO, PO, or UBERON term given its identifier.
+ */
+export function getEnvUrl(envId: string): string {
+  const request = `http://purl.obolibrary.org/obo/${envId.replace(':', '_')}`;
+  let apiUrl = '';
+  if (envId.startsWith('ENVO')) {
+    apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/envo/classes/';
+  } else if (envId.startsWith('PO')) {
+    apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/po/classes/';
+  } else if (envId.startsWith('UBERON')) {
+    apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/uberon/classes/';
+  }
+  return `${apiUrl}${encodeURIComponent(request)}`;
+}
+
+export function formatEnvItem(envItem: { id: string; label: string; data?: string }): string {
+  if (!envItem) {
+    return '-';
+  }
+  const { id, label } = envItem;
+  return `${label} (${id})`;
+}
