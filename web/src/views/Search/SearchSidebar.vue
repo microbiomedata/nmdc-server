@@ -60,6 +60,11 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   /** Biosample */
   {
+    field: 'badges',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
     field: 'geo_loc_name',
     table: 'biosample',
     group: 'Sample',
@@ -81,11 +86,6 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   {
     field: 'collection_date',
-    table: 'biosample',
-    group: 'Sample',
-  },
-  {
-    field: 'badges',
     table: 'biosample',
     group: 'Sample',
   },
