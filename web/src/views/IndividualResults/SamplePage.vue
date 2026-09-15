@@ -29,8 +29,7 @@ const metadataRows = computed(() => {
     { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-key' },
     { label: 'Sample Name', value: biosample.value.name, iconString: 'mdi-test-tube' },
     { label: 'Study ID', value: biosample.value.study_id, iconString: 'mdi-key-link', href: biosample.value.study_id ? `/details/study/${biosample.value.study_id}` : undefined },
-    // TODO: add study_name to biosample model
-    { label: 'Study Name', value: biosample.value.study_name, iconString: 'mdi-book-outline' },
+    // TODO: add study_name to biosample model?
     { label: 'Collection Date', value: biosample.value.collection_date, iconString: 'mdi-calendar' },
     { label: 'Location', value: biosample.value.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
     { label: 'Latitude', value: biosample.value.latitude, iconString: 'mdi-map-marker-radius' },
