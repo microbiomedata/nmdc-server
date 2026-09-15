@@ -37,6 +37,7 @@ declare module 'vue' {
     FilterFloat: typeof import('./components/Presentation/FilterFloat.vue')['default']
     FilterGene: typeof import('./components/FilterGene.vue')['default']
     FilterList: typeof import('./components/Presentation/FilterList.vue')['default']
+    FilterMetadataQuality: typeof import('./components/Presentation/FilterMetadataQuality.vue')['default']
     FilterSankeyTree: typeof import('./components/FilterSankeyTree.vue')['default']
     FilterTree: typeof import('./components/FilterTree.vue')['default']
     HelpWrapper: typeof import('./components/HelpWrapper.vue')['default']

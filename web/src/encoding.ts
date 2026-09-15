@@ -434,6 +434,10 @@ const fields: Record<string, FieldsData> = {
     name: 'Collection Date',
     icon: 'mdi-calendar',
   },
+  badges: {
+    name: 'Metadata Quality',
+    icon: 'mdi-medal-outline',
+  },
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
     hideFacet: true,

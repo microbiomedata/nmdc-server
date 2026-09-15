@@ -84,6 +84,11 @@ const FunctionSearchFacets: SearchFacet[] = [
     table: 'biosample',
     group: 'Sample',
   },
+  {
+    field: 'badges',
+    table: 'biosample',
+    group: 'Sample',
+  },
   /** Study */
   {
     field: 'principal_investigator_name',
@@ -132,7 +137,7 @@ api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
 function dbSummaryForTable(table: EntityType, field: string): AttributeSummary {
   if (table in dbSummary.value) {
-    return dbSummary.value[table].attributes[field] as AttributeSummary;
+    return (dbSummary.value[table].attributes[field] || {}) as AttributeSummary;
   }
   if (geneFunctionTables.includes(table)) {
     const tableToType: Record<string, string> = {

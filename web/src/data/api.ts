@@ -378,10 +378,12 @@ export type opType =
   | "=="
   | "!="
   | "has"
+  | "lacks"
   | "like";
 export const opMap: Record<opType, string> = {
   between: "between",
   has: "has",
+  lacks: "does not have",
   "<": "less",
   "<=": "lte",
   ">": "greater",
