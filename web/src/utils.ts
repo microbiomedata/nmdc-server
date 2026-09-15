@@ -154,3 +154,10 @@ export function formatEnvItem(envItem: { id: string; label: string; data?: strin
   const { id, label } = envItem;
   return `${label} (${id})`;
 }
+
+export function formatStringOrList(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  return value || '-';
+};

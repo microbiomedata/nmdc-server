@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson, formatEnvItem, getEnvUrl, getIdentifierImage } from '@/utils';
+import { downloadJson, formatEnvItem, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
@@ -44,6 +44,7 @@ const metadataRows = computed(() => {
     { label: 'Broad Scale Environment', value: formatEnvItem(biosample.value.env_broad_scale), iconString: 'mdi-link', href: biosample.value.env_broad_scale ? getEnvUrl(biosample.value.env_broad_scale.id) : undefined },
     { label: 'Local Scale Environment', value: formatEnvItem(biosample.value.env_local_scale), iconString: 'mdi-link', href: biosample.value.env_local_scale ? getEnvUrl(biosample.value.env_local_scale.id) : undefined },
     { label: 'Environmental Medium', value: formatEnvItem(biosample.value.env_medium), iconString: 'mdi-link', href: biosample.value.env_medium ? getEnvUrl(biosample.value.env_medium.id) : undefined },
+    { label: 'Biosample Categories', value: formatStringOrList(biosample.value.annotations?.biosample_categories), iconString: 'mdi-tag-multiple' },
   ];
 
   return rows;
