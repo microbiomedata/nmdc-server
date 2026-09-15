@@ -72,6 +72,20 @@ test.describe('SearchSidebar.vue', () => {
     expect(screen.getByText('Host Information')).toBeInTheDocument();
   });
 
+  test('Separates mixed metadata badge conditions by verb', async () => {
+    setConditions([
+      { table: 'biosample', field: 'badges', op: 'has', value: 'biogeochemistry' },
+      { table: 'biosample', field: 'badges', op: 'lacks', value: 'host_information' },
+    ]);
+
+    render(SearchSidebarInApp);
+
+    expect(await screen.findByText('[has]')).toBeInTheDocument();
+    expect(screen.getByText('[does not have]')).toBeInTheDocument();
+    expect(screen.getByText('Biogeochemistry')).toBeInTheDocument();
+    expect(screen.getByText('Host Information')).toBeInTheDocument();
+  });
+
   test('Clears all conditions when "Clear all" is clicked', async () => {
     setConditions([
       { table: 'biosample', field: 'env_medium', op: '==', value: 'soil' } as Condition,

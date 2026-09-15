@@ -21,11 +21,17 @@ const menuState = ref<Record<string, boolean>>({});
 
 const conditionGroups = computed(() => Object.entries(groupBy(
   props.conditions,
-  (c) => JSON.stringify({ field: c.field, table: c.table }),
+  (c) => JSON.stringify({
+    field: c.field,
+    table: c.table,
+    // Metadata badges can mix presence and absence conditions. Keep those
+    // operators in separate cards so each displayed verb applies to every chip.
+    ...(c.field === 'badges' && c.table === 'biosample' ? { op: c.op } : {}),
+  }),
 )).map(([group, conditions]) => {
-  const parsed: { field: string; table: string } = JSON.parse(group);
+  const parsed: { field: string; table: string; op?: opType } = JSON.parse(group);
   return {
-    key: parsed.field + parsed.table,
+    key: parsed.field + parsed.table + (parsed.op || ''),
     field: parsed.field,
     table: parsed.table as EntityTypeOrFullTextSearch,
     conditions,
