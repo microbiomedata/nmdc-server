@@ -146,7 +146,7 @@ def load_biosample(db: Session, obj: Dict[str, Any]) -> bool:
     if biosample.annotations is not None:
         biosample.annotations["depth"] = depth_obj
 
-    db.add(models.Biosample(**biosample.dict()))
+    db.add(models.Biosample(**biosample.model_dump()))
 
     return True
 
