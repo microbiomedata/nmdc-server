@@ -87,6 +87,7 @@ withDefaults(defineProps<{
 .label-value-table :deep(td) {
   border-bottom: 0;
   padding-left: 0;
+  user-select: text !important;
 }
 
 .icon-cell {
