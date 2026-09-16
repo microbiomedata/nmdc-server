@@ -2,13 +2,14 @@
 import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson, formatEnvItem, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
+import { downloadJson, formatEnvItem, formatSlotLabel, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
 import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
 import { BadgeKey } from '@/components/Presentation/MetadataBadge.vue';
+import { LabelValuePair } from '@/components/Presentation/LabelValueTable.vue';
 
 const props = defineProps<{
   id: string;
@@ -20,16 +21,21 @@ const loading = getBiosampleRequest.loading;
 const sampleDownloadDialog = ref(false);
 const sampleDownloadLoading = ref(false);
 const errorDialog = ref(false);
+const VISIBLE_ANNOTATION_FIELDS = [
+  'geo_loc_name',
+  'depth',
+  'biosample_categories',
+];
+
 const metadataRows = computed(() => {
   if (!biosample.value) {
     return [];
   }
 
-  const rows = [
+  const visibleRows = [
     { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-key' },
     { label: 'Sample Name', value: biosample.value.name, iconString: 'mdi-test-tube' },
     { label: 'Study ID', value: biosample.value.study_id, iconString: 'mdi-key-link', href: biosample.value.study_id ? `/details/study/${biosample.value.study_id}` : undefined },
-    // TODO: add study_name to biosample model?
     { label: 'Collection Date', value: biosample.value.collection_date, iconString: 'mdi-calendar' },
     { label: 'Location', value: biosample.value.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
     { label: 'Latitude', value: biosample.value.latitude, iconString: 'mdi-map-marker-radius' },
@@ -46,8 +52,23 @@ const metadataRows = computed(() => {
     { label: 'Biosample Categories', value: formatStringOrList(biosample.value.annotations?.biosample_categories), iconString: 'mdi-tag-multiple' },
   ];
 
-  return rows;
+  return visibleRows;
 });
+
+const metadataHiddenRows = computed(() => {
+  if (!biosample.value) {
+    return [];
+  }
+
+  const hiddenRows = Object.keys(biosample.value.annotations).filter((field) => {
+    return !VISIBLE_ANNOTATION_FIELDS.includes(field);
+  }).map((field) => {
+    return { label: formatSlotLabel(field), value: biosample.value?.annotations[field], iconString: 'mdi-code-braces' };
+  });
+
+  return hiddenRows as LabelValuePair[];
+});
+
 const alternateIdentifiers = computed(() => {
   if (biosample.value) {
     return biosample.value.alternate_identifiers.map((id) => {
@@ -57,6 +78,7 @@ const alternateIdentifiers = computed(() => {
 
   return [];
 });
+
 const relatedBiosamples = computed(() => {
   const relatedBiosampleIds = new Set();
   const relatedBiosampleInfo: any[] | Set<unknown> = [];
@@ -171,7 +193,7 @@ watchEffect(() => {
           <PageSection heading="Metadata">
             <v-card variant="outlined">
               <LabelValueTable
-                :rows="metadataRows"
+                :rows="[...metadataRows, ...metadataHiddenRows]"
               />
             </v-card>
           </PageSection>

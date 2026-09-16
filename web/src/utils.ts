@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import protobufjs from 'protobufjs';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import { Condition } from '@/data/api';
 import descriptor from '@/data/protobuf-descriptor.json';
@@ -161,3 +162,15 @@ export function formatStringOrList(value: string | string[] | undefined): string
   }
   return value || '-';
 };
+
+/**
+ * Get the human-readable slot name from the NMDC schema for a given slot property name.
+ * Default to converting snake_case to Sentence Case if no title is found in the schema.
+ */
+export function formatSlotLabel(slotName: string): string {
+  const schemaSlot = NmdcSchema.slots[slotName as keyof typeof NmdcSchema.slots];
+  if (schemaSlot && 'title' in schemaSlot) {
+    return schemaSlot.title;
+  }
+  return snakeToSentenceCase(slotName);
+}
