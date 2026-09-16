@@ -130,14 +130,13 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     <template #action-right="{ result }">
       <v-list-item-action>
         <v-btn
+          v-if="(result as BiosampleSearchResult).badges.length > 0"
           icon
           variant="plain"
           size="large"
-          class="justify-end"
           :to="{ name: 'Sample', params: { id: result.id } }"
         >
           <v-tooltip
-            v-if="(result as BiosampleSearchResult).badges.length > 0"
             max-width="340px"
           >
             <template #activator="{ props }">
@@ -164,6 +163,13 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
               </span>
             </span>
           </v-tooltip>
+        </v-btn>
+        <v-btn
+          icon
+          variant="plain"
+          size="large"
+          :to="{ name: 'Sample', params: { id: result.id } }"
+        >
           <v-icon>
             mdi-chevron-right
           </v-icon>
