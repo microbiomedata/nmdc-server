@@ -145,10 +145,10 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
                 class="d-flex align-center mr-2"
                 v-bind="props"
               >
-                <v-icon size="small">
+                <v-icon>
                   mdi-medal
                 </v-icon>
-                <div class="text-body-2">{{ (result as BiosampleSearchResult).badges.length }}</div>
+                <div>{{ (result as BiosampleSearchResult).badges.length }}</div>
               </div>
             </template>
             <span class="d-flex flex-wrap">
