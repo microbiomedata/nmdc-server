@@ -216,7 +216,11 @@ watchEffect(() => {
           sm="12"
           xs="12"
         >
-          <PageSection heading="Metadata Quality">
+          <PageSection
+            heading="Metadata Quality"
+            help-link="https://microbiomedata.github.io/nmdc-schema/MetadataBadgeEnum/"
+            help-tooltip="Click to learn more about metadata quality badges."
+          >
             <v-card
               v-if="biosample.badges?.length > 0"
               class="pa-4" 
