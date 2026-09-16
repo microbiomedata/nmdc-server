@@ -15,7 +15,6 @@ test.describe('LabelValueTable.vue', () => {
       },
     });
 
-    // const table = screen.getByRole('table', { name: 'Label value table' });
     const table = screen.getByRole('table');
     const rows = within(table).getAllByRole('row');
 
