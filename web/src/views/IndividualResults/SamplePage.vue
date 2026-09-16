@@ -25,7 +25,9 @@ const errorDialog = ref(false);
 const EXCLUDED_ANNOTATION_FIELDS = [
   'type',
   'analysis_type',
+  'provenance_metadata',
   'samp_name',
+  'location',
   'geo_loc_name',
   'lat_lon',
   'depth',
@@ -198,7 +200,11 @@ watchEffect(() => {
           <PageSection heading="Metadata">
             <v-card variant="outlined">
               <LabelValueTable
-                :rows="[...metadataRows, ...metadataHiddenRows]"
+                :default-rows="metadataRows"
+                :hidden-rows="metadataHiddenRows"
+                :toggler-more-adjective="'all'"
+                :toggler-less-adjective="'less'"
+                :toggler-noun="'metadata'"
               />
             </v-card>
           </PageSection>

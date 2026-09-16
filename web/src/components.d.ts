@@ -42,6 +42,7 @@ declare module 'vue' {
     FilterTree: typeof import('./components/FilterTree.vue')['default']
     HelpWrapper: typeof import('./components/HelpWrapper.vue')['default']
     LabelValueTable: typeof import('./components/Presentation/LabelValueTable.vue')['default']
+    LabelValueTableRow: typeof import('./components/Presentation/LabelValueTableRow.vue')['default']
     LoadingOverlay: typeof import('./components/LoadingOverlay.vue')['default']
     MenuContent: typeof import('./components/MenuContent.vue')['default']
     MetadataBadge: typeof import('./components/Presentation/MetadataBadge.vue')['default']

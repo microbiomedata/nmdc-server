@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import LabelValueTableRow from './LabelValueTableRow.vue';
+
 export interface LabelValuePair {
   iconString?: string;
   label: string;
@@ -10,14 +13,28 @@ export interface LabelValuePair {
  * Displays a flat list of metadata as label-value pairs.
  */
 withDefaults(defineProps<{
-  rows?: LabelValuePair[];
+  defaultRows?: LabelValuePair[];
+  hiddenRows?: LabelValuePair[];
   iconWidth?: number;
   labelWidth?: number;
+  togglerMoreAdjective?: string;
+  togglerLessAdjective?: string;
+  togglerNoun?: string;
 }>(), {
-  rows: () => [],
+  defaultRows: () => [],
+  hiddenRows: () => [],
   iconWidth: 32,
   labelWidth: 200,
+  togglerMoreAdjective: 'more',
+  togglerLessAdjective: 'fewer',
+  togglerNoun: 'items',
 });
+
+const showHiddenRows = ref(false);
+
+function toggleHiddenRows() {
+  showHiddenRows.value = !showHiddenRows.value;
+}
 </script>
 
 <template>
@@ -26,58 +43,42 @@ withDefaults(defineProps<{
     density="compact"
   >
     <tbody>
-      <tr
-        v-for="(row, index) in rows"
+      <LabelValueTableRow
+        v-for="(row, index) in defaultRows"
         :key="index"
+        :row="row"
+        :icon-width="iconWidth"
+        :label-width="labelWidth"
+      />
+      <tr
+        v-if="hiddenRows.length > 0"
+        class="toggle-hidden-rows"
+        @click="toggleHiddenRows"
       >
         <td
-          class="icon-cell"
-          :style="{
-            width: `${iconWidth}px`,
-            minWidth: `${iconWidth}px`,
-            maxWidth: `${iconWidth}px`,
-          }"
+          :colspan="3"
+          class="text-center"
         >
+          <span>
+            Show {{ showHiddenRows ? togglerLessAdjective : togglerMoreAdjective }} {{ togglerNoun }}
+          </span>
           <v-icon
-            v-if="row.iconString"
             size="small"
+            class="mr-2"
           >
-            {{ row.iconString }}
+            {{ showHiddenRows ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
           </v-icon>
         </td>
-        <th
-          class="label-cell text-medium-emphasis"
-          scope="row"
-          :style="{
-            width: `${labelWidth}px`,
-            minWidth: `${labelWidth}px`,
-            maxWidth: `${labelWidth}px`,
-          }"
-        >
-          <slot
-            name="label"
-            :row="row"
-            :index="index"
-          >
-            {{ row.label }}
-          </slot>
-        </th>
-        <td class="value-cell">
-          <slot
-            name="value"
-            :row="row"
-            :index="index"
-          >
-            <a
-              v-if="row.href"
-              :href="row.href"
-            >
-              {{ row.value || '-' }}
-            </a>
-            <span v-else>{{ row.value || '-' }}</span>
-          </slot>
-        </td>
       </tr>
+      <template v-if="showHiddenRows">
+        <LabelValueTableRow
+          v-for="(row, index) in hiddenRows"
+          :key="index"
+          :row="row"
+          :icon-width="iconWidth"
+          :label-width="labelWidth"
+        />
+      </template>
     </tbody>
   </v-table>
 </template>
@@ -93,5 +94,9 @@ withDefaults(defineProps<{
 .icon-cell {
   box-sizing: border-box;
   padding-right: 8px !important;
+}
+
+.toggle-hidden-rows {
+  cursor: pointer;
 }
 </style>
