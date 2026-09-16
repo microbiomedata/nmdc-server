@@ -8,7 +8,7 @@ test.describe('LabelValueTable.vue', () => {
   test('renders rows as label-value pairs', () => {
     render(LabelValueTable, {
       props: {
-        rows: [
+        defaultRows: [
           { label: 'Study ID', value: 'nmdc:sty-1' },
           { label: 'Sample count', value: 12 },
         ],
