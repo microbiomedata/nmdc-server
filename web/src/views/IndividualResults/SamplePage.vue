@@ -21,8 +21,12 @@ const loading = getBiosampleRequest.loading;
 const sampleDownloadDialog = ref(false);
 const sampleDownloadLoading = ref(false);
 const errorDialog = ref(false);
-const VISIBLE_ANNOTATION_FIELDS = [
+const EXCLUDED_ANNOTATION_FIELDS = [
+  'type',
+  'analysis_type',
+  'samp_name',
   'geo_loc_name',
+  'lat_lon',
   'depth',
   'biosample_categories',
 ];
@@ -33,9 +37,9 @@ const metadataRows = computed(() => {
   }
 
   const visibleRows = [
-    { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-key' },
+    { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-test-tube' },
     { label: 'Sample Name', value: biosample.value.name, iconString: 'mdi-test-tube' },
-    { label: 'Study ID', value: biosample.value.study_id, iconString: 'mdi-key-link', href: biosample.value.study_id ? `/details/study/${biosample.value.study_id}` : undefined },
+    { label: 'Study ID', value: biosample.value.study_id, iconString: 'mdi-book-outline', href: biosample.value.study_id ? `/details/study/${biosample.value.study_id}` : undefined },
     { label: 'Collection Date', value: biosample.value.collection_date, iconString: 'mdi-calendar' },
     { label: 'Location', value: biosample.value.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
     { label: 'Latitude', value: biosample.value.latitude, iconString: 'mdi-map-marker-radius' },
@@ -46,9 +50,9 @@ const metadataRows = computed(() => {
     { label: 'Ecosystem Type', value: biosample.value.ecosystem_type, iconString: 'mdi-pine-tree' },
     { label: 'Ecosystem Subtype', value: biosample.value.ecosystem_subtype, iconString: 'mdi-pine-tree' },
     { label: 'Specific Ecosystem', value: biosample.value.specific_ecosystem, iconString: 'mdi-pine-tree' },
-    { label: 'Broad Scale Environment', value: formatEnvItem(biosample.value.env_broad_scale), iconString: 'mdi-link', href: biosample.value.env_broad_scale ? getEnvUrl(biosample.value.env_broad_scale.id) : undefined },
-    { label: 'Local Scale Environment', value: formatEnvItem(biosample.value.env_local_scale), iconString: 'mdi-link', href: biosample.value.env_local_scale ? getEnvUrl(biosample.value.env_local_scale.id) : undefined },
-    { label: 'Environmental Medium', value: formatEnvItem(biosample.value.env_medium), iconString: 'mdi-link', href: biosample.value.env_medium ? getEnvUrl(biosample.value.env_medium.id) : undefined },
+    { label: 'Broad Scale Environment', value: formatEnvItem(biosample.value.env_broad_scale), iconString: 'mdi-leaf', href: biosample.value.env_broad_scale ? getEnvUrl(biosample.value.env_broad_scale.id) : undefined },
+    { label: 'Local Scale Environment', value: formatEnvItem(biosample.value.env_local_scale), iconString: 'mdi-leaf', href: biosample.value.env_local_scale ? getEnvUrl(biosample.value.env_local_scale.id) : undefined },
+    { label: 'Environmental Medium', value: formatEnvItem(biosample.value.env_medium), iconString: 'mdi-leaf', href: biosample.value.env_medium ? getEnvUrl(biosample.value.env_medium.id) : undefined },
     { label: 'Biosample Categories', value: formatStringOrList(biosample.value.annotations?.biosample_categories), iconString: 'mdi-tag-multiple' },
   ];
 
@@ -61,7 +65,7 @@ const metadataHiddenRows = computed(() => {
   }
 
   const hiddenRows = Object.keys(biosample.value.annotations).filter((field) => {
-    return !VISIBLE_ANNOTATION_FIELDS.includes(field);
+    return !EXCLUDED_ANNOTATION_FIELDS.includes(field);
   }).map((field) => {
     return { label: formatSlotLabel(field), value: biosample.value?.annotations[field], iconString: 'mdi-code-braces' };
   });
