@@ -46,8 +46,8 @@ if (!badgeSchema) {
   width: 5rem;
   height: 5rem;
   background-color: #fff;
-  /* border: 4px solid rgb(var(--v-theme-accent)); */
-  border: 4px solid #454545;
+  border: 4px solid rgb(var(--v-theme-accent));
+  /* border: 4px solid #454545; */
   border-radius: 50%;
   padding: 0.5rem;
   overflow: hidden;
@@ -57,10 +57,10 @@ if (!badgeSchema) {
 }
 
 .badge-label {
-  /* background-color: rgb(var(--v-theme-accent)); */
-  background-color: #454545;
+  background-color: rgb(var(--v-theme-accent));
+  /* background-color: #454545; */
   border-radius: 1rem;
-  color: #fff;
+  color: #000;
   margin-top: -1rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
