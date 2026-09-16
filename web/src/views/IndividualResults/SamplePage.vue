@@ -10,6 +10,7 @@ import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
 import { BadgeKey } from '@/components/Presentation/MetadataBadge.vue';
 import { LabelValuePair } from '@/components/Presentation/LabelValueTable.vue';
+import moment from 'moment';
 
 const props = defineProps<{
   id: string;
@@ -40,7 +41,7 @@ const metadataRows = computed(() => {
     { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-test-tube' },
     { label: 'Sample Name', value: biosample.value.name, iconString: 'mdi-test-tube' },
     { label: 'Study ID', value: biosample.value.study_id, iconString: 'mdi-book-outline', href: biosample.value.study_id ? `/details/study/${biosample.value.study_id}` : undefined },
-    { label: 'Collection Date', value: biosample.value.collection_date, iconString: 'mdi-calendar' },
+    { label: 'Collection Date', value: moment(biosample.value.collection_date).format('YYYY-MM-DD, HH:mm'), iconString: 'mdi-calendar' },
     { label: 'Location', value: biosample.value.annotations.geo_loc_name as string, iconString: 'mdi-earth' },
     { label: 'Latitude', value: biosample.value.latitude, iconString: 'mdi-map-marker-radius' },
     { label: 'Longitude', value: biosample.value.longitude, iconString: 'mdi-map-marker-radius' },
