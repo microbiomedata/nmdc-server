@@ -178,16 +178,36 @@ export function formatSlotLabel(slotName: string): string {
 
 /**
  * Format slot values for display in the UI.
+ * Specially handles values that use `has_numeric_value`, `has_unit`, and `has_raw_value` properties,
+ * as well as arrays of values.
+ * Note that this function is not currently exhaustive in its handling of all possible slot value types.
  */
 export function formatSlotValue(value: any): string {
   if (value === null || value === undefined) {
     return '-';
   }
   if (Array.isArray(value)) {
-    return value.join(', ');
+    return value.reduce((acc, curr) => {
+      if (typeof curr === 'object' && curr.has_unit && curr.has_numeric_value) {
+        return `${acc}${curr.has_numeric_value} ${curr.has_unit}, `;
+      }
+      if (typeof curr === 'object' && curr.has_raw_value) {
+        return `${acc}${curr.has_raw_value}, `;
+      }
+      if (typeof curr === 'object') {
+        return `${acc}${JSON.stringify(curr)}, `;
+      }
+      return `${acc}${String(curr)}, `;
+    }, '').slice(0, -2);
   }
   if (typeof value === 'object' && value.has_unit && value.has_numeric_value) {
+    if (value.has_unit === '1') {
+      return String(value.has_numeric_value);
+    }
     return `${value.has_numeric_value} ${value.has_unit}`;
+  }
+  if (typeof value === 'object' && value.has_raw_value) {
+    return value.has_raw_value;
   }
   if (typeof value === 'object') {
     return JSON.stringify(value);
