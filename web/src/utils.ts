@@ -176,6 +176,25 @@ export function formatSlotLabel(slotName: string): string {
   return snakeToSentenceCase(slotName);
 }
 
+/**
+ * Format slot values for display in the UI.
+ */
+export function formatSlotValue(value: any): string {
+  if (value === null || value === undefined) {
+    return '-';
+  }
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  if (typeof value === 'object' && value.has_unit && value.has_numeric_value) {
+    return `${value.has_numeric_value} ${value.has_unit}`;
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
 export function formatDatetime(dateString: string | undefined): string {
   if (!dateString) {
     return '-';

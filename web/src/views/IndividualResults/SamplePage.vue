@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson, formatDatetime, formatEnvItem, formatSlotLabel, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
+import { downloadJson, formatDatetime, formatEnvItem, formatSlotLabel, formatSlotValue, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
@@ -69,7 +69,12 @@ const metadataHiddenRows = computed(() => {
   const hiddenRows = Object.keys(biosample.value.annotations).filter((field) => {
     return !EXCLUDED_ANNOTATION_FIELDS.includes(field);
   }).map((field) => {
-    return { label: formatSlotLabel(field), value: biosample.value?.annotations[field], iconString: 'mdi-code-braces' };
+    // Temporary hack to display the `elev` field with units of meters.
+    // This slot should be changed to type nmdc:QuantityValue in the future.
+    if (field === 'elev') {
+      return { label: formatSlotLabel(field), value: `${formatSlotValue(biosample.value?.annotations[field])} m`, iconString: 'mdi-code-braces' };
+    }
+    return { label: formatSlotLabel(field), value: formatSlotValue(biosample.value?.annotations[field]), iconString: 'mdi-code-braces' };
   });
 
   return hiddenRows as LabelValuePair[];
