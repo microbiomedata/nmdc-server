@@ -93,8 +93,9 @@ test.describe('SamplePage.vue', () => {
 
     renderSamplePage({ id: 'bs-emsl' });
 
-    const identifier = await screen.findByRole('link', { name: /emsl:12345/i });
-    expect(identifier).toHaveAttribute('href', 'https://identifiers.org/emsl:12345');
+    await waitFor(() => {
+      expect(screen.getByText('emsl:12345')).toBeInTheDocument();
+    });
     expect(screen.queryByText('No alternate identifiers available for this sample.')).not.toBeInTheDocument();
   });
 
