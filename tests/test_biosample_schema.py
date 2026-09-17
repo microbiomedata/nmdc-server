@@ -1,6 +1,4 @@
 import pytest
-from linkml_runtime.linkml_model.meta import PermissibleValue
-from nmdc_schema.nmdc import MetadataBadgeEnum
 from pydantic import ValidationError
 
 from nmdc_server.schemas import METADATA_BADGE_VALUES, BiosampleBase
