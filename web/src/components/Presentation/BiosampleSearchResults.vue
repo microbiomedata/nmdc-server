@@ -151,7 +151,7 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
               </div>
             </template>
             <span class="d-flex flex-wrap">
-              <span>This biosample has {{ (result as BiosampleSearchResult).badges.length }} metadata quality badges:</span>
+              <span>This biosample has {{ (result as BiosampleSearchResult).badges.length }} metadata quality {{ (result as BiosampleSearchResult).badges.length === 1 ? 'badge' : 'badges' }}:</span>
               <span class="d-inline-flex ga-1 mt-2 mb-1 flex-wrap">
                 <v-chip
                   v-for="badge in (result as BiosampleSearchResult).badges"
