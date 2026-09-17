@@ -3,9 +3,13 @@ import { ref } from 'vue';
 import LabelValueTableRow from './LabelValueTableRow.vue';
 
 export interface LabelValuePair {
+  /** Vuetify material icon string (e.g. 'mdn-test-tube') to show next to the label */
   iconString?: string;
+  /** String to show in the left label column */
   label: string;
+  /** Value to show in the right value column */
   value?: string | number | null;
+  /** Optional URL to link to when the value is clicked */
   href?: string;
 }
 
@@ -13,21 +17,25 @@ export interface LabelValuePair {
  * Displays a flat list of metadata as label-value pairs.
  */
 withDefaults(defineProps<{
-  defaultRows?: LabelValuePair[];
-  hiddenRows?: LabelValuePair[];
+  /** Array of label-value pairs that will always be visible in the table */
+  alwaysVisibleRows?: LabelValuePair[];
+  /** Array of label-value pairs that can be toggled visible (hidden by default) */
+  hideableRows?: LabelValuePair[];
+  /** Width of the left icon column in pixels */
   iconWidth?: number;
+  /** Width of the left label column in pixels */
   labelWidth?: number;
-  togglerMoreAdjective?: string;
-  togglerLessAdjective?: string;
-  togglerNoun?: string;
+  /** Text to show when clicking to expand hideable rows */
+  expandButtonText?: string;
+  /** Text to show when clicking to collapse hideable rows */
+  collapseButtonText?: string;
 }>(), {
-  defaultRows: () => [],
-  hiddenRows: () => [],
+  alwaysVisibleRows: () => [],
+  hideableRows: () => [],
   iconWidth: 32,
   labelWidth: 200,
-  togglerMoreAdjective: 'more',
-  togglerLessAdjective: 'fewer',
-  togglerNoun: 'items',
+  expandButtonText: 'Show more',
+  collapseButtonText: 'Show fewer',
 });
 
 const showHiddenRows = ref(false);
@@ -44,14 +52,14 @@ function toggleHiddenRows() {
   >
     <tbody>
       <LabelValueTableRow
-        v-for="(row, index) in defaultRows"
+        v-for="(row, index) in alwaysVisibleRows"
         :key="index"
         :row="row"
         :icon-width="iconWidth"
         :label-width="labelWidth"
       />
       <tr
-        v-if="hiddenRows.length > 0"
+        v-if="hideableRows.length > 0"
         class="toggle-hidden-rows"
         @click="toggleHiddenRows"
       >
@@ -60,7 +68,7 @@ function toggleHiddenRows() {
           class="text-center"
         >
           <span>
-            Show {{ showHiddenRows ? togglerLessAdjective : togglerMoreAdjective }} {{ togglerNoun }}
+            {{ showHiddenRows ? collapseButtonText : expandButtonText }}
           </span>
           <v-icon
             size="small"
@@ -72,7 +80,7 @@ function toggleHiddenRows() {
       </tr>
       <template v-if="showHiddenRows">
         <LabelValueTableRow
-          v-for="(row, index) in hiddenRows"
+          v-for="(row, index) in hideableRows"
           :key="index"
           :row="row"
           :icon-width="iconWidth"

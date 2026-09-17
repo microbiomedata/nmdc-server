@@ -61,12 +61,12 @@ const metadataRows = computed(() => {
   return visibleRows;
 });
 
-const metadataHiddenRows = computed(() => {
+const metadataHideableRows = computed(() => {
   if (!biosample.value) {
     return [];
   }
 
-  const hiddenRows = Object.keys(biosample.value.annotations).filter((field) => {
+  const hideableRows = Object.keys(biosample.value.annotations).filter((field) => {
     return !EXCLUDED_ANNOTATION_FIELDS.includes(field);
   }).map((field) => {
     // Temporary hack to display the `elev` field with units of meters.
@@ -77,7 +77,7 @@ const metadataHiddenRows = computed(() => {
     return { label: formatSlotLabel(field), value: formatSlotValue(biosample.value?.annotations[field]), iconString: 'mdi-code-braces' };
   });
 
-  return hiddenRows as LabelValuePair[];
+  return hideableRows as LabelValuePair[];
 });
 
 const alternateIdentifiers = computed(() => {
@@ -208,11 +208,10 @@ watchEffect(() => {
           <PageSection heading="Metadata">
             <v-card variant="outlined">
               <LabelValueTable
-                :default-rows="metadataRows"
-                :hidden-rows="metadataHiddenRows"
-                :toggler-more-adjective="'all'"
-                :toggler-less-adjective="'less'"
-                :toggler-noun="'metadata'"
+                :always-visible-rows="metadataRows"
+                :hideable-rows="metadataHideableRows"
+                expand-button-text="See all metadata"
+                collapse-button-text="See less metadata"
               />
             </v-card>
           </PageSection>
