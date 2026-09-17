@@ -15,6 +15,7 @@ const badgeIcons: Record<BadgeKey, string> = {
 };
 
 const props = defineProps<{
+  /** Badge string identifier as defined in the schema (e.g. 'expert_curation') */
   badge: BadgeKey;
 }>();
 
@@ -29,21 +30,34 @@ if (!badgeSchema.value) {
 </script>
 
 <template>
-  <div
-    v-if="NmdcSchema.enums.MetadataBadgeEnum.permissible_values[badge]"
-    class="metadata-badge"
+  <v-tooltip
+    v-if="badgeSchema"
+    :text="badgeSchema.description"
+    location="bottom"
+    max-width="400px"
   >
-    <div class="badge-circle">
-      <v-img
-        :src="badgeIcon"
-        :alt="badgeSchema.description"
-        width="64"
-        height="64"
-        contain
-      />
-    </div>
-    <label class="badge-label">{{ snakeToSentenceCase(badge) }}</label>
-  </div>
+    <template #activator="{ props: tooltipProps }">
+      <a
+        v-if="badgeSchema"
+        v-bind="tooltipProps"
+        class="metadata-badge"
+        :href="badgeSchema.see_also[0] || '#'"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <div class="badge-circle">
+          <v-img
+            :src="badgeIcon"
+            :alt="badgeSchema.description"
+            width="64"
+            height="64"
+            contain
+          />
+        </div>
+        <div class="badge-label">{{ snakeToSentenceCase(badge) }}</div>
+      </a>
+    </template>
+  </v-tooltip>
 </template>
 
 <style scoped>
@@ -55,12 +69,15 @@ if (!badgeSchema.value) {
   text-align: center;
 }
 
+.metadata-badge:hover {
+  text-decoration: none !important;
+}
+
 .badge-circle {
   width: 5rem;
   height: 5rem;
   background-color: #fff;
   border: 4px solid rgb(var(--v-theme-accent));
-  /* border: 4px solid #454545; */
   border-radius: 50%;
   padding: 0.5rem;
   overflow: hidden;
@@ -71,7 +88,6 @@ if (!badgeSchema.value) {
 
 .badge-label {
   background-color: rgb(var(--v-theme-accent));
-  /* background-color: #454545; */
   border-radius: 1rem;
   color: #000;
   margin-top: -1rem;
