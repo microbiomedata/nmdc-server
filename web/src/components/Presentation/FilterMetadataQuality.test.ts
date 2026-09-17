@@ -16,6 +16,8 @@ test('renders every schema badge with Any selected by default', () => {
   badges.forEach((badge) => {
     expect(screen.getByText(snakeToSentenceCase(badge))).toBeInTheDocument();
     expect(screen.getByRole('radio', {
+      // Note that `name` checks multiple values, including aria-label
+      // See https://testing-library.com/docs/queries/byrole/
       name: `${snakeToSentenceCase(badge)} Any`,
     })).toBeChecked();
   });
