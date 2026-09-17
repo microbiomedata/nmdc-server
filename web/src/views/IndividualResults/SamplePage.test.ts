@@ -82,6 +82,22 @@ test.describe('SamplePage.vue', () => {
     expect(screen.queryByText('Related Biosamples')).not.toBeInTheDocument();
   });
 
+  test('Displays EMSL biosample identifiers as alternate identifiers', async () => {
+    server.use(
+      http.get('/api/biosample/bs-emsl', () => HttpResponse.json({
+        ...mockBiosample,
+        id: 'bs-emsl',
+        emsl_biosample_identifiers: ['emsl:12345'],
+      }))
+    );
+
+    renderSamplePage({ id: 'bs-emsl' });
+
+    const identifier = await screen.findByRole('link', { name: /emsl:12345/i });
+    expect(identifier).toHaveAttribute('href', 'https://identifiers.org/emsl:12345');
+    expect(screen.queryByText('No alternate identifiers available for this sample.')).not.toBeInTheDocument();
+  });
+
   test('Displays related biosamples derived from omics processing inputs', async () => {
     // Uses a different id so the axios GET cache doesn't return an earlier test's response.
     // TODO: Figure out how to clear the axios cache between tests so we can reuse mocks

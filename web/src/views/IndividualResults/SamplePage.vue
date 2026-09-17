@@ -77,8 +77,12 @@ const metadataHiddenRows = computed(() => {
 
 const alternateIdentifiers = computed(() => {
   if (biosample.value) {
-    return biosample.value.alternate_identifiers.map((id) => {
-      return { name: id, target: `https://identifiers.org/${id}`, image: getIdentifierImage(id) };
+    return [
+      ...biosample.value.alternate_identifiers,
+      ...biosample.value.emsl_biosample_identifiers,
+    ].map((id) => {
+      const target = id.startsWith('emsl') ? undefined : `https://identifiers.org/${id}`;
+      return { name: id, target, image: getIdentifierImage(id) };
     });
   }
 
@@ -275,6 +279,7 @@ watchEffect(() => {
                     {{ identifier.name }}
                   </span>
                   <v-icon
+                    v-if="identifier.target"
                     class="mr-2"
                     size="small"
                   >
