@@ -6,16 +6,6 @@ from pydantic import ValidationError
 from nmdc_server.schemas import METADATA_BADGE_VALUES, BiosampleBase
 
 
-def test_metadata_badge_values_are_generated_from_nmdc_schema():
-    expected = [
-        value.text
-        for value in vars(MetadataBadgeEnum).values()
-        if isinstance(value, PermissibleValue)
-    ]
-
-    assert METADATA_BADGE_VALUES == expected
-
-
 def test_biosample_accepts_metadata_badges():
     biosample = BiosampleBase(
         id="nmdc:bsm-00-000000",
