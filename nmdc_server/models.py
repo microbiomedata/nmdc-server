@@ -536,6 +536,7 @@ class Biosample(Base, AnnotatedModel):
 
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
+    badges = Column(JSONB, nullable=False, default=list, server_default="[]")
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
     omics_processing = relationship(
         "OmicsProcessing",

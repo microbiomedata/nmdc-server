@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Dict, Tuple
 
 import pytest
+from pydantic import ValidationError
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import models, query
+from nmdc_server import models, query, schemas
 from tests import fakes
 
 date0 = datetime(1990, 1, 1)
@@ -160,6 +161,59 @@ def test_grouped_query(db: Session):
         ],
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
+
+
+def test_badge_conditions_are_combined_as_required_constraints(db: Session):
+    badge_a, badge_b = schemas.METADATA_BADGE_VALUES[:2]
+    fakes.BiosampleFactory(id="both", badges=[badge_a, badge_b])
+    fakes.BiosampleFactory(id="first", badges=[badge_a])
+    fakes.BiosampleFactory(id="second", badges=[badge_b])
+    fakes.BiosampleFactory(id="neither", badges=[])
+    db.commit()
+
+    has_first_lacks_second = query.BiosampleQuerySchema(
+        conditions=[
+            {"table": "biosample", "field": "badges", "op": "has", "value": badge_a},
+            {"table": "biosample", "field": "badges", "op": "lacks", "value": badge_b},
+        ]
+    )
+
+    assert {sample.id for sample in has_first_lacks_second.execute(db)} == {"first"}
+
+    lacks_first = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "badges", "op": "lacks", "value": badge_a}]
+    )
+    assert {sample.id for sample in lacks_first.execute(db)} == {"second", "neither"}
+
+
+def test_contradictory_badge_conditions_return_no_results(db: Session):
+    badge = schemas.METADATA_BADGE_VALUES[0]
+    fakes.BiosampleFactory(id="with-badge", badges=[badge])
+    fakes.BiosampleFactory(id="without-badge", badges=[])
+    db.commit()
+
+    q = query.BiosampleQuerySchema(
+        conditions=[
+            {"table": "biosample", "field": "badges", "op": "has", "value": badge},
+            {"table": "biosample", "field": "badges", "op": "lacks", "value": badge},
+        ]
+    )
+
+    assert q.execute(db).all() == []
+
+
+def test_badge_condition_rejects_unknown_badge():
+    with pytest.raises(ValidationError):
+        query.BiosampleQuerySchema(
+            conditions=[
+                {
+                    "table": "biosample",
+                    "field": "badges",
+                    "op": "has",
+                    "value": "not_a_badge",
+                }
+            ]
+        )
 
 
 def test_indirect_join(db: Session):

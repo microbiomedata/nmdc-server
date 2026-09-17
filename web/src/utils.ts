@@ -1,8 +1,13 @@
 import { cloneDeep } from 'lodash';
 import protobufjs from 'protobufjs';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import { Condition } from '@/data/api';
 import descriptor from '@/data/protobuf-descriptor.json';
+import gold from '@/assets/GOLD.png';
+import img from '@/assets/IMG.png';
+import emsl from '@/assets/EMSL.png';
+import moment from 'moment';
 
 const QueryParams = protobufjs.Root.fromJSON(descriptor).lookupType('nmdc.QueryParams');
 
@@ -106,4 +111,113 @@ export function downloadBlob(blob: Blob, filename: string) {
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
   window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Get the logo image for a given identifier name.
+ */
+export function getIdentifierImage(name: string) {
+  if (name.startsWith('gold')) {
+    return gold;
+  } else if (name.startsWith('img')) {
+    return img;
+  } else if (name.startsWith('emsl')) {
+    return emsl;
+  }
+  return null;
+}
+
+export function snakeToSentenceCase(snakeCase: string): string {
+  const words = snakeCase.split('_');
+  const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+  return capitalizedWords.join(' ');
+}
+
+/**
+ * Get the URL for an ENVO, PO, or UBERON term given its identifier.
+ */
+export function getEnvUrl(envId: string): string {
+  const request = `http://purl.obolibrary.org/obo/${envId.replace(':', '_')}`;
+  let apiUrl = '';
+  if (envId.startsWith('ENVO')) {
+    apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/envo/classes/';
+  } else if (envId.startsWith('PO')) {
+    apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/po/classes/';
+  } else if (envId.startsWith('UBERON')) {
+    apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/uberon/classes/';
+  }
+  return `${apiUrl}${encodeURIComponent(request)}`;
+}
+
+export function formatEnvItem(envItem: { id: string; label: string; data?: string }): string {
+  if (!envItem) {
+    return '-';
+  }
+  const { id, label } = envItem;
+  return `${label} (${id})`;
+}
+
+export function formatStringOrList(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  return value || '-';
+};
+
+/**
+ * Get the human-readable slot name from the NMDC schema for a given slot property name.
+ * Default to converting snake_case to Sentence Case if no title is found in the schema.
+ */
+export function formatSlotLabel(slotName: string): string {
+  const schemaSlot = NmdcSchema.slots[slotName as keyof typeof NmdcSchema.slots];
+  if (schemaSlot && 'title' in schemaSlot) {
+    return schemaSlot.title;
+  }
+  return snakeToSentenceCase(slotName);
+}
+
+/**
+ * Format slot values for display in the UI.
+ * Specially handles values that use `has_numeric_value`, `has_unit`, and `has_raw_value` properties,
+ * as well as arrays of values.
+ * Note that this function is not currently exhaustive in its handling of all possible slot value types.
+ */
+export function formatSlotValue(value: any): string {
+  if (value === null || value === undefined) {
+    return '-';
+  }
+  if (Array.isArray(value)) {
+    return value.reduce((acc, curr) => {
+      if (typeof curr === 'object' && curr.has_unit && curr.has_numeric_value) {
+        return `${acc}${curr.has_numeric_value} ${curr.has_unit}, `;
+      }
+      if (typeof curr === 'object' && curr.has_raw_value) {
+        return `${acc}${curr.has_raw_value}, `;
+      }
+      if (typeof curr === 'object') {
+        return `${acc}${JSON.stringify(curr)}, `;
+      }
+      return `${acc}${String(curr)}, `;
+    }, '').slice(0, -2);
+  }
+  if (typeof value === 'object' && value.has_unit && value.has_numeric_value) {
+    if (value.has_unit === '1') {
+      return String(value.has_numeric_value);
+    }
+    return `${value.has_numeric_value} ${value.has_unit}`;
+  }
+  if (typeof value === 'object' && value.has_raw_value) {
+    return value.has_raw_value;
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+export function formatDatetime(dateString: string | undefined): string {
+  if (!dateString) {
+    return '-';
+  }
+  return moment(dateString).format('YYYY-MM-DD, HH:mm');
 }

@@ -9,6 +9,7 @@ import { types } from '@/encoding';
 import { PaginatedResult } from '@/use/usePaginatedResults';
 import { BiosampleSearchResult, DataObjectFilter } from '@/data/api';
 import { stateRefs } from '@/store';
+import { snakeToSentenceCase } from '@/utils';
 
 const { biosampleSearch, dataObjectFilter } = defineProps<{
   biosampleSearch: PaginatedResult<BiosampleSearchResult>;
@@ -128,6 +129,41 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
     </template>
     <template #action-right="{ result }">
       <v-list-item-action>
+        <v-btn
+          v-if="(result as BiosampleSearchResult).badges.length > 0"
+          icon
+          variant="plain"
+          size="large"
+          :to="{ name: 'Sample', params: { id: result.id } }"
+        >
+          <v-tooltip
+            max-width="340px"
+          >
+            <template #activator="{ props }">
+              <div
+                class="d-flex align-center mr-2"
+                v-bind="props"
+              >
+                <v-icon>
+                  mdi-medal
+                </v-icon>
+                <div>{{ (result as BiosampleSearchResult).badges.length }}</div>
+              </div>
+            </template>
+            <span class="d-flex flex-wrap">
+              <span>This biosample has {{ (result as BiosampleSearchResult).badges.length }} metadata quality {{ (result as BiosampleSearchResult).badges.length === 1 ? 'badge' : 'badges' }}:</span>
+              <span class="d-inline-flex ga-1 mt-2 mb-1 flex-wrap">
+                <v-chip
+                  v-for="badge in (result as BiosampleSearchResult).badges"
+                  :key="badge"
+                  size="small"
+                >
+                  {{ snakeToSentenceCase(badge) }}
+                </v-chip>
+              </span>
+            </span>
+          </v-tooltip>
+        </v-btn>
         <v-btn
           icon
           variant="plain"

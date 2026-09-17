@@ -118,6 +118,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   latitude: number | null;
   add_date: string;
   mod_date: string;
+  collection_date: string;
   open_in_gold: string;
   env_broad_scale: {
     id: string;
@@ -136,6 +137,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   };
   omics_processing: OmicsProcessingResult[];
   emsl_biosample_identifiers: string[];
+  badges: string[];
 }
 
 export interface NmdcValue {
@@ -376,10 +378,12 @@ export type opType =
   | "=="
   | "!="
   | "has"
+  | "lacks"
   | "like";
 export const opMap: Record<opType, string> = {
   between: "between",
   has: "has",
+  lacks: "does not have",
   "<": "less",
   "<=": "lte",
   ">": "greater",

@@ -69,8 +69,7 @@ test.describe('SamplePage.vue', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Biosample Title')).toBeInTheDocument();
     });
-    expect(screen.getByText('Test biosample description')).toBeInTheDocument();
-    expect(screen.getByText('Attributes')).toBeInTheDocument();
+    expect(screen.getByText('Metadata')).toBeInTheDocument();
     expect(screen.getByText(/Download Sample Metadata/i)).toBeInTheDocument();
   });
 
@@ -81,6 +80,23 @@ test.describe('SamplePage.vue', () => {
       expect(screen.getByText('Test Biosample Title')).toBeInTheDocument();
     });
     expect(screen.queryByText('Related Biosamples')).not.toBeInTheDocument();
+  });
+
+  test('Displays EMSL biosample identifiers as alternate identifiers', async () => {
+    server.use(
+      http.get('/api/biosample/bs-emsl', () => HttpResponse.json({
+        ...mockBiosample,
+        id: 'bs-emsl',
+        emsl_biosample_identifiers: ['emsl:12345'],
+      }))
+    );
+
+    renderSamplePage({ id: 'bs-emsl' });
+
+    await waitFor(() => {
+      expect(screen.getByText('emsl:12345')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('No alternate identifiers available for this sample.')).not.toBeInTheDocument();
   });
 
   test('Displays related biosamples derived from omics processing inputs', async () => {

@@ -10,6 +10,7 @@ import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
+import FilterMetadataQuality from '@/components/Presentation/FilterMetadataQuality.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
 import FilterGene, { GeneType as _GeneType } from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
@@ -81,8 +82,13 @@ const description = computed(() => {
       v-html="urlify(description)"
     />
     <template v-if="props.isOpen">
+      <FilterMetadataQuality
+        v-if="props.table === 'biosample' && props.field === 'badges'"
+        :conditions="props.conditions"
+        @select="$emit('select', $event)"
+      />
       <filter-list
-        v-if="props.summary.type === 'string'"
+        v-else-if="props.summary.type === 'string'"
         :field="props.field"
         :table="props.table"
         :conditions="props.conditions"

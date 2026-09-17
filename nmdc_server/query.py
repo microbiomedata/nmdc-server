@@ -22,7 +22,7 @@ from typing import (
     Union,
 )
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_, select
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
@@ -330,6 +330,41 @@ class MultiomicsConditionSchema(BaseConditionSchema):
         return and_(*and_args)
 
 
+class BadgeConditionSchema(BaseConditionSchema):
+    """A presence or absence condition for one metadata-quality badge."""
+
+    table: Table
+    value: str
+    field: Literal["badges"]
+    op: Literal["has", "lacks"]
+
+    @field_validator("table")
+    @classmethod
+    def validate_table(cls, table: Table) -> Table:
+        if table != Table.biosample:
+            raise ValueError("Metadata badge conditions must target the biosample table")
+        return table
+
+    @field_validator("value")
+    @classmethod
+    def validate_badge(cls, value: str) -> str:
+        if value not in schemas.METADATA_BADGE_VALUES:
+            raise ValueError(f"Invalid metadata badge: {value}")
+        return value
+
+    @property
+    def key(self) -> str:
+        # Each badge selection is a separate required constraint. Including the
+        # operation also makes contradictory API conditions intersect to no results.
+        return f"{self.table}:{self.field}.{self.value}.{self.op}"
+
+    def compare(self) -> ClauseElement:
+        contains_badge = models.Biosample.badges.contains([self.value])
+        if self.op == "has":
+            return contains_badge
+        return ~contains_badge
+
+
 # A special condition type for full-text search.  Unlike other conditions, this does not
 # map to a specific column or table — it triggers a tsvector search across a pre-defined
 # set of fields in BaseQuerySchema subclasses that override _fts_subquery.
@@ -343,6 +378,7 @@ class FullTextSearchConditionSchema(BaseModel):
 ConditionSchema = Union[
     FullTextSearchConditionSchema,
     RangeConditionSchema,
+    BadgeConditionSchema,
     SimpleConditionSchema,
     GoldConditionSchema,
     MultiomicsConditionSchema,
