@@ -7,6 +7,7 @@ import descriptor from '@/data/protobuf-descriptor.json';
 import gold from '@/assets/GOLD.png';
 import img from '@/assets/IMG.png';
 import emsl from '@/assets/EMSL.png';
+import moment from 'moment';
 
 const QueryParams = protobufjs.Root.fromJSON(descriptor).lookupType('nmdc.QueryParams');
 
@@ -173,4 +174,11 @@ export function formatSlotLabel(slotName: string): string {
     return schemaSlot.title;
   }
   return snakeToSentenceCase(slotName);
+}
+
+export function formatDatetime(dateString: string | undefined): string {
+  if (!dateString) {
+    return '-';
+  }
+  return moment(dateString).format('YYYY-MM-DD, HH:mm');
 }

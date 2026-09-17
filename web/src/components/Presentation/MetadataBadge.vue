@@ -1,16 +1,29 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { snakeToSentenceCase } from '@/utils';
+import biogeochemistryIcon from '@/assets/biogeochemistry.png';
+import expertCurationIcon from '@/assets/expert_curation.png';
+import hostInformationIcon from '@/assets/host_information.png';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 export type BadgeKey = keyof typeof NmdcSchema.enums.MetadataBadgeEnum.permissible_values;
+
+const badgeIcons: Record<BadgeKey, string> = {
+  biogeochemistry: biogeochemistryIcon,
+  expert_curation: expertCurationIcon,
+  host_information: hostInformationIcon,
+};
 
 const props = defineProps<{
   badge: BadgeKey;
 }>();
 
-const badgeSchema = NmdcSchema.enums.MetadataBadgeEnum.permissible_values[props.badge];
+const badgeSchema = computed(
+  () => NmdcSchema.enums.MetadataBadgeEnum.permissible_values[props.badge],
+);
+const badgeIcon = computed(() => badgeIcons[props.badge]);
 
-if (!badgeSchema) {
+if (!badgeSchema.value) {
   console.warn(`Unknown badge: ${props.badge}`);
 }
 </script>
@@ -22,7 +35,7 @@ if (!badgeSchema) {
   >
     <div class="badge-circle">
       <v-img
-        :src="`/src/assets/${badge}.png`"
+        :src="badgeIcon"
         :alt="badgeSchema.description"
         width="64"
         height="64"
