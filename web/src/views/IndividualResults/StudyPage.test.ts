@@ -56,12 +56,11 @@ const mockStudy: StudySearchResult = {
   funding_sources: [],
   protocol_link: [],
   image_url: null,
-  principal_investigator_image_url: '',
-  principal_investigator_name: 'Dr. Test',
-  principal_investigator: {
+  principal_investigators: [{
     name: 'Dr. Test',
     email: 'test@example.com',
-  },
+    profile_image_url: null,
+  }],
   omics_counts: [],
   award_dois: [],
   dataset_dois: [],

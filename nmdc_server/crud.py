@@ -202,10 +202,24 @@ def get_doi(db: Session, doi_id: str) -> Optional[models.DOIInfo]:
 
 def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     study_dict = study.dict()
+    if study.has_credit_associations is not None:
+        study_dict["has_credit_associations"] = [
+            association.model_dump(exclude_unset=True)
+            for association in study.has_credit_associations
+        ]
 
     websites = study_dict.pop("principal_investigator_websites")
+    principal_investigator_ids = study_dict.pop("principal_investigator_ids")
 
     db_study = models.Study(**study_dict)
+
+    for principal_investigator_id in principal_investigator_ids:
+        principal_investigator = db.get(  # type: ignore[attr-defined]
+            models.PrincipalInvestigator, principal_investigator_id
+        )
+        if principal_investigator is None:
+            raise ValueError(f"Unknown principal investigator: {principal_investigator_id}")
+        db_study.principal_investigators.append(principal_investigator)
 
     for url in websites:
         website, _ = get_or_create(db, models.Website, url=url)

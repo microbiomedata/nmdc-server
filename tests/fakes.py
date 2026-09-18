@@ -160,13 +160,22 @@ class StudyFactory(AnnotatedFactory):
     gold_name = Faker("word")
     gold_description = Faker("sentence")
     scientific_objective = Faker("sentence")
-    principal_investigator = SubFactory(PrincipalInvestigator)
     image = Faker("binary", length=64)
     dois: List[models.DOIInfo] = []
 
     class Meta:
         model = models.Study
         sqlalchemy_session = db
+
+    @post_generation
+    def principal_investigators(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if not extracted:
+            extracted = [PrincipalInvestigator()]
+
+        self.principal_investigators.extend(extracted)
 
     @post_generation
     def principal_investigator_websites(self, create, extracted, **kwargs):

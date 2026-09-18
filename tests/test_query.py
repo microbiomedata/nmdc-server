@@ -510,8 +510,10 @@ def test_facet_invalid_attribute(db: Session):
 
 
 def test_query_pi(db: Session):
-    study1 = fakes.StudyFactory(id="study1", principal_investigator__name="John Doe")
-    study2 = fakes.StudyFactory(id="study2", principal_investigator__name="Jane Doe")
+    john = fakes.PrincipalInvestigator(name="John Doe")
+    jane = fakes.PrincipalInvestigator(name="Jane Doe")
+    study1 = fakes.StudyFactory(id="study1", principal_investigators=[john, jane])
+    study2 = fakes.StudyFactory(id="study2", principal_investigators=[jane])
     fakes.BiosampleFactory(id="sample1", study=study1)
     fakes.BiosampleFactory(id="sample2", study=study2)
     db.commit()
@@ -519,7 +521,7 @@ def test_query_pi(db: Session):
     q = query.StudyQuerySchema()
     assert q.facet(db, "principal_investigator_name") == {
         "John Doe": 1,
-        "Jane Doe": 1,
+        "Jane Doe": 2,
     }
 
     q = query.StudyQuerySchema(
@@ -532,6 +534,17 @@ def test_query_pi(db: Session):
         ]
     )
     assert ["study1"] == [r.id for r in q.execute(db)]
+
+    q = query.StudyQuerySchema(
+        conditions=[
+            {
+                "table": "study",
+                "field": "principal_investigator_name",
+                "value": "Jane Doe",
+            }
+        ]
+    )
+    assert {"study1", "study2"} == {r.id for r in q.execute(db)}
 
     qp = query.BiosampleQuerySchema(
         conditions=[

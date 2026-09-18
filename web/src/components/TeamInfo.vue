@@ -1,10 +1,10 @@
-<script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
-import { StudySearchResult } from '@/data/api';
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { PrincipalInvestigator, StudySearchResult } from '@/data/api';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 function getOrcid(person: any) {
-  const orcid = person?.applies_to_person?.orcid ?? person?.orcid ?? '';
+  const orcid = person?.applies_to_agent?.orcid ?? person?.orcid ?? '';
   return orcid.replace('orcid:', '');
 }
 
@@ -51,50 +51,40 @@ function compareTeamMembers(a: TeamMember, b: TeamMember) {
   return a.name.localeCompare(b.name);
 }
 
-export default defineComponent({
-  components: { OrcidId },
-  props: {
-    item: {
-      type: Object as PropType<StudySearchResult>,
-      required: true,
-    },
-  },
-  setup(props) {
-    const team = computed<TeamMember[]>(() => {
-      const team: TeamMember[] = (props.item.has_credit_associations || []).map((a) => ({
-        name: a.applies_to_person.name || '',
-        orcid: getOrcid(a),
-        roles: a.applied_roles.sort(compareRoles),
-      }));
-      const pi_member = team.find((m) => m.orcid === getOrcid(props.item.principal_investigator));
-      if (pi_member) {
-        // If the PI is already in the team, ensure they have the PI role and image
-        if (!pi_member.roles.includes(PRINCIPAL_INVESTIGATOR_ROLE)) {
-          pi_member.roles.unshift(PRINCIPAL_INVESTIGATOR_ROLE);
-        }
-        if (!pi_member.image_url) {
-          pi_member.image_url = props.item.principal_investigator_image_url;
-        }
-      } else {
-        // If the PI is not in the team, add them
-        team.push({
-          name: props.item.principal_investigator.name || '',
-          orcid: getOrcid(props.item.principal_investigator),
-          roles: [PRINCIPAL_INVESTIGATOR_ROLE],
-          image_url: props.item.principal_investigator_image_url,
-        });
+const props = defineProps<{ item: StudySearchResult }>();
+
+function isSamePerson(member: TeamMember, principalInvestigator: PrincipalInvestigator) {
+  const orcid = getOrcid(principalInvestigator);
+  return orcid ? member.orcid === orcid : member.name === principalInvestigator.name;
+}
+
+const team = computed<TeamMember[]>(() => {
+  const teamMembers: TeamMember[] = (props.item.has_credit_associations || []).map(
+    (association) => ({
+      name: association.applies_to_agent.name,
+      orcid: getOrcid(association),
+      roles: [...association.applied_roles].sort(compareRoles),
+    }),
+  );
+
+  props.item.principal_investigators.forEach((principalInvestigator) => {
+    const isExistingMember = teamMembers.find((member) => isSamePerson(member, principalInvestigator));
+    if (isExistingMember) {
+      if (!isExistingMember.roles.includes(PRINCIPAL_INVESTIGATOR_ROLE)) {
+        isExistingMember.roles.unshift(PRINCIPAL_INVESTIGATOR_ROLE);
       }
+      isExistingMember.image_url ||= principalInvestigator.profile_image_url || undefined;
+    } else {
+      teamMembers.push({
+        name: principalInvestigator.name,
+        orcid: getOrcid(principalInvestigator),
+        roles: [PRINCIPAL_INVESTIGATOR_ROLE],
+        image_url: principalInvestigator.profile_image_url || undefined,
+      });
+    }
+  });
 
-      // Sort team members
-      team.sort(compareTeamMembers);
-
-      return team;
-    });
-
-    return {
-      team,
-    };
-  },
+  return teamMembers.sort(compareTeamMembers);
 });
 </script>
 
