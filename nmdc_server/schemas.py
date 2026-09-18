@@ -17,15 +17,7 @@ from uuid import UUID
 from linkml_runtime.linkml_model.meta import PermissibleValue
 from nmdc_schema.nmdc import MetadataBadgeEnum
 from pint import Unit
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    BeforeValidator,
-    ConfigDict,
-    Field,
-    ValidationInfo,
-    field_validator,
-)
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo, field_validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
@@ -265,9 +257,7 @@ class CreditAssociation(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/CreditAssociation/"""
 
     applied_roles: List[str]
-    applies_to_agent: OrcidPerson = Field(
-        validation_alias=AliasChoices("applies_to_agent", "applies_to_person")
-    )
+    applies_to_agent: OrcidPerson
 
 
 class DOIInfo(BaseModel):
