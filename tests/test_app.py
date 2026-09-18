@@ -173,13 +173,31 @@ def test_get_admin_stats(db: Session, client: TestClient, logged_in_admin_user):
 
 
 def test_get_pi_image(db: Session, client: TestClient):
-    pi = fakes.PrincipalInvestigator()
-    fakes.StudyFactory(principal_investigator=pi, id="study1")
+    pi_with_image = fakes.PrincipalInvestigator(name="PI With Image")
+    pi_without_image = fakes.PrincipalInvestigator(name="PI Without Image", image=None)
+    fakes.StudyFactory(
+        principal_investigators=[pi_with_image, pi_without_image],
+        id="study1",
+    )
     db.commit()
     resp = client.get("/api/study/study1")
     assert_status(resp)
+    data = resp.json()
+    principal_investigators_by_name = {
+        principal_investigator["name"]: principal_investigator
+        for principal_investigator in data["principal_investigators"]
+    }
+    assert {
+        name: principal_investigator["profile_image_url"]
+        for name, principal_investigator in principal_investigators_by_name.items()
+    } == {
+        "PI With Image": f"/api/principal_investigator/{pi_with_image.id}",
+        "PI Without Image": None,
+    }
+    assert "principal_investigator_names" not in data
+    assert "principal_investigator_image_urls" not in data
 
-    resp = client.get(resp.json()["image_url"])
+    resp = client.get(principal_investigators_by_name["PI With Image"]["profile_image_url"])
     assert_status(resp)
     assert resp.headers["Content-Type"] == "image/jpeg"
 

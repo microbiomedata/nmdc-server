@@ -1,5 +1,6 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, cast
+from uuid import UUID
 
 import requests
 from pydantic import model_validator
@@ -16,6 +17,8 @@ from nmdc_server.schemas import StudyCreate
 
 logger = get_logger(__name__)
 
+PRINCIPAL_INVESTIGATOR_ROLE = "Principal Investigator"
+
 # Define how long we want `requests` to wait (a) to establish a connection to the remote server,
 # and (b) for the remote server to send the first (or any subsequent) byte of the response.
 # Docs: https://docs.python-requests.org/en/latest/user/advanced/#timeouts
@@ -27,10 +30,10 @@ requests_timeout: tuple[float, float] = (
 )
 
 
-def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
+def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> UUID:
     pi = db.query(PrincipalInvestigator).filter_by(name=name).first()
     if pi:
-        return pi.id
+        return cast(UUID, pi.id)
 
     image_data = None
     if url:
@@ -46,7 +49,27 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
 
     db.add(pi)
     db.flush()
-    return pi.id
+    return cast(UUID, pi.id)
+
+
+def get_principal_investigator_ids(db: Session, credit_associations: List[dict]) -> List[UUID]:
+    principal_investigator_ids = []
+    for credit_association in credit_associations:
+        if PRINCIPAL_INVESTIGATOR_ROLE not in credit_association.get("applied_roles", []):
+            continue
+
+        pi_obj = credit_association.get("applies_to_agent")
+        if not pi_obj:
+            continue
+        principal_investigator_ids.append(
+            get_or_create_pi(
+                db,
+                pi_obj["name"],
+                pi_obj.get("profile_image_url"),
+                pi_obj.get("orcid"),
+            )
+        )
+    return principal_investigator_ids
 
 
 class Study(StudyCreate):
@@ -95,17 +118,10 @@ def load(db: Session, cursor: Cursor) -> ETLReport:
         # Update the report to account for this study having been extracted from the Mongo database.
         report.num_extracted += 1
 
-        pi_obj = obj.pop("principal_investigator", None)
-        if pi_obj:
-            if "name" in pi_obj:
-                pi_name = pi_obj["name"]
-            else:
-                pi_name = pi_obj["has_raw_value"]
-            pi_url = pi_obj.get("profile_image_url")
-            pi_orcid = pi_obj.get("orcid")
-            obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
-            obj["principal_investigator_websites"] = obj.pop("websites", [])
-            obj["pricipal_investigator_image_url"] = pi_url
+        obj["principal_investigator_ids"] = get_principal_investigator_ids(
+            db, obj.get("has_credit_associations", [])
+        )
+        obj["principal_investigator_websites"] = obj.pop("websites", [])
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
         dois = obj.pop("associated_dois", None)
         if dois:

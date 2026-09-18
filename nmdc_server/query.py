@@ -101,11 +101,16 @@ _envo_keys: Dict[str, Tuple[Table, str]] = {
     "env_medium": (Table.env_medium, "label"),
 }
 
-_association_proxy_keys: Dict[str, Tuple[Any, Any]] = {
-    "principal_investigator_name": (models.Study, models.PrincipalInvestigator.name),
+_association_proxy_keys: Dict[str, Tuple[Any, Any, Any]] = {
+    "principal_investigator_name": (
+        models.Study,
+        models.PrincipalInvestigator.name,
+        models.Study.principal_investigators,
+    ),
     "metaproteomics_analysis_category": (
         models.OmicsProcessing,
         models.MetaproteomicAnalysis.metaproteomics_analysis_category,
+        models.OmicsProcessing.metaproteomic_analysis,
     ),
 }
 
@@ -740,7 +745,7 @@ class BaseQuerySchema(BaseModel):
             attribute in _association_proxy_keys
             and self.table.model == _association_proxy_keys[attribute][0]
         ):
-            model, column = _association_proxy_keys[attribute]
+            model, column, relationship = _association_proxy_keys[attribute]
             join_ap = True
         elif hasattr(model, "annotations"):
             column = model.annotations[attribute]
@@ -756,7 +761,7 @@ class BaseQuerySchema(BaseModel):
         if join_envo:
             query = _join_envo_facet(query, attribute)
         elif join_ap:
-            query = query.join(model)
+            query = query.select_from(model).join(relationship)
         query = query.join(subquery, model.id == subquery.c.id)
 
         # collect the results

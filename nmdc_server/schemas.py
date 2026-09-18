@@ -17,7 +17,15 @@ from uuid import UUID
 from linkml_runtime.linkml_model.meta import PermissibleValue
 from nmdc_schema.nmdc import MetadataBadgeEnum
 from pint import Unit
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+)
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
@@ -246,7 +254,7 @@ DataObjectAggregation = Dict[str, DataObjectAggregationElement]
 class OrcidPerson(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/PersonValue/"""
 
-    name: Optional[str] = None
+    name: str
     email: Optional[str] = None
     orcid: Optional[str] = None
     profile_image_url: Optional[str] = None
@@ -257,7 +265,9 @@ class CreditAssociation(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/CreditAssociation/"""
 
     applied_roles: List[str]
-    applies_to_person: OrcidPerson
+    applies_to_agent: OrcidPerson = Field(
+        validation_alias=AliasChoices("applies_to_agent", "applies_to_person")
+    )
 
 
 class DOIInfo(BaseModel):
@@ -295,7 +305,7 @@ class StudyBase(AnnotatedBase):
 
 
 class StudyCreate(StudyBase):
-    principal_investigator_id: Optional[UUID] = None
+    principal_investigator_ids: List[UUID] = []
     image: Optional[bytes] = None
 
 
@@ -310,10 +320,8 @@ class OmicsCounts(BaseModel):
 
 class Study(StudyBase):
     open_in_gold: Optional[str] = None
-    principal_investigator: Optional[OrcidPerson] = None
-    principal_investigator_name: Optional[str] = None
+    principal_investigators: List[OrcidPerson] = []
     image_url: str
-    principal_investigator_image_url: str
     sample_count: Optional[int] = None
     omics_counts: Optional[List[OmicsCounts]] = None
     omics_processing_counts: Optional[List[OmicsCounts]] = None

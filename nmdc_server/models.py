@@ -320,6 +320,18 @@ class SearchIndex(Base):
     count = Column(Integer, nullable=False)
 
 
+study_principal_investigator_association = Table(
+    "study_principal_investigator_association",
+    Base.metadata,
+    Column("study_id", ForeignKey("study.id"), primary_key=True),
+    Column(
+        "principal_investigator_id",
+        ForeignKey("principal_investigator.id"),
+        primary_key=True,
+    ),
+)
+
+
 class PrincipalInvestigator(Base):
     __tablename__ = "principal_investigator"
 
@@ -330,6 +342,18 @@ class PrincipalInvestigator(Base):
     # a PI profile image... originally we didn't have a place to store static content
     # so the image data is placed in the database.
     image = Column(LargeBinary, nullable=True)
+
+    @property
+    def profile_image_url(self) -> Optional[str]:
+        if self.image:
+            return f"/api/principal_investigator/{self.id}"
+        return None
+
+    studies = relationship(
+        "Study",
+        secondary=study_principal_investigator_association,
+        back_populates="principal_investigators",
+    )
 
 
 class DOIType(enum.Enum):
@@ -430,18 +454,14 @@ class Study(Base, AnnotatedModel):
     omics_counts = query_expression()
     omics_processing_counts = query_expression()
 
-    principal_investigator_id = Column(
-        UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=True
+    principal_investigators = relationship(
+        "PrincipalInvestigator",
+        secondary=study_principal_investigator_association,
+        back_populates="studies",
     )
-    principal_investigator = relationship("PrincipalInvestigator", cascade="all")
-    principal_investigator_name = association_proxy("principal_investigator", "name")
+    # Keep the singular virtual attribute for backwards compatibility
+    principal_investigator_name = association_proxy("principal_investigators", "name")
     image = Column(LargeBinary, nullable=True)
-
-    @property
-    def principal_investigator_image_url(self):
-        if self.principal_investigator_id is not None and self.principal_investigator.image:
-            return f"/api/principal_investigator/{self.principal_investigator_id}"
-        return ""
 
     @property
     def image_url(self):

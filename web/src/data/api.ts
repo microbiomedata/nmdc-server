@@ -189,9 +189,10 @@ export interface BiosampleResultFromSource {
 }
 
 export interface PrincipalInvestigator {
-  name?: string;
+  name: string;
   email?: string;
   orcid?: string;
+  profile_image_url?: string | null;
 }
 
 export interface DOI {
@@ -213,10 +214,8 @@ export interface LabelLink {
 
 export interface StudySearchResult extends BaseSearchResult {
   principal_investigator_websites: string[];
-  principal_investigator_name: string;
-  principal_investigator_image_url: string;
   image_url: string;
-  principal_investigator: PrincipalInvestigator;
+  principal_investigators: PrincipalInvestigator[];
   award_dois: DOI[];
   dataset_dois: DOI[],
   doi_map: Record<string, DoiInfo>,
@@ -250,8 +249,8 @@ export interface StudySearchResult extends BaseSearchResult {
   children: StudySearchResult[];
   has_credit_associations: {
     applied_roles: string[];
-    applies_to_person: {
-      name?: string;
+    applies_to_agent: {
+      name: string;
       orcid?: string;
       email?: string;
     };
@@ -268,11 +267,10 @@ export interface StudyResultFromSource {
   description: string;
   study_category: string;
   has_credit_associations: {
-    applies_to_person: NmdcValue;
+    applies_to_agent: NmdcValue;
     applied_roles: string[];
     type: string;
   }[];
-  principal_investigator: NmdcValue;
   title: string;
   websites: string[];
 }
