@@ -180,8 +180,9 @@ def send_slack_message(text: str) -> bool:
                     is_sent = True
                 else:
                     click.echo("Failed to send Slack message.", err=True)
-            except requests.RequestException as e:
-                click.echo(f"Failed to send Slack message. Error: {e}", err=True)
+            except requests.RequestException:
+                # We intentionally keep this message generic so the Slack URL isn't exposed in the logs.
+                click.echo("Failed to send Slack message due to a request error.", err=True)
     else:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
 
