@@ -82,13 +82,13 @@ const metadataHideableRows = computed(() => {
 
 const alternateIdentifiers = computed(() => {
   if (biosample.value) {
-    return [
-      ...biosample.value.alternate_identifiers,
-      ...biosample.value.emsl_biosample_identifiers,
-    ].map((id) => {
-      const target = id.startsWith('emsl') ? undefined : `https://identifiers.org/${id}`;
-      return { name: id, target, image: getIdentifierImage(id) };
+    const nonEmslIdentifiers = biosample.value.alternate_identifiers.map((id) => {
+      return { name: id, target: `https://identifiers.org/${id}`, image: getIdentifierImage(id) };
     });
+    const emslIdentifiers = biosample.value.emsl_biosample_identifiers.map((id) => {
+      return { name: id, target: undefined, image: getIdentifierImage('emsl') };
+    });
+    return [...nonEmslIdentifiers, ...emslIdentifiers];
   }
 
   return [];
