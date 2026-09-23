@@ -115,6 +115,9 @@ export function downloadBlob(blob: Blob, filename: string) {
 
 /**
  * Get the logo image for a given identifier name.
+ * Note that EMSL identifiers are not guaranteed to be prefixed with "emsl",
+ * so it is possible that an EMSL identifier will not be recognized and will return null.
+ * If the caller knows exactly which image it wants, it can pass the exact string prefix (e.g. 'emsl') as the argument.
  */
 export function getIdentifierImage(name: string) {
   if (name.startsWith('gold')) {
