@@ -23,10 +23,6 @@ export const Menus: MenuItem[] = [
         href: 'https://microbiomedata.org/team/',
       },
       {
-        label: 'Advisory',
-        href: 'https://microbiomedata.org/advisory/',
-      },
-      {
         label: 'FAQs',
         href: 'https://microbiomedata.org/faqs/',
       },
@@ -81,21 +77,13 @@ export const Menus: MenuItem[] = [
         href: 'https://microbiomedata.org/documentation/',
       },
       {
-        label: 'Data Management',
-        href: 'https://microbiomedata.org/data-management/',
-      },
-      {
-        label: 'Data Integration',
-        href: 'https://microbiomedata.org/data-integration/',
-      },
-      {
         label: 'Learning Resources',
         href: 'https://microbiomedata.org/certificate-program/',
       },
     ],
   },
   {
-    label: 'Get Involved',
+    label: 'Past Outreach',
     href: 'https://microbiomedata.org/community/',
     items: [
       {
