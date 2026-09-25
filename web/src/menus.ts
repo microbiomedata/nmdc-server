@@ -77,6 +77,10 @@ export const Menus: MenuItem[] = [
         href: 'https://microbiomedata.org/documentation/',
       },
       {
+        label: 'Data Management',
+        href: 'https://microbiomedata.org/data-management/',
+      },
+      {
         label: 'Learning Resources',
         href: 'https://microbiomedata.org/certificate-program/',
       },
