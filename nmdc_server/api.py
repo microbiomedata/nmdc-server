@@ -6,7 +6,7 @@ import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, RawIOBase, StringIO
-from typing import IO, Any, Dict, List, Optional, Union, cast
+from typing import IO, Any, Dict, List, Literal, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -1352,6 +1352,16 @@ def check_permissible_val(
 async def get_metadata_submissions_report(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
+    sample_count_method: Literal["environmental_tabs", "legacy_all_tabs"] = Query(
+        default="environmental_tabs",
+        description=(
+            "Whether you want to calculate the number of samples by considering "
+            "(a) only environmental tabs (the default); or "
+            "(b) all tabs, including assay tabs. "
+            "The latter is a legacy counting method, provided to "
+            "facilitate comparison with legacy reports."
+        ),
+    ),
 ):
     r"""
     Download a TSV file containing a high-level report of Submission Portal submissions,
@@ -1384,6 +1394,17 @@ async def get_metadata_submissions_report(
     data_rows = []
     for sample_set in sample_sets:
         submission = sample_set.submission_metadata
+
+        if sample_count_method == "legacy_all_tabs":
+            # Note: Using this method, 2 rows on a "soil" tab and 2 rows on an "assay" tab
+            #       contribute 4 to the sample count.
+            sample_data = sample_set.sample_data
+            tab_data = (sample_data.get("data") or {}) if isinstance(sample_data, dict) else {}
+            sample_count = sum(len(rows) for rows in tab_data.values())
+        else:
+            # Note: Using this method, 2 rows on a "soil" tab and 2 rows on an "assay" tab
+            #       contribute only 2 to the sample count.
+            sample_count = sample_set.sample_count
 
         # Get the award information from the submission.
         #
@@ -1420,7 +1441,7 @@ async def get_metadata_submissions_report(
             sample_set.name,
             sample_set.date_last_modified,
             sample_set.created,
-            sample_set.sample_count,
+            sample_count,
             award,
         ]
         data_rows.append(data_row)
