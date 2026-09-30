@@ -20,10 +20,10 @@ def get_attribute_units(table: str, attribute: str) -> Optional[PlainUnit]:
     return _unit_info.get(table, {}).get(attribute)
 
 
-def extract_quantity(obj: dict, table: str, attribute: str) -> Optional[float]:
+def extract_quantity(obj: dict, table: str, attribute: str, value_field: str = "has_numeric_value", ) -> Optional[float]:
     """Extract units from https://microbiomedata.github.io/nmdc-schema/QuantityValue/"""
     expected_units = get_attribute_units(table, attribute)
-    value = obj.get("has_numeric_value", None)
+    value = obj.get(value_field, None)
     units = obj.get("has_unit", None)
     if value is None:
         return None
