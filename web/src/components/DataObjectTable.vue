@@ -342,7 +342,14 @@ function isWorkflowFailed(item: any) {
                 <div class="d-flex ga-2 flex-row align-center">
                   <div class="d-flex ga-1 flex-row align-center">
                     <span class="font-weight-bold">
-                      Workflow Execution:
+                      <span>Workflow Execution</span>
+                      <span
+                        v-if="isWorkflowFailed(item)"
+                        class="text-error-dark"
+                      > 
+                        (FAILED)
+                      </span>
+                      <span>:</span>
                     </span>
                     <span>
                       {{ item.group_name }}
