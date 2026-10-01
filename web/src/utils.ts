@@ -136,6 +136,10 @@ export function snakeToSentenceCase(snakeCase: string): string {
   return capitalizedWords.join(' ');
 }
 
+export function snakeToLowercase(snakeCase: string): string {
+  return snakeCase.replace(/_/g, ' ').toLowerCase();
+}
+
 /**
  * Get the URL for an ENVO, PO, or UBERON term given its identifier.
  */

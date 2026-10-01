@@ -54,6 +54,10 @@ a:visited:not(.v-btn, .v-list-item),
   gap: 16px;
 }
 
+.text-error {
+  color: rgb(var(--v-theme-error));
+}
+
 // Hide all GChart error messages
 // Selects any element whose ID begins with "google-visualization-errors"
 div[id^="google-visualization-errors"] {

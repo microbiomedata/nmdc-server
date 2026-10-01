@@ -15,6 +15,7 @@ import { stateRefs, acceptTerms } from '@/store';
 import { metaproteomicCategoryEnumToDisplay } from '@/encoding';
 
 import DownloadDialog from './DownloadDialog.vue';
+import { snakeToLowercase } from '@/utils.ts';
 
 // // TODO: This is unused. Do we still need it?
 // const descriptionMap: Record<string, string> = {
@@ -254,6 +255,15 @@ function toggleCollapseWorkflow(item: any) {
   const id = item.omics_data.id;
   stateRefs.collapsedWorkflowExecutions.value[id] = !stateRefs.collapsedWorkflowExecutions.value[id];
 }
+
+function isWorkflowHidden(item: any) {
+  const id = item.omics_data.id;
+  return stateRefs.collapsedWorkflowExecutions.value[id] && !item.hidden;
+}
+
+function isWorkflowFailed(item: any) {
+  return item.omics_data.qc_status === 'fail';
+}
 </script>
 
 <template>
@@ -398,7 +408,30 @@ function toggleCollapseWorkflow(item: any) {
             </div>
           </td>
         </tr>
-        <tr v-if="!stateRefs.collapsedWorkflowExecutions.value[item.omics_data.id] && !item.hidden">
+        <tr v-if="(item.newgroup || index == 0) && isWorkflowFailed(item) && !isWorkflowHidden(item)">
+          <td colspan="6">
+            <div class="text-error opacity-80 d-flex ga-1 flex-row align-center">
+              <div class="d-flex ga-1 flex-row align-center">
+                <v-icon>mdi-alert-circle</v-icon>
+                <span>
+                  No data objects available for this Workflow Execution
+                </span>
+              </div>
+              <v-icon>mdi-circle-small</v-icon>
+              <div>Failed at {{ item.omics_data.has_failure_categorization[0].qc_failure_where }}</div>
+              <v-icon>mdi-circle-small</v-icon>
+              <div class="d-flex ga-1 flex-row align-center">
+                <span class="font-weight-bold">
+                  Reason:
+                </span>
+                <span>
+                  {{ snakeToLowercase(item.omics_data.has_failure_categorization[0].qc_failure_what) }}
+                </span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr v-if="!isWorkflowFailed(item) && !isWorkflowHidden(item)">
           <td>
             {{ item.file_type }}
             <v-tooltip
