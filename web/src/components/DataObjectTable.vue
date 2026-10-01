@@ -410,7 +410,7 @@ function isWorkflowFailed(item: any) {
         </tr>
         <tr v-if="(item.newgroup || index == 0) && isWorkflowFailed(item) && !isWorkflowHidden(item)">
           <td colspan="6">
-            <div class="text-error opacity-80 d-flex ga-1 flex-row align-center">
+            <div class="text-error-dark d-flex ga-1 flex-row align-center">
               <div class="d-flex ga-1 flex-row align-center">
                 <v-icon>mdi-alert-circle</v-icon>
                 <span>

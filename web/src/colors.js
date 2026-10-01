@@ -2,6 +2,7 @@ import colors from 'vuetify/lib/util/colors';
 
 const red = '#ED5338';
 const red2 = '#ff5252'
+const redDark = '#B40000';
 const orange = '#E88320';
 const orangeLight = '#EEA359';
 const orangeLighter = '#EEC295';
@@ -43,4 +44,5 @@ export default {
   sequencing: red,
   success: green,
   error: red2,
+  errorDark: redDark,
 };

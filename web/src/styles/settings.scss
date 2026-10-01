@@ -54,8 +54,8 @@ a:visited:not(.v-btn, .v-list-item),
   gap: 16px;
 }
 
-.text-error {
-  color: rgb(var(--v-theme-error));
+.text-error-dark {
+  color: rgb(var(--v-theme-error-dark));
 }
 
 // Hide all GChart error messages
