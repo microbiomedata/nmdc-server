@@ -476,6 +476,9 @@ class PipelineStepBase(BaseModel):
     ended_at_time: Optional[DateType] = None
     execution_resource: Optional[str] = None
     superseded_by: Optional[str] = None
+    qc_status: Optional[str] = None
+    qc_comment: Optional[str] = None
+    has_failure_categorization: Optional[Any] = None
 
 
 class PipelineStep(PipelineStepBase):
