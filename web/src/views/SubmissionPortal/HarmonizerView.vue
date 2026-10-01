@@ -142,6 +142,7 @@ const validationSuccessSnackbar = ref(false);
 const importErrorSnackbar = ref(false);
 const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
+const importedNothing = ref(false);
 
 const allowedRoles: SubmissionEditorRole[] = ['owner', 'editor', 'metadata_contributor']
 const isEditable = computed(() => store.getUneditableReason(allowedRoles, true) === undefined);
@@ -741,9 +742,21 @@ function openFile(file: File) {
     // Alert the user if any worksheets were not imported
     notImportedWorksheetNames.value = notImported;
     importErrorSnackbar.value = notImported.length > 0;
+    importedNothing.value = Object.keys(imported).length === 0;
 
-    // Load imported data
-    store.sampleSet.forms.sampleData.data = imported;
+    // If nothing in the uploaded file matched a recognized, selected template, leave the
+    // existing sample data untouched instead of wiping it out with an empty import.
+    if (importedNothing.value) {
+      return;
+    }
+
+    // Merge the imported data into the existing data, so that templates not present in this
+    // particular file (e.g. because their tab wasn't recognized, or wasn't included at all)
+    // are left untouched rather than erased.
+    store.sampleSet.forms.sampleData.data = {
+      ...store.sampleSet.forms.sampleData.data,
+      ...imported,
+    };
 
     // Clear validation state
     harmonizerApi.setInvalidCells({});
@@ -898,6 +911,9 @@ const appBannerHeight = inject(AppBannerHeightKey);
             timeout="5000"
           >
             The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
+            <template v-if="importedNothing">
+              No new data was imported.
+            </template>
           </v-snackbar>
           <v-snackbar
             v-model="emptySheetSnackbar"
