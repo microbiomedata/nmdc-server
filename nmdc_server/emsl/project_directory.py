@@ -1,22 +1,16 @@
-"""Resolve an EMSL project id to its project UUID (and type) for LIMS export.
+"""Look up EMSL proposal metadata from an EMSL proposal number.
 
-NMDC submissions carry the EMSL Proposal Number as ``multi_omics_form.studyNumber`` (a 5-digit
-id). The LIMS wire contract needs the corresponding project **UUID** (and, for the receiver's
-workgroup naming, the project **type** + PI). NMDC does not store these — they live in EMSL's
-project registry. This module fetches them.
+Submitters enter their 5-digit EMSL proposal number as ``multi_omics_form.studyNumber``. EMSL's
+LIMS additionally requires the proposal's UUID, which NMDC does not store; it lives in EMSL's
+project registry. This module fetches it.
 
 Backends (selected by ``settings.project_directory_backend``):
-  * ``nexus``      -- the current EMSL Nexus service. ``GET /nexus/projects/lookup?q={id}`` returns
-                      a list whose first element has ``uuid`` and ``project_type``. This is the same
-                      registry the SMS portal and the l7-interface-api receiver use today.
-  * ``pv2``        -- the Nexus replacement (sc-project ``project_tracking.projects``, which pairs
-                      ``project_id`` <-> ``project_uuid``). NOT YET IMPLEMENTED — no production PV2
-                      exists yet. When PV2 is production-ready, implement ``Pv2ProjectDirectory`` and
-                      flip the config; call sites do not change.
-  * ``synthesize`` -- offline fallback for local testing with no network: a deterministic UUID5.
-
-Nexus is being deprecated (~1 year). The abstraction here is deliberate so the eventual Nexus->PV2
-switch is a config change plus one new class, not a change to lims_export.
+  * ``nexus``      -- Nexus, EMSL's current user/proposal system. ``GET {nexus_base_url}/projects/
+                      lookup?q={id}`` returns a list of matching proposals with ``id`` and ``uuid``.
+  * ``pv2``        -- placeholder for the system EMSL is building to replace Nexus. Not implemented;
+                      when it exists, add a class here and change the setting. Callers do not change.
+  * ``synthesize`` -- offline fallback for local development with no network access: returns a
+                      deterministic placeholder UUID. Never use in a deployed environment.
 """
 
 from __future__ import annotations
@@ -66,8 +60,12 @@ class NexusProjectDirectory:
         if not isinstance(data, list) or not data:
             logger.warning("Nexus project lookup for %s returned no matches", project_id)
             return None
-        # The lookup is a fuzzy search; prefer an exact id match, else take the first result.
-        match = next((p for p in data if str(p.get("id")) == str(project_id)), data[0])
+        # The lookup is a fuzzy search and may return other proposals; only accept an exact id
+        # match, otherwise the samples could be attached to the wrong proposal.
+        match = next((p for p in data if str(p.get("id")) == str(project_id)), None)
+        if match is None:
+            logger.warning("Nexus project lookup for %s returned no exact match", project_id)
+            return None
         return {
             "id": str(match.get("id", project_id)),
             "uuid": match.get("uuid"),

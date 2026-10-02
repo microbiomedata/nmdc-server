@@ -1,7 +1,7 @@
 """add lims export columns to submission_sample_set
 
 Revision ID: b2c3d4e5f6a7
-Revises: da7be44d437c
+Revises: c13f3b9b0e4d
 Create Date: 2026-08-26
 
 Adds bookkeeping columns for the NMDC -> EMSL LIMS export:
@@ -16,7 +16,7 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
 revision: str = "b2c3d4e5f6a7"
-down_revision: Optional[str] = "da7be44d437c"
+down_revision: Optional[str] = "c13f3b9b0e4d"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 

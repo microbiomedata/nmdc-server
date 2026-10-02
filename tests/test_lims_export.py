@@ -1,12 +1,14 @@
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 
-from nmdc_server import lims_export, models
+from nmdc_server import models
 from nmdc_server.config import settings
+from nmdc_server.emsl import lims_export, project_directory
 from nmdc_server.models import SubmissionEditorRole
 from tests import fakes
 
@@ -58,7 +60,7 @@ def test_build_payloads_env_slot_and_companion_merge(monkeypatch):
 
 def test_build_payloads_skips_unmapped_slot(monkeypatch):
     monkeypatch.setattr(lims_export, "_resolve_project_uuid", lambda pid: "u")
-    # host_associated_data has no ESP sample-type mapping -> skipped (no bogus sample)
+    # host_associated_data has no LIMS sample-type mapping -> skipped (no bogus sample)
     ss = _sample_set(sample_data={"data": {"host_associated_data": [{"samp_name": "H1"}]}})
     assert lims_export.build_lims_payloads(ss) == []
 
@@ -86,6 +88,21 @@ def test_resolve_project_uuid_aborts_instead_of_synthesizing(monkeypatch):
     # Offline synthesize backend deliberately returns a deterministic placeholder.
     monkeypatch.setattr(settings, "project_directory_backend", "synthesize")
     assert lims_export._resolve_project_uuid("61258")
+
+
+def test_nexus_lookup_requires_exact_id_match(monkeypatch):
+    # The Nexus lookup is a fuzzy search: q=6125 also returns 61250, 61251, ...
+    results = [{"id": "61250", "uuid": "u-61250"}, {"id": "61251", "uuid": "u-61251"}]
+
+    def fake_get(url, params, timeout):
+        return httpx.Response(200, json=results, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(project_directory.httpx, "get", fake_get)
+    directory = project_directory.NexusProjectDirectory("http://nexus.test")
+    # No exact match -> None (never another proposal's UUID).
+    assert directory.get_project_uuid("6125") is None
+    # Exact match anywhere in the results is used.
+    assert directory.get_project_uuid("61251") == "u-61251"
 
 
 def test_slot_to_sample_type_known_and_unknown():
@@ -126,6 +143,7 @@ def _configured(monkeypatch):
     # Ensure the endpoint sees a configured, enabled export for the happy-path tests.
     monkeypatch.setattr(settings, "lims_export_enabled", True)
     monkeypatch.setattr(settings, "lims_gateway_url", "http://lims.test/lims")
+    monkeypatch.setattr(settings, "lims_esp_username", "test-user")
     monkeypatch.setattr(settings, "lims_esp_token", "test-token")
 
 
@@ -160,11 +178,12 @@ def test_send_to_lims_disabled_503(db: Session, client: TestClient, logged_in_us
     assert resp.status_code == 503
 
 
+@pytest.mark.parametrize("setting", ["lims_gateway_url", "lims_esp_username", "lims_esp_token"])
 def test_send_to_lims_unconfigured_503(
-    db: Session, client: TestClient, logged_in_user, monkeypatch
+    db: Session, client: TestClient, logged_in_user, monkeypatch, setting
 ):
     sample_set = _owned_sample_set(db, logged_in_user)
-    monkeypatch.setattr(settings, "lims_esp_token", "")
+    monkeypatch.setattr(settings, setting, "")
     resp = client.post(f"/api/metadata_submission/sample_set/{sample_set.id}/send-to-lims")
     assert resp.status_code == 503
 
