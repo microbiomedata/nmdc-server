@@ -224,3 +224,21 @@ export function formatDatetime(dateString: string | undefined): string {
   }
   return moment(dateString).format('YYYY-MM-DD, HH:mm');
 }
+
+export type BadgeKey = keyof typeof NmdcSchema.enums.MetadataBadgeEnum.permissible_values;
+
+interface BadgeSchema {
+  text: string;
+  description: string;
+  title: string;
+  see_also: string[];
+}
+
+export function getBadgeSchema(badge: string): BadgeSchema | undefined {
+  return NmdcSchema.enums.MetadataBadgeEnum.permissible_values[badge as BadgeKey];
+}
+
+export function getBadgeTitle(badge: string): string {
+  const badgeSchema = getBadgeSchema(badge);
+  return badgeSchema?.title || snakeToSentenceCase(badge);
+}
