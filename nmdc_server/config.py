@@ -121,33 +121,32 @@ class Settings(BaseSettings):
     max_submission_image_total_size_bytes: int = 1 * 1000 * 1000 * 1000  # 1 GB
     """The maximum total size of all submission image files for a single submission in bytes."""
 
-    # == EMSL LIMS export (SMS -> LIMS reimplementation; see docs/lims_export.md) ==
-    lims_gateway_url: str = "http://host.docker.internal:5006/lims"
-    """Base URL of the L7 LIMS interface API (the `/lims` gateway prefix). One sample is POSTed to
-    `{lims_gateway_url}/sample` per NMDC sample. In real environments this is the consolidation-API
-    external route (`https://api.emsl.pnnl.gov/external/lims`); locally it is the bundled mock."""
+    # == EMSL LIMS export (see docs/lims_export.md) ==
+    lims_gateway_url: str = ""
+    """Base URL of EMSL's LIMS interface API. One request per sample is POSTed to
+    `{lims_gateway_url}/sample`. The export endpoint returns 503 while this is unset."""
 
-    lims_esp_username: str = "nmdc-portal"
-    """ESP service-account username the portal authenticates to the LIMS with (forwarded to the
-    receiver). Portal-held service identity, NOT per-user."""
+    lims_esp_username: str = ""
+    """Username of the LIMS service account NMDC authenticates as. This is a single account for
+    the whole portal (provisioned by EMSL for NMDC), not a per-user identity. The export endpoint
+    returns 503 while this is unset."""
 
     lims_esp_token: str = ""
-    """ESP service-account API token. Must be a valid L7 service-account token in real environments."""
+    """API token of the LIMS service account. The export endpoint returns 503 while this is unset."""
 
     lims_export_enabled: bool = True
     """Master switch for the LIMS export endpoint. When False the endpoint returns 503."""
 
     lims_auth_in_header: bool = False
-    """When True, send the ESP token to the LIMS in an HTTP `Authorization: Bearer <token>` header
-    instead of in the JSON request body. Default False (token in body, current contract); flip to True
-    once the upstream lims-interface-api header change lands."""
+    """When True, send the LIMS token in an `Authorization: Bearer <token>` header instead of in
+    the JSON request body. Leave False until EMSL's LIMS interface API accepts the header."""
 
-    # Project directory used to resolve an EMSL project id (multi_omics_form.studyNumber) to its
-    # project UUID. Backends: "nexus" (current EMSL service), "pv2" (future; not implemented),
-    # "synthesize" (offline placeholder for local testing without network).
+    # Where EMSL proposal UUIDs are looked up (see nmdc_server/emsl/project_directory.py).
+    # Backends: "nexus" (EMSL's current proposal system), "pv2" (not implemented yet),
+    # "synthesize" (offline placeholder for local development only).
     project_directory_backend: str = "nexus"
     nexus_base_url: str = "https://api.emsl.pnl.gov/nexus"
-    """Base URL of the EMSL Nexus service (no trailing slash)."""
+    """Base URL of the EMSL Nexus API (no trailing slash)."""
 
     @property
     def orcid_openid_config_url(self) -> str:

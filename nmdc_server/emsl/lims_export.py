@@ -1,27 +1,29 @@
-"""Export NMDC submission sample sets to the EMSL L7|ESP LIMS.
+"""Send the samples of an approved NMDC submission sample set to EMSL's LIMS.
 
-This is the NMDC-side reimplementation of "Hop 1" of the EMSL SMS portal's send-to-LIMS
-flow (see the companion analysis doc `SMS-to-LIMS-metadata-flow.md`). It builds one wire
-payload per sample and POSTs each to the L7 LIMS interface API (`{gateway}/lims/sample`),
-which is unchanged from the SMS integration. Locally, the target is the bundled mock
-receiver; in real environments it is the shared EMSL API gateway.
+EMSL tracks every physical sample it receives in a LIMS (an L7|ESP instance). EMSL's own sample
+submission portal registers samples there by POSTing them, one at a time, to EMSL's LIMS interface
+API. This module does the same for NMDC submissions headed to EMSL, so those samples show up in
+EMSL's sample tracking without being re-entered by hand.
 
-Design mirrors the observed receiver contract (`l7-interface-api/api.py`, `l7esp/info.py`):
-  * one POST per sample, JSON body per `build_payload`;
-  * the receiver upserts (dedup by `lims_id`, else `sample:{name}`+`project:{id}` tags), so
-    re-sending is idempotent and safe to retry;
-  * required-by-receiver fields: esp_username, esp_token, sample_type, project_id, sample_data;
-    project_uuid / shipment_uuid / shipment_tracking_number are read positionally by the
-    receiver and 400 if missing -> we always send them.
+Wire contract of the LIMS interface API (``POST {settings.lims_gateway_url}/sample``):
+  * one request per sample, JSON body as built by ``build_payload``;
+  * the body must contain ``esp_username``, ``esp_token`` (the LIMS service-account credentials),
+    ``sample_type``, ``project_id``, ``project_uuid``, ``shipment_uuid``,
+    ``shipment_tracking_number`` and ``sample_data``; a missing key is rejected with HTTP 400;
+  * the LIMS upserts samples (matched by sample name + project), so re-sending the same sample
+    updates it rather than creating a duplicate. Retrying is therefore safe;
+  * a successful response is ``{"entity_id": ..., "entity_url": ...}``.
 
-Field resolution (see docs/lims_export.md for the full writeup):
-  * project_uuid           -- resolved from the EMSL project id (multi_omics_form.studyNumber) via the
-                              configured project directory (Nexus today, PV2-swappable). Falls back to
-                              a deterministic synthesized UUID only if the directory can't resolve it.
-  * shipment_tracking_number -- NMDC captures none; sent empty (the receiver still reads the field, so
-                              it must be present). Left off deliberately, not synthesized.
-  * sample_type slug       -- NMDC environmental-package slot -> ESP sample-type key via
-                              SLOT_TO_SAMPLE_TYPE; slots with no known ESP type are skipped, not sent.
+How each field is filled from NMDC data:
+  * ``project_id`` -- ``multi_omics_form.studyNumber``, the 5-digit EMSL proposal number.
+  * ``project_uuid`` -- looked up from ``project_id`` via ``emsl.project_directory``.
+  * ``shipment_uuid`` / ``shipment_name`` -- the sample set's id and name.
+  * ``shipment_tracking_number`` -- NMDC does not collect one, so it is sent as an empty string.
+  * ``sample_type`` -- derived from the environmental-package slot the sample lives in, via
+    ``SLOT_TO_SAMPLE_TYPE``.
+  * ``sample_data`` -- the sample row itself, with ``samp_name`` renamed to ``sample_name``.
+
+See docs/lims_export.md for the full description.
 """
 
 from __future__ import annotations
@@ -36,36 +38,34 @@ import httpx
 
 from nmdc_server import models
 from nmdc_server.config import settings
+from nmdc_server.emsl.project_directory import get_project_directory
 from nmdc_server.logger import get_logger
 from nmdc_server.models import ENVIRONMENTAL_DATA_SLOTS
-from nmdc_server.project_directory import get_project_directory
 
 logger = get_logger(__name__)
 
-# Only environmental-package slots hold shippable samples. Real submissions also carry companion
-# tabs in sample_data["data"] — notably `emsl_data` (EMSL logistics: analysis_type, shipping,
-# store temp) and `jgi_mg_data` (JGI) — which ARE keyed by samp_name but are per-sample metadata,
-# NOT separate samples. Sending them would create bogus, wrong-typed LIMS samples. Restrict to the
-# model's canonical environmental-sample slot list (same set SubmissionSampleSet.sample_count uses).
+# Only environmental-package slots hold physical samples. Submissions also carry companion tabs in
+# sample_data["data"] -- notably `emsl_data` (analysis_type, shipping, storage temperature) and
+# `jgi_mg_data` -- whose rows are keyed by samp_name but describe an existing sample rather than
+# being samples themselves. Sending them would create bogus LIMS samples, so restrict to the same
+# slot list SubmissionSampleSet.sample_count uses.
 _ENV_SLOTS = set(ENVIRONMENTAL_DATA_SLOTS)
 
 # ---------------------------------------------------------------------------
-# Environmental-package slot -> ESP sample-type slug.
+# Environmental-package slot -> LIMS sample type.
 #
-# NMDC stores samples under `sample_data["data"][<slot>]`, where <slot> is a MIxS
-# environmental-package key (see models.ENVIRONMENTAL_DATA_SLOTS). The LIMS `sample_type` must be
-# an existing ESP sample-type key (a slug registered in
-# lims-dev/content/monet/inventory/emsl_sample_types.yml).
+# NMDC stores samples under `sample_data["data"][<slot>]`, where <slot> is an environmental-package
+# key (see models.ENVIRONMENTAL_DATA_SLOTS). The LIMS requires every sample to have a `sample_type`
+# that is already defined in the LIMS; each type has its own set of metadata fields.
 #
-# IMPORTANT (confirmed with the SMS author, 2026-08-24): the original SMS portal DELIBERATELY
-# filters out any sample type that has no corresponding L7/ESP type — otherwise the receiver's
-# Sample.create throws "sample can't be created", retries 5x, and finally returns a 500, spamming
-# the logs. We mirror that: a slot only produces samples if it maps to a KNOWN ESP slug; unmapped
-# slots are skipped (logged), never sent with an invented slug.
+# A sample whose type is not defined in the LIMS cannot be created: the LIMS answers with an HTTP
+# 500 after several internal retries. EMSL's own portal therefore never sends samples of an unknown
+# type, and neither do we -- slots without a mapping below are skipped and logged.
 # ---------------------------------------------------------------------------
 
-# ESP sample-type slugs that actually exist in the LIMS (from emsl_sample_types.yml).
-VALID_ESP_SAMPLE_TYPES: set[str] = {
+# Sample types currently defined in EMSL's LIMS. Adding a type here does not create it in the LIMS;
+# EMSL must define it first.
+LIMS_SAMPLE_TYPES: set[str] = {
     "aerosol-arm",
     "aerosol",
     "soil",
@@ -81,48 +81,39 @@ VALID_ESP_SAMPLE_TYPES: set[str] = {
     "synthesized-material",
     "water",
     "other-undescribed",
-    "misc-envs",  # dedicated schema authored 2026-08-24 (analysisapi data/misc-envs) — deploy + reseed lims
+    "misc-envs",
 }
 
-# NMDC environmental-package slot -> ESP sample-type slug.
-#
-# Evidence-based (2026-08-24; confirm with EMSL): NMDC submits GENERIC MIxS packages, so each maps to
-# EMSL's GENERIC AnalysisAPI schema, NOT the MONet/ARM-specific variants. Verified by comparing real
-# NMDC sample fields against each SC Data schema's `required` list (sc-data-dev/schema/manifest):
-#   soil_data  -> soil     (NMDC soil satisfies soil 9/11 required vs monet-soil only 11/26 — NMDC data
-#                           lacks the MONet-experiment fields: infiltration, ecoregion, soil_type_meth,
-#                           bulk_elect_conductivity, water_content, ...). NOTE: `soil` (not monet-soil)
-#                           also means the interface-api's monet-soil-only analysis-API mirror does not
-#                           fire — which is what was returning 500 on the monet-soil path.
-#   water_data -> water    (8/15 required; gaps are shipment-logistics fields supplied later)
-#   sediment_data -> sediment (8/11)
-#   plant_associated_data -> plant (9/13)
-#   air_data   -> aerosol  (generic; `aerosol-arm` is the ARM-program-specific schema)
-#   misc_envs_data -> misc-envs (dedicated flat schema authored 2026-08-24; EMSL chose a real type over
-#                     the other-undescribed catch-all. Requires deploy of analysisapi data/misc-envs +
-#                     regen of the ESP type + reseed lims — until then this slug won't exist in LIMS.)
+# NMDC environmental packages are generic MIxS packages, so each maps to EMSL's generic sample type
+# rather than to EMSL's program-specific variants (`monet-soil` is for EMSL's MONet soil program and
+# `aerosol-arm` for the ARM atmospheric program; both require fields NMDC does not collect).
+# `misc-envs` is a sample type EMSL added specifically for NMDC's misc_envs_data package.
+# Packages not listed here (e.g. host_associated_data, built_env_data) have no matching EMSL sample
+# type and are skipped.
 SLOT_TO_SAMPLE_TYPE: dict[str, str] = {
     "soil_data": "soil",
     "water_data": "water",
     "sediment_data": "sediment",
     "plant_associated_data": "plant",
     "air_data": "aerosol",
-    "misc_envs_data": "misc-envs",  # dedicated schema (was other-undescribed catch-all) — EMSL chose B
+    "misc_envs_data": "misc-envs",
 }
 
 
 def slot_to_sample_type(slot: str) -> str | None:
-    """Resolve an NMDC environmental-package slot to a KNOWN ESP sample-type slug, or None.
+    """Resolve an NMDC environmental-package slot to a LIMS sample type, or None.
 
-    Returns None (and logs) when the slot has no mapping, or maps to a slug that does not exist in
-    the LIMS — so the caller skips it rather than triggering a 500-storm (see module note).
+    Returns None (and logs) when the slot has no mapping, or maps to a type not defined in the
+    LIMS, so the caller skips the slot instead of sending samples the LIMS would reject.
     """
     slug = SLOT_TO_SAMPLE_TYPE.get(slot)
     if slug is None:
-        logger.warning("No ESP sample-type mapping for slot %r; skipping (needs EMSL rule)", slot)
+        logger.warning("No LIMS sample-type mapping for slot %r; skipping", slot)
         return None
-    if slug not in VALID_ESP_SAMPLE_TYPES:
-        logger.warning("Mapped slug %r for slot %r is not a known ESP type; skipping", slug, slot)
+    if slug not in LIMS_SAMPLE_TYPES:
+        logger.warning(
+            "Mapped sample type %r for slot %r is not defined in the LIMS; skipping", slug, slot
+        )
         return None
     return slug
 
@@ -132,10 +123,7 @@ class LimsExportError(Exception):
 
 
 def _resolve_project_uuid(project_id: str) -> str:
-    """Resolve the EMSL project UUID for a project id via the configured project directory.
-
-    Today this hits the EMSL Nexus service (`/projects/lookup?q={id}` -> `[0].uuid`), the same
-    registry the SMS portal and l7-interface-api receiver use. Swappable to PV2 later via config.
+    """Resolve the EMSL proposal UUID for a proposal number via the configured project directory.
 
     If a real directory (nexus/pv2) cannot resolve the id, we ABORT rather than invent a UUID:
     proceeding with a fabricated UUID would associate the samples with a project that does not
@@ -154,11 +142,10 @@ def _resolve_project_uuid(project_id: str) -> str:
 
 
 def _tracking_number(sample_set: models.SubmissionSampleSet) -> str:
-    """shipment_tracking_number. NMDC captures no tracking number.
+    """shipment_tracking_number. NMDC does not collect a tracking number.
 
-    Per Makena (2026-08-24): "leave it off" — do NOT synthesize a fake value. We send an empty
-    string because the receiver still reads the field positionally (missing -> 400). If/when the
-    receiver is updated to make it optional, this can be omitted from the payload entirely.
+    EMSL asked that no placeholder value be invented. The key is still required by the LIMS
+    interface API (a missing key is rejected with HTTP 400), so it is sent as an empty string.
     """
     return ""
 
@@ -175,15 +162,13 @@ def build_payload(
     """Build a single-sample wire payload from one NMDC sample row.
 
     ``project_id`` / ``project_uuid`` / ``sample_type`` are resolved once per sample set/slot by
-    the caller. Returns None (and logs) if the row has no sample name — that sample is unshippable
-    because ``sample_name`` is the receiver's description + dedup key.
+    the caller. Returns None (and logs) if the row has no ``samp_name``: the LIMS uses the sample
+    name to identify (and de-duplicate) samples, so a sample without one cannot be sent.
     """
-    # NMDC sample rows use the MIxS slot key `samp_name`; the LIMS wire/ESP field is `sample_name`.
-    raw_name = row.get("samp_name") or row.get("sample_name")
+    # The LIMS calls this field `sample_name`; the submission schema calls it `samp_name`.
+    raw_name = row.get("samp_name")
     if raw_name is None or str(raw_name).strip() == "":
-        logger.warning(
-            "Skipping sample in set %s slot %s: no samp_name/sample_name", sample_set.id, slot
-        )
+        logger.warning("Skipping sample in set %s slot %s: no samp_name", sample_set.id, slot)
         return None
     sample_name = str(raw_name).strip().lstrip("_")
 
@@ -218,12 +203,12 @@ def _companion_metadata_by_name(data: dict[str, Any]) -> dict[str, dict[str, Any
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            name = row.get("samp_name") or row.get("sample_name")
+            name = row.get("samp_name")
             if not name:
                 continue
             merged = by_name.setdefault(str(name).strip().lstrip("_"), {})
             for k, v in row.items():
-                if k in ("samp_name", "sample_name"):
+                if k == "samp_name":
                     continue
                 merged.setdefault(k, v)  # first companion tab wins; env row still wins later
     return by_name
@@ -238,8 +223,7 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
     data = (
         sample_set.sample_data.get("data", {}) if isinstance(sample_set.sample_data, dict) else {}
     )
-    # Resolve project id/uuid ONCE per sample set (constant across all samples; avoids a project
-    # directory / Nexus call per sample).
+    # Resolve the proposal number/UUID once per sample set; it is the same for every sample.
     multi_omics = (
         sample_set.multi_omics_form if isinstance(sample_set.multi_omics_form, dict) else {}
     )
@@ -263,14 +247,14 @@ def build_lims_payloads(sample_set: models.SubmissionSampleSet) -> list[dict[str
     for slot, rows in data.items():
         if slot not in _ENV_SLOTS or not isinstance(rows, list):
             continue
-        # Skip whole slot if its ESP sample-type is unknown (mirrors SMS; avoids 500-storm).
+        # Skip the whole slot if the LIMS has no matching sample type.
         sample_type = slot_to_sample_type(slot)
         if sample_type is None:
             continue
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            name = row.get("samp_name") or row.get("sample_name")
+            name = row.get("samp_name")
             # Overlay companion metadata under the env row (env row wins on key conflicts).
             enriched = row
             if name:
@@ -391,8 +375,8 @@ def send_sample_set_to_lims(
     upserts, so retry is safe). Returns a summary dict with per-sample results. Does NOT commit;
     the caller persists `sample_set.lims_export_results` / `lims_exported_at`.
 
-    This is deliberately synchronous (blocking the request) rather than fire-and-forget: the
-    original SMS portal fire-and-forgot and never surfaced failures — we fix that here.
+    This is deliberately synchronous (blocking the request) rather than fire-and-forget so that
+    per-sample failures are reported back to the caller and persisted.
     """
     url = _sample_url()
     payloads = build_lims_payloads(sample_set)
@@ -400,9 +384,9 @@ def send_sample_set_to_lims(
     sent = 0
     failed = 0
 
-    # Auth transport: by default the ESP token rides in the body (current contract). When
-    # lims_auth_in_header is enabled (after the upstream header change lands), send it as an
-    # Authorization: ****** instead and drop it from the body. esp_username stays in the body.
+    # By default the LIMS token is sent in the request body (the interface API's current contract).
+    # With lims_auth_in_header enabled it is sent as an `Authorization: Bearer` header instead and
+    # removed from the body. esp_username stays in the body either way.
     headers: dict[str, str] | None = None
     if settings.lims_auth_in_header:
         headers = {"Authorization": f"Bearer {settings.lims_esp_token}"}

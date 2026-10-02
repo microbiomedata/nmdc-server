@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, github, lims_export, models, query, schemas, schemas_submission
+from nmdc_server import crud, github, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -36,6 +36,7 @@ from nmdc_server.crud import (
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import SessionLocal, get_db
+from nmdc_server.emsl import lims_export
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
@@ -2206,22 +2207,22 @@ def send_sample_set_to_lims_endpoint(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    """Export a sample set's samples to the EMSL L7|ESP LIMS (manual "send to LIMS").
+    """Send a sample set's samples to EMSL's LIMS (manual "send to LIMS").
 
-    Reimplements the SMS portal's send-to-LIMS step for NMDC. Gated on the sample set being in the
-    ``ApprovedHeld`` status (ready for the EMSL user facility) and on the caller being an
-    owner/reviewer of the submission (or a site admin). One request is POSTed per sample; results
-    (entity_id / error) are persisted on the sample set.
+    Gated on the sample set being in the ``ApprovedHeld`` status, carrying the ``emsl`` template,
+    not being a test submission, and on the caller being an owner/reviewer of the submission (or a
+    site admin). One request is POSTed per sample; per-sample results (LIMS entity id or error)
+    are persisted on the sample set. See docs/lims_export.md.
     """
     if not settings.lims_export_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="LIMS export is disabled."
         )
     # Fail fast on misconfiguration rather than making a doomed request to the LIMS.
-    if not settings.lims_gateway_url or not settings.lims_esp_token:
+    if not (settings.lims_gateway_url and settings.lims_esp_username and settings.lims_esp_token):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="LIMS export is not configured (missing gateway URL or ESP token).",
+            detail="LIMS export is not configured (missing gateway URL or service-account credentials).",
         )
 
     sample_set = crud.get_submission_sample_set_for_user(
