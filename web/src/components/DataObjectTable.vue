@@ -207,17 +207,27 @@ const items = computed(() => {
         ...omicsData,
         inputIds: inputIdsByWorkflow[omicsData.id] ?? [],
       }))
-      .map((omics_data) => omics_data.outputs
-        .filter((data: any) => data.file_type && data.file_type_description)
-        .map((data_object: any, i: number) => ({
-          ...data_object,
-          omics_data,
-          /* TODO Hack to replace metagenome with omics type name */
-          group_name: getGroupName(omics_data),
-          newgroup: i === 0,
-        }))),
+      .map((omics_data) => {
+        return omics_data.outputs
+          // Only include data objects that have a file type and description
+          .filter((data_object: any) => data_object.file_type && data_object.file_type_description)
+          .map((data_object: any, i: number) => ({
+            ...data_object,
+            omics_data,
+            // TODO Hack to replace metagenome with omics type name
+            // NOTE: is this still needed? It was introduced in this commit: https://github.com/microbiomedata/nmdc-server/commit/bfdd9bce7de09e5fbb8c294bd6bf0e09fdff8fbc
+            group_name: getGroupName(omics_data),
+            newgroup: i === 0,
+          }))
+          // Only include data objects that have not failed QC, unless its the first data object in the group (wfe).
+          // This is to ensure that failed workflow executions are still displayed, but their full data object count
+          // is not included in the table's row count.
+          .filter((data_object: any) => data_object.omics_data.qc_status !== 'fail' || data_object.newgroup);
+      })
   );
 });
+
+console.log('items', items.value);
 
 function getRelatedBiosampleIds(omicsData: any) {
   if (!omicsData || !omicsData.inputIds) {
