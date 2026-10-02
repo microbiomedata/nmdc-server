@@ -2,13 +2,12 @@
 import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson, formatDatetime, formatEnvItem, formatSlotLabel, formatSlotValue, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
+import { BadgeKey, downloadJson, formatDatetime, formatEnvItem, formatSlotLabel, formatSlotValue, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
 import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
-import { BadgeKey } from '@/components/Presentation/MetadataBadge.vue';
 import { LabelValuePair } from '@/components/Presentation/LabelValueTable.vue';
 
 const props = defineProps<{
