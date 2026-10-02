@@ -15,6 +15,7 @@ import { stateRefs, acceptTerms } from '@/store';
 import { metaproteomicCategoryEnumToDisplay } from '@/encoding';
 
 import DownloadDialog from './DownloadDialog.vue';
+import { snakeToLowercase } from '@/utils.ts';
 
 // // TODO: This is unused. Do we still need it?
 // const descriptionMap: Record<string, string> = {
@@ -206,15 +207,23 @@ const items = computed(() => {
         ...omicsData,
         inputIds: inputIdsByWorkflow[omicsData.id] ?? [],
       }))
-      .map((omics_data) => omics_data.outputs
-        .filter((data: any) => data.file_type && data.file_type_description)
-        .map((data_object: any, i: number) => ({
-          ...data_object,
-          omics_data,
-          /* TODO Hack to replace metagenome with omics type name */
-          group_name: getGroupName(omics_data),
-          newgroup: i === 0,
-        }))),
+      .map((omics_data) => {
+        return omics_data.outputs
+          // Only include data objects that have a file type and description
+          .filter((data_object: any) => data_object.file_type && data_object.file_type_description)
+          .map((data_object: any, i: number) => ({
+            ...data_object,
+            omics_data,
+            // TODO Hack to replace metagenome with omics type name
+            // NOTE: is this still needed? It was introduced in this commit: https://github.com/microbiomedata/nmdc-server/commit/bfdd9bce7de09e5fbb8c294bd6bf0e09fdff8fbc
+            group_name: getGroupName(omics_data),
+            newgroup: i === 0,
+          }))
+          // Only include data objects that have not failed QC, unless its the first data object in the group (wfe).
+          // This is to ensure that failed workflow executions are still displayed, but their full data object count
+          // is not included in the table's row count.
+          .filter((data_object: any) => data_object.omics_data.qc_status !== 'fail' || data_object.newgroup);
+      })
   );
 });
 
@@ -253,6 +262,15 @@ function onAcceptTerms() {
 function toggleCollapseWorkflow(item: any) {
   const id = item.omics_data.id;
   stateRefs.collapsedWorkflowExecutions.value[id] = !stateRefs.collapsedWorkflowExecutions.value[id];
+}
+
+function isWorkflowHidden(item: any) {
+  const id = item.omics_data.id;
+  return stateRefs.collapsedWorkflowExecutions.value[id] && !item.hidden;
+}
+
+function isWorkflowFailed(item: any) {
+  return item.omics_data.qc_status === 'fail';
 }
 </script>
 
@@ -332,7 +350,14 @@ function toggleCollapseWorkflow(item: any) {
                 <div class="d-flex ga-2 flex-row align-center">
                   <div class="d-flex ga-1 flex-row align-center">
                     <span class="font-weight-bold">
-                      Workflow Execution:
+                      <span>Workflow Execution</span>
+                      <span
+                        v-if="isWorkflowFailed(item)"
+                        class="text-error-dark"
+                      > 
+                        (FAILED)
+                      </span>
+                      <span>:</span>
                     </span>
                     <span>
                       {{ item.group_name }}
@@ -398,7 +423,30 @@ function toggleCollapseWorkflow(item: any) {
             </div>
           </td>
         </tr>
-        <tr v-if="!stateRefs.collapsedWorkflowExecutions.value[item.omics_data.id] && !item.hidden">
+        <tr v-if="(item.newgroup || index == 0) && isWorkflowFailed(item) && !isWorkflowHidden(item)">
+          <td colspan="6">
+            <div class="text-error-dark d-flex ga-1 flex-row align-center">
+              <div class="d-flex ga-1 flex-row align-center">
+                <v-icon>mdi-alert-circle</v-icon>
+                <span>
+                  No data objects available for this Workflow Execution
+                </span>
+              </div>
+              <v-icon>mdi-circle-small</v-icon>
+              <div>Failed at {{ item.omics_data.has_failure_categorization[0].qc_failure_where }}</div>
+              <v-icon>mdi-circle-small</v-icon>
+              <div class="d-flex ga-1 flex-row align-center">
+                <span class="font-weight-bold">
+                  Reason:
+                </span>
+                <span>
+                  {{ snakeToLowercase(item.omics_data.has_failure_categorization[0].qc_failure_what) }}
+                </span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr v-if="!isWorkflowFailed(item) && !isWorkflowHidden(item)">
           <td>
             {{ item.file_type }}
             <v-tooltip

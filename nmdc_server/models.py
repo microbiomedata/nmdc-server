@@ -690,6 +690,9 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=True)
+    qc_status = Column(String, nullable=True)
+    qc_comment = Column(String, nullable=True)
+    has_failure_categorization = Column(JSONB, nullable=True)
 
     @declared_attr
     def superseded_by(cls):

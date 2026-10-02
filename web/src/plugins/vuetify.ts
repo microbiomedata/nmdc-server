@@ -23,6 +23,7 @@ export default createVuetify({
           accent: colors.accent,
           success: colors.success,
           error: colors.error,
+          'error-dark': colors.errorDark,
           info: colors.info,
           link: colors.link,
           visited: colors.visited,
