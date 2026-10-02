@@ -227,8 +227,6 @@ const items = computed(() => {
   );
 });
 
-console.log('items', items.value);
-
 function getRelatedBiosampleIds(omicsData: any) {
   if (!omicsData || !omicsData.inputIds) {
     return [];
