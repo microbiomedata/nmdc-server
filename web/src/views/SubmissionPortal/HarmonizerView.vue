@@ -733,10 +733,29 @@ function openFile(file: File) {
         .filter(([slotName]) => slotNameToIdMap[slotName] !== undefined)
         .map(([slotName, value]) => [slotNameToIdMap[slotName], value])));
 
-      imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
-        remappedData,
-        template.schemaClass,
-      );
+      const importedRows = harmonizerApi.unflattenArrayValues(remappedData, template.schemaClass);
+
+      // Merge imported rows into existing rows for this template by matching on sample name
+      // rather than replacing the tab. A row whose sample name matches an existing row will be
+      // updated, and a row whose sample name is new will be added. Existin g rows whose sample
+      // name is not present in the imported data will be left untouched.
+      const existingRows = store.sampleSet.forms.sampleData.data[template.sampleDataSlot] || [];
+      const mergedRows = [...existingRows];
+      importedRows.forEach((importedRow) => {
+        const rowId = importedRow[SCHEMA_ID];
+        const existingIndex = rowId ? mergedRows.findIndex((r) => r[SCHEMA_ID] === rowId) : -1;
+        if (existingIndex === -1) {
+          mergedRows.push(importedRow);
+        } else {
+          mergedRows[existingIndex] = importedRow;
+        }
+      });
+
+      imported[template.sampleDataSlot] = mergedRows;
+      // imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
+      //   remappedData,
+      //   template.schemaClass,
+      // );
     });
 
     // Alert the user if any worksheets were not imported
@@ -750,7 +769,7 @@ function openFile(file: File) {
       return;
     }
 
-    // Merge the imported data into the existing data, so that templates not present in this
+    // Apply the imported data (already merged above) so that templates not present in this
     // particular file (e.g. because their tab wasn't recognized, or wasn't included at all)
     // are left untouched rather than erased.
     store.sampleSet.forms.sampleData.data = {
