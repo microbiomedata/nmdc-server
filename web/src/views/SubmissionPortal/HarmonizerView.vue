@@ -752,10 +752,6 @@ function openFile(file: File) {
       });
 
       imported[template.sampleDataSlot] = mergedRows;
-      // imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
-      //   remappedData,
-      //   template.schemaClass,
-      // );
     });
 
     // Alert the user if any worksheets were not imported
