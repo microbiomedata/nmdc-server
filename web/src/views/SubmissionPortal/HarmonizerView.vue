@@ -705,7 +705,7 @@ function openFile(file: File) {
     const notImported = [] as string[];
     Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
       const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
-        harmonizerApi.getExcelWorksheetName(template) === name
+        harmonizerApi.getExcelWorksheetName(template)?.toLowerCase() === name.toLowerCase()
       ));
       if (!template || !template.sampleDataSlot || !template.schemaClass) {
         notImported.push(name);
