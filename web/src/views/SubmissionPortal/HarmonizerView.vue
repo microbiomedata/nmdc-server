@@ -142,6 +142,7 @@ const validationSuccessSnackbar = ref(false);
 const importErrorSnackbar = ref(false);
 const notImportedWorksheetNames = ref([] as string[]);
 const emptySheetSnackbar = ref(false);
+const importedNothing = ref(false);
 
 const allowedRoles: SubmissionEditorRole[] = ['owner', 'editor', 'metadata_contributor']
 const isEditable = computed(() => store.getUneditableReason(allowedRoles, true) === undefined);
@@ -704,7 +705,7 @@ function openFile(file: File) {
     const notImported = [] as string[];
     Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
       const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
-        harmonizerApi.getExcelWorksheetName(template) === name
+        harmonizerApi.getExcelWorksheetName(template)?.toLowerCase() === name.toLowerCase()
       ));
       if (!template || !template.sampleDataSlot || !template.schemaClass) {
         notImported.push(name);
@@ -732,18 +733,45 @@ function openFile(file: File) {
         .filter(([slotName]) => slotNameToIdMap[slotName] !== undefined)
         .map(([slotName, value]) => [slotNameToIdMap[slotName], value])));
 
-      imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
-        remappedData,
-        template.schemaClass,
-      );
+      const importedRows = harmonizerApi.unflattenArrayValues(remappedData, template.schemaClass);
+
+      // Merge imported rows into existing rows for this template by matching on sample name
+      // rather than replacing the tab. A row whose sample name matches an existing row will be
+      // updated, and a row whose sample name is new will be added. Existin g rows whose sample
+      // name is not present in the imported data will be left untouched.
+      const existingRows = store.sampleSet.forms.sampleData.data[template.sampleDataSlot] || [];
+      const mergedRows = [...existingRows];
+      importedRows.forEach((importedRow) => {
+        const rowId = importedRow[SCHEMA_ID];
+        const existingIndex = rowId ? mergedRows.findIndex((r) => r[SCHEMA_ID] === rowId) : -1;
+        if (existingIndex === -1) {
+          mergedRows.push(importedRow);
+        } else {
+          mergedRows[existingIndex] = importedRow;
+        }
+      });
+
+      imported[template.sampleDataSlot] = mergedRows;
     });
 
     // Alert the user if any worksheets were not imported
     notImportedWorksheetNames.value = notImported;
     importErrorSnackbar.value = notImported.length > 0;
+    importedNothing.value = Object.keys(imported).length === 0;
 
-    // Load imported data
-    store.sampleSet.forms.sampleData.data = imported;
+    // If nothing in the uploaded file matched a recognized, selected template, leave the
+    // existing sample data untouched instead of wiping it out with an empty import.
+    if (importedNothing.value) {
+      return;
+    }
+
+    // Apply the imported data (already merged above) so that templates not present in this
+    // particular file (e.g. because their tab wasn't recognized, or wasn't included at all)
+    // are left untouched rather than erased.
+    store.sampleSet.forms.sampleData.data = {
+      ...store.sampleSet.forms.sampleData.data,
+      ...imported,
+    };
 
     // Clear validation state
     harmonizerApi.setInvalidCells({});
@@ -898,6 +926,9 @@ const appBannerHeight = inject(AppBannerHeightKey);
             timeout="5000"
           >
             The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
+            <template v-if="importedNothing">
+              No new data was imported.
+            </template>
           </v-snackbar>
           <v-snackbar
             v-model="emptySheetSnackbar"
