@@ -121,6 +121,33 @@ class Settings(BaseSettings):
     max_submission_image_total_size_bytes: int = 1 * 1000 * 1000 * 1000  # 1 GB
     """The maximum total size of all submission image files for a single submission in bytes."""
 
+    # == EMSL LIMS export (see docs/lims_export.md) ==
+    lims_gateway_url: str = ""
+    """Base URL of EMSL's LIMS interface API. One request per sample is POSTed to
+    `{lims_gateway_url}/sample`. The export endpoint returns 503 while this is unset."""
+
+    lims_esp_username: str = ""
+    """Username of the LIMS service account NMDC authenticates as. This is a single account for
+    the whole portal (provisioned by EMSL for NMDC), not a per-user identity. The export endpoint
+    returns 503 while this is unset."""
+
+    lims_esp_token: str = ""
+    """API token of the LIMS service account. The export endpoint returns 503 while this is unset."""
+
+    lims_export_enabled: bool = True
+    """Master switch for the LIMS export endpoint. When False the endpoint returns 503."""
+
+    lims_auth_in_header: bool = False
+    """When True, send the LIMS token in an `Authorization: Bearer <token>` header instead of in
+    the JSON request body. Leave False until EMSL's LIMS interface API accepts the header."""
+
+    # Where EMSL proposal UUIDs are looked up (see nmdc_server/emsl/project_directory.py).
+    # Backends: "nexus" (EMSL's current proposal system), "pv2" (not implemented yet),
+    # "synthesize" (offline placeholder for local development only).
+    project_directory_backend: str = "nexus"
+    nexus_base_url: str = "https://api.emsl.pnl.gov/nexus"
+    """Base URL of the EMSL Nexus API (no trailing slash)."""
+
     @property
     def orcid_openid_config_url(self) -> str:
         r"""
