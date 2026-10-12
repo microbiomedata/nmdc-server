@@ -6,7 +6,7 @@ import { EntityType, EntityTypeOrFullTextSearch, opMap, type Condition, type Dat
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { makeSetsFromBitmask } from '@/encoding';
-import { snakeToSentenceCase } from '@/utils';
+import { getBadgeTitle } from '@/utils';
 
 const props = defineProps<{
   conditions: Condition[];
@@ -47,7 +47,7 @@ function verb(op?: opType) {
 
 function valueTransform(val: unknown, field: string, type: string): string {
   if (field === 'badges' && typeof val === 'string') {
-    return snakeToSentenceCase(val);
+    return getBadgeTitle(val);
   }
   // Special handling for multiomics
   if (field === 'multiomics' && type === 'biosample') {

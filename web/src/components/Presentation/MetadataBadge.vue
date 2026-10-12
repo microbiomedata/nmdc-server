@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { snakeToSentenceCase } from '@/utils';
 import biogeochemistryIcon from '@/assets/biogeochemistry.png';
 import expertCurationIcon from '@/assets/expert_curation.png';
 import hostInformationIcon from '@/assets/host_information.png';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-
-export type BadgeKey = keyof typeof NmdcSchema.enums.MetadataBadgeEnum.permissible_values;
+import { BadgeKey, getBadgeSchema, getBadgeTitle } from '@/utils';
 
 const badgeIcons: Record<BadgeKey, string> = {
   biogeochemistry: biogeochemistryIcon,
@@ -20,7 +17,7 @@ const props = defineProps<{
 }>();
 
 const badgeSchema = computed(
-  () => NmdcSchema.enums.MetadataBadgeEnum.permissible_values[props.badge],
+  () => getBadgeSchema(props.badge),
 );
 const badgeIcon = computed(() => badgeIcons[props.badge]);
 
@@ -54,7 +51,7 @@ if (!badgeSchema.value) {
             contain
           />
         </div>
-        <div class="badge-label">{{ snakeToSentenceCase(badge) }}</div>
+        <div class="badge-label">{{ getBadgeTitle(badge) }}</div>
       </a>
     </template>
   </v-tooltip>

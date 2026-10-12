@@ -9,7 +9,7 @@ import { types } from '@/encoding';
 import { PaginatedResult } from '@/use/usePaginatedResults';
 import { BiosampleSearchResult, DataObjectFilter } from '@/data/api';
 import { stateRefs } from '@/store';
-import { snakeToSentenceCase } from '@/utils';
+import { getBadgeTitle } from '@/utils';
 
 const { biosampleSearch, dataObjectFilter } = defineProps<{
   biosampleSearch: PaginatedResult<BiosampleSearchResult>;
@@ -158,7 +158,7 @@ function setExpanded(resultId: string, omicsProcessingId: string) {
                   :key="badge"
                   size="small"
                 >
-                  {{ snakeToSentenceCase(badge) }}
+                  {{ getBadgeTitle(badge) }}
                 </v-chip>
               </span>
             </span>

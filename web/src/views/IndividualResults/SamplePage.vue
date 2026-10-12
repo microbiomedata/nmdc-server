@@ -2,13 +2,12 @@
 import { computed, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
-import { downloadJson, formatDatetime, formatEnvItem, formatSlotLabel, formatSlotValue, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
+import { BadgeKey, downloadJson, formatDatetime, formatEnvItem, formatSlotLabel, formatSlotValue, formatStringOrList, getEnvUrl, getIdentifierImage } from '@/utils';
 // @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 
 import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
-import { BadgeKey } from '@/components/Presentation/MetadataBadge.vue';
 import { LabelValuePair } from '@/components/Presentation/LabelValueTable.vue';
 
 const props = defineProps<{
@@ -38,6 +37,9 @@ const metadataRows = computed(() => {
     return [];
   }
 
+  // TODO: Preferably we would use the schema to display these labels,
+  // but the values and field names that have been ingested into Postgres
+  // don't always match the nmdc-schema, so there isn't a reliable way to key these rows.
   const visibleRows = [
     { label: 'Sample ID', value: biosample.value.id, iconString: 'mdi-test-tube' },
     { label: 'Sample Name', value: biosample.value.name, iconString: 'mdi-test-tube' },
@@ -52,8 +54,8 @@ const metadataRows = computed(() => {
     { label: 'Ecosystem Type', value: biosample.value.ecosystem_type, iconString: 'mdi-pine-tree' },
     { label: 'Ecosystem Subtype', value: biosample.value.ecosystem_subtype, iconString: 'mdi-pine-tree' },
     { label: 'Specific Ecosystem', value: biosample.value.specific_ecosystem, iconString: 'mdi-pine-tree' },
-    { label: 'Broad Scale Environment', value: formatEnvItem(biosample.value.env_broad_scale), iconString: 'mdi-leaf', href: biosample.value.env_broad_scale ? getEnvUrl(biosample.value.env_broad_scale.id) : undefined },
-    { label: 'Local Scale Environment', value: formatEnvItem(biosample.value.env_local_scale), iconString: 'mdi-leaf', href: biosample.value.env_local_scale ? getEnvUrl(biosample.value.env_local_scale.id) : undefined },
+    { label: 'Broad-scale Environmental Context', value: formatEnvItem(biosample.value.env_broad_scale), iconString: 'mdi-leaf', href: biosample.value.env_broad_scale ? getEnvUrl(biosample.value.env_broad_scale.id) : undefined },
+    { label: 'Local Environmental Context', value: formatEnvItem(biosample.value.env_local_scale), iconString: 'mdi-leaf', href: biosample.value.env_local_scale ? getEnvUrl(biosample.value.env_local_scale.id) : undefined },
     { label: 'Environmental Medium', value: formatEnvItem(biosample.value.env_medium), iconString: 'mdi-leaf', href: biosample.value.env_medium ? getEnvUrl(biosample.value.env_medium.id) : undefined },
     { label: 'Biosample Categories', value: formatStringOrList(biosample.value.annotations?.biosample_categories), iconString: 'mdi-tag-multiple' },
   ];
