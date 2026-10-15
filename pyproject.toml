@@ -26,7 +26,6 @@ dependencies = [
     "nmdc-metadata-suggestor-ai-tool==1.2.1",
     "nmdc-schema==11.24.0",
     "nmdc-submission-schema==11.24.0",
-    "nmdc_api_utilities",
     "pint",
     "pydantic",
     "pydantic-settings",
