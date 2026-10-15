@@ -69,7 +69,7 @@ function setBoundsFromMap(val: Condition[]) {
                 :show-title="false"
                 :show-baseline="false"
                 :left-margin="120"
-                :right-margin="80"
+                :right-margin="100"
                 @selected="toggleConditions($event.conditions)"
               />
             </template>
