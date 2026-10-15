@@ -752,8 +752,7 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
 )
 async def get_study_source_metadata(study_id: str, db: Session = Depends(get_db)):
     """
-    Get a single record of study source metadata via the Runtime API
-    based on the supplied study ID.
+    Get a single record of study source metadata from the BiosampleRelatedDocument table in postgres.
     """
     study_source_metadata = crud.get_metadata_document_by_id(db, study_id)
     if study_source_metadata is None:
