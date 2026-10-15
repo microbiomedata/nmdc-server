@@ -1029,8 +1029,11 @@ async def get_bulk_download_data_object_metadata(
         document = dict(document)
         document["_bulk_download_path"] = paths_by_data_object_id[document["id"]]
         document["_related_biosample_ids"] = biosample_ids
-        document["_globus_path"] = document["url"].replace(
-            "https://data.microbiomedata.org/data", ""
+        is_stored_on_nersc = document["url"].startswith("https://data.microbiomedata.org/data")
+        document["_globus_path"] = (
+            document["url"].replace("https://data.microbiomedata.org/data", "")
+            if is_stored_on_nersc
+            else None
         )
         data_objects_json.append(document)
 
