@@ -523,15 +523,14 @@ def search_data_objects(
 
 def get_metadata_document_by_id(db: Session, document_id: str) -> Optional[dict]:
     """
-    Get a `BiosampleRelatedDocument` document by its `id`.
-    Can be used to get any type of object in the table.
+    Get a `BiosampleRelatedDocument` metadata document by its `id`.
+    Can be used to get any type of document in the table.
     """
     statement = select(models.BiosampleRelatedDocument.document).where(  # type: ignore[arg-type]
         models.BiosampleRelatedDocument.id == document_id
     )
 
     row = db.execute(statement).first()
-    print(f"get_metadata_document_by_id: document_id={document_id}, row={row}")
     return row[0] if row else None
 
 
