@@ -810,12 +810,16 @@ class StudyQuerySchema(BaseQuerySchema):
         """Aggregate omics types into a custom jsonb response."""
         op_summary_alias = aliased(models.OmicsProcessing)
         biosample_alias = aliased(models.Biosample)
+        id_column = func.coalesce(
+            op_summary_alias.poolable_replicates_manifest_id,
+            op_summary_alias.id,
+        )
 
         subquery = OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
         query = (
             db.query(
                 op_summary_alias.annotations["omics_type"].astext.label("omics_processing_type"),
-                func.count(func.distinct(op_summary_alias.id)).label("omics_processing_count"),
+                func.count(func.distinct(id_column)).label("omics_processing_count"),
                 op_summary_alias.study_id.label("omics_processing_study_id_sub"),
             )
             .join(subquery, subquery.c.id == op_summary_alias.id)
@@ -966,7 +970,10 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         if attribute == "omics_type":
             annotations_column = models.OmicsProcessing.annotations
-            id_column = models.OmicsProcessing.poolable_replicates_manifest_id
+            id_column = func.coalesce(
+                models.OmicsProcessing.poolable_replicates_manifest_id,
+                models.OmicsProcessing.id,
+            )
             query = self.query(db)
             aggregated_query = query.with_entities(
                 func.count(func.distinct(id_column)).label("id_count"),

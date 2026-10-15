@@ -229,6 +229,10 @@ class OmicsProcessingFactory(AnnotatedFactory):
     biosample_inputs: List[models.Biosample] = []
 
     @lazy_attribute
+    def poolable_replicates_manifest_id(self):
+        return self.id
+
+    @lazy_attribute
     def study(self):
         if not self.biosample_inputs:
             return None
