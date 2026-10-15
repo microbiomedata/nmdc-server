@@ -521,6 +521,21 @@ def search_data_objects(
     return query.DataObjectQuerySchema(conditions=conditions).execute(db)
 
 
+def get_metadata_document_by_id(db: Session, document_id: str) -> Optional[dict]:
+    """
+    Get a `BiosampleRelatedDocument` document by its `id`.
+    Can be used to get any type of object in the table.
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.id == document_id)
+    )
+
+    row = db.execute(statement).first()
+    print(f"get_metadata_document_by_id: document_id={document_id}, row={row}")
+    return row[0] if row else None
+
+
 def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[dict]:
     """
     Get all `DataObject` documents whose `id` exists in the specified list of IDs.

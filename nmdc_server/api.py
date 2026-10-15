@@ -13,8 +13,6 @@ import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
-from nmdc_api_utilities.biosample_search import BiosampleSearch
-from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -403,16 +401,14 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     "/biosample/{biosample_id}/source_metadata",
     tags=["biosample"],
 )
-async def get_biosample_source_metadata(biosample_id: str):
+async def get_biosample_source_metadata(biosample_id: str, db: Session = Depends(get_db)):
     """
-    Get a single record of biosample source metadata via the Runtime API
-    (i.e. the source of truth) based on the supplied biosample ID.
+    Get a single record of biosample source metadata from the BiosampleRelatedDocument table in postgres.
     """
-    biosample_search = BiosampleSearch()
-    source_biosample = biosample_search.get_record_by_id(biosample_id)
-    if source_biosample is None:
-        raise HTTPException(status_code=404, detail="Biosample not found in source database")
-    return source_biosample
+    biosample_source_metadata = crud.get_metadata_document_by_id(db, biosample_id)
+    if biosample_source_metadata is None:
+        raise HTTPException(status_code=404, detail="Biosample metadata not found in the database")
+    return biosample_source_metadata
 
 
 class _StreamingBuffer(RawIOBase):
@@ -754,16 +750,15 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     "/study/{study_id}/source_metadata",
     tags=["study"],
 )
-async def get_study_source_metadata(study_id: str):
+async def get_study_source_metadata(study_id: str, db: Session = Depends(get_db)):
     """
     Get a single record of study source metadata via the Runtime API
     based on the supplied study ID.
     """
-    study_search = StudySearch()
-    source_study = study_search.get_record_by_id(study_id)
-    if source_study is None:
-        raise HTTPException(status_code=404, detail="Study not found in the source database")
-    return source_study
+    study_source_metadata = crud.get_metadata_document_by_id(db, study_id)
+    if study_source_metadata is None:
+        raise HTTPException(status_code=404, detail="Study metadata not found in the database")
+    return study_source_metadata
 
 
 # data_generation
