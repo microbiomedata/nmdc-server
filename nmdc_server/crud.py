@@ -526,9 +526,8 @@ def get_metadata_document_by_id(db: Session, document_id: str) -> Optional[dict]
     Get a `BiosampleRelatedDocument` document by its `id`.
     Can be used to get any type of object in the table.
     """
-    statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
-        .where(models.BiosampleRelatedDocument.id == document_id)
+    statement = select(models.BiosampleRelatedDocument.document).where(  # type: ignore[arg-type]
+        models.BiosampleRelatedDocument.id == document_id
     )
 
     row = db.execute(statement).first()
