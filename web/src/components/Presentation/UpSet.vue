@@ -34,7 +34,7 @@ export default defineComponent({
 
     const margin = {
       top: 26,
-      right: 30,
+      right: 60,
       bottom: 10,
       left: 30,
     };

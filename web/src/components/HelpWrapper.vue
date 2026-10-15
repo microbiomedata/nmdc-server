@@ -108,7 +108,7 @@ const close = () => {
   min-height: 36px;
   position: absolute;
   top: 0;
-  right: 0.75rem;
+  right: 0;
   z-index: 2;
 }
 
