@@ -737,6 +737,7 @@ function openFile(file: File) {
         Object.entries(slotNameToTitleMap).map(([name, title]) => [title.toLowerCase(), name])
       );
       const worksheetData: Record<string, string>[] = utils.sheet_to_json(worksheet);
+      const unrecognizedSlotTitles = new Set<string>();
       const remappedData = worksheetData.map(row => {
         const remappedRow: Record<string, string> = {};
         Object.entries(row).forEach(([slotTitle, value]) => {
@@ -749,7 +750,8 @@ function openFile(file: File) {
               // If there is a case-insensitive match for the slot title, remap it to
               // the corresponding slot name.
               remappedRow[slotName] = value;
-            } else {
+            } else if (!unrecognizedSlotTitles.has(slotTitle)) {
+              unrecognizedSlotTitles.add(slotTitle);
               // If the slot title is not recognized, just warn. This allows us to import
               // spreadsheets that have extra columns that don't correspond to any slot.
               console.warn(`Unrecognized slot title "${slotTitle}" in worksheet "${name}". This column will be ignored.`);
@@ -757,7 +759,7 @@ function openFile(file: File) {
           }
         });
         return remappedRow;
-      })
+      });
 
       const importedRows = harmonizerApi.unflattenArrayValues(remappedData, template.schemaClass);
 
