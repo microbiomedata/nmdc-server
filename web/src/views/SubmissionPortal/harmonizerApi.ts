@@ -186,8 +186,12 @@ export default class HarmonizerApi {
             const { downstream } = GOLD_FIELDS[field];
             for (let j = 0; j < downstream.length; j += 1) {
               const other = downstream[j];
-              const otherIdx = fields.findIndex((f: any) => f.title === other);
-              triggered_changes.push([change[0], otherIdx, change[2], null]);
+              const otherIdx = fields.findIndex((f: any) => f.name === other);
+              if (otherIdx >= 0) {
+                triggered_changes.push([change[0], otherIdx, change[2], null]);
+              } else {
+                console.warn(`Could not find downstream field ${other} for ${field}`);
+              }
             }
           }
         },
