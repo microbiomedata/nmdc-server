@@ -723,15 +723,41 @@ function openFile(file: File) {
         return;
       }
 
-      // The spreadsheet has slot names as the header row. So `sheet_to_json` will produce array
-      // of objects with slot names as keys. But we want the imported data to be keyed on slot
-      // IDs. This code reads the worksheet data and remaps the keys from slot names to IDs.
-      const slotIdToNameMap = harmonizerApi.getHeaderRow(template.schemaClass);
-      const slotNameToIdMap = Object.fromEntries(Object.entries(slotIdToNameMap).map(([k, v]) => [v, k]));
+      // The spreadsheet has slot titles (falling back to slot name if no title, if
+      // present) as the header row. So `sheet_to_json` will produce array of objects
+      // with slot titles as keys. But we want the imported data to be keyed on slot
+      // names. This code reads the worksheet data and remaps the keys from slot titles
+      // to names.
+      const slotNameToTitleMap = harmonizerApi.getHeaderRow(template.schemaClass);
+      // Build a case-insensitive mapping from slot title to slot name, for remapping the
+      // imported data. Some nmdc-submission-schema titles changed case in 11.25.0, and
+      // we want to make a best-effort attempt to import data from older spreadsheets
+      // that used the old case.
+      const slotTitleToNameMap = Object.fromEntries(
+        Object.entries(slotNameToTitleMap).map(([name, title]) => [title.toLowerCase(), name])
+      );
       const worksheetData: Record<string, string>[] = utils.sheet_to_json(worksheet);
-      const remappedData = worksheetData.map((row) => Object.fromEntries(Object.entries(row)
-        .filter(([slotName]) => slotNameToIdMap[slotName] !== undefined)
-        .map(([slotName, value]) => [slotNameToIdMap[slotName], value])));
+      const remappedData = worksheetData.map(row => {
+        const remappedRow: Record<string, string> = {};
+        Object.entries(row).forEach(([slotTitle, value]) => {
+          if (slotNameToTitleMap[slotTitle] !== undefined) {
+            // If the slot title is already a slot name (the fallback case), use it as is.
+            remappedRow[slotTitle] = value;
+          } else {
+            const slotName = slotTitleToNameMap[slotTitle.toLowerCase()];
+            if (slotName !== undefined) {
+              // If there is a case-insensitive match for the slot title, remap it to
+              // the corresponding slot name.
+              remappedRow[slotName] = value;
+            } else {
+              // If the slot title is not recognized, just warn. This allows us to import
+              // spreadsheets that have extra columns that don't correspond to any slot.
+              console.warn(`Unrecognized slot title "${slotTitle}" in worksheet "${name}". This column will be ignored.`);
+            }
+          }
+        });
+        return remappedRow;
+      })
 
       const importedRows = harmonizerApi.unflattenArrayValues(remappedData, template.schemaClass);
 
