@@ -302,7 +302,17 @@ function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: Template
     return row_types.includes('lipidomics')
       || row_types.includes('metaproteomics')
       || row_types.includes('metabolomics')
-      || row_types.includes('natural organic matter');
+      || row_types.includes('natural organic matter')
+      || row_types.includes('proteomics')
+      || row_types.includes('molecular structure')
+      || row_types.includes('chemical speciation mapping')
+      || row_types.includes('isotope profiling')
+      || row_types.includes('imaging - xray')
+      || row_types.includes('imaging - electron')
+      || row_types.includes('imaging - ion')
+      || row_types.includes('imaging - light')
+      || row_types.includes('hydraulic properties')
+      || row_types.includes('other emsl analyses');
   }
   if (templateKey === JGI_MG) {
     return row_types.includes('metagenomics');
