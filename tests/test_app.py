@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+
 # Starlette's TestClient uses httpx2 instead of httpx when httpx2 is installed.
 # httpx2 is pulled in by nmdc-metadata-suggestor-ai-tool
 # (via claude-agent-sdk -> mcp), so TestClient responses are httpx2.Response.
@@ -422,7 +423,6 @@ def test_get_data_object_report_normal(db: Session, client: TestClient, logged_i
     column_names = ["data_object.id", "data_object.url", "data_object.file_size_bytes"]
     reader = DictReader(response.text.splitlines(), fieldnames=column_names, delimiter="\t")
     rows = [row for row in reader]
-
 
     # Check the header row.
     header_row = rows[0]
