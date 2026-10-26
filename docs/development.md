@@ -134,6 +134,16 @@ NMDC_LLM_SERVICE_ACCOUNT_CREDENTIALS_FILE=/auth/name-of-your-file.json
 ```
 This path is used by nmdc-metadata-suggestor-ai-tool on the backend
 
+### Langfuse Setup (used with the AI suggestor tool)
+For Langfuse access, contact Olivia Hess
+To enable Langfuse, set the following variables in `.env`:
+- LANGFUSE_PUBLIC_KEY=changeme
+- LANGFUSE_SECRET_KEY=changeme
+- LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+- LANGFUSE_TRACING_ENVIRONMENT=dev/local/prod
+
+Setting these values will enable traces to be sent to our Langfuse instance.
+
 ## Load production data
 
 The `nmdc-server` CLI has a `load-db` subcommand which populates your local database using a backup file. These backups are produced nightly for both dev and prod and stored in Google Cloud Storage buckets. Typically, you will want to load from a recent production backup.
