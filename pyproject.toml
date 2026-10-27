@@ -10,7 +10,7 @@ dynamic = ["version"]
 dependencies = [
     "alembic",
     "authlib",
-    "click==8.3.1",
+    "click",
     "fastapi-debug-toolbar",
     "fastapi[standard]",
     "google-cloud-secret-manager",
@@ -18,7 +18,7 @@ dependencies = [
     "httpx",
     "ipython",
     "itsdangerous",
-    "linkml-runtime==1.11.0",
+    "linkml-runtime",
     "nmdc-geoloc-tools",
     "nmdc-metadata-suggestor-ai-tool==1.3.1",
     "nmdc-schema==11.25",
