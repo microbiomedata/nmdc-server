@@ -8,10 +8,7 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
-# Starlette's TestClient uses httpx2 instead of httpx when httpx2 is installed.
-# httpx2 is pulled in by nmdc-metadata-suggestor-ai-tool
-# (via claude-agent-sdk -> mcp), so TestClient responses are httpx2.Response.
-# If that dependency is ever removed, switch this back to `from httpx import Response`.
+# Starlette's TestClient prefers httpx2 when it is installed
 from httpx2 import Response
 from sqlalchemy.orm.session import Session
 from starlette import status as http_status

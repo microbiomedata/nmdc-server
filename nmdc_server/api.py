@@ -9,7 +9,7 @@ from io import BytesIO, RawIOBase, StringIO
 from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
-import httpx
+import httpx2
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
@@ -981,7 +981,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     # logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     async with (
-        httpx.AsyncClient(timeout=None) as client,
+        httpx2.AsyncClient(timeout=None) as client,
         client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
     ):
         async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):

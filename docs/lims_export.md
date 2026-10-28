@@ -11,7 +11,7 @@ All EMSL-specific code lives in the `nmdc_server/emsl/` package.
 
 - `nmdc_server/emsl/lims_export.py` — `build_lims_payloads(sample_set)` and
   `send_sample_set_to_lims(sample_set)`. Flattens `sample_data["data"][slot]` rows into one request
-  body per sample, POSTs each with httpx, retries on network errors and 5xx responses, and returns a
+  body per sample, POSTs each with httpx2, retries on network errors and 5xx responses, and returns a
   per-sample result summary.
 - `nmdc_server/emsl/project_directory.py` — looks up the EMSL proposal UUID for the 5-digit EMSL
   proposal number the submitter entered (`multi_omics_form.studyNumber`). The LIMS requires the

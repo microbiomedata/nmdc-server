@@ -15,7 +15,7 @@ dependencies = [
     "fastapi[standard]",
     "google-cloud-secret-manager",
     "google-cloud-storage",
-    "httpx",
+    "httpx2",
     "ipython",
     "itsdangerous",
     "linkml-runtime",
