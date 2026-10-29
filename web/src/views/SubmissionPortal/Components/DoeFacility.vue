@@ -133,6 +133,13 @@ export default defineComponent({
         :disabled="templateHasData('emsl') || undefined"
         hide-details
       />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Other EMSL Analyses"
+        value="other-emsl"
+        :disabled="templateHasData('emsl') || undefined"
+        hide-details
+      />
     </div>
     <v-checkbox
       v-model="multiOmicsForm.facilities"

@@ -309,6 +309,10 @@ export const useSubmissionStore = defineStore('submission', () => {
             // Data types? Natural Organic Matter
             templates.add(EMSL);
           }
+          if (multiOmicsForm.omicsProcessingTypes.includes('other-emsl')) {
+            // Data types? Other
+            templates.add(EMSL);
+          }
         }
         if (multiOmicsForm.facilities?.includes('JGI')) {
           // Which facility? JGI
@@ -402,7 +406,7 @@ export const useSubmissionStore = defineStore('submission', () => {
       sampleSet.forms.multiOmicsForm.studyNumber = '';
       sampleSet.forms.multiOmicsForm.ship = null;
       sampleSet.forms.multiOmicsForm.omicsProcessingTypes = sampleSet.forms.multiOmicsForm.omicsProcessingTypes.filter(t => (
-        t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
+        t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl' && t !== 'other-emsl'
       ));
     }
     // JGI was removed
