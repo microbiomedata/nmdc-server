@@ -34,7 +34,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-import httpx
+import httpx2
 
 from nmdc_server import models
 from nmdc_server.config import settings
@@ -279,7 +279,7 @@ def _sample_url() -> str:
 
 
 def _send_one_sample(
-    client: httpx.Client,
+    client: httpx2.Client,
     url: str,
     payload: dict[str, Any],
     headers: dict[str, str] | None,
@@ -300,7 +300,7 @@ def _send_one_sample(
             time.sleep(min(0.5 * 2 ** (attempt - 2), 5.0))
         try:
             resp = client.post(url, json=payload, headers=headers)
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             last_error = f"network error: {e}"
             logger.warning(
                 "LIMS send %s attempt %d/%d failed: %s",
@@ -393,7 +393,7 @@ def send_sample_set_to_lims(
         for payload in payloads:
             payload.pop("esp_token", None)
 
-    with httpx.Client(timeout=timeout) as client:
+    with httpx2.Client(timeout=timeout) as client:
         for payload in payloads:
             outcome = _send_one_sample(client, url, payload, headers, max_retries)
             if outcome["status"] == "ok":

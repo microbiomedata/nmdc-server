@@ -33,7 +33,9 @@ DateType = Union[datetime, date]
 AnnotationValue = Union[float, int, datetime, str, dict, list, None]
 
 METADATA_BADGE_VALUES: List[str] = [
-    value.text for value in vars(MetadataBadgeEnum).values() if isinstance(value, PermissibleValue)
+    value.text
+    for value in vars(MetadataBadgeEnum).values()
+    if isinstance(value, (PermissibleValue, MetadataBadgeEnum))
 ]
 
 

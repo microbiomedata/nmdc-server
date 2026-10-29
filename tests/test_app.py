@@ -7,7 +7,9 @@ from uuid import uuid4
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from httpx import Response
+
+# Starlette's TestClient prefers httpx2 when it is installed
+from httpx2 import Response
 from sqlalchemy.orm.session import Session
 from starlette import status as http_status
 

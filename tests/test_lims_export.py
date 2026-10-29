@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-import httpx
+import httpx2
 import pytest
 from fastapi.testclient import TestClient
 from nmdc_schema.nmdc import SubmissionStatusEnum
@@ -95,9 +95,9 @@ def test_nexus_lookup_requires_exact_id_match(monkeypatch):
     results = [{"id": "61250", "uuid": "u-61250"}, {"id": "61251", "uuid": "u-61251"}]
 
     def fake_get(url, params, timeout):
-        return httpx.Response(200, json=results, request=httpx.Request("GET", url))
+        return httpx2.Response(200, json=results, request=httpx2.Request("GET", url))
 
-    monkeypatch.setattr(project_directory.httpx, "get", fake_get)
+    monkeypatch.setattr(project_directory.httpx2, "get", fake_get)
     directory = project_directory.NexusProjectDirectory("http://nexus.test")
     # No exact match -> None (never another proposal's UUID).
     assert directory.get_project_uuid("6125") is None

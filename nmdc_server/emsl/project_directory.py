@@ -19,7 +19,7 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Protocol
 
-import httpx
+import httpx2
 
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
@@ -51,10 +51,10 @@ class NexusProjectDirectory:
             return None
         url = f"{self.base_url}/projects/lookup"
         try:
-            resp = httpx.get(url, params={"q": project_id}, timeout=self.timeout)
+            resp = httpx2.get(url, params={"q": project_id}, timeout=self.timeout)
             resp.raise_for_status()
             data = resp.json()
-        except (httpx.HTTPError, ValueError) as e:
+        except (httpx2.HTTPError, ValueError) as e:
             logger.warning("Nexus project lookup failed for %s: %s", project_id, e)
             return None
         if not isinstance(data, list) or not data:

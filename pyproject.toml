@@ -10,20 +10,17 @@ dynamic = ["version"]
 dependencies = [
     "alembic",
     "authlib",
-    # Use click<8.2.0 because that allows linkml (a transitive dependency) version 1.10.x to be used. This constraint
-    # can be removed when linkml 1.11.0 is released, which will support click 8.2.0 and above.
-    # See: https://github.com/linkml/linkml/issues/3239
-    "click<8.2.0",
+    "click",
     "fastapi-debug-toolbar",
     "fastapi[standard]",
     "google-cloud-secret-manager",
     "google-cloud-storage",
-    "httpx",
+    "httpx2",
     "ipython",
     "itsdangerous",
     "linkml-runtime",
     "nmdc-geoloc-tools",
-    "nmdc-metadata-suggestor-ai-tool==1.2.1",
+    "nmdc-metadata-suggestor-ai-tool==1.3.1",
     "nmdc-schema==11.25",
     "nmdc-submission-schema==11.25.0",
     "pint",
