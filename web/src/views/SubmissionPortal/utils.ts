@@ -1,7 +1,7 @@
 import moment, { invalid } from 'moment';
-import { read, utils, xlsxUtils } from 'xlsx';
+import { read, utils as xlsxUtils } from 'xlsx';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import { Contributor } from '@/views/SubmissionPortal/types.ts';
+import { Contributor, SubmissionEditorRole } from '@/views/SubmissionPortal/types.ts';
 
 export function formatShippingDate (date: string | Date | null | undefined): string {
   if(!date) {
@@ -20,8 +20,6 @@ export function validateOrcid(orcid: string): string | boolean {
   if (!orcid) {
     return true;
   }
-  // const orcidRegex = /^(\d{4}-){3}\d{3}(\d|X)$/;
-  // return orcidRegex.test(orcid) || 'ORCID iD must be in valid format (0000-0000-0000-0000)';
   return ORCID_REGEX.test(orcid) || 'ORCID iD must be in valid format (0000-0000-0000-0000)';
 }
 
@@ -30,7 +28,18 @@ const CREDIT_ROLE_LOOKUP = new Map(CREDIT_ROLES.map((role) => [role.toLowerCase(
 
 const NAME_COLUMNS = ['name', 'full name', 'contributor name'];
 const ORCID_COLUMNS = ['orcid', 'orcid id', 'orcid ida'];
-const CREDIT_ROLE_COLUMNS = ['credit', 'credit roles', 'roles'];
+const CREDIT_COLUMNS = ['credit', 'credit roles', 'roles'];
+const PERMISSION_LEVEL_COLUMNS = ['permission level', 'permission', 'permissionlevel'];
+
+/**
+ * Only levels assignable via the submission portal are included here. The "owner" role is not assignable via the portal, and is therefore excluded.
+ */
+const PERMISSION_LEVEL_LOOKUP = new Map<string, SubmissionEditorRole>([
+  ['viewer', 'viewer'],
+  ['editor', 'editor'],
+  ['metadata contributor', 'metadata_contributor'],
+  ['metadata_contributor', 'metadata_contributor'],
+]);
 
 export interface ContributorImportError {
   row: number;
@@ -132,12 +141,26 @@ export async function parseContributorsSpreadsheet(file: File): Promise<Contribu
       return;
     }
 
+    const permissionRaw = findColumnValue(row, PERMISSION_LEVEL_COLUMNS);
+    let permissionLevel: SubmissionEditorRole | null = null;
+    if (permissionRaw) {
+      const normalized = PERMISSION_LEVEL_LOOKUP.get(permissionRaw.toLowerCase());
+      if (!normalized) {
+        errors.push({
+          row: rowNumber,
+          message: `Unrecognized permission level "${permissionRaw}". Expected one of: Viewer, Metadata Contributor, Editor.`,
+        });
+        return;
+      }
+      permissionLevel = normalized;
+    }
+
     seenOrcids.add(orcid);
     contributors.push({
       name,
       orcid,
       roles,
-      permissionLevel: null
+      permissionLevel,
     });
   });
   
