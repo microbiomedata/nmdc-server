@@ -272,7 +272,7 @@ export type OmicsProcessingType =
   // non-doe types
   'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' | 'isolate-genome' | 'isolate-transcriptome' |
   // doe facility associated types
-  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' |
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'other-emsl' |
   'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi' | 'isolate-genome-jgi' | 'isolate-transcriptome-jgi';
 
 export type IsolateDataFormat = 'interleaved' | 'non-interleaved' | 'insdc-repository';
