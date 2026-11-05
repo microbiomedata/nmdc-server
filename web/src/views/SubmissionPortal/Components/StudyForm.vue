@@ -529,7 +529,7 @@ function handleSave() {
                 <ul>
                   <li
                     v-for="error in contributorImportErrors"
-                    :key="`$(error.row)-$(error.message)`"
+                    :key="`${error.row}-${error.message}`"
                   >
                     Row {{ error.row }}: {{ error.message }}
                   </li>
