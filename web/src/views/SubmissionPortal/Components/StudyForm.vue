@@ -79,10 +79,13 @@ async function handleContributorImportFileChange(event: Event) {
 
   const { contributors, errors } = await parseContributorsSpreadsheet(file);
 
-  const existingOrcids = new Set(studyForm.value.contributors.map((c) => c.orcid));
+  /**
+   * Blank ORCIDs are excluded here so multiple contributors without ORCIDs can be added, but if an ORCID is provided it must be unique and valid.
+   */
+  const existingOrcids = new Set(studyForm.value.contributors.map((c) => c.orcid).filter((orcid) => orcid));
   const skippedExisting: string[] = [];
   const toAdd = contributors.filter((contributor) => {
-    if (existingOrcids.has(contributor.orcid)) {
+    if (contributor.orcid && existingOrcids.has(contributor.orcid)) {
       skippedExisting.push(`${contributor.name} (${contributor.orcid})`);
       return false;
     }
@@ -482,10 +485,10 @@ function handleSave() {
                 You can import contributors from a CSV or Excel file. The file should have the following columns:
               </p>
               <ul>
-                <li><strong>Name</strong>: Full name of the contributor</li>
-                <li><strong>ORCID</strong>: ORCID iD of the contributor (format: 0000-0000-0000-0000)</li>
-                <li><strong>CRediT Roles</strong>: Semicolon-separated list of CRediT roles</li>
-                <li><strong>Permission Level</strong>: One of Viewer, Metadata Contributor, Editor, or Owner</li>
+                <li><strong>Name</strong>: Full name of the contributor.</li>
+                <li><strong>ORCID</strong>: ORCID iD of the contributor. Only required for Principal Investigator (format: 0000-0000-0000-0000)</li>
+                <li><strong>CRediT Roles</strong>: Semicolon-separated list of CRediT roles.</li>
+                <li><strong>Permission Level</strong>: One of Viewer, Metadata Contributor, Editor, or Owner. An ORCID must be included to assign a permission level.</li>
               </ul>
               <p>
                 If a contributor with the same ORCID already exists in the submission, they will be skipped. Any errors in the file will be reported after import.
