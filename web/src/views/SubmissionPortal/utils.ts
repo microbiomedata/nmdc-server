@@ -108,8 +108,13 @@ export async function parseContributorsSpreadsheet(file: File): Promise<Contribu
       return;
     }
 
+    /**
+     * Making ORCID optional here - it is only required for the Principal Investigator, 
+     * which is set in a separate field elsewhere in the form, not through the contributor 
+     * spreadsheet. If an ORCID is provided, it must be valid and unique.
+     */
     const orcid = normalizeOrcid(orcidRaw);
-    if (!orcid || !ORCID_REGEX.test(orcid)) {
+    if (orcid && !ORCID_REGEX.test(orcid)) {
       errors.push({
         row: rowNumber,
         message: `Invalid ORCID iD "${orcidRaw}". Expected format: 0000-0000-0000-0000`,
@@ -117,7 +122,7 @@ export async function parseContributorsSpreadsheet(file: File): Promise<Contribu
       return;
     }
 
-    if (seenOrcids.has(orcid)) {
+    if (orcid && seenOrcids.has(orcid)) {
       errors.push({
         row: rowNumber,
         message: `Duplicate ORCID iD "${orcid}" found in the spreadsheet`,
@@ -144,6 +149,13 @@ export async function parseContributorsSpreadsheet(file: File): Promise<Contribu
     const permissionRaw = findColumnValue(row, PERMISSION_LEVEL_COLUMNS);
     let permissionLevel: SubmissionEditorRole | null = null;
     if (permissionRaw) {
+      if (!orcid) {
+        errors.push({
+          row: rowNumber,
+          message: 'Permission level specified but ORCID is missing. Permission levels can only be assigned to contributors with an ORCID.',
+        });
+        return;
+      }
       const normalized = PERMISSION_LEVEL_LOOKUP.get(permissionRaw.toLowerCase());
       if (!normalized) {
         errors.push({
@@ -155,7 +167,9 @@ export async function parseContributorsSpreadsheet(file: File): Promise<Contribu
       permissionLevel = normalized;
     }
 
-    seenOrcids.add(orcid);
+    if (orcid) {
+      seenOrcids.add(orcid);
+    }
     contributors.push({
       name,
       orcid,
