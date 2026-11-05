@@ -459,8 +459,39 @@ function handleSave() {
             <v-icon class="pr-1">
               mdi-file-upload
             </v-icon>
-            Import Contributors from Spreadsheet
+            Import Contributors from File Upload
           </v-btn-grey>
+          <v-tooltip
+            bottom
+            max-width="500px"
+          >
+            <template #activator="{props}">
+              <v-btn
+                icon
+                size="small"
+                variant="plain"
+                class="mb-4"
+                v-bind="props"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <div class="pb-2">
+              <strong>Importing Contributors:</strong>
+              <p>
+                You can import contributors from a CSV or Excel file. The file should have the following columns:
+              </p>
+              <ul>
+                <li><strong>Name</strong>: Full name of the contributor</li>
+                <li><strong>ORCID</strong>: ORCID iD of the contributor (format: 0000-0000-0000-0000)</li>
+                <li><strong>CRediT Roles</strong>: Semicolon-separated list of CRediT roles</li>
+                <li><strong>Permission Level</strong>: One of Viewer, Metadata Contributor, Editor, or Owner</li>
+              </ul>
+              <p>
+                If a contributor with the same ORCID already exists in the submission, they will be skipped. Any errors in the file will be reported after import.
+              </p>
+            </div>
+          </v-tooltip>
         </div>
         <v-dialog
           v-model="contributorImportResultsOpen"
