@@ -3,7 +3,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'
 import { computed, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
-import { validateOrcid } from '../utils.ts';
+import { validateOrcid, parseContributorsSpreadsheet, ContributorImportError } from '../utils.ts';
 import { PermissionTitle, SubmissionEditorRole } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -58,6 +58,48 @@ function addContributor() {
     roles: [],
     permissionLevel: null,
   });
+}
+
+const contributorImportInput = useTemplateRef<HTMLInputElement>('contributorImportInput');
+const contributorImportResultsOpen = ref(false);
+const contributorImportedCount = ref(0);
+const contributorImportSkippedExisting: Ref<string[]> = ref([]);
+const contributorImportErrors: Ref<ContributorImportError[]> = ref([]);
+
+function showContributorImportDialog() { 
+  contributorImportInput.value?.click();
+}
+
+async function handleContributorImportFileChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  // Reset the file input so that the same file can be re-selected if needed
+  target.value = '';
+  if (!file) return;
+
+  const { contributors, errors } = await parseContributorsSpreadsheet(file);
+
+  /**
+   * Blank ORCIDs are excluded here so multiple contributors without ORCIDs can be added, but if an ORCID is provided it must be unique and valid.
+   */
+  const existingOrcids = new Set(studyForm.value.contributors.map((c) => c.orcid).filter((orcid) => orcid));
+  const skippedExisting: string[] = [];
+  const toAdd = contributors.filter((contributor) => {
+    if (contributor.orcid && existingOrcids.has(contributor.orcid)) {
+      skippedExisting.push(`${contributor.name} (${contributor.orcid})`);
+      return false;
+    }
+    return true;
+  });
+
+  studyForm.value.contributors.push(...toAdd);
+
+  contributorImportedCount.value = toAdd.length;
+  contributorImportSkippedExisting.value = skippedExisting;
+  contributorImportErrors.value = errors;
+  contributorImportResultsOpen.value = true;
+
+  revalidate();
 }
 
 function addFundingSource() {
@@ -394,16 +436,118 @@ function handleSave() {
             <v-icon>mdi-minus-circle</v-icon>
           </v-btn>
         </div>
-        <v-btn-grey
-          :disabled="formRef?.isDisabled"
-          class="mb-4"
-          @click="addContributor"
+        <div class="d-flex">
+          <v-btn-grey
+            :disabled="formRef?.isDisabled"
+            class="mb-4 mr-3"
+            @click="addContributor"
+          >
+            <v-icon class="pr-1">
+              mdi-plus-circle
+            </v-icon>
+            Add Contributor
+          </v-btn-grey>
+          <input
+            ref="contributorImportInput"
+            type="file"
+            style="position: fixed; top: -100em"
+            accept=".csv, .xlsx, .xls"
+            @change="handleContributorImportFileChange"
+          >
+          <v-btn-grey
+            :disabled="formRef?.isDisabled"
+            class="mb-4"
+            @click="showContributorImportDialog"
+          >
+            <v-icon class="pr-1">
+              mdi-file-upload
+            </v-icon>
+            Import Contributors from File Upload
+          </v-btn-grey>
+          <v-tooltip
+            bottom
+            max-width="500px"
+          >
+            <template #activator="{props}">
+              <v-btn
+                icon
+                size="small"
+                variant="plain"
+                class="mb-4"
+                v-bind="props"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <div class="pb-2">
+              <strong>Importing Contributors:</strong>
+              <p>
+                You can import contributors from a CSV or Excel file. The file should have the following columns:
+              </p>
+              <ul>
+                <li><strong>Name</strong>: Full name of the contributor.</li>
+                <li><strong>ORCID</strong>: ORCID iD of the contributor. Only required for Principal Investigator (format: 0000-0000-0000-0000)</li>
+                <li><strong>CRediT Roles</strong>: Semicolon-separated list of CRediT roles.</li>
+                <li><strong>Permission Level</strong>: One of Viewer, Metadata Contributor, Editor, or Owner. An ORCID must be included to assign a permission level.</li>
+              </ul>
+              <p>
+                If a contributor with the same ORCID already exists in the submission, they will be skipped. Any errors in the file will be reported after import.
+              </p>
+            </div>
+          </v-tooltip>
+        </div>
+        <v-dialog
+          v-model="contributorImportResultsOpen"
+          max-width="600px"
         >
-          <v-icon class="pr-1">
-            mdi-plus-circle
-          </v-icon>
-          Add Contributor
-        </v-btn-grey>
+          <v-card>
+            <v-card-title>Contributor Import Results</v-card-title>
+            <v-card-text>
+              <p v-if="contributorImportedCount > 0">
+                Imported {{ contributorImportedCount }} contributor{{ contributorImportedCount === 1 ? '' : 's' }}.
+              </p>
+              <p v-else>
+                No new contributors were imported.
+              </p>
+              <template v-if="contributorImportSkippedExisting.length > 0">
+                <p class="mb-1">
+                  Skipped (ORCID already exists in submission's contributor list):
+                </p>
+                <ul class="mb-3">
+                  <li
+                    v-for="skipped in contributorImportSkippedExisting"
+                    :key="skipped"
+                  >
+                    {{ skipped }}
+                  </li>
+                </ul>
+              </template>
+              <template v-if="contributorImportErrors.length > 0">
+                <p class="mb-1">
+                  Rows not imported due to errors:
+                </p>
+                <ul>
+                  <li
+                    v-for="error in contributorImportErrors"
+                    :key="`${error.row}-${error.message}`"
+                  >
+                    Row {{ error.row }}: {{ error.message }}
+                  </li>
+                </ul>
+              </template>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn
+                color="primary"
+                variant="text"
+                @click="contributorImportResultsOpen = false"
+              >
+                Close
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </PageSection>
 
       <PageSection
