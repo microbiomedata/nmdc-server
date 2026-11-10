@@ -279,7 +279,7 @@ function isWorkflowFailed(item: any) {
     <v-dialog
       v-if="termsDialog.item"
       v-model="termsDialog.value"
-      :width="400"
+      :width="700"
     >
       <DownloadDialog
         @clicked="onAcceptTerms"
