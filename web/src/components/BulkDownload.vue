@@ -291,7 +291,7 @@ watch(
                 </v-btn>
                 <v-dialog
                   v-model="bulkTermsDialog"
-                  :width="400"
+                  :max-width="700"
                 >
                   <template #activator="{ props: dialogProps }">
                     <v-tooltip
@@ -318,6 +318,7 @@ watch(
                   </template>
                   <DownloadDialog
                     :loading="loading"
+                    is-streaming
                     @clicked="createAndDownload"
                   />
                 </v-dialog>
@@ -353,7 +354,7 @@ watch(
               </v-btn>
               <v-dialog
                 v-model="metadataTermsDialog"
-                :width="400"
+                :width="700"
               >
                 <template #activator="{ props: dialogProps }">
                   <v-tooltip

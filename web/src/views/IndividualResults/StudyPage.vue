@@ -250,7 +250,7 @@ export default defineComponent({
 
               <v-dialog
                 v-model="studyDownloadDialog"
-                max-width="400"
+                max-width="700"
               >
                 <template #activator="{ props }">
                   <v-btn

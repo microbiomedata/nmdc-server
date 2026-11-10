@@ -162,7 +162,7 @@ watchEffect(() => {
         <template #actions>
           <v-dialog
             v-model="sampleDownloadDialog"
-            max-width="400"
+            max-width="700"
           >
             <template #activator="{ props: dialogProps }">
               <v-btn
