@@ -180,7 +180,10 @@ def get_environmental_geospatial(
     return aggregations.get_geospatial_aggregation(db, query)
 
 
-# study
+# NOTE: This query is technically suboptimal because we end up including child studies in the query
+# and then discard them with the ID filter. If we need to optimize, we can separate the logic
+# so that we can get do a `get_study` by ID that still uses the subqueries in `StudyQuerySchema`
+# without also querying for child studies first.
 def get_study(db: Session, study_id: str) -> Optional[models.Study]:
     return (
         search_study(
