@@ -182,10 +182,14 @@ def get_environmental_geospatial(
 
 # study
 def get_study(db: Session, study_id: str) -> Optional[models.Study]:
-    return search_study(
-        db,
-        [{"table": "study", "field": "id", "value": study_id}],  # type: ignore
-    ).first()
+    return (
+        search_study(
+            db,
+            [{"table": "study", "field": "id", "value": study_id}],  # type: ignore
+        )
+        .filter(models.Study.id == study_id)
+        .first()
+    )
 
 
 def get_study_image(db: Session, study_id: str) -> Optional[bytes]:
