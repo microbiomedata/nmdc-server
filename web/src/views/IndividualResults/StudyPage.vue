@@ -25,7 +25,7 @@ import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import ErrorDialog from '@/components/ErrorDialog.vue';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 
 const DEFAULT_BIOSAMPLE_PAGE_SIZE = 5;
 

@@ -4,7 +4,7 @@ import {
   watch,
 
 } from 'vue';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 import { event } from 'vue-gtag';
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';

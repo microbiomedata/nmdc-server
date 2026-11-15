@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -2294,7 +2294,7 @@ wheels = [
 
 [[package]]
 name = "nmdc-schema"
-version = "11.25"
+version = "11.26.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2312,9 +2312,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/82/80/36cf5cd2f8eb52857a8674b942580090f8e58d0fb9011285d14751b3425e/nmdc_schema-11.25.tar.gz", hash = "sha256:b7a95563822fb836b72c74a1be6ac8df7aaa182976f05832c44953b136998298", size = 874593, upload-time = "2026-10-15T18:44:18.162Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/dc/745888920928c5fdfce096e0377318975f07d09364563e9ffee3ef83caf1/nmdc_schema-11.26.0.tar.gz", hash = "sha256:016e1a2e8068449f1a3b7c398206ad7e535f718ce32709987ecbe8a3177b31d1", size = 914079, upload-time = "2026-11-11T04:13:24.364Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/09/80e87345935789f7fac896854114f15899610b482e7b0b83132a7c7b800f/nmdc_schema-11.25-py3-none-any.whl", hash = "sha256:1c0dc1fa3bc83d06a08a3a15643b343f18866bce90484cb4e6e69364d905dc78", size = 964920, upload-time = "2026-10-15T18:44:16.308Z" },
+    { url = "https://files.pythonhosted.org/packages/14/8e/7fc262f94f14d8fe59988525cb485c5990d67c5c28117e8fb33a720357e8/nmdc_schema-11.26.0-py3-none-any.whl", hash = "sha256:e0b3fcd9b56d097ec2a39a681696fd0e17066c392ba29bf0f17c4236d38cb1b7", size = 1008056, upload-time = "2026-11-11T04:13:22.356Z" },
 ]
 
 [[package]]
@@ -2389,8 +2389,8 @@ requires-dist = [
     { name = "linkml-runtime" },
     { name = "nmdc-geoloc-tools" },
     { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.3.1" },
-    { name = "nmdc-schema", specifier = "==11.25" },
-    { name = "nmdc-submission-schema", specifier = "==11.25.0" },
+    { name = "nmdc-schema", specifier = "==11.26.0" },
+    { name = "nmdc-submission-schema", specifier = "==11.26.0" },
     { name = "pint" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -2431,15 +2431,15 @@ lint = [
 
 [[package]]
 name = "nmdc-submission-schema"
-version = "11.25.0"
+version = "11.26.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "linkml-runtime" },
     { name = "rdflib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/00/4fc694d2a07942de38e6637def4f73ac664e550f648d32623409186ebead/nmdc_submission_schema-11.25.0.tar.gz", hash = "sha256:df74be5773f76fd21abc5944175c9272215af294d1a879d4194d174e2b7d82b5", size = 745112, upload-time = "2026-10-15T19:45:38.294Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/42/1a/27aed9a7b050db139e3e6922cfc92b5eb7f0831e383d8b70475b1300b0b3/nmdc_submission_schema-11.26.0.tar.gz", hash = "sha256:14468252c2eb8e8fecc216829052a998d79bf6b92eb19d0fef063545aa88c28e", size = 778284, upload-time = "2026-11-14T22:41:32.351Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/62/e896268079625c7c57ca4dacdd6def165f0e1fcccd8df18985e9039b3376/nmdc_submission_schema-11.25.0-py3-none-any.whl", hash = "sha256:c565ba40d43ff5f837f603d2acd7102151c902c08d769ac2c8e930394cc44abd", size = 761557, upload-time = "2026-10-15T19:45:36.848Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/5c/33cb070bd9a5211fd67b4241e0d7ed9eb3a4cd009c4b0cc0f33f8c91a700/nmdc_submission_schema-11.26.0-py3-none-any.whl", hash = "sha256:50e92f132ae9b925b751a56e5ae43af760175bd2a840d6f05b64d9db662ae738", size = 795079, upload-time = "2026-11-14T22:41:30.692Z" },
 ]
 
 [[package]]
@@ -2877,7 +2877,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

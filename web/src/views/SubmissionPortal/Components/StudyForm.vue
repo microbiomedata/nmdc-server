@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 import { computed, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';

@@ -1,7 +1,7 @@
 import { merge } from 'lodash';
 import axios, { AxiosError } from 'axios';
 import { setupCache } from 'axios-cache-interceptor';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
 import type { User } from '@/types';
 

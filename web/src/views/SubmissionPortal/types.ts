@@ -1,4 +1,4 @@
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 
 import { User } from '@/types';
 import { RouteLocationRaw } from 'vue-router';

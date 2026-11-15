@@ -63,7 +63,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('src', import.meta.url)),
-      'nmdc-schema': fileURLToPath(new URL('node_modules/nmdc-schema', import.meta.url)),
     },
     extensions: [
       '.js',

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, computed } from 'vue';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import {
