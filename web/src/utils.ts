@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import protobufjs from 'protobufjs';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 
 import { Condition } from '@/data/api';
 import descriptor from '@/data/protobuf-descriptor.json';

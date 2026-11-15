@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 
 import type { Condition } from '@/data/api';
 import { snakeToSentenceCase } from '@/utils';

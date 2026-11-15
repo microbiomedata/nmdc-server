@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { groupBy } from 'lodash';
 
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
