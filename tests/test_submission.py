@@ -57,6 +57,73 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
+@pytest.mark.parametrize("sort_order", ["asc", "desc"])
+def test_list_submissions_sort_by_study_name_groups_empty_and_null(
+    db: Session, client: TestClient, logged_in_admin_user, sort_order: str
+):
+    """
+    This test demonstrates that our sorting logic puts both `null` and empty string
+    study names next to one another in the sorted result. By default, Postgres would
+    put empty strings before numbers/letters and would put `null` after letters (or
+    vice versa, depending on whether the sorting is being done ASC versus DESC).
+    """
+    author = fakes.UserFactory()
+    for study_name in ["Zebra Study", None, "Alpha Study", "", "123 Study"]:
+        fakes.SubmissionMetadataFactory(
+            author=author,
+            author_orcid=author.orcid,
+            study_name=study_name,
+        )
+    db.commit()
+
+    response = client.get(
+        "/api/metadata_submission/slim",
+        params={"column_sort": "study_name", "sort_order": sort_order},
+    )
+    assert response.status_code == 200
+
+    study_names = [item["study_name"] for item in response.json()["results"]]
+    nonempty_study_names = [name for name in study_names if name not in ("", None)]
+    empty_study_names = [name for name in study_names if name in ("", None)]
+    assert set(empty_study_names) == {"", None}
+
+    if sort_order == "asc":
+        assert nonempty_study_names == ["123 Study", "Alpha Study", "Zebra Study"]
+        assert study_names[:2] == empty_study_names
+        assert study_names[2:] == nonempty_study_names
+    else:
+        assert nonempty_study_names == ["Zebra Study", "Alpha Study", "123 Study"]
+        assert study_names[:3] == nonempty_study_names
+        assert study_names[3:] == empty_study_names
+
+
+def test_list_submissions_secondary_sort_groups_empty_and_null(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    """
+    This test demonstrates the same thing, but for the secondary sorting (e.g. when
+    sorting by author, how the studies _of that author_ would be sorted).
+    """
+    author = fakes.UserFactory(name="Same Author")
+    for study_name in [None, "Alpha Study", ""]:
+        fakes.SubmissionMetadataFactory(
+            author=author,
+            author_orcid=author.orcid,
+            study_name=study_name,
+        )
+    db.commit()
+
+    response = client.get(
+        "/api/metadata_submission/slim",
+        params={"column_sort": "author.name", "sort_order": "asc"},
+    )
+    assert response.status_code == 200
+
+    study_names = [item["study_name"] for item in response.json()["results"]]
+    assert set(study_names[:2]) == {"", None}
+    assert study_names[2] == "Alpha Study"
+
+
 def test_create_submission(db: Session, client: TestClient, logged_in_user):
     study_name = "test test test"
     pi_email = "test@example.org"
