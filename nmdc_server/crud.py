@@ -1298,6 +1298,8 @@ def get_submissions_for_user(
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
     )
 
+    normalized_study_name = func.coalesce(models.SubmissionMetadata.study_name, "")
+
     column: Any
     if column_sort == "author.name":
         column = models.User.name
@@ -1311,6 +1313,8 @@ def get_submissions_for_user(
             models.SubmissionSampleSet.submission_metadata_id == models.SubmissionMetadata.id,
         )
         column = models.SubmissionSampleSet.status
+    elif column_sort == "study_name":
+        column = normalized_study_name
     else:
         column = getattr(models.SubmissionMetadata, column_sort)
 
@@ -1320,9 +1324,7 @@ def get_submissions_for_user(
         .order_by(column.asc() if order == "asc" else column.desc())
         # Secondary sorts to ensure consistent order since primary sort may have ties
         # (e.g. multiple submissions from the same author)
-        .order_by(models.SubmissionMetadata.study_name.asc()).order_by(
-            models.SubmissionMetadata.id.asc()
-        )
+        .order_by(normalized_study_name.asc()).order_by(models.SubmissionMetadata.id.asc())
     )
 
     if is_test_submission_filter != None:
