@@ -1314,8 +1314,6 @@ def get_submissions_for_user(
         )
         column = models.SubmissionSampleSet.status
     elif column_sort == "study_name":
-        # Treat NULL and "" identically so unnamed submissions ("No Study Name Provided" in UI)
-        # sort together instead of splitting across opposite ends of the result set.
         column = normalized_study_name
     else:
         column = getattr(models.SubmissionMetadata, column_sort)
