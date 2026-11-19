@@ -11,9 +11,33 @@ import {
 //          https://github.com/vuetifyjs/vuetify/issues/19315
 // @ts-ignore
 import { useForm } from 'vuetify/lib/composables/form';
+import axios from 'axios';
 import useRequest from '@/use/useRequest';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
 import { useSubmissionStore } from '../store';
+
+// Keep in sync with ALLOWED_IMAGE_CONTENT_TYPES in nmdc_server/api.py.
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+const UNSUPPORTED_FILE_TYPE_MESSAGE = 'Unable to upload this file. Please make sure it\'s a supported '
+  + 'image type (JPEG, PNG, GIF, or WebP) and under the size limit, then try again.';
+
+/**
+ * useRequest() stores String(err) for its error state. For an AxiosError that produces a
+ * generic message like "AxiosError: Request failed with status code 422" without the specific
+ * reason. This extracts the backend's detail message when present, and otherwise falls back to
+ * a message naming the most common cause (unsupported file type).
+ */
+function extractErrorMessage(err: unknown): Error {
+  if (axios.isAxiosError(err)) {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === 'string' && detail) {
+      return new Error(detail);
+    }
+    return new Error(UNSUPPORTED_FILE_TYPE_MESSAGE);
+  }
+  return err instanceof Error ? err : new Error(String(err));
+}
 
 export default defineComponent({
   props: {
@@ -91,12 +115,27 @@ export default defineComponent({
       if (!fileRef.value) {
         return;
       }
-      await store.uploadSubmissionImage(fileRef.value, props.imageType);
+      // Check client-side first to avoid a round trip for a file type we already know the
+      // backend will reject (see ALLOWED_IMAGE_CONTENT_TYPES in nmdc_server/api.py).
+      if (!ACCEPTED_IMAGE_TYPES.includes(fileRef.value.type)) {
+        throw new Error(UNSUPPORTED_FILE_TYPE_MESSAGE);
+      }
+      try {
+        await store.uploadSubmissionImage(fileRef.value, props.imageType);
+      } catch (err) {
+        throw extractErrorMessage(err);
+      }
       fileRef.value = null;
     });
 
     const { request: deleteRequest, loading: deleting, error: deleteError } = useRequest();
-    const handleDelete = () => deleteRequest(() => store.deleteSubmissionImage(props.imageType));
+    const handleDelete = () => deleteRequest(async () => {
+      try {
+        await store.deleteSubmissionImage(props.imageType);
+      } catch (err) {
+        throw extractErrorMessage(err);
+      }
+    });
 
     const handleChangeClick = () => {
       if (fileInputRef.value) {
@@ -104,18 +143,24 @@ export default defineComponent({
       }
     };
 
+    // useRequest() stores errors via String(err), which for an Error adds a redundant
+    // "Error: " prefix on top of the message from extractErrorMessage().
+    const uploadErrorMessage = computed(() => uploadError.value?.replace(/^Error: /, '') ?? null);
+    const deleteErrorMessage = computed(() => deleteError.value?.replace(/^Error: /, '') ?? null);
+
     return {
       disabled: form.isDisabled,
       fileInputRef,
       fileRef,
       filePreview,
       uploading,
-      uploadError,
+      uploadError: uploadErrorMessage,
       handleUpload,
       deleting,
-      deleteError,
+      deleteError: deleteErrorMessage,
       handleDelete,
       handleChangeClick,
+      acceptedImageTypes: ACCEPTED_IMAGE_TYPES.join(','),
     };
   },
 });
@@ -126,7 +171,7 @@ export default defineComponent({
     <v-file-input
       ref="fileInputRef"
       v-model="fileRef"
-      accept="image/*"
+      :accept="acceptedImageTypes"
       :label="inputLabel"
       :hint="inputHint"
       :prepend-icon="inputIcon"
@@ -213,7 +258,7 @@ export default defineComponent({
         outlined
         class="mt-2"
       >
-        Error uploading image: {{ uploadError }}
+        {{ uploadError }}
       </v-alert>
       <v-alert
         v-if="deleteError"
@@ -221,7 +266,7 @@ export default defineComponent({
         outlined
         class="mt-2"
       >
-        Error deleting image: {{ deleteError }}
+        {{ deleteError }}
       </v-alert>
     </div>
   </div>
