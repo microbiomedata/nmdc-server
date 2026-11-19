@@ -1426,6 +1426,35 @@ def test_set_submission_image_nonexistent_submission(
     assert response.status_code == 404
 
 
+def test_generate_signed_upload_url_unsupported_content_type(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test requesting a signed upload URL with an unsupported content type returns 422."""
+    submission = fakes.SubmissionMetadataFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    request_data = {
+        "file_name": "test-image.tif",
+        "file_size": 1000000,
+        "content_type": "image/tiff",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/signed_upload_url", json=request_data
+    )
+
+    assert response.status_code == 422
+    assert "Unsupported image type" in response.json()["detail"]
+
+
 def test_set_submission_image_invalid_image_type(db: Session, client: TestClient, logged_in_user):
     """Test setting image with invalid image type returns 422."""
     submission = fakes.SubmissionMetadataFactory(

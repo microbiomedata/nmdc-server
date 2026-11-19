@@ -1814,6 +1814,12 @@ async def suggest_metadata(
     return response
 
 
+# Image formats supported by every major browser and safe to display inline on the public
+# study page. Keep this in sync with the accepted-types guidance shown in the submission portal
+# (web/src/definitions.ts).
+ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+
 @router.post("/metadata_submission/{id}/image/signed_upload_url", response_model=schemas.SignedUrl)
 async def generate_signed_upload_url(
     id: str,
@@ -1821,6 +1827,15 @@ async def generate_signed_upload_url(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if body.content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                f"Unsupported image type '{body.content_type}'. "
+                "Accepted types: JPEG, PNG, GIF, WebP."
+            ),
+        )
+
     # Don't accept files larger than the configured limit (default is 25 MB)
     if body.file_size > settings.max_submission_image_file_size_bytes:
         raise HTTPException(
