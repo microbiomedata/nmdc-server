@@ -101,6 +101,7 @@ class SampleMetadataSuggester:
             - interface_tab: The name of the interface tab for which to generate suggestions
             - sample_data_slot: The name of the data section within the submission object which to generate suggestions. This is optional because some suggestors may only need the interface tab level information.
             - submission: The full submission metadata, which may provide additional context for generating suggestions.
+            - sample_set: The sample set currently being worked on.
         """
         if not settings.llm_service_account_credentials_file:
             logger.warning(
@@ -116,7 +117,10 @@ class SampleMetadataSuggester:
             sample_set.sample_data.data.get(sample_data_slot, None) if sample_data_slot else None
         )
         recommendation_pipeline_output = run_recommendation_pipeline(
-            submission.model_dump(), llm_client, interface_name=interface_tab
+            submission_object=submission.model_dump(),
+            sample_set_object=sample_set.model_dump(),
+            llm_client=llm_client,
+            interface_name=interface_tab,
         )
 
         suggestions: List[MetadataSuggestion] = []
