@@ -3,6 +3,8 @@ from unittest.mock import ANY, Mock
 
 import nmdc_server.metadata as metadata
 from nmdc_server.metadata import ElevationSuggester
+from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionSampleSet
+from tests.fakes import SubmissionMetadataFactory, SubmissionSampleSetFactory
 
 
 def test_elevation_suggester():
@@ -42,11 +44,8 @@ def test_elevation_suggester():
 
 
 def test_study_suggestions_pass_submission_and_sample_set(monkeypatch):
-    submission = SimpleNamespace(model_dump=lambda: {"submission": "data"})
-    sample_set = SimpleNamespace(
-        model_dump=lambda: {"sample_set": "data"},
-        sample_data=SimpleNamespace(data={}),
-    )
+    submission = SubmissionMetadataSchema.model_validate(SubmissionMetadataFactory.build())
+    sample_set = SubmissionSampleSet.model_validate(SubmissionSampleSetFactory.build())
     run_pipeline = Mock(return_value=SimpleNamespace(metadata_fields=[]))
     monkeypatch.setattr(metadata.settings, "llm_service_account_credentials_file", "credentials")
     monkeypatch.setattr(metadata, "LLMClient", Mock(return_value=object()))
@@ -61,8 +60,8 @@ def test_study_suggestions_pass_submission_and_sample_set(monkeypatch):
 
     assert suggestions == []
     run_pipeline.assert_called_once_with(
-        submission_object={"submission": "data"},
-        sample_set_object={"sample_set": "data"},
+        submission_object=submission.model_dump(),
+        sample_set_object=sample_set.model_dump(),
         llm_client=ANY,
         interface_name="sample",
     )
