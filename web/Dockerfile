@@ -40,7 +40,7 @@ RUN --mount=type=secret,required=false,id=sentry_auth_token,env=SENTRY_AUTH_TOKE
     yarn run build
 
 
-FROM nginx:1.28-alpine AS production-stage
+FROM nginx:1.30-alpine AS production-stage
 LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
 
 RUN rm -v /etc/nginx/nginx.conf
