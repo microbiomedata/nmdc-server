@@ -134,7 +134,7 @@ class SampleMetadataSuggester:
             )
 
         # env triad suggestions
-        if sample_set.sample_data.data.get(sample_data_slot, None):
+        if sample_data_slot and sample_set.sample_data.data.get(sample_data_slot):
 
             env_triad_pipeline_output = get_env_triad_recommendation(
                 sample_set_object=sample_set.model_dump(),
