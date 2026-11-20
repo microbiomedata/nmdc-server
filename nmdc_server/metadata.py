@@ -132,7 +132,7 @@ class SampleMetadataSuggester:
                     is_ai_generated=True,
                 )
             )
-  
+
         # env triad suggestions
         if sample_set.sample_data.data.get(sample_data_slot, None):
 
