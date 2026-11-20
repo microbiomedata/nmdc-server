@@ -1,4 +1,4 @@
-FROM node:lts AS build-stage
+FROM node:24.22 AS build-stage
 
 # Define "build arguments" (i.e. build-time parameters), which can be set via
 # the `--build-arg KEY=VALUE` argument to the `$ docker build` command.
