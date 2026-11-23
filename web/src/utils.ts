@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 import protobufjs from 'protobufjs';
 import NmdcSchema from 'nmdc-schema/nmdc_materialized_patterns.json';
+import axios from 'axios';
 
 import { Condition } from '@/data/api';
 import descriptor from '@/data/protobuf-descriptor.json';
@@ -245,4 +246,22 @@ export function getBadgeSchema(badge: string): BadgeSchema | undefined {
 export function getBadgeTitle(badge: string): string {
   const badgeSchema = getBadgeSchema(badge);
   return badgeSchema?.title || snakeToSentenceCase(badge);
+}
+
+/**
+ * Get a human-readable Error from a caught value. For an AxiosError, this surfaces the
+ * backend's `detail` message when present (rather than e.g. a generic
+ * "AxiosError: Request failed with status code 422"), falling back to `fallbackMessage` if the
+ * response has no `detail`. Non-axios errors are passed through as-is (wrapped in an Error if
+ * they aren't already one).
+ */
+export function extractErrorMessage(err: unknown, fallbackMessage = 'An unexpected error occurred. Please try again.'): Error {
+  if (axios.isAxiosError(err)) {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === 'string' && detail) {
+      return new Error(detail);
+    }
+    return new Error(fallbackMessage);
+  }
+  return err instanceof Error ? err : new Error(String(err));
 }

@@ -11,8 +11,8 @@ import {
 //          https://github.com/vuetifyjs/vuetify/issues/19315
 // @ts-ignore
 import { useForm } from 'vuetify/lib/composables/form';
-import axios from 'axios';
 import useRequest from '@/use/useRequest';
+import { extractErrorMessage } from '@/utils';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
 import { useSubmissionStore } from '../store';
 
@@ -21,23 +21,6 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/web
 
 const UNSUPPORTED_FILE_TYPE_MESSAGE = 'Unable to upload this file. Please make sure it\'s a supported '
   + 'image type (JPEG, PNG, GIF, or WebP) and under the size limit, then try again.';
-
-/**
- * useRequest() stores String(err) for its error state. For an AxiosError that produces a
- * generic message like "AxiosError: Request failed with status code 422" without the specific
- * reason. This extracts the backend's detail message when present, and otherwise falls back to
- * a message naming the most common cause (unsupported file type).
- */
-function extractErrorMessage(err: unknown): Error {
-  if (axios.isAxiosError(err)) {
-    const detail = err.response?.data?.detail;
-    if (typeof detail === 'string' && detail) {
-      return new Error(detail);
-    }
-    return new Error(UNSUPPORTED_FILE_TYPE_MESSAGE);
-  }
-  return err instanceof Error ? err : new Error(String(err));
-}
 
 export default defineComponent({
   props: {
@@ -123,7 +106,7 @@ export default defineComponent({
       try {
         await store.uploadSubmissionImage(fileRef.value, props.imageType);
       } catch (err) {
-        throw extractErrorMessage(err);
+        throw extractErrorMessage(err, UNSUPPORTED_FILE_TYPE_MESSAGE);
       }
       fileRef.value = null;
     });
