@@ -11,7 +11,7 @@ export function formatShippingDate (date: string | Date | null | undefined): str
 }
 
 export function checkDoiFormat(v: string): string | boolean {
-  return /^(?:doi:)?10\.\d{2,9}\/.+$/.test(v) || 'DOI must be in the format "10.xxxx/xxxxx"';
+  return /^(?:doi:)?10\.\d{2,9}\/\d{4}$/.test(v) || 'DOI must be in the format "10.xxxx/xxxx"';
 }
 
 const ORCID_REGEX = /^(\d{4}-){3}\d{3}(\d|X)$/;
