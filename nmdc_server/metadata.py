@@ -101,6 +101,7 @@ class SampleMetadataSuggester:
             - interface_tab: The name of the interface tab for which to generate suggestions
             - sample_data_slot: The name of the data section within the submission object which to generate suggestions. This is optional because some suggestors may only need the interface tab level information.
             - submission: The full submission metadata, which may provide additional context for generating suggestions.
+            - sample_set: The sample set currently being worked on.
         """
         if not settings.llm_service_account_credentials_file:
             logger.warning(
@@ -111,12 +112,12 @@ class SampleMetadataSuggester:
         llm_client = LLMClient(
             access_provider="gcp", credentials_file=settings.llm_service_account_credentials_file
         )
-        # collect samples from the sample set
-        samples = (
-            sample_set.sample_data.data.get(sample_data_slot, None) if sample_data_slot else None
-        )
+
         recommendation_pipeline_output = run_recommendation_pipeline(
-            submission.model_dump(), llm_client, interface_name=interface_tab
+            submission_object=submission.model_dump(),
+            sample_set_object=sample_set.model_dump(),
+            llm_client=llm_client,
+            interface_name=interface_tab,
         )
 
         suggestions: List[MetadataSuggestion] = []
@@ -133,16 +134,17 @@ class SampleMetadataSuggester:
             )
 
         # env triad suggestions
-        if samples:
+        if sample_data_slot and sample_set.sample_data.data.get(sample_data_slot):
+
             env_triad_pipeline_output = get_env_triad_recommendation(
-                samples=samples,
+                sample_set_object=sample_set.model_dump(),
                 submission_object=submission.model_dump(),
                 llm_client=llm_client,
                 interface_names=[interface_tab],
             )
 
             for metadata_field in env_triad_pipeline_output.metadata_fields:
-                row = samples[int(metadata_field.id)]
+                row = sample_set.sample_data.data[sample_data_slot][int(metadata_field.id)]
                 current_value = row.get(metadata_field.field_name)
                 # filter out suggestions that are the same as the current value
                 if metadata_field.value == current_value:
