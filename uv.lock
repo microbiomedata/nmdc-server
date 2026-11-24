@@ -2264,7 +2264,7 @@ wheels = [
 
 [[package]]
 name = "nmdc-metadata-suggestor-ai-tool"
-version = "1.4.0"
+version = "1.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "claude-agent-sdk" },
@@ -2287,9 +2287,9 @@ dependencies = [
     { name = "restrictedpython" },
     { name = "starlette" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/62/c2c377cf38671a8e923c456df521a02d335c909ef2bbb4fb8f87c8369e02/nmdc_metadata_suggestor_ai_tool-1.4.0.tar.gz", hash = "sha256:81c2c2cde27674ec3700c2b819434eda8c1b5d969995fd2e422c250b22ce04a5", size = 217959, upload-time = "2026-11-20T02:58:23.963Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/44/ecdc7c09e5f2e6350e3ed051cadad5bfc1c731895ca9bebb3c990fda19cd/nmdc_metadata_suggestor_ai_tool-1.4.1.tar.gz", hash = "sha256:20e1d001f64d7603cc4e44c753920a047b72a853acf55a2ac546580349c23b26", size = 218046, upload-time = "2026-11-24T16:02:47.82Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/9b/b3f7451b51d115354a052b6fbb2deb0c6838b34a11fa62ce76f8cda1a8fe/nmdc_metadata_suggestor_ai_tool-1.4.0-py3-none-any.whl", hash = "sha256:2fe07ec09f288f6332a14c44aa8af326e9347120770cd642bc24f2bc3f29527d", size = 143468, upload-time = "2026-11-20T02:58:22.454Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/55/30d2bcf549e21487b3669efe73f0cd316345513fd973d5926849b7e3a836/nmdc_metadata_suggestor_ai_tool-1.4.1-py3-none-any.whl", hash = "sha256:e77202b97caeeed918682eb444decc473407ab69a9b557076fbf12a22a0b6058", size = 143575, upload-time = "2026-11-24T16:02:46.427Z" },
 ]
 
 [[package]]
@@ -2388,7 +2388,7 @@ requires-dist = [
     { name = "itsdangerous" },
     { name = "linkml-runtime" },
     { name = "nmdc-geoloc-tools" },
-    { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.4.0" },
+    { name = "nmdc-metadata-suggestor-ai-tool", specifier = "==1.4.1" },
     { name = "nmdc-schema", specifier = "==11.26.0" },
     { name = "nmdc-submission-schema", specifier = "==11.26.0" },
     { name = "pint" },
